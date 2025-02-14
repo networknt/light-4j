@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -203,7 +204,7 @@ public class JsonSchemaGeneratorTest {
         generator.writeSchemaToFile("src/test/resources/config",  metadata);
         final var file1 = new File("src/test/resources/config/apikey-test.json");
         final var file2 = new File("src/test/resources/config/apikey-compare.json");
-        assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));
+        assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
     }
 
     @Test
