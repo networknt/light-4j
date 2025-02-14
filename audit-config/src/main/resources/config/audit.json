@@ -45,14 +45,12 @@
     "requestBodyMaxSize" : {
       "type" : "integer",
       "description" : "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\nrequest body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-      "default" : 4096,
-      "format" : "INT32"
+      "default" : 4096
     },
     "responseBodyMaxSize" : {
       "type" : "integer",
       "description" : "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-      "default" : 4096,
-      "format" : "INT32"
+      "default" : 4096
     },
     "enabled" : {
       "type" : "boolean",
