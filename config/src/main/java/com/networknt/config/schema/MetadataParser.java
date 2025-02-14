@@ -7,6 +7,7 @@ import org.yaml.snakeyaml.util.Tuple;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.type.MirroredTypeException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.Optional;
@@ -165,7 +166,13 @@ public class MetadataParser {
      * @return A LinkedHashMap containing the metadata.
      */
     private static LinkedHashMap<String, Object> parseArrayMetadata(final ArrayField field, final ProcessingEnvironment processingEnvironment) {
-        final var itemElement = ReflectionUtils.safeGetElement(field.items().getCanonicalName(), processingEnvironment);
+        String canonicalName;
+        try {
+            canonicalName = field.items().getCanonicalName();
+        } catch (MirroredTypeException e) {
+            canonicalName = e.getTypeMirrors().get(0).toString();
+        }
+        final var itemElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var itemMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(itemElement, itemMetadata, processingEnvironment);
 
@@ -257,7 +264,13 @@ public class MetadataParser {
      * @return A LinkedHashMap containing the metadata.
      */
     private static LinkedHashMap<String, Object> parseObjectMetadata(final ObjectField field, final ProcessingEnvironment processingEnvironment) {
-        final var refElement = ReflectionUtils.safeGetElement(field.ref().getCanonicalName(), processingEnvironment);
+        String canonicalName;
+        try {
+            canonicalName = field.ref().getCanonicalName();
+        } catch (MirroredTypeException e) {
+            canonicalName = e.getTypeMirrors().get(0).toString();
+        }
+        final var refElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var refMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();

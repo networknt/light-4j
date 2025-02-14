@@ -31,5 +31,3 @@ public @interface NullField {
      */
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
 }
-
-

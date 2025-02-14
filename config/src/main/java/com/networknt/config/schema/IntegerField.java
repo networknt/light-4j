@@ -65,5 +65,3 @@ public @interface IntegerField {
      */
     Format format() default Format.int32;
 }
-
-
