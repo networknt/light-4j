@@ -51,5 +51,3 @@ public @interface StringField {
      */
     Format format() default Format.none;
 }
-
-

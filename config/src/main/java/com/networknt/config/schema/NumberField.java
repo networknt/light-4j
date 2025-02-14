@@ -64,4 +64,3 @@ public @interface NumberField {
      */
     Format format() default Format.float32;
 }
-

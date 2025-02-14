@@ -62,5 +62,3 @@ public @interface ObjectField {
      */
     Class<?>[] oneOf() default {};
 }
-
-

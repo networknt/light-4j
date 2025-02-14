@@ -31,6 +31,3 @@ public @interface BooleanField {
      */
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
 }
-
-
-
