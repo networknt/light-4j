@@ -1057,6 +1057,16 @@ ERR11640:
   code: ERR11640
   message: PROVIDER_KEY_TYPE_INVALID
   description: Provider key type %s is invalid.
+ERR11641:
+  statusCode: 400
+  code: ERR11641
+  message: INVALID_CONTENT_FORMAT
+  description: Invalid content format and %s is expected.
+ERR11642:
+  statusCode: 400
+  code: ERR11642
+  message: INVALID_REMOTE_URL
+  description: Invalid remote url %s.
 
 
 # OAuth2 service error 12000-12099

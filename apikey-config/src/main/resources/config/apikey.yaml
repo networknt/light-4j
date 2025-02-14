@@ -1,0 +1,8 @@
+#Enable or disable the api key filter.
+enabled: ${apikey.enabled:false}
+#If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is
+#stored in the config file. It is more secure than put the encrypted key into the config file.
+#The default value is false. If you want to enable it, you need to use the following repo
+#https://github.com/networknt/light-hash command line tool to hash the clear text key.
+hashEnabled: ${apikey.hashEnabled:false}
+pathPrefixAuths: 'null'

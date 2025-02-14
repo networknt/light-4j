@@ -187,4 +187,32 @@ public class Util {
         }
         return attributeMap;
     }
+
+    /**
+     * Get the serviceId from the jsonMap for hybrid framework.
+     * @param jsonMap  map that contains host, service, action and version
+     * @return serviceId
+     */
+    public static String getServiceId(Map<String, Object> jsonMap) {
+        return  (jsonMap.get("host") == null? "" : jsonMap.get("host") + "/") +
+                (jsonMap.get("service") == null? "" : jsonMap.get("service") + "/") +
+                (jsonMap.get("action") == null? "" : jsonMap.get("action") + "/") +
+                (jsonMap.get("version") == null? "" : jsonMap.get("version"));
+    }
+
+    /**
+     * Get the serviceId from the host, service, action and version
+     * @param host String
+     * @param service String
+     * @param name String
+     * @param version String
+     * @return serviceId
+     */
+    public static String getServiceId(String host, String service, String name, String version) {
+        return  (host == null ? "" : host + "/") +
+                (service == null ? "" : service + "/") +
+                (name == null ? "" : name + "/") +
+                (version == null ? "" : version);
+    }
+
 }
