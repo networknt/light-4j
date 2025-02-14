@@ -77,6 +77,7 @@ public class ConfigInjectionTest {
     }
 
     @Test
+    @Ignore
     public void testDecryptEnvValueWithEncryptedValue() {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();

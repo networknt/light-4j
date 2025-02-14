@@ -1,10 +1,25 @@
 package com.networknt.apikey;
 
 import com.networknt.config.ConfigInjection;
+import com.networknt.config.schema.StringField;
 
 public class ApiKey {
+
+    @StringField(
+            configFieldName = "pathPrefix",
+            pattern = "^/.*"
+    )
     String pathPrefix;
+
+    @StringField(
+            configFieldName = "headerName",
+            pattern = "^[a-zA-Z0-9-_]*$"
+    )
     String headerName;
+
+    @StringField(
+            configFieldName = "apiKey"
+    )
     String apiKey;
 
     public String getPathPrefix() {
