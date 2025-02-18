@@ -5,6 +5,10 @@ import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.tools.FileObject;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -74,7 +78,10 @@ public abstract class Generator {
      * @param path     The path to write the schema to.
      * @param metadata The metadata to write.
      */
-    public abstract void writeSchemaToFile(final String path, final LinkedHashMap<String, Object> metadata);
+    public abstract void writeSchemaToFile(final FileObject path, final LinkedHashMap<String, Object> metadata) throws IOException;
+    public abstract void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException;
+
+    public abstract void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata);
 
     /**
      * Parses an array field.

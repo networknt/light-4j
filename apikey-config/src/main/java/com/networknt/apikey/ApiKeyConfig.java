@@ -45,6 +45,7 @@ public class ApiKeyConfig {
 
     @ArrayField(
             configFieldName = "pathPrefixAuths",
+            externalized = true,
             items = ApiKey.class
     )
     List<ApiKey> pathPrefixAuths;

@@ -6,7 +6,9 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
+import java.io.File;
 import java.lang.annotation.Annotation;
+import java.net.URL;
 import java.util.Optional;
 
 public class ReflectionUtils {
@@ -80,5 +82,21 @@ public class ReflectionUtils {
 
             else return Optional.of(annotation);
         }
+    }
+
+    public static String getResourceFolderForConfigClass(Class<?> configClass) {
+        URL url = configClass.getResource("/config");
+
+        if (url == null)
+            throw new RuntimeException("No resource folder found for class: " + configClass.getSimpleName());
+
+        File file;
+        try {
+            file = new File(url.toURI());
+        } catch (Exception e) {
+            file = new File(url.getPath());
+        }
+
+        return file.getAbsolutePath();
     }
 }

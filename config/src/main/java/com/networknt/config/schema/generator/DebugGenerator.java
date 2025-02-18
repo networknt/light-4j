@@ -2,7 +2,11 @@ package com.networknt.config.schema.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.tools.FileObject;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.util.LinkedHashMap;
 
 /**
@@ -20,10 +24,19 @@ public class DebugGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(String path, LinkedHashMap<String, Object> metadata) {
+    public void writeSchemaToFile(final FileObject path, LinkedHashMap<String, Object> metadata) throws IOException {
+        writeSchemaToFile(path.openOutputStream(), metadata);
+    }
+
+    @Override
+    public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
+        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(writer, metadata);
+    }
+
+    @Override
+    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) {
         try {
-            final var file = new File(path + "/" + configKey + ".debug.json");
-            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(file, metadata);
+            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, metadata);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -7,6 +7,8 @@ import com.networknt.config.schema.generator.YamlGenerator;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -201,7 +203,8 @@ public class JsonSchemaGeneratorTest {
     public void writeJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(testMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("apikey-test");
-        generator.writeSchemaToFile("src/test/resources/config",  metadata);
+
+        generator.writeSchemaToFile(new FileOutputStream("src/test/resources/config"),  metadata);
         final var file1 = new File("src/test/resources/config/apikey-test.json");
         final var file2 = new File("src/test/resources/config/apikey-compare.json");
         assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
@@ -211,7 +214,7 @@ public class JsonSchemaGeneratorTest {
     public void writeYamlSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(testMetadata2, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new YamlGenerator("audit-test");
-        generator.writeSchemaToFile("src/test/resources/config",  metadata);
+        generator.writeSchemaToFile(new FileOutputStream("src/test/resources/config"),  metadata);
         final var file1 = new File("src/test/resources/config/audit-test.yaml");
         final var file2 = new File("src/test/resources/config/audit-compare.yaml");
         assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));

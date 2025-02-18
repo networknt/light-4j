@@ -8,7 +8,8 @@ import com.networknt.config.schema.MetadataParser;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.io.File;
+import javax.tools.FileObject;
+import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -29,7 +30,36 @@ public class JsonSchemaGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final String path, final LinkedHashMap<String, Object> metadata) {
+    public void writeSchemaToFile(OutputStream os, LinkedHashMap<String, Object> metadata) {
+        final var schemaMap = this.prepJsonMetadataObject(metadata);
+        try {
+            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, schemaMap);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void writeSchemaToFile(final FileObject source, final LinkedHashMap<String, Object> metadata) throws IOException {
+        final var schemaMap = this.prepJsonMetadataObject(metadata);
+        try {
+            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(source.openOutputStream(), schemaMap);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void writeSchemaToFile(final Writer br, final LinkedHashMap<String, Object> metadata) {
+        final var schemaMap = this.prepJsonMetadataObject(metadata);
+        try {
+            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private LinkedHashMap<String, Object> prepJsonMetadataObject(final LinkedHashMap<String, Object> metadata) {
         LinkedHashMap<String, Object> schemaMap = new LinkedHashMap<>();
         schemaMap.put("$schema", JSON_DRAFT);
 
@@ -40,14 +70,7 @@ public class JsonSchemaGenerator extends Generator {
             schemaMap.put(MetadataParser.PROPERTIES_KEY, this.getRootSchemaProperties(metadata));
 
         } else schemaMap.put("additionalProperties", true);
-
-        try {
-            LOG.trace("Writing JSON schema {} to file: {}", this.configKey ,path + "/" + this.configKey + ".yaml");
-            final var file = new File(path + "/" + configKey + ".json");
-            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(file, schemaMap);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return schemaMap;
     }
 
     @Override
