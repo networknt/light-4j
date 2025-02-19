@@ -16,11 +16,14 @@
 
 package com.networknt.utility;
 
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
@@ -33,6 +36,20 @@ public class DateUtil {
                     .appendPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
                     .toFormatter()
                     .withZone(UTC);
+
+    /** Formatter for date-time without seconds and timezone (assumed UTC) */
+    static final DateTimeFormatter DATE_TIME_FORMAT_WITHOUT_SECONDS =
+            new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd'T'HH:mm")
+                    .toFormatter()
+                    .withZone(UTC);
+
+    // List of formatters to try in order
+    private static final List<DateTimeFormatter> FORMATTERS = Arrays.asList(
+            ISO_INSTANT,
+            ALTERNATE_ISO_8601_DATE_FORMAT,
+            DATE_TIME_FORMAT_WITHOUT_SECONDS
+    );
 
     /**
      * Formats the specified date as an ISO 8601 string.
@@ -61,11 +78,15 @@ public class DateUtil {
                     .concat("Z");
         }
 
-        try {
-            return parseInstant(dateString, ISO_INSTANT);
-        } catch (DateTimeParseException e) {
-            return parseInstant(dateString, ALTERNATE_ISO_8601_DATE_FORMAT);
+        // Try each formatter in sequence
+        for (DateTimeFormatter formatter : FORMATTERS) {
+            try {
+                return parseInstant(dateString, formatter);
+            } catch (DateTimeParseException e) {
+                // Continue to next formatter
+            }
         }
+        throw new DateTimeParseException("Could not parse date: " + dateString, dateString, 0);
     }
 
     /**
@@ -80,5 +101,4 @@ public class DateUtil {
     private static Instant parseInstant(String dateString, DateTimeFormatter formatter) {
         return formatter.withZone(ZoneOffset.UTC).parse(dateString, Instant::from);
     }
-
 }
