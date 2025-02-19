@@ -13,7 +13,11 @@ import org.yaml.snakeyaml.events.CommentEvent;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.representer.Representer;
 
+import javax.tools.FileObject;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -55,17 +59,28 @@ public class YamlGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final String path, final LinkedHashMap<String, Object> metadata) {
+    public void writeSchemaToFile(final FileObject object, final LinkedHashMap<String, Object> metadata) throws IOException {
+        writeSchemaToFile(object.openOutputStream(), metadata);
+    }
+
+    @Override
+    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) {
         try {
             final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
             final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
             final var fileContent = yaml.dump(json);
+            os.write(fileContent.getBytes());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            LOG.trace("Writing YAML {} configuration to file: {}", this.configKey ,path + "/" + this.configKey + ".yaml");
-            try (FileWriter writer = new FileWriter(path + "/" + this.configKey + ".yaml")) {
-                writer.write(fileContent);
-            }
-
+    @Override
+    public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
+        try {
+            final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
+            final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
+            yaml.dump(json, writer);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

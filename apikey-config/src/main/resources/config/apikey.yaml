@@ -5,4 +5,4 @@ enabled: ${apikey.enabled:false}
 #The default value is false. If you want to enable it, you need to use the following repo
 #https://github.com/networknt/light-hash command line tool to hash the clear text key.
 hashEnabled: ${apikey.hashEnabled:false}
-pathPrefixAuths: 'null'
+pathPrefixAuths: ${apikey.pathPrefixAuths:}
