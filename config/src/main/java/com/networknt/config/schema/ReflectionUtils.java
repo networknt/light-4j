@@ -1,7 +1,5 @@
 package com.networknt.config.schema;
 
-import com.networknt.config.schema.generator.Generator;
-
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -26,10 +24,6 @@ public class ReflectionUtils {
         } catch (final MirroredTypeException e) {
             return processingEnvironment.getTypeUtils().asElement(e.getTypeMirror());
         }
-    }
-
-    public static void printName(Generator generator) {
-        System.out.println(generator.getClass().getName());
     }
 
     /**

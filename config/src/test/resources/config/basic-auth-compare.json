@@ -1,0 +1,47 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "enableAD", "allowAnonymous", "allowBearerToken", "users" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable or disable the basic auth filter."
+    },
+    "enableAD" : {
+      "type" : "boolean",
+      "description" : "Enable or disable the Active Directory authentication."
+    },
+    "allowAnonymous" : {
+      "type" : "boolean",
+      "description" : "Allow anonymous access to the service."
+    },
+    "allowBearerToken" : {
+      "type" : "boolean",
+      "description" : "Allow bearer token access to the service."
+    },
+    "users" : {
+      "type" : "object",
+      "description" : "All user definitions and their path mappings.",
+      "additionalProperties" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "description" : "UserAuth password"
+          },
+          "paths" : {
+            "type" : "array",
+            "description" : "The different paths that will be valid for this UserAuth",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "username" : {
+            "type" : "string",
+            "description" : "UserAuth username"
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,8 +2,6 @@ package com.networknt.config.schema.generator;
 
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MetadataParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.comments.CommentLine;
@@ -14,7 +12,6 @@ import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.representer.Representer;
 
 import javax.tools.FileObject;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -28,7 +25,6 @@ import java.util.LinkedHashMap;
  */
 public class YamlGenerator extends Generator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(YamlGenerator.class);
     private static final DumperOptions YAML_OPTIONS = new DumperOptions();
     static {
         YAML_OPTIONS.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -38,8 +34,8 @@ public class YamlGenerator extends Generator {
         YAML_OPTIONS.setSplitLines(false);
     }
 
-    public YamlGenerator(final String configKey) {
-        super(configKey);
+    public YamlGenerator(final String configKey, final String configName) {
+        super(configKey, configName);
     }
 
     @Override
@@ -64,26 +60,18 @@ public class YamlGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) {
-        try {
-            final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-            final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
-            final var fileContent = yaml.dump(json);
-            os.write(fileContent.getBytes());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException {
+        final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
+        final var fileContent = yaml.dump(json);
+        os.write(fileContent.getBytes());
     }
 
     @Override
     public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
-        try {
-            final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-            final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
-            yaml.dump(json, writer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
+        yaml.dump(json, writer);
     }
 
     /**
@@ -95,9 +83,9 @@ public class YamlGenerator extends Generator {
      * @param property The property to add the field to.
      */
     private void buildYamlProperty(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        final var externalized = this.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
+        final var externalized = Generator.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
         final var isExternalized = externalized != null && externalized;
-        final var configFieldName = this.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
+        final var configFieldName = Generator.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
         final var defaultValue = field.get(MetadataParser.DEFAULT_VALUE_KEY);
 
         /* Don't stringify non-string values if not externalized. */
@@ -123,10 +111,10 @@ public class YamlGenerator extends Generator {
     @Override
     protected void parseArray(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
 
-        final var useSubObjectDefault = this.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
+        final var useSubObjectDefault = Generator.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
         if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
-            if (Generator.fieldIsHashMap(field, MetadataParser.ITEMS_KEY)) {
+            if (Generator.fieldIsSubMap(field, MetadataParser.ITEMS_KEY)) {
 
                 // TODO - test this with items
                 final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.ITEMS_KEY);
@@ -142,6 +130,11 @@ public class YamlGenerator extends Generator {
         } else {
             this.buildYamlProperty(field, property);
         }
+    }
+
+    @Override
+    protected void parseMapField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
+        this.buildYamlProperty(field, property);
     }
 
     @Override
@@ -162,10 +155,10 @@ public class YamlGenerator extends Generator {
     @Override
     protected void parseObject(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
 
-        final var useSubObjectDefault = this.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
-        if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
+        final var useSubObjectDefault = Generator.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
+        if (useSubObjectDefault != null && useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
-            if (Generator.fieldIsHashMap(field, MetadataParser.PROPERTIES_KEY)) {
+            if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY)) {
 
                 // TODO - test this with properties
                 final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
@@ -212,12 +205,12 @@ public class YamlGenerator extends Generator {
                     final var start = node.getStartMark();
                     final var end = node.getEndMark();
 
-                    if (Generator.fieldIsHashMap(innerMetadata, MetadataParser.PROPERTIES_KEY)) {
+                    if (Generator.fieldIsSubMap(innerMetadata, MetadataParser.PROPERTIES_KEY)) {
 
                         final var allProperties = (LinkedHashMap<String, Object>) this.innerMetadata.get(MetadataParser.PROPERTIES_KEY);
                         final var currentYamlField = (String) data;
 
-                        if (Generator.fieldIsHashMap(allProperties, currentYamlField)) {
+                        if (Generator.fieldIsSubMap(allProperties, currentYamlField)) {
                             final var yamlFieldProp = (LinkedHashMap<String, Object>) allProperties.get(currentYamlField);
                             final var description = (String) yamlFieldProp.get(MetadataParser.DESCRIPTION_KEY);
 

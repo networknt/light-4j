@@ -20,14 +20,14 @@ public @interface ConfigSchema {
 
 
     /**
-     * The name of the configuration file.
+     * The name of the parameter key of the configuration file.
      */
     String configKey();
 
     /**
-     * The output directory of the configuration file.
+     * The name of the configuration file.
      */
-    String outputDir() default "src/main/resources/config";
+    String configName();
 
     /**
      * List of all the configuration file formats generated.
