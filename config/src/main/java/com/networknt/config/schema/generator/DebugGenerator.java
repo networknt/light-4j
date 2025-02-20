@@ -19,8 +19,8 @@ public class DebugGenerator extends Generator {
 
     private final ObjectMapper objectWriter = new ObjectMapper();
 
-    public DebugGenerator(final String configKey) {
-        super(configKey);
+    public DebugGenerator(final String configKey, final String configName) {
+        super(configKey, configName);
     }
 
     @Override
@@ -34,16 +34,17 @@ public class DebugGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) {
-        try {
-            this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, metadata);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException {
+        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, metadata);
     }
 
     @Override
     protected void parseArray(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+        // no need to parse anything
+    }
+
+    @Override
+    protected void parseMapField(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
         // no need to parse anything
     }
 

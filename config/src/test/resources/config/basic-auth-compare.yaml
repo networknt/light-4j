@@ -1,0 +1,9 @@
+#Enable or disable the basic auth filter.
+enabled: ${basic-auth-test.enabled:false}
+#Enable or disable the Active Directory authentication.
+enableAD: ${basic-auth-test.enableAD:false}
+#Allow anonymous access to the service.
+allowAnonymous: ${basic-auth-test.allowAnonymous:false}
+#Allow bearer token access to the service.
+allowBearerToken: ${basic-auth-test.allowBearerToken:false}
+users: ${basic-auth-test.users:}

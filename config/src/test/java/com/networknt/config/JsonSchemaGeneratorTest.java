@@ -19,6 +19,88 @@ import static org.junit.Assert.*;
 
 public class JsonSchemaGeneratorTest {
 
+    public static final String basicAuthMetadata = "{\n" +
+            "  \"properties\" : {\n" +
+            "    \"enabled\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"configFieldName\" : \"enabled\",\n" +
+            "      \"description\" : \"Enable or disable the basic auth filter.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : false\n" +
+            "    },\n" +
+            "    \"enableAD\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"configFieldName\" : \"enableAD\",\n" +
+            "      \"description\" : \"Enable or disable the Active Directory authentication.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : false\n" +
+            "    },\n" +
+            "    \"allowAnonymous\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"configFieldName\" : \"allowAnonymous\",\n" +
+            "      \"description\" : \"Allow anonymous access to the service.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : false\n" +
+            "    },\n" +
+            "    \"allowBearerToken\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"configFieldName\" : \"allowBearerToken\",\n" +
+            "      \"description\" : \"Allow bearer token access to the service.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : false\n" +
+            "    },\n" +
+            "    \"users\" : {\n" +
+            "      \"type\" : \"map\",\n" +
+            "      \"configFieldName\" : \"users\",\n" +
+            "      \"description\" : \"\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"additionalProperties\" : {\n" +
+            "        \"properties\" : {\n" +
+            "          \"username\" : {\n" +
+            "            \"type\" : \"string\",\n" +
+            "            \"configFieldName\" : \"username\",\n" +
+            "            \"description\" : \"UserAuth username\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"defaultValue\" : \"\",\n" +
+            "            \"minLength\" : 0,\n" +
+            "            \"maxLength\" : 2147483647,\n" +
+            "            \"pattern\" : \"\",\n" +
+            "            \"format\" : \"none\"\n" +
+            "          },\n" +
+            "          \"password\" : {\n" +
+            "            \"type\" : \"string\",\n" +
+            "            \"configFieldName\" : \"password\",\n" +
+            "            \"description\" : \"UserAuth password\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"defaultValue\" : \"\",\n" +
+            "            \"minLength\" : 0,\n" +
+            "            \"maxLength\" : 2147483647,\n" +
+            "            \"pattern\" : \"\",\n" +
+            "            \"format\" : \"none\"\n" +
+            "          },\n" +
+            "          \"paths\" : {\n" +
+            "            \"type\" : \"array\",\n" +
+            "            \"configFieldName\" : \"paths\",\n" +
+            "            \"description\" : \"The different paths that will be valid for this UserAuth\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"items\" : {\n" +
+            "              \"type\" : \"string\"\n" +
+            "            },\n" +
+            "            \"minItems\" : 0,\n" +
+            "            \"maxItems\" : 2147483647,\n" +
+            "            \"uniqueItems\" : false,\n" +
+            "            \"contains\" : false,\n" +
+            "            \"useSubObjectDefault\" : false,\n" +
+            "            \"defaultValue\" : \"\"\n" +
+            "          }\n" +
+            "        },\n" +
+            "        \"type\" : \"object\"\n" +
+            "      },\n" +
+            "      \"defaultValue\" : \"\"\n" +
+            "    }\n" +
+            "  },\n" +
+            "  \"type\" : \"object\"\n" +
+            "}";
     private static final String testMetadata2 = "{\n" +
             "  \"properties\" : {\n" +
             "    \"headers\" : {\n" +
@@ -201,7 +283,7 @@ public class JsonSchemaGeneratorTest {
     @Test
     public void writeJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(testMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
-        final var generator = new JsonSchemaGenerator("apikey-test");
+        final var generator = new JsonSchemaGenerator("apikey-test", "apikey-test");
         generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/apikey-test.json"),  metadata);
         final var file1 = new File("src/test/resources/config/apikey-test.json");
         final var file2 = new File("src/test/resources/config/apikey-compare.json");
@@ -211,11 +293,31 @@ public class JsonSchemaGeneratorTest {
     @Test
     public void writeYamlSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(testMetadata2, new TypeReference<LinkedHashMap<String, Object>>() {});
-        final var generator = new YamlGenerator("audit-test");
+        final var generator = new YamlGenerator("audit-test", "audit-test");
         generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/audit-test.yaml"),  metadata);
         final var file1 = new File("src/test/resources/config/audit-test.yaml");
         final var file2 = new File("src/test/resources/config/audit-compare.yaml");
         assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));
+    }
+
+    @Test
+    public void testMapFieldJsonSchemaToFile() throws IOException {
+        final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
+        final var generator = new JsonSchemaGenerator("basic-auth-test", "basic-auth-test");
+        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/basic-auth-test.json"),  metadata);
+        final var file1 = new File("src/test/resources/config/basic-auth-test.json");
+        final var file2 = new File("src/test/resources/config/basic-auth-compare.json");
+        assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
+    }
+
+    @Test
+    public void testMapFieldYamlSchemaToFile() throws IOException {
+        final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
+        final var generator = new YamlGenerator("basic-auth-test", "basic-auth-test");
+        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/basic-auth-test.yaml"),  metadata);
+        final var file1 = new File("src/test/resources/config/basic-auth-test.yaml");
+        final var file2 = new File("src/test/resources/config/basic-auth-compare.yaml");
+        assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
     }
 
 }

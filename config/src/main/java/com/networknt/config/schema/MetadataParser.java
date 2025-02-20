@@ -22,6 +22,7 @@ import java.util.function.Function;
  */
 public class MetadataParser {
 
+
     private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class);
 
     /* types */
@@ -32,11 +33,13 @@ public class MetadataParser {
     public static final String ARRAY_TYPE = "array";
     public static final String NULL_TYPE = "null";
     public static final String BOOLEAN_TYPE = "boolean";
+    public static final String MAP_TYPE = "map";
 
     /* keys */
     public static final String TYPE_KEY = "type";
     public static final String DESCRIPTION_KEY = "description";
     public static final String EXTERNALIZED_KEY = "externalized";
+    public static final String ADDITIONAL_PROPERTIES_KEY = "additionalProperties";
     public static final String DEFAULT_VALUE_KEY = "defaultValue";
     public static final String MINIMUM_KEY = "minimum";
     public static final String MAXIMUM_KEY = "maximum";
@@ -46,6 +49,7 @@ public class MetadataParser {
     public static final String PATTERN_KEY = "pattern";
     public static final String FORMAT_KEY = "format";
     public static final String ITEMS_KEY = "items";
+    public static final String VALUE_TYPE_KEY = "valueType";
     public static final String CONFIG_FIELD_NAME_KEY = "configFieldName";
     public static final String USE_SUB_OBJECT_DEFAULT_KEY = "useSubObjectDefault";
     public static final String MIN_ITEMS_KEY = "minItems";
@@ -66,6 +70,7 @@ public class MetadataParser {
         FIELD_PARSE_FUNCTIONS.put(StringField.class, (tuple) -> parseStringMetadata((StringField) tuple._1()));
         FIELD_PARSE_FUNCTIONS.put(NumberField.class, (tuple) -> parseNumberMetadata((NumberField) tuple._1()));
         FIELD_PARSE_FUNCTIONS.put(ArrayField.class, (tuple) -> parseArrayMetadata((ArrayField) tuple._1(), tuple._2()));
+        FIELD_PARSE_FUNCTIONS.put(MapField.class, (tuple) -> parseMapMetadata((MapField) tuple._1(), tuple._2()));
     }
 
     /**
@@ -188,6 +193,28 @@ public class MetadataParser {
         metadata.put(UNIQUE_ITEMS_KEY, field.uniqueItems());
         metadata.put(CONTAINS_KEY, field.contains());
         metadata.put(USE_SUB_OBJECT_DEFAULT_KEY, field.useSubObjectDefault());
+        metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
+        return metadata;
+    }
+
+    private static LinkedHashMap<String, Object> parseMapMetadata(final MapField field, final ProcessingEnvironment processingEnvironment) {
+        String canonicalName;
+        try {
+            canonicalName = field.valueType().getCanonicalName();
+        } catch (MirroredTypeException e) {
+            canonicalName = e.getTypeMirrors().get(0).toString();
+        }
+        final var valueElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
+        final var valueMetadata = new LinkedHashMap<String, Object>();
+        gatherObjectSchemaData(valueElement, valueMetadata, processingEnvironment);
+
+        // TODO - handle keyType
+        final var metadata = new LinkedHashMap<String, Object>();
+        metadata.put(TYPE_KEY, MAP_TYPE);
+        metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
+        metadata.put(DESCRIPTION_KEY, field.description());
+        metadata.put(EXTERNALIZED_KEY, field.externalized());
+        metadata.put(ADDITIONAL_PROPERTIES_KEY, valueMetadata);
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
         return metadata;
     }

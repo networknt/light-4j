@@ -38,8 +38,6 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         super.init(processingEnv);
         this.processingEnv = processingEnv;
         this.metadataParser = new MetadataParser();
-
-        LOG.trace("ConfigAnnotationParser initialized");
     }
 
     @Override
@@ -66,18 +64,18 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 final var extension = output.getExtension();
 
                 /* write config in project folder. */
-                final var projectFile = this.resolveOrCreateFile(modulePath, configClassMetadata.configKey() + extension).toPath();
+                final var projectFile = this.resolveOrCreateFile(modulePath, configClassMetadata.configName() + extension).toPath();
                 try (var writer = Files.newBufferedWriter(projectFile)) {
-                    Generator.getGenerator(output, configClassMetadata.configKey())
+                    Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
                 } catch (IOException e) {
                     throw new RuntimeException("Error generating config file", e);
                 }
 
                 /* write config in target folder. */
-                final var targetFile = this.resolveOrCreateFile(targetPathMirror, configClassMetadata.configKey() + extension).toPath();
+                final var targetFile = this.resolveOrCreateFile(targetPathMirror, configClassMetadata.configName() + extension).toPath();
                 try (var writer = Files.newBufferedWriter(targetFile)) {
-                    Generator.getGenerator(output, configClassMetadata.configKey())
+                    Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
                 } catch (IOException e) {
                     throw new RuntimeException("Error generating config file", e);
@@ -103,8 +101,8 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 if (file.createNewFile())
                     LOG.debug("File {} created.", file.getName());
 
-
                 else LOG.warn("File {} already exists, the existing file will have it's contents overwritten.", file.getName());
+
             } catch (IOException e) {
                 throw new RuntimeException("Could not create a new file '" + fileName + "', for the directory '" + file + "'. " + e.getMessage());
             }
@@ -122,6 +120,8 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         } catch (IOException e) {
             throw new RuntimeException("Could not create temp resource to find the current module", e);
         }
+
+        // return parent folder of the temp file.
         return Paths.get(resource.toUri()).getParent().resolve(path);
     }
 

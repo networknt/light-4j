@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "audit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "audit", configName = "audit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
