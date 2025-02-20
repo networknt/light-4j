@@ -21,7 +21,6 @@
     },
     "users" : {
       "type" : "object",
-      "description" : "All user definitions and their path mappings.",
       "additionalProperties" : {
         "type" : "object",
         "properties" : {

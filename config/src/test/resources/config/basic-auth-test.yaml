@@ -6,5 +6,4 @@ enableAD: ${basic-auth-test.enableAD:false}
 allowAnonymous: ${basic-auth-test.allowAnonymous:false}
 #Allow bearer token access to the service.
 allowBearerToken: ${basic-auth-test.allowBearerToken:false}
-#All user definitions and their path mappings.
 users: ${basic-auth-test.users:}
