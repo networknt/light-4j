@@ -1,0 +1,34 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enableServerInfo", "keysToNotSort", "downstreamEnabled", "downstreamHost", "downstreamPath" ],
+  "properties" : {
+    "enableServerInfo" : {
+      "type" : "boolean",
+      "description" : "Indicate if the server info is enabled or not.",
+      "default" : true
+    },
+    "keysToNotSort" : {
+      "type" : "array",
+      "description" : "String list keys that should not be sorted in the normalized info output. If you have a list of string values\ndefine in one of your config files and the sequence of the values is important, you can add the key to this list.\nIf you want to add your own keys, please make sure that you include the following default keys in your values.yml",
+      "default" : [ "admin", "default", "defaultHandlers", "request", "response" ],
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "downstreamEnabled" : {
+      "type" : "boolean",
+      "description" : "For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down\nstream API before return the server info to the invoker. By default, it is not enabled.\nif the server info needs to invoke down streams API. It is false by default."
+    },
+    "downstreamHost" : {
+      "type" : "string",
+      "description" : "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar.",
+      "default" : "http://localhost:8081"
+    },
+    "downstreamPath" : {
+      "type" : "string",
+      "description" : "down stream API server info path. This allows the down stream API to have customized path implemented.",
+      "default" : "/adm/server/info"
+    }
+  }
+}

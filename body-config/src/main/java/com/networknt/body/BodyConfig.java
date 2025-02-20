@@ -17,6 +17,9 @@
 package com.networknt.body;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +28,7 @@ import java.util.Map;
 /**
  * Created by steve on 29/09/16.
  */
+@ConfigSchema(configKey = "body", configName = "body", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class BodyConfig {
     private static final Logger logger = LoggerFactory.getLogger(BodyConfig.class);
 
@@ -35,10 +39,44 @@ public class BodyConfig {
     private static final String LOG_FULL_REQUEST_BODY = "logFullRequestBody";
     private static final String LOG_FULL_RESPONSE_BODY = "logFullResponseBody";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            description = "Enable body parse flag",
+            externalized = true,
+            defaultValue = true
+    )
     boolean enabled;
+
+    @BooleanField(
+            configFieldName = CACHE_REQUEST_BODY,
+            externalized = true,
+            description = "cache request body as a string along with JSON object. The string formatted request body will be used for audit log.\n" +
+                          "you should only enable this if you have configured audit.yml to log the request body as it uses extra memory."
+    )
     boolean cacheRequestBody;
-    boolean cacheResponseBody;
+
+    @BooleanField(
+            configFieldName = LOG_FULL_REQUEST_BODY,
+            externalized = true,
+            description = "log the full request body when RequestBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
+                          "for production. The default value is false and only 16K of the request body will be logged."
+    )
     boolean logFullRequestBody;
+
+    @BooleanField(
+            configFieldName = CACHE_RESPONSE_BODY,
+            externalized = true,
+            description = "cache response body as a string along with JSON object. The string formatted response body will be used for audit log.\n" +
+                          "you should only enable this if you have configured audit.yml to log the response body as it uses extra memory."
+    )
+    boolean cacheResponseBody;
+
+    @BooleanField(
+            configFieldName = LOG_FULL_RESPONSE_BODY,
+            externalized = true,
+            description = "log the full response body when ResponseBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
+                          "for production. The default value is false and only 16K of the response body will be logged."
+    )
     boolean logFullResponseBody;
     private final Config config;
     private Map<String, Object> mappedConfig;
