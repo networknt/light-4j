@@ -3,6 +3,10 @@ package com.networknt.security;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(configKey = "unified-security", configName = "unified-security", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class UnifiedSecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(UnifiedSecurityConfig.class);
     public static final String CONFIG_NAME = "unified-security";
@@ -26,8 +31,32 @@ public class UnifiedSecurityConfig {
     public static final String JWK_SERVICE_IDS = "jwkServiceIds";
     public static final String SJWK_SERVICE_IDS = "sjwkServiceIds";
     public static final String SWT_SERVICE_IDS = "swtServiceIds";
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            defaultValue = true,
+            externalized = true,
+            description = "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\n" +
+                          "request/response chain in the handler.yml configuration."
+    )
     boolean enabled;
+
+    @ArrayField(
+            configFieldName = ANONYMOUS_PREFIXES,
+            items = String.class,
+            externalized = true,
+            description = "Anonymous prefixes configuration. A list of request path prefixes. The anonymous prefixes will be checked\n" +
+                          "first, and if any path is matched, all other security checks will be bypassed, and the request goes to\n" +
+                          "the next handler in the chain. You can use json array or string separated by comma or YAML format."
+    )
     List<String> anonymousPrefixes;
+
+    @ArrayField(
+            configFieldName = PATH_PREFIX_AUTHS,
+            items = UnifiedPathPrefixAuth.class,
+            externalized = true,
+            description = "path prefix security configuration."
+    )
     List<UnifiedPathPrefixAuth> pathPrefixAuths;
 
     private final Config config;

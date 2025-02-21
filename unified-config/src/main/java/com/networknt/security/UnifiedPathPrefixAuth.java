@@ -1,16 +1,38 @@
 package com.networknt.security;
 
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.StringField;
+
 import java.util.List;
 
 public class UnifiedPathPrefixAuth {
+
+    @StringField(configFieldName = "prefix")
     String prefix;
+
+    @BooleanField(configFieldName = "basic")
     boolean basic;
+
+    @BooleanField(configFieldName = "jwt")
     boolean jwt;
+
+    @BooleanField(configFieldName = "sjwt")
     boolean sjwt;
+
+    @BooleanField(configFieldName = "swt")
     boolean swt;
+
+    @BooleanField(configFieldName = "apikey")
     boolean apikey;
+
+    @ArrayField(configFieldName = "jwkServiceIds", items = String.class)
     List<String> jwkServiceIds;
+
+    @ArrayField(configFieldName = "sjwkServiceIds", items = String.class)
     List<String> sjwkServiceIds;
+
+    @ArrayField(configFieldName = "swtServiceIds", items = String.class)
     List<String> swtServiceIds;
 
     public String getPrefix() {

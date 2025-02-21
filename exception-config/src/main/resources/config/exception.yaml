@@ -1,0 +1,2 @@
+#Enable or disable the exception module.
+enabled: ${exception.enabled:true}
