@@ -55,6 +55,19 @@ public class Util {
     }
 
     /**
+     * Get well formatted UUID without - and _
+     *
+     * @return uuid string
+     */
+    public static String getAlphaNumUUID() {
+        String uuid;
+        do {
+            uuid = getUUID();
+        } while (uuid.contains("-") || uuid.contains("_"));
+        return uuid;
+    }
+
+    /**
      * Quote the given string if needed
      *
      * @param value The value to quote (e.g. bob)
