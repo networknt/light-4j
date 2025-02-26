@@ -173,7 +173,7 @@ public class JsonSchemaGenerator extends Generator {
 
         /* special handling for json default value */
         // TODO - handle useSubObjectDefault for array
-        final var presentValue = this.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
+        final var presentValue = getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
             try {
                 property.put("default", this.objectWriter.readValue(presentValue, Object.class));
@@ -192,7 +192,7 @@ public class JsonSchemaGenerator extends Generator {
     @Override
     protected void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.NULL_TYPE);
-        final var presentValue = this.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
+        final var presentValue = getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING))
             property.put("default", presentValue);
 
@@ -206,16 +206,20 @@ public class JsonSchemaGenerator extends Generator {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
         Generator.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
 
+        final LinkedHashMap<String, Object> objectProperties;
+        if (Generator.fieldIsSubMap(field, MetadataParser.REF_KEY)) {
+            objectProperties = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.REF_KEY)).get(MetadataParser.PROPERTIES_KEY);
 
-        var objectProperties = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
-        if (objectProperties == null && Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY)) {
-            System.out.println("Using additional properties");
+        } else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY)) {
             usesAdditionalProperties = true;
-            final var additionalProps = (LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY);
-            if (Generator.fieldIsSubMap(additionalProps, MetadataParser.PROPERTIES_KEY)) {
-                System.out.println("Additional props contains properties");
-                objectProperties = (LinkedHashMap<String, Object>) additionalProps.get(MetadataParser.PROPERTIES_KEY);
-            }
+            objectProperties = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY)).get(MetadataParser.PROPERTIES_KEY);
+
+        } else if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY)) {
+            objectProperties = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
+
+        // TODO - handle anyOf, oneOf, allOf, not etc.
+        } else {
+            throw new IllegalArgumentException("Object field must contain a reference or additional properties.");
         }
 
         /* special handling for json default value */
