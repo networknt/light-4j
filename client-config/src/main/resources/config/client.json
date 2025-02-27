@@ -12,6 +12,35 @@
           "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate.",
           "default" : true
         },
+        "loadTrustStore" : {
+          "type" : "boolean",
+          "description" : "trust store contains certificates that server needs. Enable if tls is used.",
+          "default" : true
+        },
+        "tlsVersion" : {
+          "type" : "string",
+          "description" : "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1\nand 1.2 (deprecated and risky).",
+          "default" : "TLSv1.3"
+        },
+        "defaultGroupKey" : {
+          "type" : "string"
+        },
+        "keyStorePass" : {
+          "type" : "string",
+          "description" : "key store password",
+          "default" : "password"
+        },
+        "trustStorePass" : {
+          "type" : "string",
+          "description" : "trust store password",
+          "default" : "password"
+        },
+        "trustedNames" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        },
         "loadKeyStore" : {
           "type" : "boolean",
           "description" : "key store contains client key and it should be loaded if two-way ssl is used."
@@ -26,40 +55,20 @@
           "description" : "private key password",
           "default" : "password"
         },
-        "loadTrustStore" : {
-          "type" : "boolean",
-          "description" : "trust store contains certificates that server needs. Enable if tls is used.",
-          "default" : true
-        },
         "keyStore" : {
           "type" : "string",
           "description" : "key store location",
           "default" : "client.keystore"
-        },
-        "tlsVersion" : {
-          "type" : "string",
-          "description" : "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1\nand 1.2 (deprecated and risky).",
-          "default" : "TLSv1.3"
         },
         "trustStore" : {
           "type" : "string",
           "description" : "trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword",
           "default" : "client.truststore"
         },
-        "keyStorePass" : {
-          "type" : "string",
-          "description" : "key store password",
-          "default" : "password"
-        },
         "defaultCertPassword" : {
           "type" : "string",
           "description" : "public issued CA cert password",
           "default" : "chageit"
-        },
-        "trustStorePass" : {
-          "type" : "string",
-          "description" : "trust store password",
-          "default" : "password"
         }
       }
     },
@@ -77,7 +86,9 @@
           "properties" : {
             "proxyPort" : {
               "type" : "integer",
-              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection."
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "minimum" : 0,
+              "maximum" : 65535
             },
             "clientId" : {
               "type" : "string",
@@ -176,6 +187,14 @@
                   "additionalProperties" : {
                     "type" : "object",
                     "properties" : {
+                      "proxyPort" : {
+                        "type" : "integer",
+                        "minimum" : 0,
+                        "maximum" : 65535
+                      },
+                      "audience" : {
+                        "type" : "string"
+                      },
                       "enableHttp2" : {
                         "type" : "boolean"
                       },
@@ -189,6 +208,9 @@
                         "type" : "string"
                       },
                       "server_url" : {
+                        "type" : "string"
+                      },
+                      "proxyHost" : {
                         "type" : "string"
                       },
                       "uri" : {
@@ -235,7 +257,9 @@
             },
             "proxyPort" : {
               "type" : "integer",
-              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection."
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "minimum" : 0,
+              "maximum" : 65535
             },
             "refresh_token" : {
               "type" : "object",
@@ -331,6 +355,14 @@
                   "additionalProperties" : {
                     "type" : "object",
                     "properties" : {
+                      "proxyPort" : {
+                        "type" : "integer",
+                        "minimum" : 0,
+                        "maximum" : 65535
+                      },
+                      "audience" : {
+                        "type" : "string"
+                      },
                       "enableHttp2" : {
                         "type" : "boolean"
                       },
@@ -344,6 +376,9 @@
                         "type" : "string"
                       },
                       "server_url" : {
+                        "type" : "string"
+                      },
+                      "proxyHost" : {
                         "type" : "string"
                       },
                       "uri" : {

@@ -24,6 +24,8 @@ tls:
   #TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
   #and 1.2 (deprecated and risky).
   tlsVersion: ${client.tlsVersion:TLSv1.3}
+  defaultGroupKey: ${client.defaultGroupKey:}
+  trustedNames: ${client.trustedNames:}
 #Settings for OAuth2 server communication.
 oauth:
   #OAuth 2.0 token endpoint configuration

@@ -1,7 +1,10 @@
 package com.networknt.client;
 
 import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
+
+import java.util.Map;
 
 
 public class TlsConfig {
@@ -121,6 +124,21 @@ public class TlsConfig {
     )
     String tlsVersion;
 
+    @StringField(
+            configFieldName = "defaultGroupKey",
+            externalizedKeyName = "defaultGroupKey",
+            externalized = true
+    )
+    String defaultGroupKey;
+
+    @MapField(
+            configFieldName = "trustedNames",
+            externalizedKeyName = "trustedNames",
+            externalized = true,
+            valueType = String.class
+    )
+    Map<String, String> trustedNames;
+
     public boolean isVerifyHostname() {
         return verifyHostname;
     }
@@ -163,5 +181,13 @@ public class TlsConfig {
 
     public String getTlsVersion() {
         return tlsVersion;
+    }
+
+    public String getDefaultGroupKey() {
+        return defaultGroupKey;
+    }
+
+    public Map<String, String> getTrustedNames() {
+        return trustedNames;
     }
 }
