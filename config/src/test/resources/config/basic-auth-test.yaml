@@ -1,5 +1,0 @@
-enabled: ${basic-auth-test.null:false}
-enableAD: ${basic-auth-test.null:false}
-allowAnonymous: ${basic-auth-test.null:false}
-allowBearerToken: ${basic-auth-test.null:false}
-users: ${basic-auth-test.null:}

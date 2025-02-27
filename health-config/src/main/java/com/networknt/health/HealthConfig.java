@@ -42,6 +42,7 @@ public class HealthConfig {
 
     @BooleanField(
             configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             defaultValue = true,
             externalized = true,
             description = "true to enable this middleware handler. By default, the health check is enabled."
@@ -50,6 +51,7 @@ public class HealthConfig {
 
     @BooleanField(
             configFieldName = USE_JSON,
+            externalizedKeyName = USE_JSON,
             externalized = true,
             description = "true to return Json format message. By default, it is false. It will only be changed to true if the monitor\n" +
                           "tool only support JSON response body."
@@ -58,6 +60,7 @@ public class HealthConfig {
 
     @IntegerField(
             configFieldName = TIMEOUT,
+            externalizedKeyName = TIMEOUT,
             defaultValue = 2000,
             externalized = true,
             description = "timeout in milliseconds for the health check. If the duration is passed, a failure will return.\n" +
@@ -69,6 +72,7 @@ public class HealthConfig {
 
     @BooleanField(
             configFieldName = DOWNSTREAM_ENABLED,
+            externalizedKeyName = DOWNSTREAM_ENABLED,
             externalized = true,
             description = "For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down\n" +
                     "stream API before return the health status to the invoker. By default, it is not enabled.\n" +
@@ -78,6 +82,7 @@ public class HealthConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_HOST,
+            externalizedKeyName = DOWNSTREAM_HOST,
             externalized = true,
             defaultValue = "http://localhost:8081",
             description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
@@ -86,6 +91,7 @@ public class HealthConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_PATH,
+            externalizedKeyName = DOWNSTREAM_PATH,
             externalized = true,
             defaultValue = "/health",
             description = "down stream API health check path. This allows the down stream API to have customized path implemented."

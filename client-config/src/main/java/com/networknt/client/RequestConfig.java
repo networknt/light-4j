@@ -1,13 +1,9 @@
 package com.networknt.client;
 
-import com.networknt.config.Config;
-import com.networknt.config.MapLoadable;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 
-import java.util.Map;
-
-public class RequestConfig /*implements MapLoadable*/ {
+public class RequestConfig {
 
     public static final String ERROR_THRESHOLD = "errorThreshold";
     public static final String TIMEOUT = "timeout";
@@ -22,6 +18,7 @@ public class RequestConfig /*implements MapLoadable*/ {
     public static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
     public static final String MAX_REQUEST_RETRY = "maxRequestRetry";
     public static final String REQUEST_RETRY_DELAY = "requestRetryDelay";
+
     @IntegerField(
             configFieldName = ERROR_THRESHOLD,
             externalizedKeyName = ERROR_THRESHOLD,
@@ -206,59 +203,4 @@ public class RequestConfig /*implements MapLoadable*/ {
     public int getRequestRetryDelay() {
         return requestRetryDelay;
     }
-
-//    @Override
-//    public void loadData(Map<String, Object> data) {
-//        if (data.containsKey(ERROR_THRESHOLD)) {
-//            errorThreshold = Config.loadIntegerValue(ERROR_THRESHOLD, data.get(ERROR_THRESHOLD));
-//        }
-//
-//        if (data.containsKey(TIMEOUT)) {
-//            timeout = Config.loadIntegerValue(TIMEOUT, data.get(TIMEOUT));
-//        }
-//
-//        if (data.containsKey(RESET_TIMEOUT)) {
-//            resetTimeout = Config.loadIntegerValue(RESET_TIMEOUT, data.get(RESET_TIMEOUT));
-//        }
-//
-//        if (data.containsKey(INJECT_OPEN_TRACING)) {
-//            injectOpenTracing = Config.loadBooleanValue(INJECT_OPEN_TRACING, data.get(INJECT_OPEN_TRACING));
-//        }
-//
-//        if (data.containsKey(INJECT_CALLER_ID)) {
-//            injectCallerId = Config.loadBooleanValue(INJECT_CALLER_ID, data.get(INJECT_CALLER_ID));
-//        }
-//
-//        if (data.containsKey(ENABLE_HTTP_2)) {
-//            enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP_2, data.get(ENABLE_HTTP_2));
-//        }
-//
-//        if (data.containsKey(CONNECTION_POOL_SIZE)) {
-//            connectionPoolSize = Config.loadIntegerValue(CONNECTION_POOL_SIZE, data.get(CONNECTION_POOL_SIZE));
-//        }
-//
-//        if (data.containsKey(CONNECTION_EXPIRE_TIME)) {
-//            connectionExpireTime = Config.loadIntegerValue(CONNECTION_EXPIRE_TIME, data.get(CONNECTION_EXPIRE_TIME));
-//        }
-//
-//        if (data.containsKey(MAX_REQ_PER_CONN)) {
-//            maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, data.get(MAX_REQ_PER_CONN));
-//        }
-//
-//        if (data.containsKey(MAX_CONNECTION_NUM_PER_HOST)) {
-//            maxConnectionNumPerHost = Config.loadIntegerValue(MAX_CONNECTION_NUM_PER_HOST, data.get(MAX_CONNECTION_NUM_PER_HOST));
-//        }
-//
-//        if (data.containsKey(MIN_CONNECTION_NUM_PER_HOST)) {
-//            minConnectionNumPerHost = Config.loadIntegerValue(MIN_CONNECTION_NUM_PER_HOST, data.get(MIN_CONNECTION_NUM_PER_HOST));
-//        }
-//
-//        if (data.containsKey(MAX_REQUEST_RETRY)) {
-//            maxRequestRetry = Config.loadIntegerValue(MAX_REQUEST_RETRY, data.get(MAX_REQUEST_RETRY));
-//        }
-//
-//        if (data.containsKey(REQUEST_RETRY_DELAY)) {
-//            requestRetryDelay = Config.loadIntegerValue(REQUEST_RETRY_DELAY, data.get(REQUEST_RETRY_DELAY));
-//        }
-//    }
 }

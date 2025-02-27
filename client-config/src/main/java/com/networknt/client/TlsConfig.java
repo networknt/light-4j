@@ -6,9 +6,21 @@ import com.networknt.config.schema.StringField;
 
 public class TlsConfig {
 
+    public static final String VERIFY_HOSTNAME = "verifyHostname";
+    public static final String LOAD_DEFAULT_TRUST_STORE = "loadDefaultTrustStore";
+    public static final String LOAD_TRUST_STORE = "loadTrustStore";
+    public static final String TRUST_STORE = "trustStore";
+    public static final String TRUST_STORE_PASS = "trustStorePass";
+    public static final String LOAD_KEY_STORE = "loadKeyStore";
+    public static final String KEY_STORE = "keyStore";
+    public static final String KEY_STORE_PASS = "keyStorePass";
+    public static final String KEY_PASS = "keyPass";
+    public static final String DEFAULT_CERT_PASSWORD = "defaultCertPassword";
+    public static final String TLS_VERSION = "tlsVersion";
+
     @BooleanField(
-            configFieldName = "verifyHostname",
-            externalizedKeyName = "verifyHostname",
+            configFieldName = VERIFY_HOSTNAME,
+            externalizedKeyName = VERIFY_HOSTNAME,
             externalized = true,
             defaultValue = true,
             description = "if the server is using self-signed certificate, this need to be false. " +
@@ -18,8 +30,8 @@ public class TlsConfig {
     private boolean verifyHostname;
 
     @BooleanField(
-            configFieldName = "loadDefaultTrustStore",
-            externalizedKeyName = "loadDefaultTrustStore",
+            configFieldName = LOAD_DEFAULT_TRUST_STORE,
+            externalizedKeyName = LOAD_DEFAULT_TRUST_STORE,
             externalized = true,
             defaultValue = true,
             description = "indicate of system load default cert."
@@ -27,8 +39,8 @@ public class TlsConfig {
     private boolean loadDefaultTrustStore;
 
     @BooleanField(
-            configFieldName = "loadTrustStore",
-            externalizedKeyName = "loadTrustStore",
+            configFieldName = LOAD_TRUST_STORE,
+            externalizedKeyName = LOAD_TRUST_STORE,
             externalized = true,
             defaultValue = true,
             description = "trust store contains certificates that server needs. Enable if tls is used."
@@ -36,8 +48,8 @@ public class TlsConfig {
     private boolean loadTrustStore;
 
     @StringField(
-            configFieldName = "trustStore",
-            externalizedKeyName = "trustStore",
+            configFieldName = TRUST_STORE,
+            externalizedKeyName = TRUST_STORE,
             externalized = true,
             defaultValue = "client.truststore",
             description = "trust store location can be specified here or system properties " +
@@ -46,8 +58,8 @@ public class TlsConfig {
     private String trustStore;
 
     @StringField(
-            configFieldName = "trustStorePass",
-            externalizedKeyName = "trustStorePass",
+            configFieldName = TRUST_STORE_PASS,
+            externalizedKeyName = TRUST_STORE_PASS,
             externalized = true,
             defaultValue = "password",
             description = "trust store password"
@@ -55,16 +67,16 @@ public class TlsConfig {
     private char[] trustStorePass;
 
     @BooleanField(
-            configFieldName = "loadKeyStore",
-            externalizedKeyName = "loadKeyStore",
+            configFieldName = LOAD_KEY_STORE,
+            externalizedKeyName = LOAD_KEY_STORE,
             externalized = true,
             description = "key store contains client key and it should be loaded if two-way ssl is used."
     )
     private boolean loadKeyStore;
 
     @StringField(
-            configFieldName = "keyStore",
-            externalizedKeyName = "keyStore",
+            configFieldName = KEY_STORE,
+            externalizedKeyName = KEY_STORE,
             externalized = true,
             defaultValue = "client.keystore",
             description = "key store location"
@@ -72,8 +84,8 @@ public class TlsConfig {
     private String keyStore;
 
     @StringField(
-            configFieldName = "keyStorePass",
-            externalizedKeyName = "keyStorePass",
+            configFieldName = KEY_STORE_PASS,
+            externalizedKeyName = KEY_STORE_PASS,
             externalized = true,
             defaultValue = "password",
             description = "key store password"
@@ -81,8 +93,8 @@ public class TlsConfig {
     private char[] keyStorePass;
 
     @StringField(
-            configFieldName = "keyPass",
-            externalizedKeyName = "keyPass",
+            configFieldName = KEY_PASS,
+            externalizedKeyName = KEY_PASS,
             externalized = true,
             defaultValue = "password",
             description = "private key password"
@@ -90,8 +102,8 @@ public class TlsConfig {
     private char[] keyPass;
 
     @StringField(
-            configFieldName = "defaultCertPassword",
-            externalizedKeyName = "defaultCertPassword",
+            configFieldName = DEFAULT_CERT_PASSWORD,
+            externalizedKeyName = DEFAULT_CERT_PASSWORD,
             externalized = true,
             defaultValue = "chageit",
             description = "public issued CA cert password"
@@ -99,8 +111,8 @@ public class TlsConfig {
     private char[] defaultCertPassword;
 
     @StringField(
-            configFieldName = "tlsVersion",
-            externalizedKeyName = "tlsVersion",
+            configFieldName = TLS_VERSION,
+            externalizedKeyName = TLS_VERSION,
             externalized = true,
             defaultValue = "TLSv1.3",
             description = "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support " +

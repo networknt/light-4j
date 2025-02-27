@@ -1,8 +1,5 @@
 package com.networknt.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
-import com.networknt.config.MapLoadable;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
@@ -10,7 +7,7 @@ import com.networknt.config.schema.StringField;
 import java.util.List;
 import java.util.Map;
 
-public class OAuthTokenClientCredentialConfig /*implements MapLoadable*/ {
+public class OAuthTokenClientCredentialConfig {
 
 
     public static final String URI = "uri";
@@ -87,29 +84,4 @@ public class OAuthTokenClientCredentialConfig /*implements MapLoadable*/ {
     public Map<String, AuthServerConfig> getServiceIdAuthServers() {
         return serviceIdAuthServers;
     }
-
-//    @Override
-//    public void loadData(Map<String, Object> data) {
-//        if (data.containsKey(URI)) {
-//            uri = (String) data.get(URI);
-//        }
-//
-//        if (data.containsKey(CLIENT_ID)) {
-//            client_id = ((String) data.get(CLIENT_ID)).toCharArray();
-//        }
-//
-//        if (data.containsKey(CLIENT_SECRET)) {
-//            client_secret = ((String) data.get(CLIENT_SECRET)).toCharArray();
-//        }
-//
-//        if (data.containsKey(SCOPE)) {
-//            scope = (List<String>) data.get(SCOPE);
-//        }
-//
-//        if (data.containsKey(SERVICE_ID_AUTH_SERVERS)) {
-//            final var mapped = (Map<String, Object>) data.get(SERVICE_ID_AUTH_SERVERS);
-//            final var mapper = Config.getInstance().getMapper();
-//            this.serviceIdAuthServers = mapper.convertValue(mapped, new TypeReference<>() {});
-//        }
-//    }
 }

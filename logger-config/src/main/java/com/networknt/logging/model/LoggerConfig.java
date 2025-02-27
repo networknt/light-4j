@@ -36,6 +36,7 @@ public class LoggerConfig {
 
     @BooleanField(
             configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             defaultValue = true,
             externalized = true,
             description = "Indicate if the logging info is enabled or not."
@@ -44,15 +45,17 @@ public class LoggerConfig {
 
     @IntegerField(
             configFieldName = LOG_START,
+            externalizedKeyName = LOG_START,
             defaultValue = 600000,
             externalized = true,
-            description = "Indicate the default time period backward in millisecond for log content retrieve. \n" +
+            description = "Indicate the default time period backward in millisecond for log content retrieve.\n" +
                           "Default is an hour which indicate system will retrieve one hour log by default"
     )
     long logStart;
 
     @BooleanField(
             configFieldName = DOWNSTREAM_ENABLED,
+            externalizedKeyName = DOWNSTREAM_ENABLED,
             externalized = true,
             description = "if the logger access needs to invoke down streams API. It is false by default."
     )
@@ -60,6 +63,7 @@ public class LoggerConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_HOST,
+            externalizedKeyName = DOWNSTREAM_HOST,
             externalized = true,
             defaultValue = "http://localhost:8081",
             description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
@@ -68,6 +72,7 @@ public class LoggerConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_FRAMEWORK,
+            externalizedKeyName = DOWNSTREAM_FRAMEWORK,
             externalized = true,
             defaultValue = "Light4j",
             description = "down stream API framework that has the admin endpoints. Light4j, SpringBoot, Quarkus, Micronaut, Helidon, etc. If the adm endpoints are different between\n" +

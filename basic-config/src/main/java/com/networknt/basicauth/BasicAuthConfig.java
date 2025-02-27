@@ -44,7 +44,8 @@ public class BasicAuthConfig {
     public static final String BEARER = "bearer";
 
     @BooleanField(
-            configFieldName = "enabled",
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             externalized = true,
             defaultValue = true,
             description = "Enable Basic Authentication Handler, default is true."
@@ -52,7 +53,8 @@ public class BasicAuthConfig {
     boolean enabled;
 
     @BooleanField(
-            configFieldName = "enableAD",
+            configFieldName = ENABLE_AD,
+            externalizedKeyName = ENABLE_AD,
             externalized = true,
             defaultValue = true,
             description = "Enable Ldap Authentication, default is true."
@@ -60,7 +62,8 @@ public class BasicAuthConfig {
     boolean enableAD;
 
     @BooleanField(
-            configFieldName = "allowAnonymous",
+            configFieldName = ALLOW_ANONYMOUS,
+            externalizedKeyName = ALLOW_ANONYMOUS,
             externalized = true,
             description = "Do we allow the anonymous to pass the authentication and limit it with some paths\n" +
                           "to access? Default is false, and it should only be true in client-proxy."
@@ -68,14 +71,16 @@ public class BasicAuthConfig {
     boolean allowAnonymous;
 
     @BooleanField(
-            configFieldName = "allowBearerToken",
+            configFieldName = ALLOW_BEARER_TOKEN,
+            externalizedKeyName = ALLOW_BEARER_TOKEN,
             externalized = true,
             description = "Allow bearer token access to the service."
     )
     boolean allowBearerToken;
 
     @MapField(
-            configFieldName = "users",
+            configFieldName = USERS,
+            externalizedKeyName = USERS,
             externalized = true,
             description = "All user definitions and their path mappings.",
             valueType = UserAuth.class

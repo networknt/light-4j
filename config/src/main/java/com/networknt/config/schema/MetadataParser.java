@@ -183,8 +183,6 @@ public class MetadataParser {
         final var itemElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var itemMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(itemElement, itemMetadata, processingEnvironment);
-
-        // TODO - handle itemsAllOf, itemsAnyOf, itemsOneOf
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, ARRAY_TYPE);
         metadata.put(ID_KEY, getUUID());
@@ -212,8 +210,6 @@ public class MetadataParser {
         final var valueElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var valueMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(valueElement, valueMetadata, processingEnvironment);
-
-        // TODO - handle keyType
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, MAP_TYPE);
         metadata.put(ID_KEY, getUUID());
@@ -322,8 +318,6 @@ public class MetadataParser {
         metadata.put(EXTERNALIZED_KEY, field.externalized());
         metadata.put(USE_SUB_OBJECT_DEFAULT_KEY, field.useSubObjectDefault());
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
-
-        // TODO - support allOf, anyOf, oneOf
         metadata.put(REF_KEY, refMetadata);
         return metadata;
     }

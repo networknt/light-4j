@@ -41,6 +41,7 @@ public class BodyConfig {
 
     @BooleanField(
             configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             description = "Enable body parse flag",
             externalized = true,
             defaultValue = true
@@ -49,6 +50,7 @@ public class BodyConfig {
 
     @BooleanField(
             configFieldName = CACHE_REQUEST_BODY,
+            externalizedKeyName = CACHE_REQUEST_BODY,
             externalized = true,
             description = "cache request body as a string along with JSON object. The string formatted request body will be used for audit log.\n" +
                           "you should only enable this if you have configured audit.yml to log the request body as it uses extra memory."
@@ -57,6 +59,7 @@ public class BodyConfig {
 
     @BooleanField(
             configFieldName = LOG_FULL_REQUEST_BODY,
+            externalizedKeyName = LOG_FULL_REQUEST_BODY,
             externalized = true,
             description = "log the full request body when RequestBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
                           "for production. The default value is false and only 16K of the request body will be logged."
@@ -65,6 +68,7 @@ public class BodyConfig {
 
     @BooleanField(
             configFieldName = CACHE_RESPONSE_BODY,
+            externalizedKeyName = CACHE_RESPONSE_BODY,
             externalized = true,
             description = "cache response body as a string along with JSON object. The string formatted response body will be used for audit log.\n" +
                           "you should only enable this if you have configured audit.yml to log the response body as it uses extra memory."
@@ -73,6 +77,7 @@ public class BodyConfig {
 
     @BooleanField(
             configFieldName = LOG_FULL_RESPONSE_BODY,
+            externalizedKeyName = LOG_FULL_RESPONSE_BODY,
             externalized = true,
             description = "log the full response body when ResponseBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
                           "for production. The default value is false and only 16K of the response body will be logged."

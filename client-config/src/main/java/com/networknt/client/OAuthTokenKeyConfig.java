@@ -1,14 +1,11 @@
 package com.networknt.client;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
-import com.networknt.config.MapLoadable;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
 
 import java.util.Map;
 
-public class OAuthTokenKeyConfig /*implements MapLoadable*/ {
+public class OAuthTokenKeyConfig {
 
     public static final String SERVER_URL = "server_url";
     public static final String SERVICE_ID = "serviceId";
@@ -125,43 +122,4 @@ public class OAuthTokenKeyConfig /*implements MapLoadable*/ {
     public String getAudience() {
         return audience;
     }
-
-//    @Override
-//    public void loadData(Map<String, Object> data) {
-//        if (data.containsKey(SERVER_URL)) {
-//            this.server_url = (String) data.get(SERVER_URL);
-//        }
-//
-//        if (data.containsKey(SERVICE_ID)) {
-//            this.serviceId = (String) data.get(SERVICE_ID);
-//        }
-//
-//        if (data.containsKey(URI)) {
-//            this.uri = (String) data.get(URI);
-//        }
-//
-//        if (data.containsKey(CLIENT_ID)) {
-//            this.client_id = ((String) data.get(CLIENT_ID)).toCharArray();
-//        }
-//
-//        if (data.containsKey(CLIENT_SECRET)) {
-//            this.client_secret = ((String) data.get(CLIENT_SECRET)).toCharArray();
-//        }
-//
-//        if (data.containsKey(ENABLE_HTTP_2)) {
-//            this.enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP_2, data.get(ENABLE_HTTP_2));
-//        }
-//
-//        if (data.containsKey(AUDIENCE)) {
-//            this.audience = (String) data.get(AUDIENCE);
-//        }
-//
-//        if (data.containsKey(SERVICE_ID_AUTH_SERVERS)) {
-//            final var mapped = (Map<String, Object>) data.get(SERVICE_ID_AUTH_SERVERS);
-//            final var mapper = Config.getInstance().getMapper();
-//            this.serviceIdAuthServers = mapper.convertValue(mapped, new TypeReference<>() {});
-//        }
-//
-//
-//    }
 }

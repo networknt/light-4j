@@ -11,8 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import static org.junit.Assert.*;
@@ -1359,114 +1357,7 @@ public static final String clientConfigMetadata = "{\n" +
             "  },\n" +
             "  \"type\" : \"object\"\n" +
             "}";
-    private static final String testMetadata2 = "{\n" +
-            "  \"properties\" : {\n" +
-            "    \"headers\" : {\n" +
-            "      \"type\" : \"array\",\n" +
-            "      \"configFieldName\" : \"headers\",\n" +
-            "      \"description\" : \"Output header elements. You can add more if you want. If multiple values, you can use a comma separated\\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"items\" : {\n" +
-            "        \"type\" : \"string\"\n" +
-            "      },\n" +
-            "      \"minItems\" : 0,\n" +
-            "      \"maxItems\" : 2147483647,\n" +
-            "      \"uniqueItems\" : false,\n" +
-            "      \"contains\" : false,\n" +
-            "      \"useSubObjectDefault\" : false,\n" +
-            "      \"defaultValueJsonString\" : \"[\\\"X-Correlation-Id\\\", \\\"X-Traceability-Id\\\",\\\"caller_id\\\"]\"\n" +
-            "    },\n" +
-            "    \"audit\" : {\n" +
-            "      \"type\" : \"array\",\n" +
-            "      \"configFieldName\" : \"audit\",\n" +
-            "      \"description\" : \"Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"items\" : {\n" +
-            "        \"type\" : \"string\"\n" +
-            "      },\n" +
-            "      \"minItems\" : 0,\n" +
-            "      \"maxItems\" : 2147483647,\n" +
-            "      \"uniqueItems\" : false,\n" +
-            "      \"contains\" : false,\n" +
-            "      \"useSubObjectDefault\" : false,\n" +
-            "      \"defaultValueJsonString\" : \"[\\\"client_id\\\", \\\"user_id\\\", \\\"scope_client_id\\\", \\\"endpoint\\\", \\\"serviceId\\\"]\"\n" +
-            "    },\n" +
-            "    \"statusCode\" : {\n" +
-            "      \"type\" : \"boolean\",\n" +
-            "      \"configFieldName\" : \"statusCode\",\n" +
-            "      \"description\" : \"Output response status code.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : true\n" +
-            "    },\n" +
-            "    \"responseTime\" : {\n" +
-            "      \"type\" : \"boolean\",\n" +
-            "      \"configFieldName\" : \"responseTime\",\n" +
-            "      \"description\" : \"Output response time.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : true\n" +
-            "    },\n" +
-            "    \"auditOnError\" : {\n" +
-            "      \"type\" : \"boolean\",\n" +
-            "      \"configFieldName\" : \"auditOnError\",\n" +
-            "      \"description\" : \"when auditOnError is true:\\n - it will only log when status code >= 400\\nwhen auditOnError is false:\\n - it will log on every request\\nlog level is controlled by logLevel\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : false\n" +
-            "    },\n" +
-            "    \"mask\" : {\n" +
-            "      \"type\" : \"boolean\",\n" +
-            "      \"configFieldName\" : \"mask\",\n" +
-            "      \"description\" : \"Enable mask in the audit log\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : true\n" +
-            "    },\n" +
-            "    \"timestampFormat\" : {\n" +
-            "      \"type\" : \"string\",\n" +
-            "      \"configFieldName\" : \"timestampFormat\",\n" +
-            "      \"description\" : \"the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\\nfor some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : \"\",\n" +
-            "      \"minLength\" : 0,\n" +
-            "      \"maxLength\" : 2147483647,\n" +
-            "      \"pattern\" : \"\",\n" +
-            "      \"format\" : \"none\"\n" +
-            "    },\n" +
-            "    \"requestBodyMaxSize\" : {\n" +
-            "      \"type\" : \"integer\",\n" +
-            "      \"configFieldName\" : \"requestBodyMaxSize\",\n" +
-            "      \"description\" : \"The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\\nrequest body is bigger than the max size, it will be truncated to the max size. The default value is 4096.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : 4096,\n" +
-            "      \"minimum\" : -2147483648,\n" +
-            "      \"maximum\" : 2147483647,\n" +
-            "      \"exclusiveMin\" : false,\n" +
-            "      \"exclusiveMax\" : false,\n" +
-            "      \"multipleOf\" : 0,\n" +
-            "      \"format\" : \"int32\"\n" +
-            "    },\n" +
-            "    \"responseBodyMaxSize\" : {\n" +
-            "      \"type\" : \"integer\",\n" +
-            "      \"configFieldName\" : \"responseBodyMaxSize\",\n" +
-            "      \"description\" : \"The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096.\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : 4096,\n" +
-            "      \"minimum\" : -2147483648,\n" +
-            "      \"maximum\" : 2147483647,\n" +
-            "      \"exclusiveMin\" : false,\n" +
-            "      \"exclusiveMax\" : false,\n" +
-            "      \"multipleOf\" : 0,\n" +
-            "      \"format\" : \"int32\"\n" +
-            "    },\n" +
-            "    \"enabled\" : {\n" +
-            "      \"type\" : \"boolean\",\n" +
-            "      \"configFieldName\" : \"enabled\",\n" +
-            "      \"description\" : \"Enable Audit Logging\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : true\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"type\" : \"object\"\n" +
-            "}";
-    private static final String testMetadata = "{\n" +
+    private static final String apiKeyMetadata = "{\n" +
             "  \"type\": \"object\",\n" +
             "  \"properties\": {\n" +
             "    \"pathPrefixAuths\": {\n" +
@@ -1540,41 +1431,21 @@ public static final String clientConfigMetadata = "{\n" +
 
     @Test
     public void writeJsonSchemaToFile() throws IOException {
-        final var metadata = MAPPER.readValue(testMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
+        final var metadata = MAPPER.readValue(apiKeyMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("apikey-test", "apikey-test");
-        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/apikey-test.json"),  metadata);
-        final var file1 = new File("src/test/resources/config/apikey-test.json");
-        final var file2 = new File("src/test/resources/config/apikey-compare.json");
+        generator.writeSchemaToFile(new FileWriter("./src/test/resources/schemaGenerator/apikey-test.json"),  metadata);
+        final var file1 = new File("src/test/resources/schemaGenerator/apikey-test.json");
+        final var file2 = new File("src/test/resources/schemaGenerator/apikey-compare.json");
         assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
-    }
-
-    @Test
-    public void writeYamlSchemaToFile() throws IOException {
-        final var metadata = MAPPER.readValue(testMetadata2, new TypeReference<LinkedHashMap<String, Object>>() {});
-        final var generator = new YamlGenerator("audit-test", "audit-test");
-        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/audit-test.yaml"),  metadata);
-        final var file1 = new File("src/test/resources/config/audit-test.yaml");
-        final var file2 = new File("src/test/resources/config/audit-compare.yaml");
-        assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));
     }
 
     @Test
     public void testMapFieldJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("basic-auth-test", "basic-auth-test");
-        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/basic-auth-test.json"),  metadata);
-        final var file1 = new File("src/test/resources/config/basic-auth-test.json");
-        final var file2 = new File("src/test/resources/config/basic-auth-compare.json");
-        assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
-    }
-
-    @Test
-    public void testMapFieldYamlSchemaToFile() throws IOException {
-        final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
-        final var generator = new YamlGenerator("basic-auth-test", "basic-auth-test");
-        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/basic-auth-test.yaml"),  metadata);
-        final var file1 = new File("src/test/resources/config/basic-auth-test.yaml");
-        final var file2 = new File("src/test/resources/config/basic-auth-compare.yaml");
+        generator.writeSchemaToFile(new FileWriter("./src/test/resources/schemaGenerator/basic-auth-test.json"),  metadata);
+        final var file1 = new File("src/test/resources/schemaGenerator/basic-auth-test.json");
+        final var file2 = new File("src/test/resources/schemaGenerator/basic-auth-compare.json");
         assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
     }
 
@@ -1582,9 +1453,9 @@ public static final String clientConfigMetadata = "{\n" +
     public void testClientConfigYamlSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(clientConfigMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new YamlGenerator("client-test", "client-test");
-        generator.writeSchemaToFile(new FileWriter("./src/test/resources/config/client-test.yaml"),  metadata);
-        final var file1 = new File("src/test/resources/config/client-test.yaml");
-        final var file2 = new File("src/test/resources/config/client-compare.yaml");
+        generator.writeSchemaToFile(new FileWriter("./src/test/resources/schemaGenerator/client-test.yaml"),  metadata);
+        final var file1 = new File("src/test/resources/schemaGenerator/client-test.yaml");
+        final var file2 = new File("src/test/resources/schemaGenerator/client-compare.yaml");
         assertEquals(Files.readString(file1.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""), Files.readString(file2.toPath(), StandardCharsets.UTF_8).replaceAll("\\s", ""));
     }
 

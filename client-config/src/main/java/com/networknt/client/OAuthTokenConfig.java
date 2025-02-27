@@ -1,15 +1,11 @@
 package com.networknt.client;
 
-import com.networknt.config.Config;
-import com.networknt.config.MapLoadable;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.ObjectField;
 import com.networknt.config.schema.StringField;
 
-import java.util.Map;
-
-public class OAuthTokenConfig /*implements MapLoadable*/ {
+public class OAuthTokenConfig  {
 
     public static final String CACHE = "cache";
     public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
@@ -190,58 +186,4 @@ public class OAuthTokenConfig /*implements MapLoadable*/ {
         return key;
     }
 
-//    @Override
-//    public void loadData(Map<String, Object> data) {
-//        if (data.containsKey(CACHE)) {
-//            cache.loadData((Map<String, Object>) data.get(CACHE));
-//        }
-//
-//        if (data.containsKey(TOKEN_RENEW_BEFORE_EXPIRED)) {
-//            tokenRenewBeforeExpired = Config.loadIntegerValue(TOKEN_RENEW_BEFORE_EXPIRED, data.get(TOKEN_RENEW_BEFORE_EXPIRED));
-//        }
-//
-//        if (data.containsKey(EXPIRED_REFRESH_RETRY_DELAY)) {
-//            expiredRefreshRetryDelay = Config.loadIntegerValue(EXPIRED_REFRESH_RETRY_DELAY, data.get(EXPIRED_REFRESH_RETRY_DELAY));
-//        }
-//
-//        if (data.containsKey(EARLY_REFRESH_RETRY_DELAY)) {
-//            earlyRefreshRetryDelay = Config.loadIntegerValue(EARLY_REFRESH_RETRY_DELAY, data.get(EARLY_REFRESH_RETRY_DELAY));
-//        }
-//
-//        if (data.containsKey(SERVER_URL)) {
-//            server_url = (String) data.get(SERVER_URL);
-//        }
-//
-//        if (data.containsKey(SERVICE_ID)) {
-//            serviceId = (String) data.get(SERVICE_ID);
-//        }
-//
-//        if (data.containsKey(PROXY_HOST)) {
-//            proxyHost = (String) data.get(PROXY_HOST);
-//        }
-//
-//        if (data.containsKey(PROXY_PORT)) {
-//            proxyPort = Config.loadIntegerValue(PROXY_PORT, data.get(PROXY_PORT));
-//        }
-//
-//        if (data.containsKey(ENABLE_HTTP_2)) {
-//            enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP_2, data.get(ENABLE_HTTP_2));
-//        }
-//
-//        if (data.containsKey(AUTHORIZATION_CODE)) {
-//            authorization_code.loadData((Map<String, Object>) data.get(AUTHORIZATION_CODE));
-//        }
-//
-//        if (data.containsKey(CLIENT_CREDENTIALS)) {
-//            client_credentials.loadData((Map<String, Object>) data.get(CLIENT_CREDENTIALS));
-//        }
-//
-//        if (data.containsKey(REFRESH_TOKEN)) {
-//            refresh_token.loadData((Map<String, Object>) data.get(REFRESH_TOKEN));
-//        }
-//
-//        if (data.containsKey(KEY)) {
-//            key.loadData((Map<String, Object>) data.get(KEY));
-//        }
-//    }
 }

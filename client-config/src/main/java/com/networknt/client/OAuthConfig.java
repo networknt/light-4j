@@ -1,13 +1,9 @@
 package com.networknt.client;
 
-import com.networknt.config.Config;
-import com.networknt.config.MapLoadable;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ObjectField;
 
-import java.util.Map;
-
-public class OAuthConfig /*implements MapLoadable*/ {
+public class OAuthConfig {
 
     public static final String TOKEN = "token";
     public static final String MULTIPLE_AUTH_SERVERS = "multipleAuthServers";
@@ -65,23 +61,4 @@ public class OAuthConfig /*implements MapLoadable*/ {
     public OauthSignConfig getSign() {
         return sign;
     }
-
-//    @Override
-//    public void loadData(Map<String, Object> data) {
-//        if (data.get(MULTIPLE_AUTH_SERVERS) != null) {
-//            this.multipleAuthServers = Config.loadBooleanValue(MULTIPLE_AUTH_SERVERS, data.get(MULTIPLE_AUTH_SERVERS));
-//        }
-//
-//        if (data.get(TOKEN) instanceof Map) {
-//            this.token.loadData((Map<String, Object>) data.get(TOKEN));
-//        }
-//
-//        if (data.get(SIGN) instanceof Map) {
-//            this.sign.loadData((Map<String, Object>) data.get(SIGN));
-//        }
-//
-//        if (data.get(DEREF) instanceof Map) {
-//            this.deref.loadData((Map<String, Object>) data.get(DEREF));
-//        }
-//    }
 }

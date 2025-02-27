@@ -49,22 +49,4 @@ public @interface ObjectField {
      * The reference class of the field.
      */
     Class<?> ref();
-
-    /**
-     * The required flag of the field.
-     * If set, all classes must be present in the configuration file.
-     */
-    Class<?>[] allOf() default {};
-
-    /**
-     * The required flag of the field.
-     * If set to true, any class must be present in the configuration file.
-     */
-    Class<?>[] anyOf() default {};
-
-    /**
-     * The required flag of the field.
-     * If set, only one class must be present in the configuration file.
-     */
-    Class<?>[] oneOf() default {};
 }
