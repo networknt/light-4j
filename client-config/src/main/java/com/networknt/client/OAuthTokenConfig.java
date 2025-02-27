@@ -87,6 +87,8 @@ public class OAuthTokenConfig  {
     @IntegerField(
             configFieldName = PROXY_PORT,
             externalizedKeyName = "tokenProxyPort",
+            min = 0,
+            max = 65535,
             externalized = true,
             description = "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\n" +
                     "a different port, please specify it here. If proxyHost is available and proxyPort is missing, then\n" +
