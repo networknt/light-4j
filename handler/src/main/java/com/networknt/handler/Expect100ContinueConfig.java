@@ -2,19 +2,51 @@ package com.networknt.handler;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(configKey = "expect-100-continue", configName = "expect-100-continue", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class Expect100ContinueConfig {
     public static final String CONFIG_NAME = "expect-100-continue";
     private static final String ENABLED = "enabled";
     private static final String IGNORED_PATH_PREFIXES = "ignoredPathPrefixes";
     private static final String IN_PLACE_PATH_PREFIXES = "inPlacePathPrefixes";
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "Indicate if the Expect100Continue middleware is enabled or not."
+    )
     private boolean enabled;
+
+    @ArrayField(
+            configFieldName = IN_PLACE_PATH_PREFIXES,
+            externalizedKeyName = IN_PLACE_PATH_PREFIXES,
+            externalized = true,
+            description = "List of paths that will not follow the expect-100-continue protocol. The Expect header will be removed altogether.\n" +
+                    "format is in array format, or in string array format (i.e. '[path1, path2]')",
+            items = String.class
+    )
     private List<String> ignoredPathPrefixes;
+
+    @ArrayField(
+            configFieldName = IGNORED_PATH_PREFIXES,
+            externalizedKeyName = IGNORED_PATH_PREFIXES,
+            externalized = true,
+            description = "List of paths that will respond 100-continue in place before continuing execution of the remaining handlers.\n" +
+                    "The Expect header will be removed after the response is sent.\n" +
+                    "format is in array format, or in string array format (i.e. '[path1, path2]')",
+            items = String.class
+    )
     private List<String> inPlacePathPrefixes;
+
     private final Config config;
     private Map<String, Object> mappedConfig;
 

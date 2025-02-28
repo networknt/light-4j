@@ -1,35 +1,38 @@
 # controls how to dump entire request and response to log file. not recommended
 # on production if performance is important
-enabled: true
-mask: true
+enabled: ${dump.enabled:false}
+mask: ${dump.mask:false}
 # logger level ERROR | WARN | INFO | DEBUG
-logLevel: WARN
+logLevel: ${dump.logLevel:INFO}
 # indent size for logging info
-#indentSize: 4
+indentSize: ${dump.indentSize:4}
 # use json style or not, if use json, indentSize option will be useless
-useJson: false
+useJson: ${dump.useJson:false}
+requestEnabled: ${dump.requestEnabled:false}
 # if "request: false", disable dumping requests.
-request:
-  url: true
-  headers: true
-  # filter for headers
-  filteredHeaders:
-  - Postman-Token
-  - X-Correlation-Id
-  - cookie
-  cookies: true
-  #filter for cookies
-  filteredCookies:
-  - Cookie_Gmail
-  queryParameters: true
-  #filter for queryParameters
-  filteredQueryParameters:
-  - itemId
-  - a
-  body: true
-
-response:
-  headers: true
-  cookies: true
-  body: true
-  statusCode: true
+#request:
+#  url: true
+#  headers: true
+#  # filter for headers
+#  filteredHeaders:
+#  - Postman-Token
+#  - X-Correlation-Id
+#  - cookie
+#  cookies: true
+#  #filter for cookies
+#  filteredCookies:
+#  - Cookie_Gmail
+#  queryParameters: true
+#  #filter for queryParameters
+#  filteredQueryParameters:
+#  - itemId
+#  - a
+#  body: true
+request: ${dump.request:}
+#response:
+#  headers: true
+#  cookies: true
+#  body: true
+#  statusCode: true
+responseEnabled: ${dump.responseEnabled:false}
+response: ${dump.response:}

@@ -16,18 +16,69 @@
 
 package com.networknt.email;
 
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.StringField;
+
 /**
  * Email Configuration
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "email", configName = "email", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class EmailConfig {
     public static final String CONFIG_NAME = "email";
+
+    @StringField(
+            configFieldName = "host",
+            externalizedKeyName = "host",
+            externalized = true,
+            description = "Email server host name or IP address",
+            defaultValue = "mail.lightapi.net"
+    )
     String host;
+
+    @StringField(
+            configFieldName = "port",
+            externalizedKeyName = "port",
+            externalized = true,
+            defaultValue = "587",
+            description = "Email SMTP port number. Please don't use port 25 as it is not safe"
+    )
     String port;
+
+    @StringField(
+            configFieldName = "user",
+            externalizedKeyName = "user",
+            externalized = true,
+            description = "Email server user name"
+    )
     String user;
+
+    @StringField(
+            configFieldName = "pass",
+            externalizedKeyName = "pass",
+            externalized = true,
+            description = "Email server password"
+    )
     String pass;
+
+    @StringField(
+            configFieldName = "debug",
+            externalizedKeyName = "debug",
+            externalized = true,
+            defaultValue = "true",
+            description = "Email debug mode"
+    )
     String debug;
+
+    @StringField(
+            configFieldName = "auth",
+            externalizedKeyName = "auth",
+            externalized = true,
+            defaultValue = "true",
+            description = "Email authentication"
+    )
     String auth;
 
     public String getHost() {
