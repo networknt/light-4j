@@ -34,6 +34,7 @@ public class UnifiedSecurityConfig {
 
     @BooleanField(
             configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             defaultValue = true,
             externalized = true,
             description = "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\n" +
@@ -43,6 +44,7 @@ public class UnifiedSecurityConfig {
 
     @ArrayField(
             configFieldName = ANONYMOUS_PREFIXES,
+            externalizedKeyName = ANONYMOUS_PREFIXES,
             items = String.class,
             externalized = true,
             description = "Anonymous prefixes configuration. A list of request path prefixes. The anonymous prefixes will be checked\n" +
@@ -53,6 +55,7 @@ public class UnifiedSecurityConfig {
 
     @ArrayField(
             configFieldName = PATH_PREFIX_AUTHS,
+            externalizedKeyName = PATH_PREFIX_AUTHS,
             items = UnifiedPathPrefixAuth.class,
             externalized = true,
             description = "path prefix security configuration."

@@ -33,18 +33,21 @@ public @interface MapField {
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
 
     /**
+     * The externalized key name of the field.
+     * If set, the value of the field will be formatted in the Light4J configuration style.
+     * i.e.
+     * ${configKeyName.externalizedKeyName:defaultValue}
+     */
+    String externalizedKeyName() default ConfigSchema.DEFAULT_STRING;
+
+    /**
      * The additionalProperties flag of the field.
      * If set to true, the map can have additional properties.
      */
     boolean additionalProperties() default false;
 
     /**
-     * The keyType of the map.
-     */
-    Class<?> keyType() default String.class;
-
-    /**
      * The valueType of the map.
      */
-    Class<?> valueType() default String.class;
+    Class<?> valueType();
 }

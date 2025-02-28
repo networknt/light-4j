@@ -10,7 +10,7 @@
     },
     "logStart" : {
       "type" : "integer",
-      "description" : "Indicate the default time period backward in millisecond for log content retrieve. \nDefault is an hour which indicate system will retrieve one hour log by default",
+      "description" : "Indicate the default time period backward in millisecond for log content retrieve.\nDefault is an hour which indicate system will retrieve one hour log by default",
       "default" : 600000
     },
     "downstreamEnabled" : {

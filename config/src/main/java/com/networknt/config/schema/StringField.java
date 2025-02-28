@@ -30,6 +30,14 @@ public @interface StringField {
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
 
     /**
+     * The externalized key name of the field.
+     * If set, the value of the field will be formatted in the Light4J configuration style.
+     * i.e.
+     * ${configKeyName.externalizedKeyName:defaultValue}
+     */
+    String externalizedKeyName() default ConfigSchema.DEFAULT_STRING;
+
+    /**
      * The minimum length of the field.
      */
     int minLength() default ConfigSchema.DEFAULT_INT;

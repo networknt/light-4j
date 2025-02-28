@@ -27,14 +27,16 @@ public class ApiKeyConfig {
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
 
     @BooleanField(
-            configFieldName = "enabled",
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             externalized = true,
             description = "Enable or disable the api key filter."
     )
     boolean enabled;
 
     @BooleanField(
-            configFieldName = "hashEnabled",
+            configFieldName = HASH_ENABLED,
+            externalizedKeyName = HASH_ENABLED,
             externalized = true,
             description = "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\n" +
                           "stored in the config file. It is more secure than put the encrypted key into the config file.\n" +
@@ -44,7 +46,8 @@ public class ApiKeyConfig {
     boolean hashEnabled;
 
     @ArrayField(
-            configFieldName = "pathPrefixAuths",
+            configFieldName = PATH_PREFIX_AUTHS,
+            externalizedKeyName = PATH_PREFIX_AUTHS,
             externalized = true,
             items = ApiKey.class
     )

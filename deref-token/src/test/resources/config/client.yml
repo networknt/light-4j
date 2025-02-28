@@ -48,14 +48,14 @@ oauth:
       scope:
       - test.r
       - test.w
-  key:
-    # if there is no service discovery and you have OAuth2 server deployed on VM
-    # and there is load balance in front of these service instances.
-    server_url: http://localhost:7777
-    # if you are using consul/zookeeper for service discovery
-    # serviceId: com.networknt.oauth2-key-1.0.0
-    uri: "/oauth2/key"
-    client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
+    key:
+      # if there is no service discovery and you have OAuth2 server deployed on VM
+      # and there is load balance in front of these service instances.
+      server_url: http://localhost:7777
+      # if you are using consul/zookeeper for service discovery
+      # serviceId: com.networknt.oauth2-key-1.0.0
+      uri: "/oauth2/key"
+      client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url.
@@ -68,3 +68,17 @@ oauth:
     uri: "/oauth2/deref"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+request:
+  errorThreshold: 2
+  timeout: 3000
+  resetTimeout: 7000
+  injectOpenTracing: false
+  injectCallerId: false
+  enableHttp2: true
+  connectionPoolSize: 1000
+  connectionExpireTime: 1800000
+  maxReqPerConn: 1000000
+  maxConnectionNumPerHost: 1000
+  minConnectionNumPerHost: 250
+  maxRequestRetry: 3
+  requestRetryDelay: 1000

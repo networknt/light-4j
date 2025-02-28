@@ -26,6 +26,14 @@ public @interface ObjectField {
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
 
     /**
+     * The externalized key name of the field.
+     * If set, the value of the field will be formatted in the Light4J configuration style.
+     * i.e.
+     * ${configKeyName.externalizedKeyName:defaultValue}
+     */
+    String externalizedKeyName() default ConfigSchema.DEFAULT_STRING;
+
+    /**
      * The default value of the field. For objects, this must be in JSON string format.
      * i.e.
      * {\"exampleField\": \"exampleValue\"}
@@ -40,23 +48,5 @@ public @interface ObjectField {
     /**
      * The reference class of the field.
      */
-    Class<?> ref() default Object.class;
-
-    /**
-     * The required flag of the field.
-     * If set, all classes must be present in the configuration file.
-     */
-    Class<?>[] allOf() default {};
-
-    /**
-     * The required flag of the field.
-     * If set to true, any class must be present in the configuration file.
-     */
-    Class<?>[] anyOf() default {};
-
-    /**
-     * The required flag of the field.
-     * If set, only one class must be present in the configuration file.
-     */
-    Class<?>[] oneOf() default {};
+    Class<?> ref();
 }

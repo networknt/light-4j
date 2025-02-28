@@ -42,6 +42,7 @@ public class ServerInfoConfig {
 
     @BooleanField(
             configFieldName = ENABLE_SERVER_INFO,
+            externalizedKeyName = ENABLE_SERVER_INFO,
             externalized = true,
             defaultValue = true,
             description = "Indicate if the server info is enabled or not."
@@ -50,6 +51,7 @@ public class ServerInfoConfig {
 
     @ArrayField(
             configFieldName = KEYS_TO_NOT_SORT,
+            externalizedKeyName = KEYS_TO_NOT_SORT,
             externalized = true,
             defaultValue = "[\"admin\", \"default\", \"defaultHandlers\", \"request\", \"response\"]",
             description = "String list keys that should not be sorted in the normalized info output. If you have a list of string values\n" +
@@ -61,6 +63,7 @@ public class ServerInfoConfig {
 
     @BooleanField(
             configFieldName = DOWNSTREAM_ENABLED,
+            externalizedKeyName = DOWNSTREAM_ENABLED,
             externalized = true,
             description = "For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down\n" +
             "stream API before return the server info to the invoker. By default, it is not enabled.\n" +
@@ -70,6 +73,7 @@ public class ServerInfoConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_HOST,
+            externalizedKeyName = DOWNSTREAM_HOST,
             externalized = true,
             defaultValue = "http://localhost:8081",
             description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
@@ -78,6 +82,7 @@ public class ServerInfoConfig {
 
     @StringField(
             configFieldName = DOWNSTREAM_PATH,
+            externalizedKeyName = DOWNSTREAM_PATH,
             externalized = true,
             defaultValue = "/adm/server/info",
             description = "down stream API server info path. This allows the down stream API to have customized path implemented."

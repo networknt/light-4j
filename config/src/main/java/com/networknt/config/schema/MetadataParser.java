@@ -11,6 +11,7 @@ import javax.lang.model.type.MirroredTypeException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 
@@ -21,7 +22,6 @@ import java.util.function.Function;
  * @author Kalev Gonvick
  */
 public class MetadataParser {
-
 
     private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class);
 
@@ -37,6 +37,7 @@ public class MetadataParser {
 
     /* keys */
     public static final String TYPE_KEY = "type";
+    public static final String ID_KEY = "$id";
     public static final String DESCRIPTION_KEY = "description";
     public static final String EXTERNALIZED_KEY = "externalized";
     public static final String ADDITIONAL_PROPERTIES_KEY = "additionalProperties";
@@ -49,6 +50,7 @@ public class MetadataParser {
     public static final String PATTERN_KEY = "pattern";
     public static final String FORMAT_KEY = "format";
     public static final String ITEMS_KEY = "items";
+    public static final String EXTERNALIZED_KEY_NAME = "externalizedKeyName";
     public static final String VALUE_TYPE_KEY = "valueType";
     public static final String CONFIG_FIELD_NAME_KEY = "configFieldName";
     public static final String USE_SUB_OBJECT_DEFAULT_KEY = "useSubObjectDefault";
@@ -177,13 +179,14 @@ public class MetadataParser {
         } catch (MirroredTypeException e) {
             canonicalName = e.getTypeMirrors().get(0).toString();
         }
+
         final var itemElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var itemMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(itemElement, itemMetadata, processingEnvironment);
-
-        // TODO - handle itemsAllOf, itemsAnyOf, itemsOneOf
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, ARRAY_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -207,10 +210,10 @@ public class MetadataParser {
         final var valueElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
         final var valueMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(valueElement, valueMetadata, processingEnvironment);
-
-        // TODO - handle keyType
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, MAP_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -228,6 +231,8 @@ public class MetadataParser {
     private static LinkedHashMap<String, Object> parseIntegerMetadata(final IntegerField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, INTEGER_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -250,6 +255,8 @@ public class MetadataParser {
     private static LinkedHashMap<String, Object> parseNumberMetadata(final NumberField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, NUMBER_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -272,6 +279,8 @@ public class MetadataParser {
     private static LinkedHashMap<String, Object> parseStringMetadata(final StringField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, STRING_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -302,13 +311,13 @@ public class MetadataParser {
         gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, OBJECT_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
         metadata.put(USE_SUB_OBJECT_DEFAULT_KEY, field.useSubObjectDefault());
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
-
-        // TODO - support allOf, anyOf, oneOf
         metadata.put(REF_KEY, refMetadata);
         return metadata;
     }
@@ -322,6 +331,8 @@ public class MetadataParser {
     private static LinkedHashMap<String, Object> parseNullMetadata(final NullField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, NULL_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
@@ -338,10 +349,17 @@ public class MetadataParser {
     private static LinkedHashMap<String, Object> parseBooleanMetadata(final BooleanField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, BOOLEAN_TYPE);
+        metadata.put(ID_KEY, getUUID());
+        metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
         return metadata;
+    }
+
+    private static String getUUID() {
+        final var id = UUID.randomUUID();
+        return id.toString();
     }
 }

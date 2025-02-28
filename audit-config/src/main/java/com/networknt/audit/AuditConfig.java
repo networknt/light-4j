@@ -56,7 +56,8 @@ public class AuditConfig {
     public static final String CONFIG_NAME = "audit";
 
     @ArrayField(
-            configFieldName = "headers",
+            configFieldName = HEADERS,
+            externalizedKeyName = HEADERS,
             description = "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
                     "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
             externalized = true,
@@ -66,7 +67,8 @@ public class AuditConfig {
     private List<String> headerList;
 
     @ArrayField(
-            configFieldName = "audit",
+            configFieldName = AUDIT,
+            externalizedKeyName = AUDIT,
             description = "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
                     "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
             externalized = true,
@@ -80,7 +82,8 @@ public class AuditConfig {
     private Consumer<String> auditFunc;
 
     @BooleanField(
-            configFieldName = "statusCode",
+            configFieldName = STATUS_CODE,
+            externalizedKeyName = STATUS_CODE,
             description = "Output response status code.",
             externalized = true,
             defaultValue = true
@@ -88,7 +91,8 @@ public class AuditConfig {
     private boolean statusCode;
 
     @BooleanField(
-            configFieldName = "responseTime",
+            configFieldName = RESPONSE_TIME,
+            externalizedKeyName = RESPONSE_TIME,
             description = "Output response time.",
             externalized = true,
             defaultValue = true
@@ -96,7 +100,8 @@ public class AuditConfig {
     private boolean responseTime;
 
     @BooleanField(
-            configFieldName = "auditOnError",
+            configFieldName = AUDIT_ON_ERROR,
+            externalizedKeyName = AUDIT_ON_ERROR,
             description = "when auditOnError is true:\n" +
                     " - it will only log when status code >= 400\n" +
                     "when auditOnError is false:\n" +
@@ -107,7 +112,8 @@ public class AuditConfig {
     private boolean auditOnError;
 
     @BooleanField(
-            configFieldName = "mask",
+            configFieldName = MASK,
+            externalizedKeyName = MASK,
             description = "Enable mask in the audit log",
             externalized = true,
             defaultValue = true
@@ -115,7 +121,8 @@ public class AuditConfig {
     private boolean mask;
 
     @StringField(
-            configFieldName = "timestampFormat",
+            configFieldName = TIMESTAMP_FORMAT,
+            externalizedKeyName = TIMESTAMP_FORMAT,
             description = "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\n" +
                     "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.",
             externalized = true
@@ -123,7 +130,8 @@ public class AuditConfig {
     private String timestampFormat;
 
     @IntegerField(
-            configFieldName = "requestBodyMaxSize",
+            configFieldName = REQUEST_BODY_MAX_SIZE,
+            externalizedKeyName = REQUEST_BODY_MAX_SIZE,
             description = "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\n" +
                     "request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
             externalized = true,
@@ -132,7 +140,8 @@ public class AuditConfig {
     private int requestBodyMaxSize;
 
     @IntegerField(
-            configFieldName = "responseBodyMaxSize",
+            configFieldName = RESPONSE_BODY_MAX_SIZE,
+            externalizedKeyName = RESPONSE_BODY_MAX_SIZE,
             description = "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\n" +
                     "response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
             externalized = true,
@@ -141,7 +150,8 @@ public class AuditConfig {
     private int responseBodyMaxSize;
 
     @BooleanField(
-            configFieldName = "enabled",
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
             description = "Enable Audit Logging",
             externalized = true,
             defaultValue = true

@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.Map;
 
 /**
  * JWT token issuer helper utility that use by light-ouath2 token and code services to

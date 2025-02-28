@@ -27,9 +27,17 @@ public @interface ArrayField {
      * The externalized flag of the field.
      * If set to true, the value of the field will be formatted in the Light4J configuration style.
      * i.e.
-     * ${configFileName.configFieldName:defaultValue}
+     * ${configKeyName.externalizedKeyName:defaultValue}
      */
     boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
+
+    /**
+     * The externalized key name of the field.
+     * If set, the value of the field will be formatted in the Light4J configuration style.
+     * i.e.
+     * ${configKeyName.externalizedKeyName:defaultValue}
+     */
+    String externalizedKeyName() default ConfigSchema.DEFAULT_STRING;
 
     /**
      * The useSubObjectDefault flag of the field.
@@ -40,7 +48,7 @@ public @interface ArrayField {
     /**
      * The reference class of the field.
      */
-    Class<?> items() default Object.class;
+    Class<?> items();
 
     /**
      * The minimum number of items in this array.
