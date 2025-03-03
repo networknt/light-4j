@@ -16,16 +16,95 @@
 
 package com.networknt.portal.registry;
 
+import com.networknt.config.schema.*;
+
+@ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
 
+    @StringField(
+            configFieldName = "portalUrl",
+            externalizedKeyName = "portalUrl",
+            externalized = true,
+            defaultValue = "https://lightapi.net",
+            description = "Portal URL for accessing controller API. Default to lightapi.net public portal, and it can be pointed to a standalone\n" +
+                    "light-controller instance for testing in the same Kubernetes cluster or docker-compose."
+    )
     String portalUrl;
+
+    @StringField(
+            configFieldName = "portalToken",
+            externalizedKeyName = "authorization",
+            externalized = true,
+            description = "Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0\n" +
+                    "provider during the deployment. And then pass the token to the container with an environment variable. The other\n" +
+                    "option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In\n" +
+                    "that case, you can use portalRegistry.portalToken as the key instead of the environment variable."
+    )
     String portalToken;
+
+    @IntegerField(
+            configFieldName = "maxReqPerConn",
+            externalizedKeyName = "maxReqPerConn",
+            externalized = true,
+            defaultValue = 1000000,
+            description = "number of requests before resetting the shared connection to work around HTTP/2 limitation"
+    )
     int maxReqPerConn;
+
+    @IntegerField(
+            configFieldName = "deregisterAfter",
+            externalizedKeyName = "deregisterAfter",
+            externalized = true,
+            defaultValue = 120000,
+            description = "De-register the service after the amount of time with health check failed. Once a health check is failed, the\n" +
+                    "service will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\n" +
+                    "the value is an integer in milliseconds. 1000 means 1 second and default to 2 minutes"
+    )
     int deregisterAfter;
+
+    @IntegerField(
+            configFieldName = "checkInterval",
+            externalizedKeyName = "checkInterval",
+            externalized = true,
+            defaultValue = 10000,
+            description = "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\n" +
+                    "request will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\n" +
+                    "after 10 seconds, then mark the service is critical. The value is an integer in milliseconds"
+    )
     int checkInterval;
+
+    @BooleanField(
+            configFieldName = "httpCheck",
+            externalizedKeyName = "httpCheck",
+            externalized = true,
+            description = "enable health check HTTP. An HTTP get request will be sent to the service to ensure that 200 response status is\n" +
+                    "coming back. This is suitable for service that depending on the database or other infrastructure services. You should\n" +
+                    "implement a customized health check handler that checks dependencies. i.e. if DB is down, return status 400. This\n" +
+                    "is the recommended configuration that allows the light-portal controller to poll the health info from each service."
+    )
     boolean httpCheck;
+
+    @BooleanField(
+            configFieldName = "ttlCheck",
+            externalizedKeyName = "ttlCheck",
+            externalized = true,
+            defaultValue = true,
+            description = "The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;\n" +
+                    "however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/\n" +
+                    "Note that we need to provide the leading and trailing slash in the path definition."
+    )
     boolean ttlCheck;
+
+    @StringField(
+            configFieldName = "healthPath",
+            externalizedKeyName = "healthPath",
+            externalized = true,
+            defaultValue = "/health/",
+            description = "The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;\n" +
+                    "however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/\n" +
+                    "Note that we need to provide the leading and trailing slash in the path definition."
+    )
     String healthPath;
 
     public String getPortalUrl() {

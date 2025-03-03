@@ -18,6 +18,7 @@ package com.networknt.limit;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +30,10 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "limit", configName = "limit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class LimitConfig {
     private static final Logger logger = LoggerFactory.getLogger(LimitConfig.class);
     public static final String CONFIG_NAME = "limit";
-    ;
     private static final String CONCURRENT_REQUEST = "concurrentRequest";
     private static final String QUEUE_SIZE = "queueSize";
     private static final String ERROR_CODE = "errorCode";
@@ -50,22 +51,159 @@ public class LimitConfig {
     public static final String SEPARATE_KEY = "#";
 
 
+    @BooleanField(
+            configFieldName = IS_ENABLED,
+            externalizedKeyName = IS_ENABLED,
+            externalized = true,
+            description = "If this handler is enabled or not. It is disabled by default as this handle might be in\n" +
+                    "most http-sidecar, light-proxy and light-router instances. However, it should only be used\n" +
+                    "internally to throttle request for a slow backend service or externally for DDoS attacks."
+    )
     boolean enabled;
-    int concurrentRequest;
-    int queueSize;
-    int errorCode;
-    String clientIdKeyResolver;
-    String addressKeyResolver;
-    String userIdKeyResolver;
 
-    LimitKey key;
+    @IntegerField(
+            configFieldName = CONCURRENT_REQUEST,
+            externalizedKeyName = CONCURRENT_REQUEST,
+            externalized = true,
+            defaultValue = 2,
+            description = "Maximum concurrent requests allowed per second on the entire server. This is property is\n" +
+                    "here to keep backward compatible. New users should use the rateLimit property for config\n" +
+                    "with different keys and different time unit."
+    )
+    int concurrentRequest;
+
+    @IntegerField(
+            configFieldName = QUEUE_SIZE,
+            externalizedKeyName = QUEUE_SIZE,
+            externalized = true,
+            defaultValue = -1,
+            description = "This property is kept to ensure backward compatibility. Please don't use it anymore. All\n" +
+                    "requests will return the rate limit headers with error messages after the limit is reached."
+    )
+    int queueSize;
+
+    @IntegerField(
+            configFieldName = ERROR_CODE,
+            externalizedKeyName = ERROR_CODE,
+            externalized = true,
+            defaultValue = 429,
+            description = "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\n" +
+                    "error code to trick the DDoS client/tool to stop the attacks as it considers the server\n" +
+                    "is down. However, if the rate limit is used internally to throttle the client requests to\n" +
+                    "protect a slow backend API, it will return 429 error code to indicate too many requests\n" +
+                    "for the client to wait a grace period to resent the request. By default, 429 is returned."
+    )
+    int errorCode;
+
+    @ArrayField(
+            configFieldName = RATE_LIMIT,
+            externalizedKeyName = RATE_LIMIT,
+            externalized = true,
+            defaultValue = "[\"10/s\", \"10000/d\"]",
+            description = "Default request rate limit 10 requests per second and 10000 quota per day. This is the\n" +
+                    "default for the server shared by all the services. If the key is not server, then the\n" +
+                    "quota is not applicable.\n" +
+                    "10 requests per second limit and 10000 requests per day quota.",
+            items = String.class
+    )
     List<LimitQuota> rateLimit;
+
+    @BooleanField(
+            configFieldName = HEADERS_ALWAYS_SET,
+            externalizedKeyName = HEADERS_ALWAYS_SET,
+            externalized = true,
+            description = "By default, the rate limit headers are not set when limit is not reached. However, you can\n" +
+                    "overwrite the behavior with true to write the three rate limit headers for 200 response in\n" +
+                    "order for client to manage the flow of the requests."
+    )
     boolean headersAlwaysSet;
+
+    @StringField(
+            configFieldName = LIMIT_KEY,
+            externalizedKeyName = LIMIT_KEY,
+            pattern = "server|address|client|user",
+            defaultValue = "server",
+            description = "Key of the rate limit: server, address, client, user\n" +
+                    "server: The entire server has one rate limit key, and it means all users share the same.\n" +
+                    "address: The IP address is the key and each IP will have its rate limit configuration.\n" +
+                    "client: The client id in the JWT token so that we can give rate limit per client.\n" +
+                    "user: The user id in the JWT token so that we can set rate limit and quota based on user."
+    )
+    LimitKey key;
+
+    @MapField(
+            configFieldName = SERVER,
+            externalizedKeyName = SERVER,
+            externalized = true,
+            description = "If server is the key, we can set up different rate limit per request path prefix.",
+            valueType = LimitQuota.class
+
+    )
     Map<String, LimitQuota> server;
+
+    @ObjectField(
+            configFieldName = ADDRESS,
+            externalizedKeyName = ADDRESS,
+            externalized = true,
+            description = "If address is the key, we can set up different rate limit per address and optional per\n" +
+                    "path or service for certain addresses. All other un-specified addresses will share the\n" +
+                    "limit defined in rateLimit.",
+            ref = RateLimitSet.class
+    )
     RateLimitSet address;
+
+    @ObjectField(
+            configFieldName = CLIENT,
+            externalizedKeyName = CLIENT,
+            externalized = true,
+            description = "If client is the key, we can set up different rate limit per client and optional per\n" +
+                    "path or service for certain clients. All other un-specified clients will share the limit\n" +
+                    "defined in rateLimit. When client is select, the rate-limit handler must be after the\n" +
+                    "JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.",
+            ref = RateLimitSet.class
+
+    )
     RateLimitSet client;
+
+    @ObjectField(
+            configFieldName = USER,
+            externalizedKeyName = USER,
+            externalized = true,
+            description = "If user is the key, we can set up different rate limit per user and optional per\n" +
+                    "path or service for certain users. All other un-specified users will share the limit\n" +
+                    "defined in rateLimit. When user is select, the rate-limit handler must be after the\n" +
+                    "JwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.",
+            ref = RateLimitSet.class
+    )
     RateLimitSet user;
-    private  Map<String, Object> mappedConfig;
+
+    @StringField(
+            configFieldName = CLIENT_ID_KEY,
+            externalizedKeyName = CLIENT_ID_KEY,
+            externalized = true,
+            defaultValue = "com.networknt.limit.key.JwtClientIdKeyResolver",
+            description = "Client id Key Resolver."
+    )
+    String clientIdKeyResolver;
+
+    @StringField(
+            configFieldName = ADDRESS_KEY,
+            externalizedKeyName = ADDRESS_KEY,
+            externalized = true,
+            defaultValue = "com.networknt.limit.key.IpAddressKeyResolver",
+            description = "Address Key Resolver."
+    )
+    String addressKeyResolver;
+
+    @StringField(
+            configFieldName = USER_ID_KEY,
+            externalizedKeyName = USER_ID_KEY,
+            externalized = true,
+            defaultValue = "com.networknt.limit.key.JwtUserIdKeyResolver",
+            description = "User id Key Resolver."
+    )
+    String userIdKeyResolver;
+    private Map<String, Object> mappedConfig;
     private final Config config;
 
 
@@ -76,6 +214,7 @@ public class LimitConfig {
     /**
      * Please note that this constructor is only for testing to load different config files
      * to test different configurations.
+     *
      * @param configName String
      */
     private LimitConfig(String configName) {
@@ -229,15 +368,15 @@ public class LimitConfig {
         }
 
         object = getMappedConfig().get(IS_ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(IS_ENABLED, object);
+        if (object != null) enabled = Config.loadBooleanValue(IS_ENABLED, object);
         object = getMappedConfig().get(HEADERS_ALWAYS_SET);
-        if(object != null) headersAlwaysSet = Config.loadBooleanValue(HEADERS_ALWAYS_SET, object);
+        if (object != null) headersAlwaysSet = Config.loadBooleanValue(HEADERS_ALWAYS_SET, object);
         object = getMappedConfig().get(CLIENT_ID_KEY);
-        if(object != null) setClientIdKeyResolver((String) object);
+        if (object != null) setClientIdKeyResolver((String) object);
         object = getMappedConfig().get(ADDRESS_KEY);
-        if(object != null) setAddressKeyResolver((String) object);
+        if (object != null) setAddressKeyResolver((String) object);
         object = getMappedConfig().get(USER_ID_KEY);
-        if(object != null) setUserIdKeyResolver((String) object);
+        if (object != null) setUserIdKeyResolver((String) object);
     }
 
     private void setRateLimitConfig() {
@@ -253,7 +392,7 @@ public class LimitConfig {
             String str = (String) object;
             List<String> limits = Arrays.asList(str.split(" "));
             List<LimitQuota> limitQuota = new ArrayList<>();
-            limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
+            limits.stream().forEach(l -> limitQuota.add(new LimitQuota(l)));
             rateLimit = limitQuota;
         } else {
             // if rateLimit doesn't exist, use the concurrentRequest as request per second.
@@ -262,44 +401,44 @@ public class LimitConfig {
             rateLimit = limitQuota;
         }
 
-        if (mappedConfig.get(SERVER)!=null)  {
+        if (mappedConfig.get(SERVER) != null) {
             Object serverObject = mappedConfig.get(SERVER);
-            if(serverObject != null) {
+            if (serverObject != null) {
                 this.server = new HashMap<>();
-                if(serverObject instanceof String) {
+                if (serverObject instanceof String) {
                     String s = (String) serverObject;
                     s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("server s = " + s);
-                    if(s.startsWith("{")) {
+                    if (logger.isTraceEnabled()) logger.trace("server s = " + s);
+                    if (s.startsWith("{")) {
                         Map<String, Object> serverConfig = JsonMapper.string2Map(s);
-                        serverConfig.forEach((k, v)->this.server.put(k, new LimitQuota((String)v)));
+                        serverConfig.forEach((k, v) -> this.server.put(k, new LimitQuota((String) v)));
                     } else {
                         logger.error("server is the wrong type. Only JSON map or YAML map is supported.");
                     }
-                } else if(serverObject instanceof Map) {
+                } else if (serverObject instanceof Map) {
                     Map<String, String> serverConfig = (Map<String, String>) serverObject;
-                    serverConfig.forEach((k, v)->this.server.put(k, new LimitQuota(v)));
+                    serverConfig.forEach((k, v) -> this.server.put(k, new LimitQuota(v)));
                 } else {
                     logger.error("server is the wrong type. Only JSON map or YAML map is supported.");
                 }
             }
         }
 
-        if (mappedConfig.get(ADDRESS)!=null)  {
+        if (mappedConfig.get(ADDRESS) != null) {
             Object addressObject = mappedConfig.get(ADDRESS);
-            if(addressObject != null) {
+            if (addressObject != null) {
                 address = new RateLimitSet();
                 if (addressObject instanceof String) {
                     String s = (String) addressObject;
                     s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("address s = " + s);
-                    if(s.startsWith("{")) {
+                    if (logger.isTraceEnabled()) logger.trace("address s = " + s);
+                    if (s.startsWith("{")) {
                         Map<String, Object> addressConfig = JsonMapper.string2Map(s);
                         address = populateFromMap(addressConfig);
                     } else {
                         logger.error("address is the wrong type. Only JSON map or YAML map is supported.");
                     }
-                } else if(addressObject instanceof Map) {
+                } else if (addressObject instanceof Map) {
                     Map<String, Object> addressConfig = (Map<String, Object>) addressObject;
                     address = populateFromMap(addressConfig);
                 } else {
@@ -308,21 +447,21 @@ public class LimitConfig {
             }
         }
 
-        if (mappedConfig.get(CLIENT)!=null)  {
+        if (mappedConfig.get(CLIENT) != null) {
             Object clientObject = mappedConfig.get(CLIENT);
             if (clientObject != null) {
                 client = new RateLimitSet();
                 if (clientObject instanceof String) {
                     String s = (String) clientObject;
                     s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("client s = " + s);
-                    if(s.startsWith("{")) {
+                    if (logger.isTraceEnabled()) logger.trace("client s = " + s);
+                    if (s.startsWith("{")) {
                         Map<String, Object> clientConfig = JsonMapper.string2Map(s);
                         client = populateFromMap(clientConfig);
                     } else {
                         logger.error("client is the wrong type. Only JSON map or YAML map is supported.");
                     }
-                } else if(clientObject instanceof Map) {
+                } else if (clientObject instanceof Map) {
                     Map<String, Object> clientConfig = (Map<String, Object>) clientObject;
                     client = populateFromMap(clientConfig);
                 } else {
@@ -331,21 +470,21 @@ public class LimitConfig {
             }
         }
 
-        if (mappedConfig.get(USER)!=null)  {
+        if (mappedConfig.get(USER) != null) {
             Object userObject = mappedConfig.get(USER);
-            if(userObject != null) {
+            if (userObject != null) {
                 user = new RateLimitSet();
                 if (userObject instanceof String) {
                     String s = (String) userObject;
                     s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("user s = " + s);
-                    if(s.startsWith("{")) {
+                    if (logger.isTraceEnabled()) logger.trace("user s = " + s);
+                    if (s.startsWith("{")) {
                         Map<String, Object> userConfig = JsonMapper.string2Map(s);
                         user = populateFromMap(userConfig);
                     } else {
                         logger.error("user is the wrong type. Only JSON map or YAML map is supported.");
                     }
-                } else if(userObject instanceof Map) {
+                } else if (userObject instanceof Map) {
                     Map<String, Object> userConfig = (Map<String, Object>) userObject;
                     user = populateFromMap(userConfig);
                 } else {
@@ -357,21 +496,21 @@ public class LimitConfig {
 
     public List<String> getAddressList() {
         List<String> addressList = new ArrayList<>();
-       if (getAddress().getDirectMaps()!=null && !getAddress().getDirectMaps().isEmpty()) {
-           getAddress().getDirectMaps().forEach((k,v)->{
-               String address = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
-               if (!addressList.contains(address)) {
-                   addressList.add(address);
-               }
-           });
+        if (getAddress().getDirectMaps() != null && !getAddress().getDirectMaps().isEmpty()) {
+            getAddress().getDirectMaps().forEach((k, v) -> {
+                String address = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
+                if (!addressList.contains(address)) {
+                    addressList.add(address);
+                }
+            });
         }
         return addressList;
     }
 
     public List<String> getClientList() {
         List<String> clientList = new ArrayList<>();
-        if (getClient().getDirectMaps()!=null && !getClient().getDirectMaps().isEmpty()) {
-            getClient().getDirectMaps().forEach((k,v)->{
+        if (getClient().getDirectMaps() != null && !getClient().getDirectMaps().isEmpty()) {
+            getClient().getDirectMaps().forEach((k, v) -> {
                 String client = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
                 if (!clientList.contains(client)) {
                     clientList.add(client);
@@ -383,8 +522,8 @@ public class LimitConfig {
 
     public List<String> getUserList() {
         List<String> userList = new ArrayList<>();
-        if (getClient().getDirectMaps()!=null && !getUser().getDirectMaps().isEmpty()) {
-            getUser().getDirectMaps().forEach((k,v)->{
+        if (getClient().getDirectMaps() != null && !getUser().getDirectMaps().isEmpty()) {
+            getUser().getDirectMaps().forEach((k, v) -> {
                 String user = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
                 if (!userList.contains(user)) {
                     userList.add(user);
@@ -396,19 +535,19 @@ public class LimitConfig {
 
     public static RateLimitSet populateFromMap(Map<String, Object> map) {
         RateLimitSet rateLimitSet = new RateLimitSet();
-        map.forEach((k, o)->{
+        map.forEach((k, o) -> {
             if (o instanceof String) {
-                List<String> limits = Arrays.asList(((String)o).split(" "));
+                List<String> limits = Arrays.asList(((String) o).split(" "));
                 List<LimitQuota> limitQuota = new ArrayList<>();
-                limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
+                limits.stream().forEach(l -> limitQuota.add(new LimitQuota(l)));
                 rateLimitSet.addDirectMap(k, limitQuota);
             } else if (o instanceof Map) {
-                Map<String, String> path = (Map<String, String>)o;
-                path.forEach((p, v)->{
+                Map<String, String> path = (Map<String, String>) o;
+                path.forEach((p, v) -> {
                     List<String> limits = Arrays.asList(v.split(" "));
                     String key = k + SEPARATE_KEY + p;
                     List<LimitQuota> limitQuotas = new ArrayList<>();
-                    limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                    limits.stream().forEach(l -> limitQuotas.add(new LimitQuota(l)));
                     rateLimitSet.addDirectMap(key, limitQuotas);
                 });
             }
@@ -417,7 +556,13 @@ public class LimitConfig {
     }
 
     public static class RateLimitSet {
-        public Map<String, List<LimitQuota>>  directMaps;
+
+        @MapField(
+                configFieldName = "directMapss",
+                externalizedKeyName = "directMaps",
+                valueType = List.class
+        )
+        public Map<String, List<LimitQuota>> directMaps;
 
         public RateLimitSet() {
 
@@ -432,7 +577,7 @@ public class LimitConfig {
         }
 
         public void addDirectMap(String key, List<LimitQuota> limitQuotas) {
-            if (this.directMaps==null) {
+            if (this.directMaps == null) {
                 this.directMaps = new HashMap<>();
             }
             this.directMaps.put(key, limitQuotas);

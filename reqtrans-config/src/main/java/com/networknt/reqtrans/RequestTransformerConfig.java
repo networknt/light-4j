@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +19,7 @@ import java.util.*;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "request-transformer", configName = "request-transformer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class RequestTransformerConfig {
     public static final String CONFIG_NAME = "request-transformer";
     private static final Logger logger = LoggerFactory.getLogger(RequestTransformerConfig.class);
@@ -28,7 +32,23 @@ public class RequestTransformerConfig {
 
     private Map<String, Object> mappedConfig;
     private final Config config;
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "indicate if this interceptor is enabled or not."
+    )
     private boolean enabled;
+
+    @BooleanField(
+            configFieldName = REQUIRED_CONTENT,
+            externalizedKeyName = REQUIRED_CONTENT,
+            externalized = true,
+            defaultValue = true,
+
+    )
     private boolean requiredContent;
     private String defaultBodyEncoding;
     List<String> appliedPathPrefixes;

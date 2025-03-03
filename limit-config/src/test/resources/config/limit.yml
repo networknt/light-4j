@@ -33,10 +33,10 @@ rateLimit: 10/s 1000/d
 key: ${limit.key:server}
 # Address specific rate limit if they don't follow the default rateLimit definition.
 # The following is the json format returned from the config server.
-server: "{\"/v1/address\":\"10/s\",\"/v2/address\":\"1000/s\"}"
-address: "{\"192.168.1.100\":\"10/h 1000/d\",\"192.168.1.101\":\"1000/s 1000000/d\",\"192.168.1.102\":{\"/v1/address\":\"10/s\",\"/v2/address\":\"100/s\"}}"
-client: "{\"f7d42348-c647-4efb-a52d-4c5787421e73\":\"100/m 10000/d\",\"f7d42348-c647-4efb-a52d-4c5787421e74\":\"10/m 1000/d\",\"f7d42348-c647-4efb-a52d-4c5787421e75\":{\"/v1/address\":\"20/s\",\"/v2/address\":\"200/s\"}}"
-user: "{\"alex@lightapi.net\":\"10/m 10000/d\",\"alice@lightapi.net\":\"20/m 20000/d\",\"albert@lightapi.net\":{\"/batch\":\"1000/m 1000000/d\"}}"
+server: {"/v1/address":"10/s","/v2/address":"1000/s"}
+address: {"192.168.1.100":"10/h 1000/d","192.168.1.101":"1000/s 1000000/d","192.168.1.102":{"/v1/address":"10/s","/v2/address":"100/s"}}
+client: {"f7d42348-c647-4efb-a52d-4c5787421e73":"100/m 10000/d","f7d42348-c647-4efb-a52d-4c5787421e74":"10/m 1000/d","f7d42348-c647-4efb-a52d-4c5787421e75":{"/v1/address":"20/s","/v2/address":"200/s"}}
+user: {"alex@lightapi.net":"10/m 10000/d","alice@lightapi.net":"20/m 20000/d","albert@lightapi.net":{"/batch":"1000/m 1000000/d"}}
 
 # Client id Key Resolver.
 clientIdKeyResolver: com.networknt.limit.key.JwtClientIdKeyResolver

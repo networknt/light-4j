@@ -17,6 +17,9 @@
 package com.networknt.metrics.prometheus;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 
 /**
  * Prometheus metrics middleware handler configuration that is mapped to all
@@ -24,12 +27,26 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  * @author Gavin Chen
  */
+@ConfigSchema(configName = "prometheus", configKey = "prometheus", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class PrometheusConfig {
     public static final String CONFIG_NAME = "prometheus";
+
+    @BooleanField(
+        configFieldName = "enabled",
+        externalizedKeyName = "enabled",
+        externalized = true,
+        description = "If metrics handler is enabled or not"
+    )
     boolean enabled;
+
+    @BooleanField(
+            configFieldName = "enableHotspot",
+            externalizedKeyName = "enableHotspot",
+            externalized = true,
+            description = "If the Prometheus hotspot is enabled or not.\n" +
+                    "hotspot include thread, memory, classloader,..."
+    )
     boolean enableHotspot;
-
-
 
     @JsonIgnore
     String description;
