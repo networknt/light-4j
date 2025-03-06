@@ -4,12 +4,10 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
-import java.io.File;
 import java.lang.annotation.Annotation;
-import java.net.URL;
 import java.util.Optional;
 
-public class ReflectionUtils {
+public class AnnotationUtils {
 
     /**
      * Safely gets an element from a canonical name.
@@ -23,6 +21,43 @@ public class ReflectionUtils {
             return processingEnvironment.getElementUtils().getTypeElement(canonicalName);
         } catch (final MirroredTypeException e) {
             return processingEnvironment.getTypeUtils().asElement(e.getTypeMirror());
+        }
+    }
+
+    public static boolean elementIsClass(final Element element, final Class<?> clazz, final ProcessingEnvironment processingEnvironment) {
+        final var elementClass = AnnotationUtils.getClassFromElement(element, processingEnvironment);
+        return elementClass.map(aClass -> aClass.equals(clazz)).orElse(false);
+    }
+
+    public static boolean elementImplementsClass(final Element element, final Class<?> clazz, final ProcessingEnvironment processingEnv) {
+        final var elementClass = AnnotationUtils.getClassFromElement(element, processingEnv);
+        if (elementClass.isEmpty())
+            return false;
+
+        for (final var implementedInterface : elementClass.get().getInterfaces()) {
+            if (implementedInterface.equals(clazz)) {
+                System.out.println(element.getSimpleName() + " implements " + clazz.getSimpleName());
+                return true;
+            }
+        }
+
+        System.out.println(element.getSimpleName() + " does NOT implement " + clazz.getSimpleName());
+        return false;
+    }
+
+    /**
+     * Gets the full canonical name from the element and gets the class from the string.
+     *
+     * @param element -
+     * @param processingEnv
+     * @return
+     */
+    public static Optional<Class<?>> getClassFromElement(final Element element, final ProcessingEnvironment processingEnv) {
+        final var typeElement = processingEnv.getElementUtils().getTypeElement(element.toString());
+        try {
+            return Optional.of(Class.forName(typeElement.toString()));
+        } catch (ClassNotFoundException e) {
+            return Optional.empty();
         }
     }
 
@@ -76,21 +111,5 @@ public class ReflectionUtils {
 
             else return Optional.of(annotation);
         }
-    }
-
-    public static String getResourceFolderForConfigClass(Class<?> configClass) {
-        URL url = configClass.getResource("/config");
-
-        if (url == null)
-            throw new RuntimeException("No resource folder found for class: " + configClass.getSimpleName());
-
-        File file;
-        try {
-            file = new File(url.toURI());
-        } catch (Exception e) {
-            file = new File(url.getPath());
-        }
-
-        return file.getAbsolutePath();
     }
 }

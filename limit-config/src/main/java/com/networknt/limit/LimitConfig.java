@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "limit", configName = "limit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "limit", configName = "limit", outputFormats = { OutputFormat.JSON_SCHEMA, OutputFormat.YAML })
 public class LimitConfig {
     private static final Logger logger = LoggerFactory.getLogger(LimitConfig.class);
     public static final String CONFIG_NAME = "limit";
@@ -99,7 +99,6 @@ public class LimitConfig {
             configFieldName = RATE_LIMIT,
             externalizedKeyName = RATE_LIMIT,
             externalized = true,
-            defaultValue = "[\"10/s\", \"10000/d\"]",
             description = "Default request rate limit 10 requests per second and 10000 quota per day. This is the\n" +
                     "default for the server shared by all the services. If the key is not server, then the\n" +
                     "quota is not applicable.\n" +
@@ -136,8 +135,7 @@ public class LimitConfig {
             externalizedKeyName = SERVER,
             externalized = true,
             description = "If server is the key, we can set up different rate limit per request path prefix.",
-            valueType = LimitQuota.class
-
+            valueType = String.class
     )
     Map<String, LimitQuota> server;
 
@@ -558,7 +556,7 @@ public class LimitConfig {
     public static class RateLimitSet {
 
         @MapField(
-                configFieldName = "directMapss",
+                configFieldName = "directMaps",
                 externalizedKeyName = "directMaps",
                 valueType = List.class
         )

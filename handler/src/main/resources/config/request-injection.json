@@ -1,0 +1,24 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "appliedBodyInjectionPathPrefixes", "maxBuffers" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "indicator of enabled",
+      "default" : true
+    },
+    "appliedBodyInjectionPathPrefixes" : {
+      "type" : "array",
+      "description" : "request body injection applied path prefixes. Injecting the request body and output into the audit log is very heavy operation,\nand it should only be enabled when necessary or for diagnose session to resolve issues. This list can be updated on the config\nserver or local values.yml, then an API call to the config-reload endpoint to apply the changes from light-portal control pane.\nPlease be aware that big request body will only log the beginning part of it in the audit log and gzip encoded request body can\nnot be injected. Even the body injection is not applied, you can still transform the request for headers, query parameters, path\nparameters etc. The format is a list of strings separated with commas or a JSON list in values.yml definition from config server,\nor you can use yaml format in this file or values.yaml on local filesystem. The following are the examples.\nrequest-injection.appliedBodyInjectionPathPrefixes: [\"/v1/cats\", \"/v1/dogs\"]\nrequest-injection.appliedBodyInjectionPathPrefixes: /v1/cats, /v1/dogs\nrequest-injection.appliedBodyInjectionPathPrefixes:\n  - /v1/cats\n  - /v1/dogs",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "maxBuffers" : {
+      "type" : "integer",
+      "description" : "Max number of buffers for the interceptor. The default value is 1024. If the number of buffers exceeds this value, the large\nrequest body will be truncated. The buffer size is 16K, so the max size of the body can be intercepted is 16M. If you want to\nupload large file to the server with ExternalServiceHandler, you might need to increase the number of buffers to a larger value.\nPlease be aware that the memory usage will be increased as well. So please use it with caution and test it with load test. Also,\nplease make sure that you update the server.maxTransferFileSize to a larger value that matches the maxBuffers * 1024.",
+      "default" : 1024
+    }
+  }
+}

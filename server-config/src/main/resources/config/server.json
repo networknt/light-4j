@@ -1,0 +1,139 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "ip", "httpPort", "enableHttp", "httpsPort", "enableHttps", "keystoreName", "keystorePass", "keyPass", "enableTwoWayTls", "truststoreName", "truststorePass", "bootstrapStoreName", "bootstrapStorePass", "serviceId", "enableRegistry", "startOnRegistryFailure", "dynamicPort", "minPort", "maxPort", "environment", "buildNumber", "shutdownGracefulPeriod", "serviceName", "bufferSize", "ioThreads", "workerThreads", "backlog", "alwaysSetDate", "serverString", "shutdownTimeout", "allowUnescapedCharactersInUrl", "maxTransferFileSize", "maskConfigProperties" ],
+  "properties" : {
+    "ip" : {
+      "type" : "string",
+      "description" : "This is the default binding address if the service is dockerized."
+    },
+    "httpPort" : {
+      "type" : "integer",
+      "description" : "Http port if enableHttp is true. It will be ignored if dynamicPort is true."
+    },
+    "enableHttp" : {
+      "type" : "boolean",
+      "description" : "Enable HTTP should be false by default. It should be only used for testing with clients or tools\nthat don't support https or very hard to import the certificate. Otherwise, https should be used.\nWhen enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is\nonly one protocol will be used for the server at anytime. If both http and https are true, only\nhttps listener will be created and the server will bind to https port only."
+    },
+    "httpsPort" : {
+      "type" : "integer",
+      "description" : "Https port if enableHttps is true. It will be ignored if dynamicPort is true."
+    },
+    "enableHttps" : {
+      "type" : "boolean",
+      "description" : "Http/2 is enabled by default for better performance and it works with the client module\nPlease note that HTTP/2 only works with HTTPS."
+    },
+    "keystoreName" : {
+      "type" : "string",
+      "description" : "Keystore file name in config folder."
+    },
+    "keystorePass" : {
+      "type" : "string",
+      "description" : "Keystore password"
+    },
+    "keyPass" : {
+      "type" : "string",
+      "description" : "Private key password"
+    },
+    "enableTwoWayTls" : {
+      "type" : "boolean",
+      "description" : "Flag that indicate if two way TLS is enabled. Not recommended in docker container."
+    },
+    "truststoreName" : {
+      "type" : "string",
+      "description" : "Truststore file name in config folder."
+    },
+    "truststorePass" : {
+      "type" : "string",
+      "description" : "Truststore password"
+    },
+    "bootstrapStoreName" : {
+      "type" : "string",
+      "description" : "Bootstrap truststore name used to connect to the light-config-server if it is used."
+    },
+    "bootstrapStorePass" : {
+      "type" : "string",
+      "description" : "Bootstrap truststore password"
+    },
+    "serviceId" : {
+      "type" : "string",
+      "description" : "Unique service identifier. Used in service registration and discovery etc."
+    },
+    "enableRegistry" : {
+      "type" : "boolean",
+      "description" : "Flag to enable self service registration. This should be turned on on official test and production. And\ndyanmicPort should be enabled if any orchestration tool is used like Kubernetes."
+    },
+    "startOnRegistryFailure" : {
+      "type" : "boolean",
+      "description" : "When enableRegistry is true and the registry/discovery service is not reachable. Stop the server or continue\nstarting the server. When your global registry is not setup as high availability and only for monitoring, you\ncan set it true. If you are using it for global service discovery, leave it with false."
+    },
+    "dynamicPort" : {
+      "type" : "boolean",
+      "description" : "Dynamic port is used in situation that multiple services will be deployed on the same host and normally\nyou will have enableRegistry set to true so that other services can find the dynamic port service. When\ndeployed to Kubernetes cluster, the Pod must be annotated as hostNetwork: true"
+    },
+    "minPort" : {
+      "type" : "integer",
+      "description" : "Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup\nfirewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be\nenough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods"
+    },
+    "maxPort" : {
+      "type" : "integer",
+      "description" : "Maximum port rang. The range can be customized to adopt your network security policy and can be increased or\nreduced to ease firewall rules."
+    },
+    "environment" : {
+      "type" : "string",
+      "description" : "environment tag that will be registered on consul to support multiple instances per env for testing.\nhttps://github.com/networknt/light-doc/blob/master/docs/content/design/env-segregation.md\nThis tag should only be set for testing env, not production. The production certification process will enforce it."
+    },
+    "buildNumber" : {
+      "type" : "string",
+      "description" : "Build Number, to be set by teams for auditing or tracing purposes.\nAllows teams to audit the value and set it according to their release management process"
+    },
+    "shutdownGracefulPeriod" : {
+      "type" : "integer",
+      "description" : "Shutdown gracefully wait period in milliseconds\nIn this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set\nbased on the slowest request possible."
+    },
+    "serviceName" : {
+      "type" : "string",
+      "description" : "The following parameters are for advanced users to fine tune the service in a container environment. Please leave\nthese values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/\n\nUnique service name. Used in microservice to associate a given name to a service with configuration\nor as a key within the configuration of a particular domain"
+    },
+    "bufferSize" : {
+      "type" : "integer",
+      "description" : "Buffer size of undertow server. Default to 16K"
+    },
+    "ioThreads" : {
+      "type" : "integer",
+      "description" : "Number of IO thread. Default to number of processor * 2"
+    },
+    "workerThreads" : {
+      "type" : "integer",
+      "description" : "Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu"
+    },
+    "backlog" : {
+      "type" : "integer",
+      "description" : "Backlog size. Default to 10000"
+    },
+    "alwaysSetDate" : {
+      "type" : "boolean",
+      "description" : "Flag to set UndertowOptions.ALWAYS_SET_DATE"
+    },
+    "serverString" : {
+      "type" : "string",
+      "description" : "Server string used to mark the server. Default to L for light-4j."
+    },
+    "shutdownTimeout" : {
+      "type" : "integer"
+    },
+    "allowUnescapedCharactersInUrl" : {
+      "type" : "boolean",
+      "description" : "Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.\nPlease note that this option widens the attack surface and attacker can potentially access your filesystem.\nThis should only be used on an internal server and never be used on a server accessed from the Internet."
+    },
+    "maxTransferFileSize" : {
+      "type" : "integer",
+      "description" : "Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.",
+      "format" : "u64"
+    },
+    "maskConfigProperties" : {
+      "type" : "boolean",
+      "description" : "Indicate if the mask for the module registry should be applied or not. Default to true. If all the sensitive\nproperties are encrypted, then this flag can be set to false. This allows the encrypted sensitive properties\nto show up in the server info response. When config server is used, this flag should be set to false so that\nthe server info response can be automatically compared with the config server generated server info based on\nthe config properties."
+    }
+  }
+}

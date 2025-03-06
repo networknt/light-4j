@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@ConfigSchema(configKey = "response-transformer", configName = "response-transformer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ResponseTransformerConfig {
     public static final String CONFIG_NAME = "response-transformer";
     private static final Logger logger = LoggerFactory.getLogger(ResponseTransformerConfig.class);
@@ -21,10 +23,56 @@ public class ResponseTransformerConfig {
 
     private Map<String, Object> mappedConfig;
     private final Config config;
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "indicate if this interceptor is enabled or not."
+    )
     private boolean enabled;
+
+    @BooleanField(
+            configFieldName = REQUIRED_CONTENT,
+            externalizedKeyName = REQUIRED_CONTENT,
+            externalized = true,
+            defaultValue = true,
+            description = "indicate if the transform interceptor needs to change the request body"
+    )
     private boolean requiredContent;
+
+    @StringField(
+            configFieldName = DEFAULT_BODY_ENCODING,
+            externalizedKeyName = DEFAULT_BODY_ENCODING,
+            externalized = true,
+            defaultValue = "UTF-8",
+            description = "default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1."
+    )
     private String defaultBodyEncoding;
+
+    @ArrayField(
+            configFieldName = APPLIED_PATH_PREFIXES,
+            externalizedKeyName = APPLIED_PATH_PREFIXES,
+            externalized = true,
+            description = "A list of applied request path prefixes, other requests will skip this handler. The value can be a string\n" +
+                    "if there is only one request path prefix needs this handler. or a list of strings if there are multiple.",
+            items = String.class
+    )
     List<String> appliedPathPrefixes;
+
+    @MapField(
+            configFieldName = PATH_PREFIX_ENCODING,
+            externalizedKeyName = PATH_PREFIX_ENCODING,
+            externalized = true,
+            description = "For certain path prefixes that are not using the defaultBodyEncoding UTF-8, you can define the customized\n" +
+                    "encoding like ISO-8859-1 for the path prefixes here. This is only for the legacy APIs that can only accept\n" +
+                    "ISO-8859-1 response body but the backend server is sending the response in UTF-8 as it is standard on the Web.\n" +
+                    "pathPrefixEncoding:\n" +
+                    "  /v1/pets: ISO-8859-1\n" +
+                    "  /v1/party/info: ISO-8859-1",
+            valueType = String.class
+    )
     Map<String, Object> pathPrefixEncoding;
 
     private ResponseTransformerConfig() {

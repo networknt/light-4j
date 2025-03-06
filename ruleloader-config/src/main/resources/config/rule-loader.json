@@ -1,0 +1,36 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "portalHost", "portalToken", "ruleSource", "endpointRules" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "A flag to enable the rule loader to get rules for the service from portal",
+      "default" : true
+    },
+    "portalHost" : {
+      "type" : "string",
+      "description" : "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal",
+      "default" : "https://localhost"
+    },
+    "portalToken" : {
+      "type" : "string",
+      "description" : "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\nis light-portal."
+    },
+    "ruleSource" : {
+      "type" : "string",
+      "description" : "Source of the rule. light-portal or config-folder and default to light-portal. If config folder is set,\na rules.yml must be in the externalized folder to load rules from it. The config-folder option should\nonly be used for local testing or the light-portal is not implemented in the organization and cloud\nlight-portal is not allowed due to security policy or blocked.",
+      "default" : "light-portal"
+    },
+    "endpointRules" : {
+      "type" : "object",
+      "description" : "When ruleSource is config-folder, then we can load the endpoint to rules mapping here instead of portal\nservice details. Each endpoint will have a list of rules and the type of the rules.",
+      "additionalProperties" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+#Indicate if the dump middleware is enabled or not.
+enabled: ${dump.enabled:false}
+#Indicate if the dump middleware should mask sensitive data.
+mask: ${dump.mask:false}
+#The log level for the dump middleware.
+logLevel: ${dump.logLevel:INFO}
+#The indent size for the dump middleware.
+indentSize: ${dump.indentSize:4}
+#Indicate if the dump middleware should use JSON format.
+useJson: ${dump.useJson:false}
+#Indicate if the dump middleware should dump request.
+requestEnabled: ${dump.requestEnabled:false}
+#The request settings for the dump middleware.
+request: ${dump.request:}
+#Indicate if the dump middleware should dump response.
+responseEnabled: ${dump.responseEnabled:false}
+#The response settings for the dump middleware.
+response: ${dump.response:}
