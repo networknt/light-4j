@@ -3,6 +3,10 @@ package com.networknt.handler;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,31 +18,50 @@ import java.util.Map;
 /**
  * The config class for the ResponseInterceptorInjectionHandler middleware handler.
  */
+@ConfigSchema(configName = "response-injection", configKey = "response-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ResponseInjectionConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseInjectionConfig.class);
 
     public static final String CONFIG_NAME = "response-injection";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "indicator of enabled"
+    )
     private boolean enabled;
+
+    @ArrayField(
+            configFieldName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
+            externalizedKeyName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
+            externalized = true,
+            description = "response body injection applied path prefixes. Injecting the response body and output into the audit log is very heavy operation,\n" +
+                    "and it should only be enabled when necessary or for diagnose session to resolve issues. This list can be updated on the config\n" +
+                    "server or local values.yml, then an API call to the config-reload endpoint to apply the changes from light-portal control pane.\n" +
+                    "Please be aware that big response body will only log the beginning part of it in the audit log and gzip encoded response body can\n" +
+                    "not be injected. Even the body injection is not applied, you can still transform the response for headers, query parameters, path\n" +
+                    "parameters etc. The format is a list of strings separated with commas or a JSON list in values.yml definition from config server,\n" +
+                    "or you can use yaml format in this file or values.yaml on local filesystem. The following are the examples.\n" +
+                    "response-injection.appliedBodyInjectionPathPrefixes: [\"/v1/cats\", \"/v1/dogs\"]\n" +
+                    "response-injection.appliedBodyInjectionPathPrefixes: /v1/cats, /v1/dogs\n" +
+                    "response-injection.appliedBodyInjectionPathPrefixes:\n" +
+                    "  - /v1/cats\n" +
+                    "  - /v1/dogs",
+            items = String.class
+    )
     private List<String> appliedBodyInjectionPathPrefixes;
 
     private Map<String, Object> mappedConfig;
     private final Config config;
 
     public ResponseInjectionConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
+        this(CONFIG_NAME);
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     *
-     * @param configName String
-     */
     public ResponseInjectionConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);

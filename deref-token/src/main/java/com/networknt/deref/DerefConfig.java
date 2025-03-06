@@ -16,13 +16,25 @@
 
 package com.networknt.deref;
 
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
+
 /**
  * The config class that maps to deref.yml
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "dereg", configName = "deref", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DerefConfig {
     public static final String CONFIG_NAME = "deref";
+
+    @BooleanField(
+        configFieldName = "enabled",
+        externalizedKeyName = "enabled",
+        externalized = true,
+        description = "indicate if the deref handler is enabled or not."
+    )
     boolean enabled;
 
     public boolean isEnabled() {

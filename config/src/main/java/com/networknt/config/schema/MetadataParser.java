@@ -9,9 +9,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.MirroredTypeException;
 import java.lang.annotation.Annotation;
-import java.util.LinkedHashMap;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 
@@ -34,6 +32,10 @@ public class MetadataParser {
     public static final String NULL_TYPE = "null";
     public static final String BOOLEAN_TYPE = "boolean";
     public static final String MAP_TYPE = "map";
+
+    /* formatted types */
+    public static final String URL_TYPE = "url";
+    public static final String URI_TYPE = "uri";
 
     /* keys */
     public static final String TYPE_KEY = "type";
@@ -63,6 +65,11 @@ public class MetadataParser {
     public static final String MULTIPLE_OF_KEY = "multipleOf";
     public static final String PROPERTIES_KEY = "properties";
 
+    private static final LinkedHashMap<String, String> DEFAULT_CONTAINER_PROPS = new LinkedHashMap<>();
+    static {
+        DEFAULT_CONTAINER_PROPS.put(TYPE_KEY, STRING_TYPE);
+    }
+
     private final static LinkedHashMap<Class<? extends Annotation>, Function<Tuple<Annotation, ProcessingEnvironment>, LinkedHashMap<String, Object>>> FIELD_PARSE_FUNCTIONS = new LinkedHashMap<>();
     static {
         FIELD_PARSE_FUNCTIONS.put(BooleanField.class, (tuple) -> parseBooleanMetadata((BooleanField) tuple._1()));
@@ -87,24 +94,6 @@ public class MetadataParser {
         return rootMetadata;
     }
 
-    /**
-     * Returns the type of the element as a string.
-     * @param element The element to get the type of.
-     * @return The type of the element as a string.
-     */
-    private static String getTypeString(final Element element) {
-        final var name = element.getSimpleName().toString().toLowerCase();
-
-        switch (name) {
-            case BOOLEAN_TYPE:
-            case INTEGER_TYPE:
-            case NUMBER_TYPE:
-            case STRING_TYPE:
-                return name;
-            default:
-                return OBJECT_TYPE;
-        }
-    }
 
     /**
      * Gathers schema data for an object element.
@@ -117,6 +106,7 @@ public class MetadataParser {
         LOG.trace("Gathering schema data for element: {}", currentRoot.getSimpleName());
         final var fields = currentRoot.getEnclosedElements();
         final var properties = new LinkedHashMap<String, Object>();
+        final var name = currentRoot.getSimpleName().toString().toLowerCase();
 
         for (final var field : fields) {
             final var fieldMetadata = getObjectPropertyMetadata(field, processingEnvironment);
@@ -131,8 +121,48 @@ public class MetadataParser {
         if (!properties.isEmpty())
             rootMetadata.put(PROPERTIES_KEY, properties);
 
-        var type = getTypeString(currentRoot);
-        rootMetadata.put(TYPE_KEY, type);
+        if (AnnotationUtils.elementImplementsClass(currentRoot, Collection.class, processingEnvironment)
+                || AnnotationUtils.elementIsClass(currentRoot, Collection.class, processingEnvironment)) {
+            System.out.println("Array Type");
+            rootMetadata.put(TYPE_KEY, ARRAY_TYPE);
+            if (properties.isEmpty())
+                rootMetadata.put(ITEMS_KEY, DEFAULT_CONTAINER_PROPS);
+
+        } else if (AnnotationUtils.elementImplementsClass(currentRoot, Map.class, processingEnvironment)
+                || AnnotationUtils.elementIsClass(currentRoot, Map.class, processingEnvironment)) {
+
+            System.out.println("Map Type");
+            rootMetadata.put(TYPE_KEY, MAP_TYPE);
+            if (properties.isEmpty())
+                rootMetadata.put(ADDITIONAL_PROPERTIES_KEY, DEFAULT_CONTAINER_PROPS);
+
+        } else {
+            switch (name) {
+
+                /* types with no formats */
+                case BOOLEAN_TYPE:
+                case INTEGER_TYPE:
+                case NUMBER_TYPE:
+                case STRING_TYPE: {
+                    rootMetadata.put(TYPE_KEY, name);
+                    break;
+                }
+
+                /* types with formats */
+                case URI_TYPE:
+                case URL_TYPE: {
+                    rootMetadata.put(TYPE_KEY, STRING_TYPE);
+                    rootMetadata.put(FORMAT_KEY, Format.uri.name());
+                    break;
+                }
+
+                /* fallback */
+                default: {
+                    rootMetadata.put(TYPE_KEY, OBJECT_TYPE);
+                    break;
+                }
+            }
+        }
     }
 
 
@@ -147,16 +177,16 @@ public class MetadataParser {
 
         LOG.trace("Gathering object schema data for property: {}", element.getSimpleName());
 
-        if (element.getKind() != ElementKind.FIELD) {
+        if (element.getKind() != ElementKind.FIELD)
             return Optional.empty();
-        }
+
 
         for (final var entry : FIELD_PARSE_FUNCTIONS.entrySet()) {
             final var annotationClass = entry.getKey();
             final var parseFunction = entry.getValue();
 
-            if (ReflectionUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).isPresent()) {
-                final var annotation = ReflectionUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).get();
+            if (AnnotationUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).isPresent()) {
+                final var annotation = AnnotationUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).get();
                 return Optional.of(parseFunction.apply(new Tuple<>(annotation, processingEnvironment)));
             }
         }
@@ -180,7 +210,7 @@ public class MetadataParser {
             canonicalName = e.getTypeMirrors().get(0).toString();
         }
 
-        final var itemElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
+        final var itemElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
         final var itemMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(itemElement, itemMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();
@@ -207,7 +237,7 @@ public class MetadataParser {
         } catch (MirroredTypeException e) {
             canonicalName = e.getTypeMirrors().get(0).toString();
         }
-        final var valueElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
+        final var valueElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
         final var valueMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(valueElement, valueMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();
@@ -306,7 +336,7 @@ public class MetadataParser {
         } catch (MirroredTypeException e) {
             canonicalName = e.getTypeMirrors().get(0).toString();
         }
-        final var refElement = ReflectionUtils.safeGetElement(canonicalName, processingEnvironment);
+        final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
         final var refMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();

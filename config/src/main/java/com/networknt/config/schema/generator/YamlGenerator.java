@@ -1,5 +1,7 @@
 package com.networknt.config.schema.generator;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MetadataParser;
 import org.yaml.snakeyaml.DumperOptions;
@@ -17,9 +19,12 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Generates Light4J style yaml configuration files.
+ *
+ * // TODO - YAML keeps printing single quotes on special chars
  *
  * @author Kalev Gonvick
  */
@@ -106,8 +111,27 @@ public class YamlGenerator extends Generator {
                     .append(externalizedKeyName)
                     .append(":");
 
-        if (defaultValue != null)
+        if (isExternalized && defaultValue != null)
             builder.append(defaultValue);
+
+        else if (defaultValue != null) {
+            final var mapper = Config.getInstance().getMapper();
+            try {
+                final LinkedHashMap<String, Object> jsonMapValue = mapper.readValue((String) defaultValue, new TypeReference<>() {});
+                property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonMapValue);
+                return;
+            } catch (Exception me) {
+                try {
+                    final List<String> jsonListValue = mapper.readValue((String) defaultValue, new TypeReference<>() {});
+                    property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonListValue);
+                    return;
+                } catch (Exception le) {
+                    // do nothing
+                }
+            }
+        }
+
+        System.out.println(defaultValue);
 
         if (isExternalized)
             builder.append(EXTERNAL_CONFIG_SUFFIX);
@@ -123,17 +147,12 @@ public class YamlGenerator extends Generator {
         if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
             if (Generator.fieldIsSubMap(field, MetadataParser.ITEMS_KEY)) {
-
-                // TODO - test this with items
                 final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.ITEMS_KEY);
                 props.values().forEach(value -> {
                     final var itemProp = new LinkedHashMap<String, Object>();
                     this.parseField((LinkedHashMap<String, Object>) value, itemProp);
                     property.putAll(itemProp);
                 });
-            } else {
-                // TODO - handle itemsAllOf, itemsOneOf, itemsAnyOf
-                throw new IllegalStateException("Not implemented yet.");
             }
         } else this.buildYamlProperty(field, property);
 
@@ -175,10 +194,8 @@ public class YamlGenerator extends Generator {
             else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY))
                 props = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY)).get(MetadataParser.PROPERTIES_KEY);
 
-            else {
-                // TODO - handle allOf, oneOf, anyOf
-                throw new IllegalStateException("Not implemented yet.");
-            }
+            else props = new LinkedHashMap<>();
+
 
             final var objectProperties = new LinkedHashMap<String, Object>();
             props.forEach((key, value) -> {

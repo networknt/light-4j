@@ -16,6 +16,10 @@
 
 package com.networknt.dump;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.config.Config;
+import com.networknt.config.schema.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,65 +28,138 @@ import java.util.Map;
 /**
  * this class is to load dump.yml config file, and map settings to properties of this class.
  */
+@ConfigSchema(configKey = "dump", configName = "dump", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DumpConfig {
     public static final String CONFIG_NAME = "dump";
+
+    @BooleanField(
+            configFieldName = "enabled",
+            externalizedKeyName = "enabled",
+            externalized = true,
+            description = "Indicate if the dump middleware is enabled or not."
+    )
     private boolean enabled = false;
+
+    @BooleanField(
+            configFieldName = "mask",
+            externalizedKeyName = "mask",
+            externalized = true,
+            description = "Indicate if the dump middleware should mask sensitive data."
+    )
     private boolean mask = false;
+
+    @StringField(
+            configFieldName = "logLevel",
+            externalizedKeyName = "logLevel",
+            defaultValue = "INFO",
+            pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
+            externalized = true,
+            description = "The log level for the dump middleware."
+    )
     private String logLevel = "INFO";
-    private int indentSize = 4;
-    private boolean useJson = false;
-    private Map<String, Object> request;
-    private Map<String, Object> response;
+
+    @IntegerField(
+            configFieldName = "indentSize",
+            externalizedKeyName = "indentSize",
+            defaultValue = 4,
+            externalized = true,
+            description = "The indent size for the dump middleware."
+    )
+    private int indentSize;
+
+    @BooleanField(
+            configFieldName = "useJson",
+            externalizedKeyName = "useJson",
+            externalized = true,
+            description = "Indicate if the dump middleware should use JSON format."
+    )
+    private boolean useJson;
+
+    @BooleanField(
+            configFieldName = "requestEnabled",
+            externalizedKeyName = "requestEnabled",
+            externalized = true,
+            description = "Indicate if the dump middleware should dump request."
+    )
+    private boolean requestEnabled;
+
+    @ObjectField(
+            configFieldName = "request",
+            externalizedKeyName = "request",
+            externalized = true,
+            description = "The request settings for the dump middleware.",
+            ref = DumpRequestConfig.class
+    )
+    private DumpRequestConfig request;
+
+    @BooleanField(
+            configFieldName = "responseEnabled",
+            externalizedKeyName = "responseEnabled",
+            externalized = true,
+            description = "Indicate if the dump middleware should dump response."
+    )
+    private boolean responseEnabled;
+
+    @ObjectField(
+            configFieldName = "response",
+            externalizedKeyName = "response",
+            externalized = true,
+            description = "The response settings for the dump middleware.",
+            ref = DumpResponseConfig.class
+    )
+    private DumpResponseConfig response;
+
     private static Boolean DEFAULT = false;
 
     //request settings:
-    private boolean requestUrlEnabled ;
-    private boolean requestHeaderEnabled ;
-    private List<String> requestFilteredHeaders;
-    private boolean requestCookieEnabled;
-    private List<String> requestFilteredCookies;
-    private boolean requestQueryParametersEnabled;
-    private List<String> requestFilteredQueryParameters;
-    private boolean requestBodyEnabled;
-
-    //response settings:
-    private boolean responseHeaderEnabled;
-    private List<String> responseFilteredHeaders;
-    private boolean responseCookieEnabled;
-    private List<String> responseFilteredCookies;
-    private boolean responseStatusCodeEnabled;
-    private boolean responseBodyEnabled;
+//    private boolean requestUrlEnabled ;
+//    private boolean requestHeaderEnabled ;
+//    private List<String> requestFilteredHeaders;
+//    private boolean requestCookieEnabled;
+//    private List<String> requestFilteredCookies;
+//    private boolean requestQueryParametersEnabled;
+//    private List<String> requestFilteredQueryParameters;
+//    private boolean requestBodyEnabled;
+//
+//    //response settings:
+//    private boolean responseHeaderEnabled;
+//    private List<String> responseFilteredHeaders;
+//    private boolean responseCookieEnabled;
+//    private List<String> responseFilteredCookies;
+//    private boolean responseStatusCodeEnabled;
+//    private boolean responseBodyEnabled;
 
 
     public void setResponse(Map<String, Object> response) {
-        this.response = response == null ? new HashMap<>() : response;
-        loadResponseConfig(this.response);
+        final var mapper = Config.getInstance().getMapper();
+        this.response = mapper.convertValue(response, new TypeReference<>() {});
     }
+
 
     public void setRequest(Map<String, Object> request) {
-        this.request = request == null ? new HashMap<>() : request;
-        loadRequestConfig(this.request);
+        final var mapper = Config.getInstance().getMapper();
+        this.request = mapper.convertValue(request, new TypeReference<>() {});
     }
 
-    private void loadRequestConfig(Map<String, Object> request) {
-        this.requestBodyEnabled = loadEnableConfig(request, DumpConstants.BODY);
-        this.requestCookieEnabled = loadEnableConfig(request, DumpConstants.COOKIES);
-        this.requestHeaderEnabled = loadEnableConfig(request, DumpConstants.HEADERS);
-        this.requestQueryParametersEnabled = loadEnableConfig(request, DumpConstants.QUERY_PARAMETERS);
-        this.requestUrlEnabled = loadEnableConfig(request, DumpConstants.URL);
-        this.requestFilteredCookies = loadFilterConfig(request, DumpConstants.FILTERED_COOKIES);
-        this.requestFilteredHeaders = loadFilterConfig(request, DumpConstants.FILTERED_HEADERS);
-        this.requestFilteredQueryParameters = loadFilterConfig(request, DumpConstants.FILTERED_QUERY_PARAMETERS);
-    }
-
-    private void loadResponseConfig(Map<String, Object> response) {
-        this.responseBodyEnabled = loadEnableConfig(response, DumpConstants.BODY);
-        this.responseCookieEnabled = loadEnableConfig(response, DumpConstants.COOKIES);
-        this.responseHeaderEnabled = loadEnableConfig(response, DumpConstants.HEADERS);
-        this.responseStatusCodeEnabled = loadEnableConfig(response, DumpConstants.STATUS_CODE);
-        this.responseFilteredCookies = loadFilterConfig(response, DumpConstants.FILTERED_COOKIES);
-        this.responseFilteredHeaders = loadFilterConfig(response, DumpConstants.HEADERS);
-    }
+//    private void loadRequestConfig(Map<String, Object> request) {
+//        this.requestBodyEnabled = loadEnableConfig(request, DumpConstants.BODY);
+//        this.requestCookieEnabled = loadEnableConfig(request, DumpConstants.COOKIES);
+//        this.requestHeaderEnabled = loadEnableConfig(request, DumpConstants.HEADERS);
+//        this.requestQueryParametersEnabled = loadEnableConfig(request, DumpConstants.QUERY_PARAMETERS);
+//        this.requestUrlEnabled = loadEnableConfig(request, DumpConstants.URL);
+//        this.requestFilteredCookies = loadFilterConfig(request, DumpConstants.FILTERED_COOKIES);
+//        this.requestFilteredHeaders = loadFilterConfig(request, DumpConstants.FILTERED_HEADERS);
+//        this.requestFilteredQueryParameters = loadFilterConfig(request, DumpConstants.FILTERED_QUERY_PARAMETERS);
+//    }
+//
+//    private void loadResponseConfig(Map<String, Object> response) {
+//        this.responseBodyEnabled = loadEnableConfig(response, DumpConstants.BODY);
+//        this.responseCookieEnabled = loadEnableConfig(response, DumpConstants.COOKIES);
+//        this.responseHeaderEnabled = loadEnableConfig(response, DumpConstants.HEADERS);
+//        this.responseStatusCodeEnabled = loadEnableConfig(response, DumpConstants.STATUS_CODE);
+//        this.responseFilteredCookies = loadFilterConfig(response, DumpConstants.FILTERED_COOKIES);
+//        this.responseFilteredHeaders = loadFilterConfig(response, DumpConstants.HEADERS);
+//    }
 
     private boolean loadEnableConfig(Map<String, Object> config, String optionName) {
         return config.get(optionName) instanceof Boolean ? (Boolean)config.get(optionName) : DEFAULT;
@@ -97,11 +174,11 @@ public class DumpConfig {
     }
 
     public boolean isRequestEnabled() {
-        return isEnabled() && !request.isEmpty();
+        return isEnabled() && !this.requestEnabled;
     }
 
     public boolean isResponseEnabled() {
-        return isEnabled() && !response.isEmpty();
+        return isEnabled() && !this.responseEnabled;
     }
 
     //auto-generated
@@ -139,67 +216,72 @@ public class DumpConfig {
         this.useJson = useJson;
     }
 
+    @Deprecated(since = "2.2.1")
     public Map<String, Object> getRequest() {
-        return request;
+        final var mapper = Config.getInstance().getMapper();
+        return mapper.convertValue(request, new TypeReference<>() {});
     }
 
+    @Deprecated(since = "2.2.1")
     public Map<String, Object> getResponse() {
-        return response;
+        final var mapper = Config.getInstance().getMapper();
+        return mapper.convertValue(response, new TypeReference<>() {});
     }
+
 
     public boolean isRequestUrlEnabled() {
-        return requestUrlEnabled;
+        return request.isUrl();
     }
 
     public boolean isRequestHeaderEnabled() {
-        return requestHeaderEnabled;
+        return request.isHeaders();
     }
 
     public List<String> getRequestFilteredHeaders() {
-        return requestFilteredHeaders;
+        return request.getFilteredHeaders();
     }
 
     public boolean isRequestCookieEnabled() {
-        return requestCookieEnabled;
+        return request.isCookies();
     }
 
     public List<String> getRequestFilteredCookies() {
-        return requestFilteredCookies;
+        return request.getFilteredCookies();
     }
 
     public boolean isRequestQueryParametersEnabled() {
-        return requestQueryParametersEnabled;
+        return request.isQueryParameters();
     }
 
     public List<String> getRequestFilteredQueryParameters() {
-        return requestFilteredQueryParameters;
+        return request.getFilteredQueryParameters();
     }
 
     public boolean isRequestBodyEnabled() {
-        return requestBodyEnabled;
+        return request.isBody();
     }
 
     public boolean isResponseHeaderEnabled() {
-        return responseHeaderEnabled;
+        return response.isHeaders();
     }
 
     public List<String> getResponseFilteredHeaders() {
-        return responseFilteredHeaders;
+        return response.getFilteredHeaders();
     }
 
     public boolean isResponseCookieEnabled() {
-        return responseCookieEnabled;
+        return response.isCookies();
     }
 
     public List<String> getResponseFilteredCookies() {
-        return responseFilteredCookies;
+        return response.getFilteredCookies();
     }
 
     public boolean isResponseStatusCodeEnabled() {
-        return responseStatusCodeEnabled;
+        return response.isStatusCode();
     }
 
     public boolean isResponseBodyEnabled() {
-        return responseBodyEnabled;
+        return response.isBody();
     }
 }

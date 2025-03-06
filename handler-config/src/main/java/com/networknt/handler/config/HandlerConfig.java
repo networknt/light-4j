@@ -19,6 +19,7 @@ package com.networknt.handler.config;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import java.util.*;
  * @author Nicholas Azar
  * @author Dan Dobrin
  */
+@ConfigSchema(configName = "handler", configKey = "handler", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class HandlerConfig {
     public static final String CONFIG_NAME = "handler";
     private static final Logger logger = LoggerFactory.getLogger(HandlerConfig.class);
@@ -43,22 +45,127 @@ public class HandlerConfig {
     private static final String AUDIT_STACK_TRACE = "auditStackTrace";
     private static final String BASE_PATH = "basePath";
     private static final String REPORT_HANDLER_DURATION = "reportHandlerDuration";
+    private static final String HANDLER_METRICS_LOG_LEVEL = "handlerMetricsLogLevel";
 
     private static final String PATH = "path";
     private static final String SOURCE = "source";
     private static final String EXEC = "exec";
     private static final String METHOD = "method";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            defaultValue = true,
+            description = "Indicate if the handler middleware is enabled or not."
+    )
     private boolean enabled;
-    private List<String> handlers;
-    private Map<String, List<String>> chains;
-    private List<PathChain> paths;
-    private List<String> defaultHandlers;
+
+    @BooleanField(
+            configFieldName = AUDIT_ON_ERROR,
+            externalizedKeyName = AUDIT_ON_ERROR,
+            externalized = true,
+            description = "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\n" +
+                    "set the Status Object in the AUDIT_INFO, for auditing purposes\n" +
+                    "default, if not set:false"
+    )
     private boolean auditOnError;
+
+    @BooleanField(
+            configFieldName = AUDIT_STACK_TRACE,
+            externalizedKeyName = AUDIT_STACK_TRACE,
+            externalized = true,
+            description = "set the StackTrace in the AUDIT_INFO, for auditing purposes\n" +
+                    "default, if not set:false"
+    )
     private boolean auditStackTrace;
+
+    @BooleanField(
+            configFieldName = REPORT_HANDLER_DURATION,
+            externalizedKeyName = REPORT_HANDLER_DURATION,
+            externalized = true,
+            description = "Indicate if the handler middleware should report handler duration."
+    )
     private boolean enabledHandlerMetrics;
+
+    @StringField(
+            configFieldName = HANDLER_METRICS_LOG_LEVEL,
+            externalizedKeyName = HANDLER_METRICS_LOG_LEVEL,
+            externalized = true,
+            defaultValue = "DEBUG",
+            pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
+            description = "The log level for the handler metrics."
+    )
     private String handlerMetricsLogLevel;
+
+    @StringField(
+            configFieldName = BASE_PATH,
+            externalizedKeyName = BASE_PATH,
+            externalized = true,
+            defaultValue = "/",
+            description = "Base Path of the API endpoints"
+    )
     private String basePath;
+
+    @ArrayField(
+            configFieldName = HANDLERS,
+            externalizedKeyName = HANDLERS,
+            externalized = true,
+            description = "------------------------------------------------------------------------------\n" +
+                    "Support individual handler chains for each separate endpoint. It allows framework\n" +
+                    "handlers like health check, server info to bypass majority of the middleware handlers\n" +
+                    "and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.\n" +
+                    "\n" +
+                    "handlers  --  list of handlers to be used across chains in this microservice\n" +
+                    "              including the routing handlers for ALL endpoints\n" +
+                    "          --  format: fully qualified handler class name@optional:given name\n" +
+                    "chains    --  allows forming of [1..N] chains, which could be wholly or\n" +
+                    "              used to form handler chains for each endpoint\n" +
+                    "              ex.: default chain below, reused partially across multiple endpoints\n" +
+                    "paths     --  list all the paths to be used for routing within the microservice\n" +
+                    "          ----  path: the URI for the endpoint (ex.: path: '/v1/pets')\n" +
+                    "          ----  method: the operation in use (ex.: 'post')\n" +
+                    "          ----  exec: handlers to be executed -- this element forms the list and\n" +
+                    "                      the order of execution for the handlers\n" +
+                    "\n" +
+                    "IMPORTANT NOTES:\n" +
+                    "- to avoid executing a handler, it has to be removed/commented out in the chain\n" +
+                    "  or change the enabled:boolean to false for a middleware handler configuration.\n" +
+                    "- all handlers, routing handler included, are to be listed in the execution chain\n" +
+                    "- for consistency, give a name to each handler; it is easier to refer to a name\n" +
+                    "  vs a fully qualified class name and is more elegant\n" +
+                    "- you can list in chains the fully qualified handler class names, and avoid using the\n" +
+                    "  handlers element altogether\n" +
+                    "------------------------------------------------------------------------------",
+            items = String.class
+    )
+    private List<String> handlers;
+
+    @MapField(
+            configFieldName = DEFAULT_HANDLERS,
+            externalizedKeyName = DEFAULT_HANDLERS,
+            externalized = true,
+            description = "List of defined chains",
+            valueType = List.class
+    )
+    private Map<String, List<String>> chains;
+
+    @ArrayField(
+            configFieldName = PATHS,
+            externalizedKeyName = PATHS,
+            externalized = true,
+            items = PathChain.class
+    )
+    private List<PathChain> paths;
+
+    @ArrayField(
+            configFieldName = DEFAULT_HANDLERS,
+            externalizedKeyName = DEFAULT_HANDLERS,
+            externalized = true,
+            description = "If there is no matched path, then it goes here first. If this is not set, then an error\n" +
+                    "will be returned.",
+            items = String.class
+    )
+    private List<String> defaultHandlers;
     private Map<String, Object> mappedConfig;
     private final Config config;
 

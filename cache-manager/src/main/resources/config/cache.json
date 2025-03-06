@@ -1,0 +1,30 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "caches" ],
+  "properties" : {
+    "caches" : {
+      "type" : "array",
+      "description" : "There will be multiple caches per application and each cache should have it own name and expiryInMinutes. The\ncaches are lists of caches. The cache name is used to identify the cache and the expiryInMinutes the expiry time.\ncaches:\n  - cacheName: cache1\n    expiryInMinutes: 60\n    maxSize: 1000\n  - cacheName: cache2\n    expiryInMinutes: 120\n    maxSize: 100",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "cacheName" : {
+            "type" : "string",
+            "description" : "The name of the cache."
+          },
+          "maxSize" : {
+            "type" : "integer",
+            "description" : "The maximum size of the cache.",
+            "minimum" : 0
+          },
+          "expiryInMinutes" : {
+            "type" : "integer",
+            "description" : "The expiry time of the cache in minutes.",
+            "minimum" : 0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+#indicate if this interceptor is enabled or not.
+enabled: ${response-transformer.enabled:true}
+#indicate if the transform interceptor needs to change the request body
+requiredContent: ${response-transformer.requiredContent:true}
+#default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1.
+defaultBodyEncoding: ${response-transformer.defaultBodyEncoding:UTF-8}
+#A list of applied request path prefixes, other requests will skip this handler. The value can be a string
+#if there is only one request path prefix needs this handler. or a list of strings if there are multiple.
+appliedPathPrefixes: ${response-transformer.appliedPathPrefixes:}
+#For certain path prefixes that are not using the defaultBodyEncoding UTF-8, you can define the customized
+#encoding like ISO-8859-1 for the path prefixes here. This is only for the legacy APIs that can only accept
+#ISO-8859-1 response body but the backend server is sending the response in UTF-8 as it is standard on the Web.
+#pathPrefixEncoding:
+#  /v1/pets: ISO-8859-1
+#  /v1/party/info: ISO-8859-1
+pathPrefixEncoding: ${response-transformer.pathPrefixEncoding:}

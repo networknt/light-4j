@@ -1,0 +1,4 @@
+#Indicate if the content middleware is enabled or not.
+enabled: ${content.enabled:false}
+#The content type to be used in the response.
+contentType: ${content.contentType:}

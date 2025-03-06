@@ -18,6 +18,9 @@ package com.networknt.config.reload.model;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import java.util.Map;
 /**
  * Config class for Config reload related handlers
  */
+@ConfigSchema(configKey = "configReload", configName = "configReload", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ConfigReloadConfig {
     private static final Logger logger = LoggerFactory.getLogger(ConfigReloadConfig.class);
     public static final String CONFIG_NAME = "configReload";
@@ -34,6 +38,13 @@ public class ConfigReloadConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "config reload from config server.\n" +
+            "Indicate if the config reload from config server  is enabled or not."
+    )
     boolean enabled;
 
     private ConfigReloadConfig(String configName) {

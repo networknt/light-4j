@@ -3,6 +3,7 @@ package com.networknt.security;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ import java.util.*;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configName = "security", configKey = "security", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class SecurityConfig {
     public static final String CONFIG_NAME = "security";
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
@@ -48,30 +50,260 @@ public class SecurityConfig {
     private static final String PASS_THROUGH_CLAIMS = "passThroughClaims";
 
     private Map<String, Object> mappedConfig;
-    private Map<String, Object> certificate;
+
     private final Config config;
+
+    @BooleanField(
+            configFieldName = ENABLE_VERIFY_JWT,
+            externalizedKeyName = ENABLE_VERIFY_JWT,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification\n" +
+                    "if this flag is false. It should only be set to false on the dev environment for testing\n" +
+                    "purposes. If you have some endpoints that want to skip the JWT verification, you can put the\n" +
+                    "request path prefix in skipPathPrefixes."
+    )
     private boolean enableVerifyJwt;
+
+    @BooleanField(
+            configFieldName = ENABLE_VERIFY_SWT,
+            externalizedKeyName = ENABLE_VERIFY_SWT,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification\n" +
+                    "if this flag is false. It should only be set to false on the dev environment for testing\n" +
+                    "purposes. If you have some endpoints that want to skip the SWT verification, you can put the\n" +
+                    "request path prefix in skipPathPrefixes."
+    )
     private boolean enableVerifySwt;
+
+    @StringField(
+            configFieldName = SWT_CLIENT_ID_HEADER,
+            externalizedKeyName = SWT_CLIENT_ID_HEADER,
+            externalized = true,
+            defaultValue = "swt-client",
+            description = "swt clientId header name. When light-gateway is used and the consumer app does not want to save\n" +
+                    "the client secret in the configuration file, it can be passed in the header."
+    )
     private String swtClientIdHeader;
+
+    @StringField(
+            configFieldName = SWT_CLIENT_SECRET_HEADER,
+            externalizedKeyName = SWT_CLIENT_SECRET_HEADER,
+            externalized = true,
+            defaultValue = "swt_secret",
+            description = "swt clientSecret header name. When light-gateway is used and the consumer app does not want to save\n" +
+                    "the client secret in the configuration file, it can be passed in the header."
+    )
     private String swtClientSecretHeader;
+
+    @BooleanField(
+            configFieldName = ENABLE_EXTRACT_SCOPE_TOKEN,
+            externalizedKeyName = ENABLE_EXTRACT_SCOPE_TOKEN,
+            externalized = true,
+            defaultValue = true,
+            description = "Extract JWT scope token from the X-Scope-Token header and validate the JWT token"
+    )
     private boolean enableExtractScopeToken;
+
+    @BooleanField(
+            configFieldName = ENABLE_VERIFY_SCOPE,
+            externalizedKeyName = ENABLE_VERIFY_SCOPE,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the\n" +
+                    "light gateway as a centralized gateway without backend API specifications, you can still enable\n" +
+                    "this flag to allow the admin endpoints to have scopes verified. And all backend APIs without\n" +
+                    "specifications skip the scope verification if the spec does not exist with the skipVerifyScopeWithoutSpec\n" +
+                    "flag to true. Also, you need to have the openapi.yml specification file in the config folder to\n" +
+                    "enable it, as the scope verification compares the scope from the JWT token and the scope in the\n" +
+                    "endpoint specification."
+    )
     private boolean enableVerifyScope;
+
+    @BooleanField(
+            configFieldName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
+            externalizedKeyName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
+            externalized = true,
+            description = "Users should only use this flag in a shared light gateway if the backend API specifications are\n" +
+                    "unavailable in the gateway config folder. If this flag is true and the enableVerifyScope is true,\n" +
+                    "the security handler will invoke the scope verification for all endpoints. However, if the endpoint\n" +
+                    "doesn't have a specification to retrieve the defined scopes, the handler will skip the scope verification."
+    )
     private boolean skipVerifyScopeWithoutSpec;
-    private boolean enableMockJwt;
-    private int clockSkewInSeconds;
-    private String keyResolver;
-    private boolean logJwtToken;
-    private boolean logClientUserScope;
-    private boolean enableJwtCache;
-    private int jwtCacheFullSize;
-    private boolean bootstrapFromKeyService;
+
+    @BooleanField(
+            configFieldName = IGNORE_JWT_EXPIRY,
+            externalizedKeyName = IGNORE_JWT_EXPIRY,
+            externalized = true,
+            description = "If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless\n" +
+                    "you have a strong reason, please use it only on the dev environment if your OAuth 2 provider\n" +
+                    "doesn't support long-lived token for dev environment or test automation."
+    )
     private boolean ignoreJwtExpiry;
-    private String providerId;
+
+
+
+    @BooleanField(
+            configFieldName = ENABLE_H2C,
+            externalizedKeyName = ENABLE_H2C,
+            externalized = true,
+            defaultValue = true,
+            description = "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\n" +
+                    "By default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls."
+    )
     private boolean enableH2c;
 
+    @BooleanField(
+            configFieldName = ENABLE_MOCK_JWT,
+            externalizedKeyName = ENABLE_MOCK_JWT,
+            externalized = true,
+            description = "User for test only. should be always be false on official environment."
+    )
+    private boolean enableMockJwt;
+
+    @BooleanField(
+            configFieldName = ENABLE_RELAXED_KEY_CONSTRAINTS,
+            externalizedKeyName = ENABLE_RELAXED_KEY_CONSTRAINTS,
+            externalized = true,
+            defaultValue = true,
+            description = ""
+    )
     private boolean enableRelaxedKeyValidation;
+
+    // JWT
+
+//    @IntegerField(
+//            configFieldName = CLOCK_SKEW_IN_SECONDS,
+//            externalizedKeyName = CLOCK_SKEW_IN_SECONDS,
+//            externalized = true
+//    )
+//    private int clockSkewInSeconds;
+//
+//
+//    private Map<String, Object> certificate;
+//
+//    @StringField(
+//            configFieldName = KEY_RESOLVER,
+//            externalizedKeyName = KEY_RESOLVER,
+//            externalized = true,
+//            description = "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2"
+//    )
+//    private String keyResolver;
+
+    // ~JWT
+
+    @ObjectField(
+            configFieldName = JWT,
+            description = "JWT signature public certificates. kid and certificate path mappings.",
+            ref = SecurityJwtConfig.class,
+            useSubObjectDefault = true
+    )
+    private SecurityJwtConfig jwt;
+
+    @BooleanField(
+            configFieldName = LOG_JWT_TOKEN,
+            externalizedKeyName = LOG_JWT_TOKEN,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable or disable JWT token logging for audit. This is to log the entire token\n" +
+                    "or choose the next option that only logs client_id, user_id and scope."
+    )
+    private boolean logJwtToken;
+
+    @BooleanField(
+            configFieldName = LOG_CLIENT_USER_SCOPE,
+            externalizedKeyName = LOG_CLIENT_USER_SCOPE,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable or disable client_id, user_id and scope logging if you don't want to log\n" +
+                    "the entire token. Choose this option or the option above."
+    )
+    private boolean logClientUserScope;
+
+    @BooleanField(
+            configFieldName = ENABLE_JWT_CACHE,
+            externalizedKeyName = ENABLE_JWT_CACHE,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable JWT token cache to speed up verification. This will only verify expired time\n" +
+                    "and skip the signature verification as it takes more CPU power and a long time. If\n" +
+                    "each request has a different jwt token, like authorization code flow, this indicator\n" +
+                    "should be turned off. Otherwise, the cached jwt will only be removed after 15 minutes\n" +
+                    "and the cache can grow bigger if the number of requests is very high. This will cause\n" +
+                    "memory kill in a Kubernetes pod if the memory setting is limited."
+    )
+    private boolean enableJwtCache;
+
+    @IntegerField(
+            configFieldName = JWT_CACHE_FULL_SIZE,
+            externalizedKeyName = JWT_CACHE_FULL_SIZE,
+            externalized = true,
+            description = "If enableJwtCache is true, then an error message will be shown up in the log if the\n" +
+                    "cache size is bigger than the jwtCacheFullSize. This helps the developers to detect\n" +
+                    "cache problem if many distinct tokens flood the cache in a short period of time. If\n" +
+                    "you see JWT cache exceeds the size limit in logs, you need to turn off the enableJwtCache\n" +
+                    "or increase the cache full size to a bigger number from the default 100."
+    )
+    private int jwtCacheFullSize;
+
+    @BooleanField(
+            configFieldName = BOOTSTRAP_FROM_KEY_SERVICE,
+            externalizedKeyName = BOOTSTRAP_FROM_KEY_SERVICE,
+            externalized = true,
+            defaultValue = true,
+            description = "If you are using light-oauth2, then you don't need to have oauth subfolder for public\n" +
+                    "key certificate to verify JWT token, the key will be retrieved from key endpoint once\n" +
+                    "the first token is arrived. Default to false for dev environment without oauth2 server\n" +
+                    "or official environment that use other OAuth 2.0 providers."
+    )
+    private boolean bootstrapFromKeyService;
+
+
+
+    @StringField(
+            configFieldName = PROVIDER_ID,
+            externalizedKeyName = PROVIDER_ID,
+            externalized = true,
+            description = "Used in light-oauth2 and oauth-kafka key service for federated deployment. Each instance\n" +
+                    "will have a providerId, and it will be part of the kid to allow each instance to get the\n" +
+                    "JWK from other instance based on the providerId in the kid."
+    )
+    private String providerId;
+
+    @ArrayField(
+            configFieldName = SKIP_PATH_PREFIXES,
+            externalizedKeyName = SKIP_PATH_PREFIXES,
+            externalized = true,
+            description = "Define a list of path prefixes to skip the security to ease the configuration for the\n" +
+                    "handler.yml so that users can define some endpoint without security even through it uses\n" +
+                    "the default chain. This is particularly useful in the light-gateway use case as the same\n" +
+                    "instance might be shared with multiple consumers and providers with different security\n" +
+                    "requirement. The format is a list of strings separated with commas or a JSON list in\n" +
+                    "values.yml definition from config server, or you can use yaml format in this file.",
+            items = String.class
+    )
     private List<String> skipPathPrefixes;
 
+    @MapField(
+            configFieldName = PASS_THROUGH_CLAIMS,
+            externalizedKeyName = PASS_THROUGH_CLAIMS,
+            externalized = true,
+            description = "When light-gateway or http-sidecar is used for security, sometimes, we need to pass some\n" +
+                    "claims from the JWT or SWT to the backend API for further verification or audit. You can\n" +
+                    "select some claims to pass to the backend API with HTTP headers. The format is a map of\n" +
+                    "claim in the token and a header name that the downstream API is expecting. You can use\n" +
+                    "both JSON or YAML format.\n" +
+                    "When SwtVerifyHandler is used, the claim names are in https://github.com/networknt/light-4j/blob/master/client/src/main/java/com/networknt/client/oauth/TokenInfo.java\n" +
+                    "When JwtVerifyHandler is used, the claim names is the JwtClaims claimName.\n" +
+                    "YAML\n" +
+                    "security.passThroughClaims:\n" +
+                    "  clientId: client_id\n" +
+                    "  tokenType: token_type\n" +
+                    "JSON\n" +
+                    "security.passThroughClaims: {\"clientId\":\"client_id\",\"tokenType\":\"token_type\"}",
+            valueType = String.class
+    )
     private Map<String, String> passThroughClaims;
 
     private SecurityConfig() {
@@ -119,7 +351,7 @@ public class SecurityConfig {
     }
 
     public Map<String, Object> getCertificate() {
-        return certificate;
+        return jwt.getCertificate();
     }
 
     public boolean isEnableVerifyJwt() {
@@ -156,11 +388,11 @@ public class SecurityConfig {
     }
 
     public int getClockSkewInSeconds() {
-        return clockSkewInSeconds;
+        return jwt.getClockSkewInSeconds();
     }
 
     public String getKeyResolver() {
-        return keyResolver;
+        return jwt.getKeyResolver();
     }
 
     public boolean isLogJwtToken() {
@@ -196,23 +428,26 @@ public class SecurityConfig {
     }
 
     private void setCertificate() {
+
         if(getMappedConfig() != null) {
             Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
-            Object obj = jwtMap.get(CERTIFICATE);
-            if(obj instanceof String) {
-                String s = (String)obj;
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                Map<String, Object> map = new LinkedHashMap<>();
-                for(String keyValue : s.split(" *& *")) {
-                    String[] pairs = keyValue.split(" *= *", 2);
-                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
-                }
-                certificate = map;
-            } else if (obj instanceof Map) {
-                certificate = (Map)obj;
-            } else {
-                certificate = new HashMap<>();
-            }
+            final var mapper = Config.getInstance().getMapper();
+            this.jwt = mapper.convertValue(jwtMap, new TypeReference<>(){});
+//            Object obj = jwtMap.get(CERTIFICATE);
+//            if(obj instanceof String) {
+//                String s = (String)obj;
+//                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+//                Map<String, Object> map = new LinkedHashMap<>();
+//                for(String keyValue : s.split(" *& *")) {
+//                    String[] pairs = keyValue.split(" *= *", 2);
+//                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+//                }
+//                certificate = map;
+//            } else if (obj instanceof Map) {
+//                certificate = (Map)obj;
+//            } else {
+//                certificate = new HashMap<>();
+//            }
         }
     }
 
@@ -252,12 +487,12 @@ public class SecurityConfig {
             if(object != null) ignoreJwtExpiry = Config.loadBooleanValue(IGNORE_JWT_EXPIRY, object);
             object = getMappedConfig().get(PROVIDER_ID);
             if(object != null) providerId = (String)object;
-            Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
-            if(jwtMap != null) {
-                object = jwtMap.get(CLOCK_SKEW_IN_SECONDS);
-                if(object != null) clockSkewInSeconds = Config.loadIntegerValue(CLOCK_SKEW_IN_SECONDS, object);
-                keyResolver = (String) jwtMap.get(KEY_RESOLVER);
-            }
+//            Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
+//            if(jwtMap != null) {
+//                object = jwtMap.get(CLOCK_SKEW_IN_SECONDS);
+//                if(object != null) clockSkewInSeconds = Config.loadIntegerValue(CLOCK_SKEW_IN_SECONDS, object);
+//                keyResolver = (String) jwtMap.get(KEY_RESOLVER);
+//            }
         }
     }
 

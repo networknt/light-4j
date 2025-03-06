@@ -200,7 +200,8 @@ public class DefaultConfigLoader implements IConfigLoader{
             logger.error("Failed to load configs from config server. Please check the logs for more details.");
             return;
         }
-        if(logger.isTraceEnabled()) logger.trace("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
+        if(logger.isTraceEnabled())
+            logger.trace("serviceConfigs received from Config Server: {}", JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
@@ -246,7 +247,7 @@ public class DefaultConfigLoader implements IConfigLoader{
             logger.error("Failed to load files from config server. Please check the logs for more details.");
             return;
         }
-        if(logger.isDebugEnabled()) logger.debug("loadFiles: " + JsonMapper.toJson(serviceFiles));
+        if(logger.isDebugEnabled()) logger.debug("loadFiles: {}", JsonMapper.toJson(serviceFiles));
         try {
             Path filePath = Paths.get(targetConfigsDirectory);
             if (!Files.exists(filePath)) {

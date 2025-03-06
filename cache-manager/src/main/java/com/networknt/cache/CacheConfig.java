@@ -2,6 +2,9 @@ package com.networknt.cache;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,7 @@ import java.util.regex.Pattern;
 
 import com.networknt.config.Config;
 
+@ConfigSchema(configName = "cache", configKey = "cache", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class CacheConfig {
     private static final Logger logger = LoggerFactory.getLogger(CacheConfig.class);
     public static final String CONFIG_NAME = "cache";
@@ -21,6 +25,21 @@ public class CacheConfig {
     public static final String EXPIRY_IN_MINUTES = "expiryInMinutes";
     public static final String MAX_SIZE = "maxSize";
 
+    @ArrayField(
+            configFieldName = CACHES,
+            externalizedKeyName = CACHES,
+            externalized = true,
+            description = "There will be multiple caches per application and each cache should have it own name and expiryInMinutes. The\n" +
+            "caches are lists of caches. The cache name is used to identify the cache and the expiryInMinutes the expiry time.\n" +
+            "caches:\n" +
+            "  - cacheName: cache1\n" +
+            "    expiryInMinutes: 60\n" +
+            "    maxSize: 1000\n" +
+            "  - cacheName: cache2\n" +
+            "    expiryInMinutes: 120\n" +
+            "    maxSize: 100",
+            items = CacheItem.class
+    )
     List<CacheItem> caches;
 
     private final Config config;

@@ -53,10 +53,10 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             final var configClassMetadata = config.getAnnotation(ConfigSchema.class);
 
             /* Get config path inside project folder */
-            final var modulePath = this.getPathInCurrentModule("../../src/main/resources/config/", 1);
+            final var modulePath = this.getPathInCurrentModule("../../src/main/resources/config/", configClassMetadata.configKey() + "_module");
 
             /* Get config path inside target folder */
-            final var targetPathMirror = this.getPathInCurrentModule("config/", 2);
+            final var targetPathMirror = this.getPathInCurrentModule("config/", configClassMetadata.configKey() + "_target");
 
             /* Generate a file inside the project folder and inside the target folder. */
             final var configMetadata = this.metadataParser.parseMetadata(config, this.processingEnv);
@@ -112,11 +112,11 @@ public class ConfigAnnotationParser extends AbstractProcessor {
     }
 
 
-    private Path getPathInCurrentModule(final String relativeModulePath, final int anchorIndex) {
+    private Path getPathInCurrentModule(final String relativeModulePath, final String tempAnchorName) {
         final var path = Objects.requireNonNullElse(relativeModulePath, "");
         final FileObject resource;
         try {
-            resource = this.processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "anchor" + anchorIndex, (Element[]) null);
+            resource = this.processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "anchor" + tempAnchorName, (Element[]) null);
         } catch (IOException e) {
             throw new RuntimeException("Could not create temp resource to find the current module", e);
         }

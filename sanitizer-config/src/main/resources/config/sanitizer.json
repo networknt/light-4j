@@ -1,0 +1,59 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "bodyEnabled", "bodyEncoder", "bodyAttributesToEncode", "bodyAttributesToIgnore", "headerEnabled", "headerEncoder", "headerAttributesToEncode", "headerAttributesToIgnore" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "indicate if sanitizer is enabled or not"
+    },
+    "bodyEnabled" : {
+      "type" : "boolean",
+      "description" : "if it is enabled, the body needs to be sanitized",
+      "default" : true
+    },
+    "bodyEncoder" : {
+      "type" : "string",
+      "description" : "the encoder for the body. javascript, javascript-attribute, javascript-block or javascript-source\nThere are other encoders that you can choose depending on your requirement. Please refer to site\nhttps://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java",
+      "default" : "javascript-source"
+    },
+    "bodyAttributesToEncode" : {
+      "type" : "array",
+      "description" : "pick up a list of keys to encode the values to limit the scope to only selected keys. You can\nchoose this option if you want to only encode certain fields in the body. When this option is\nselected, you can not use the bodyAttributesToIgnore list.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "bodyAttributesToIgnore" : {
+      "type" : "array",
+      "description" : "pick up a list of keys to ignore the values encoding to skip some of the values so that these\nvalues won't be encoded. You can choose this option if you want to encode everything except\nseveral values with a list of the keys. When this option is selected, you can not use the\nbodyAttributesToEncode list.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "headerEnabled" : {
+      "type" : "boolean",
+      "description" : "if it is enabled, the header needs to be sanitized",
+      "default" : true
+    },
+    "headerEncoder" : {
+      "type" : "boolean",
+      "description" : "the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source\nThere are other encoders that you can choose depending on your requirement. Please refer to site\nhttps://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java",
+      "default" : true
+    },
+    "headerAttributesToEncode" : {
+      "type" : "array",
+      "description" : "pick up a list of keys to encode the values to limit the scope to only selected keys. You can\nchoose this option if you want to only encode certain values in the headers. When this option is\nselected, you can not use the headerAttributesToIgnore list.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "headerAttributesToIgnore" : {
+      "type" : "array",
+      "description" : "pick up a list of keys to ignore the values encoding to skip some of the values so that these\nvalues won't be encoded. You can choose this option if you want to encode everything except\nseveral values with a list of the keys. When this option is selected, you can not use the\nheaderAttributesToEncode list.",
+      "items" : {
+        "type" : "string"
+      }
+    }
+  }
+}

@@ -1,6 +1,10 @@
 package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.MapField;
+import com.networknt.config.schema.OutputFormat;
 import com.networknt.handler.config.HandlerUtils;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
@@ -18,6 +22,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "serviceDict", configName = "serviceDict", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ServiceDictConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServiceDictConfig.class);
     public static final String CONFIG_NAME = "serviceDict";
@@ -28,8 +33,24 @@ public class ServiceDictConfig {
 
     // variables
     private Map<String, Object> mappedConfig;
-    private Map<String, String> mapping;
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "indicate if ServiceDictHandler is enabled or not"
+    )
     private boolean enabled;
+
+    @MapField(
+            configFieldName = MAPPING,
+            externalizedKeyName = MAPPING,
+            externalized = true,
+            description = "mapping from 'pathPrefix@requestMethod' to serviceIds",
+            valueType = String.class
+    )
+    private Map<String, String> mapping;
 
     // the config object
     private Config config;

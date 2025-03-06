@@ -1,0 +1,18 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "encoders" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "response encode handler for gzip and deflate"
+    },
+    "encoders" : {
+      "type" : "array",
+      "default" : [ "gzip", "deflate" ],
+      "items" : {
+        "type" : "string"
+      }
+    }
+  }
+}

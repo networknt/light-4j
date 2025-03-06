@@ -19,6 +19,10 @@ package com.networknt.encode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import com.networknt.decode.RequestDecodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(configKey = "response-encode", configName = "response-encode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ResponseEncodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseEncodeConfig.class);
 
@@ -37,7 +42,21 @@ public class ResponseEncodeConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "response encode handler for gzip and deflate"
+    )
     boolean enabled;
+
+    @ArrayField(
+            configFieldName = ENCODERS,
+            externalizedKeyName = ENCODERS,
+            externalized = true,
+            defaultValue = "[\"gzip\", \"deflate\"]",
+            items = String.class
+    )
     List<String> encoders;
 
     private ResponseEncodeConfig(String configName) {
