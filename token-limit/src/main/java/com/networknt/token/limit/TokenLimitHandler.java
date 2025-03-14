@@ -133,7 +133,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
             // grant_type and scope will always be sent on body
             Map<String, String> bodyMap = convertStringToHashMap(requestBodyString);
             grantType = bodyMap.get(GRANT_TYPE);
-            scope = bodyMap.get(SCOPE).replace(" ", "");
+            scope = (bodyMap.get(SCOPE) != null) ? bodyMap.get(SCOPE).replace(" ", "") : "";
 
             // For clientID and secrets lets check auth headers first
             String auth = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
