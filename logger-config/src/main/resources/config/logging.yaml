@@ -1,0 +1,12 @@
+#Indicate if the logging info is enabled or not.
+enabled: ${logging.enabled:true}
+#Indicate the default time period backward in millisecond for log content retrieve.
+#Default is an hour which indicate system will retrieve one hour log by default
+logStart: ${logging.logStart:600000}
+#if the logger access needs to invoke down streams API. It is false by default.
+downstreamEnabled: ${logging.downstreamEnabled:false}
+#down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar.
+downstreamHost: ${logging.downstreamHost:http://localhost:8081}
+#down stream API framework that has the admin endpoints. Light4j, SpringBoot, Quarkus, Micronaut, Helidon, etc. If the adm endpoints are different between
+#different versions, you can use the framework plus version as the identifier. For example, Light4j-1.6.0, SpringBoot-2.4.0, etc.
+downstreamFramework: ${logging.downstreamFramework:Light4j}

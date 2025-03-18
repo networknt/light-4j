@@ -1,0 +1,121 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "mask", "logLevel", "indentSize", "useJson", "requestEnabled", "request", "responseEnabled", "response" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if the dump middleware is enabled or not."
+    },
+    "mask" : {
+      "type" : "boolean",
+      "description" : "Indicate if the dump middleware should mask sensitive data."
+    },
+    "logLevel" : {
+      "type" : "string",
+      "description" : "The log level for the dump middleware.",
+      "default" : "INFO",
+      "pattern" : "^(TRACE|DEBUG|INFO|WARN|ERROR)$"
+    },
+    "indentSize" : {
+      "type" : "integer",
+      "description" : "The indent size for the dump middleware.",
+      "default" : 4
+    },
+    "useJson" : {
+      "type" : "boolean",
+      "description" : "Indicate if the dump middleware should use JSON format."
+    },
+    "requestEnabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if the dump middleware should dump request."
+    },
+    "request" : {
+      "type" : "object",
+      "description" : "The request settings for the dump middleware.",
+      "properties" : {
+        "headers" : {
+          "type" : "boolean",
+          "description" : "Indicate if the headers should be dumped or not."
+        },
+        "filteredHeaders" : {
+          "type" : "array",
+          "description" : "List of headers that should be filtered out from the dump.",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "queryParameters" : {
+          "type" : "boolean",
+          "description" : "Indicate if the query parameters should be dumped or not."
+        },
+        "filteredQueryParameters" : {
+          "type" : "array",
+          "description" : "List of query parameters that should be filtered",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "body" : {
+          "type" : "boolean",
+          "description" : "Indicate if the body should be dumped or not."
+        },
+        "enabled" : {
+          "type" : "boolean",
+          "description" : "Indicate if the dump request middleware is enabled or not."
+        },
+        "cookies" : {
+          "type" : "boolean",
+          "description" : "Indicate if the cookies should be dumped or not."
+        },
+        "filteredCookies" : {
+          "type" : "array",
+          "description" : "List of cookies that should be filtered out from the dump.",
+          "items" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "responseEnabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if the dump middleware should dump response."
+    },
+    "response" : {
+      "type" : "object",
+      "description" : "The response settings for the dump middleware.",
+      "properties" : {
+        "headers" : {
+          "type" : "boolean",
+          "description" : "Dump response headers"
+        },
+        "filteredHeaders" : {
+          "type" : "array",
+          "description" : "List of headers to filter",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "body" : {
+          "type" : "boolean",
+          "description" : "Dump response body"
+        },
+        "cookies" : {
+          "type" : "boolean",
+          "description" : "Dump response cookies"
+        },
+        "filteredCookies" : {
+          "type" : "array",
+          "description" : "List of cookies to filter",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "statusCode" : {
+          "type" : "boolean",
+          "description" : "Dump response status code"
+        }
+      }
+    }
+  }
+}

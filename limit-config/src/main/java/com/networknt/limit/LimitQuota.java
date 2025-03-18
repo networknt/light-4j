@@ -1,8 +1,11 @@
 package com.networknt.limit;
 
+import com.networknt.config.schema.IntegerField;
+
 import java.util.concurrent.TimeUnit;
 
 public class LimitQuota {
+
     int value;
     TimeUnit unit;
 

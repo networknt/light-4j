@@ -17,12 +17,17 @@
 package com.networknt.content;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.StringField;
 
 import java.util.Map;
 
 /**
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
+@ConfigSchema(configKey = "content", configName = "content", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ContentConfig {
   public static final String CONFIG_NAME = "content";
   private static final String ENABLED = "enabled";
@@ -30,7 +35,22 @@ public class ContentConfig {
   private Map<String, Object> mappedConfig;
   private final Config config;
 
+
+  @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "Indicate if the content middleware is enabled or not."
+  )
   boolean enabled;
+
+  @StringField(
+            configFieldName = CONTENT_TYPE,
+            externalizedKeyName = CONTENT_TYPE,
+            pattern = ".*/.*",
+            externalized = true,
+            description = "The content type to be used in the response."
+  )
   String contentType;
 
   private ContentConfig(String configName) {

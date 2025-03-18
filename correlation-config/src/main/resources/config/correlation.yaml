@@ -1,0 +1,8 @@
+#If enabled is true, the handler will be injected into the request and response chain.
+enabled: ${correlation.enabled:true}
+#If set to true, it will auto-generate the correlationID if it is not provided in the request
+autogenCorrelationID: ${correlation.autogenCorrelationID:true}
+#The MDC context field name for the correlation id value
+correlationMdcField: ${correlation.correlationMdcField:cId}
+#The MDC context field name for the traceability id value
+traceabilityMdcField: ${correlation.traceabilityMdcField:tId}

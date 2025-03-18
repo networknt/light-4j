@@ -19,6 +19,10 @@ package com.networknt.decode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(configKey = "request-decode", configName = "request-decode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class RequestDecodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(RequestDecodeConfig.class);
     public static final String CONFIG_NAME = "request-decode";
@@ -35,7 +40,21 @@ public class RequestDecodeConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "request decode handler for gzip and deflate"
+    )
     boolean enabled;
+
+    @ArrayField(
+            configFieldName = DECODERS,
+            externalizedKeyName = DECODERS,
+            externalized = true,
+            defaultValue = "[\"gzip\", \"deflate\"]",
+            items = String.class
+    )
     List<String> decoders;
 
     private RequestDecodeConfig(String configName) {

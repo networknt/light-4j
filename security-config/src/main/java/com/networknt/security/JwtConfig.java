@@ -17,6 +17,7 @@ package com.networknt.security;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "jwt", configName = "jwt", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class JwtConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
     public static final String CONFIG_NAME = "jwt";
@@ -38,14 +40,64 @@ public class JwtConfig {
     public static final String EXPIRED_IN_MINUTES = "expiredInMinutes";
     public static final String PROVIDER_ID = "providerId";
     private Map<String, Object> mappedConfig;
-    private Map<String, Object> certificate;
+    //private Map<String, Object> certificate;
     private final Config config;
 
-    String issuer;
-    String audience;
-    String version;
-    int expiredInMinutes;
+    @ObjectField(
+            configFieldName = EXPIRED_IN_MINUTES,
+            defaultValue = "{\"kid\":\"100\",\"filename\":\"primary.jks\",\"keyName\":\"selfsigned\",\"password\":\"password\"}",
+            description = "This is the default JWT configuration and some of the properties need to be overwritten when used to issue JWT tokens.\n" +
+                    "It is a component that used to issue JWT token. Normally, it should be used by light-oauth2 or oauth-kafka only.\n" +
+                    "Signature private key that used to sign JWT tokens. It is here to ensure backward compatibility only.",
+            ref = Key.class
+    )
     Key key;
+
+    @StringField(
+            configFieldName = ISSUER,
+            externalizedKeyName = ISSUER,
+            defaultValue = "urn:com:networknt:oauth2:v1",
+            externalized = true,
+            description = "issuer of the JWT token"
+    )
+    String issuer;
+
+
+    @StringField(
+            configFieldName = AUDIENCE,
+            externalizedKeyName = AUDIENCE,
+            defaultValue = "urn:com.networknt",
+            externalized = true,
+            description = "audience of the JWT token"
+    )
+    String audience;
+
+    @IntegerField(
+            configFieldName = EXPIRED_IN_MINUTES,
+            externalizedKeyName = EXPIRED_IN_MINUTES,
+            defaultValue = 10,
+            externalized = true,
+            description = "expired in 10 minutes by default for issued JWT tokens"
+    )
+    int expiredInMinutes;
+
+    @StringField(
+            configFieldName = VERSION,
+            externalizedKeyName = VERSION,
+            externalized = true,
+            defaultValue = "1.0",
+            description = "JWT token version"
+    )
+    String version;
+
+
+    @StringField(
+            configFieldName = PROVIDER_ID,
+            externalizedKeyName = PROVIDER_ID,
+            externalized = true,
+            description = "If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this\n" +
+                    "value should be null so that the OAuth 2.0 provider is run as one instance"
+    )
     String providerId;
 
     private JwtConfig(String configName) {
@@ -156,9 +208,17 @@ public class JwtConfig {
     }
 
     public static class Key {
+
+        @StringField(configFieldName = "kid")
         String kid;
+
+        @StringField(configFieldName = "filename")
         String filename;
+
+        @StringField(configFieldName = "password")
         String password;
+
+        @StringField(configFieldName = "keyName")
         String keyName;
 
         public Key() {

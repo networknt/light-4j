@@ -2,6 +2,10 @@ package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.MapField;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +19,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "pathService", configName = "pathService", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class PathServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(PathServiceConfig.class);
     public static final String CONFIG_NAME = "pathService";
@@ -25,8 +30,25 @@ public class PathServiceConfig {
 
     // variables
     private Map<String, Object> mappedConfig;
-    private Map<String, String> mapping;
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "indicate if PathServiceHandler is enabled or not"
+    )
     private boolean enabled;
+
+    @MapField(
+        configFieldName = MAPPING,
+        externalizedKeyName = MAPPING,
+        externalized = true,
+        description = "mapping from request endpoints to serviceIds",
+        valueType = String.class
+    )
+    private Map<String, String> mapping;
+
 
     // the config object
     private Config config;

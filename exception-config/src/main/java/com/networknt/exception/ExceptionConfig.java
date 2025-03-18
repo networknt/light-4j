@@ -17,14 +17,26 @@
 package com.networknt.exception;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 
 /**
  * Config class for Exception module to control the behavior
  *
  * @author  Steve Hu
  */
+@ConfigSchema(configName = "exception", configKey = "exception", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ExceptionConfig {
     public static final String CONFIG_NAME = "exception";
+
+    @BooleanField(
+            configFieldName = "enabled",
+            externalizedKeyName = "enabled",
+            defaultValue = true,
+            externalized = true,
+            description = "Enable or disable the exception module."
+    )
     boolean enabled;
 
     @JsonIgnore

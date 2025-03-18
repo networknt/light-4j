@@ -1,0 +1,32 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "getMethodEnabled", "client_credentials", "passThrough", "tokenServiceId" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "indicate if the handler is enabled or not in the handler chain.",
+      "default" : true
+    },
+    "getMethodEnabled" : {
+      "type" : "boolean",
+      "description" : "If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as\na temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL."
+    },
+    "client_credentials" : {
+      "type" : "array",
+      "description" : "A list of client_id and client_secret concat with a colon.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "passThrough" : {
+      "type" : "boolean",
+      "description" : "An indicator to for path through to an OAuth 2.0 server to get a real token."
+    },
+    "tokenServiceId" : {
+      "type" : "string",
+      "description" : "If pathThrough is set to true, this is the serviceId that is used in the client.yml configuration as the key\nto get all the properties to connect to the target OAuth 2.0 provider to get client_credentials access token.\nThe client.yml must be set to true for multipleAuthServers and the token will be verified on the same LPC.",
+      "default" : "light-proxy-client"
+    }
+  }
+}

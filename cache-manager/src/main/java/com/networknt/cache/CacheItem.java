@@ -1,8 +1,28 @@
 package com.networknt.cache;
 
+import com.networknt.config.schema.IntegerField;
+import com.networknt.config.schema.StringField;
+
 public class CacheItem {
+
+    @StringField(
+            configFieldName = "cacheName",
+            description = "The name of the cache."
+    )
     String cacheName;
+
+    @IntegerField(
+            configFieldName = "expiryInMinutes",
+            description = "The expiry time of the cache in minutes.",
+            min = 0
+    )
     int expiryInMinutes;
+
+    @IntegerField(
+            configFieldName = "maxSize",
+            description = "The maximum size of the cache.",
+            min = 0
+    )
     int maxSize;
 
     public CacheItem() {

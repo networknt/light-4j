@@ -2,11 +2,14 @@ package com.networknt.rule;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(configName = "rule-loader", configKey = "rule-loader", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class RuleLoaderConfig {
     private static final Logger logger = LoggerFactory.getLogger(RuleLoaderConfig.class);
 
@@ -22,10 +25,54 @@ public class RuleLoaderConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "A flag to enable the rule loader to get rules for the service from portal"
+    )
     boolean enabled;
-    String ruleSource;
+
+
+    @StringField(
+            configFieldName = PORTAL_HOST,
+            externalizedKeyName = PORTAL_HOST,
+            externalized = true,
+            defaultValue = "https://localhost",
+            description = "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal"
+    )
     String portalHost;
+
+    @StringField(
+            configFieldName = PORTAL_TOKEN,
+            externalizedKeyName = PORTAL_TOKEN,
+            externalized = true,
+            description = "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\n" +
+                    "is light-portal."
+    )
     String portalToken;
+
+    @StringField(
+            configFieldName = RULE_SOURCE,
+            externalizedKeyName = RULE_SOURCE,
+            externalized = true,
+            defaultValue = "light-portal",
+            description = "Source of the rule. light-portal or config-folder and default to light-portal. If config folder is set,\n" +
+                    "a rules.yml must be in the externalized folder to load rules from it. The config-folder option should\n" +
+                    "only be used for local testing or the light-portal is not implemented in the organization and cloud\n" +
+                    "light-portal is not allowed due to security policy or blocked."
+    )
+    String ruleSource;
+
+    @MapField(
+            configFieldName = ENDPOINT_RULES,
+            externalizedKeyName = ENDPOINT_RULES,
+            externalized = true,
+            description = "When ruleSource is config-folder, then we can load the endpoint to rules mapping here instead of portal\n" +
+                    "service details. Each endpoint will have a list of rules and the type of the rules.",
+            valueType = List.class
+    )
     Map<String, Object> endpointRules;
 
     private RuleLoaderConfig() {

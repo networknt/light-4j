@@ -1,0 +1,49 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "allowedOrigins", "allowedMethods", "pathPrefixAllowed" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if the CORS middleware is enabled or not.",
+      "default" : true
+    },
+    "allowedOrigins" : {
+      "type" : "array",
+      "description" : "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\nconfiguration for all paths. If you want to have different configuration for different paths, you\ncan use pathPrefixAllowed. The value is a list of strings.\nWildcard is not supported for security reasons.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "allowedMethods" : {
+      "type" : "array",
+      "description" : "Allowed methods list. The value is a list of strings. The possible value is GET, POST, PUT, DELETE, PATCH\nThis is the global configuration for all paths. If you want to have different configuration for different\npaths, you can use pathPrefixAllowed.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "pathPrefixAllowed" : {
+      "type" : "object",
+      "description" : "cors configuration per path prefix on a shared gateway. You either have allowedOrigins and allowedMethods\nor you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.\nThe value is a map with the key as the path prefix and the value is another map with allowedOrigins and\nallowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.\n\nUse the above global configuration if you are dealing with a single API in the case of http-sidecar,\nproxy server or build the API with light-4j frameworks. If you are using light-gateway with multiple\ndownstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different\nAPIs.\n\n\nHere is an example in values.yml\ncors.pathPrefixAllowed:\n  /v1/pets:\n    allowedOrigins:\n      - https://abc.com\n      - https://www.xyz.com\n    allowedMethods:\n      - GET\n      - PUT\n      - POST\n      - DELETE\n  /v1/market:\n    allowedOrigins:\n      - https://def.com\n      - https://abc.com\n    allowedMethods:\n      - GET\n      - POST",
+      "additionalProperties" : {
+        "type" : "object",
+        "properties" : {
+          "allowedOrigins" : {
+            "type" : "array",
+            "description" : "List of allowed origins for CORS requests.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "allowedMethods" : {
+            "type" : "array",
+            "description" : "List of allowed methods for CORS requests.",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

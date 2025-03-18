@@ -8,22 +8,14 @@ import com.networknt.handler.ResponseInterceptor;
 import com.networknt.http.ResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
-import com.networknt.rule.RuleConstants;
-import com.networknt.rule.RuleLoaderStartupHook;
-import com.networknt.utility.ConfigUtils;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,19 +37,9 @@ import static com.networknt.utility.Constants.ERROR_MESSAGE;
  */
 public class ResponseCacheInterceptor implements ResponseInterceptor {
     static final Logger logger = LoggerFactory.getLogger(ResponseCacheInterceptor.class);
-    private static final String RESPONSE_BODY = "responseBody";
-    private static final String METHOD = "method";
-    private static final String POST = "post";
-    private static final String PUT = "put";
-    private static final String PATCH = "patch";
-    private static final String AUDIT_INFO = "auditInfo";
-    private static final String STATUS_CODE = "statusCode";
-
-    private static final String RESPONSE_FILTER = "res-fil";
-    private static final String PERMISSION = "permission";
-
     private static ResponseCacheConfig config;
     private volatile HttpHandler next;
+    CacheManager cacheManager = CacheManager.getInstance();
 
     /**
      * ResponseCacheInterceptor constructor
@@ -123,7 +105,6 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
                     String key = cacheTask.getKey();
                     synchronized (this) {
                         // the snakeyaml is not thread safe, and we need to synchronize the block as getInstance will read cache.yml config.
-                        CacheManager cacheManager = CacheManager.getInstance();
                         if(cacheManager == null) {
                             logger.error("Could not get CacheManager instance");
                         } else {

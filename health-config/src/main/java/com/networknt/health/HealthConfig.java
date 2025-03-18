@@ -18,6 +18,7 @@ package com.networknt.health;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.*;
 
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
+@ConfigSchema(configKey = "health", configName = "health", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class HealthConfig {
     public static final String CONFIG_NAME = "health";
     private static final String ENABLED = "enabled";
@@ -38,11 +40,62 @@ public class HealthConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            defaultValue = true,
+            externalized = true,
+            description = "true to enable this middleware handler. By default, the health check is enabled."
+    )
     boolean enabled;
+
+    @BooleanField(
+            configFieldName = USE_JSON,
+            externalizedKeyName = USE_JSON,
+            externalized = true,
+            description = "true to return Json format message. By default, it is false. It will only be changed to true if the monitor\n" +
+                          "tool only support JSON response body."
+    )
     boolean useJson;
+
+    @IntegerField(
+            configFieldName = TIMEOUT,
+            externalizedKeyName = TIMEOUT,
+            defaultValue = 2000,
+            externalized = true,
+            description = "timeout in milliseconds for the health check. If the duration is passed, a failure will return.\n" +
+                    "It is to prevent taking too much time to check subsystems that are not available or timeout.\n" +
+                    "As the health check is used by the control plane for service discovery, by default, one request\n" +
+                    "per ten seconds. The quick response time is very important to not block the control plane."
+    )
     int timeout;
+
+    @BooleanField(
+            configFieldName = DOWNSTREAM_ENABLED,
+            externalizedKeyName = DOWNSTREAM_ENABLED,
+            externalized = true,
+            description = "For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down\n" +
+                    "stream API before return the health status to the invoker. By default, it is not enabled.\n" +
+                    "if the health check needs to invoke down streams API. It is false by default."
+    )
     boolean downstreamEnabled;
+
+    @StringField(
+            configFieldName = DOWNSTREAM_HOST,
+            externalizedKeyName = DOWNSTREAM_HOST,
+            externalized = true,
+            defaultValue = "http://localhost:8081",
+            description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
+    )
     String downstreamHost;
+
+    @StringField(
+            configFieldName = DOWNSTREAM_PATH,
+            externalizedKeyName = DOWNSTREAM_PATH,
+            externalized = true,
+            defaultValue = "/health",
+            description = "down stream API health check path. This allows the down stream API to have customized path implemented."
+    )
     String downstreamPath;
 
     private HealthConfig(String configName) {

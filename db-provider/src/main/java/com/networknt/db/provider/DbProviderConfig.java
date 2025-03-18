@@ -1,9 +1,14 @@
 package com.networknt.db.provider;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.IntegerField;
+import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.StringField;
 
 import java.util.Map;
 
+@ConfigSchema(configKey = "db-provider", configName = "db-provider", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DbProviderConfig {
     public static final String CONFIG_NAME = "db-provider";
     public static final String DRIVER_CLASS_NAME = "driverClassName";
@@ -11,10 +16,50 @@ public class DbProviderConfig {
     public static final String PASSWORD = "password";
     public static final String JDBC_URL = "jdbcUrl";
     public static final String MAXIMUM_POOL_SIZE = "maximumPoolSize";
+
+    @StringField(
+            configFieldName = DRIVER_CLASS_NAME,
+            externalizedKeyName = DRIVER_CLASS_NAME,
+            externalized = true,
+            defaultValue = "org.postgresql.Driver",
+            description = "The driver class name for the database connection."
+    )
     String driverClassName;
-    String username;
-    String password;
+
+    @StringField(
+            configFieldName = JDBC_URL,
+            externalizedKeyName = JDBC_URL,
+            defaultValue = "jdbc:postgresql://timescale:5432/configserver",
+            externalized = true,
+            description = "JDBC connection URL"
+    )
     String jdbcUrl;
+
+    @StringField(
+            configFieldName = USERNAME,
+            externalizedKeyName = USERNAME,
+            defaultValue = "postgres",
+            externalized = true,
+            description = "JDBC connection username"
+    )
+    String username;
+
+    @StringField(
+            configFieldName = PASSWORD,
+            externalizedKeyName = PASSWORD,
+            defaultValue = "secret",
+            externalized = true,
+            description = "JDBC connection password"
+    )
+    char[] password;
+
+    @IntegerField(
+            configFieldName = MAXIMUM_POOL_SIZE,
+            externalizedKeyName = MAXIMUM_POOL_SIZE,
+            defaultValue = 3,
+            externalized = true,
+            description = "Maximum number of connections in the pool"
+    )
     int maximumPoolSize;
 
     private final Config config;
@@ -67,11 +112,11 @@ public class DbProviderConfig {
     }
 
     public String getPassword() {
-        return password;
+        return new String(password);
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = password.toCharArray();
     }
 
     public String getJdbcUrl() {
@@ -96,7 +141,7 @@ public class DbProviderConfig {
         object = mappedConfig.get(USERNAME);
         if(object != null) username = (String)object;
         object = mappedConfig.get(PASSWORD);
-        if(object != null) password = (String)object;
+        if(object != null) password = ((String)object).toCharArray();
         object = mappedConfig.get(JDBC_URL);
         if(object != null) jdbcUrl = (String)object;
         object = mappedConfig.get(MAXIMUM_POOL_SIZE);

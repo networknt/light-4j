@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
+    <version>2.2.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -71,7 +71,7 @@
         <version.jose4j>0.9.6</version.jose4j>
         <version.commons.codec>1.15</version.commons.codec>
         <version.encoder>1.2.3</version.encoder>
-        <version.logback>1.5.12</version.logback>
+        <version.logback>1.5.16</version.logback>
         <version.junit>4.13.2</version.junit>
         <version.mockito>3.11.1</version.mockito>
         <version.powermock>2.0.9</version.powermock>
@@ -80,7 +80,7 @@
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.yaml-rule>2.0.0</version.yaml-rule>
+        <version.yaml-rule>2.0.1</version.yaml-rule>
         <version.http-client>1.0.13</version.http-client>
         <version.snakeyaml>2.3</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
@@ -102,6 +102,7 @@
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <version.jacoco>0.8.10</version.jacoco>
         <version.maven-compiler>3.8.0</version.maven-compiler>
+        <version.maven-deploy>3.1.1</version.maven-deploy>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
@@ -647,6 +648,11 @@
                 <version>${version.jackson}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jdk8</artifactId>
                 <version>${version.jackson}</version>
@@ -909,6 +915,11 @@
                 <configuration>
                     <release>${java.version}</release>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${version.maven-deploy}</version>
             </plugin>
             <!--
 			<plugin>

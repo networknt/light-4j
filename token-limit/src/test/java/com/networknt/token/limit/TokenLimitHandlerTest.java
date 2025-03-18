@@ -29,7 +29,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-@Ignore
+
 public class TokenLimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(TokenLimitHandlerTest.class);
     @ClassRule
@@ -45,6 +45,9 @@ public class TokenLimitHandlerTest {
     //private static TokenLimitConfig config;
     String legacyRequestBody = "grant_type=client_credentials&client_id=legacyClient&client_secret=secret&scope=scope";
     String nonLegacyRequestBody = "grant_type=client_credentials&client_id=NonlegacyClient&client_secret=secret&scope=scope";
+    String xForwardedRequestBody = "grant_type=client_credentials&client_id=xFowardedClient&client_secret=secret&scope=scope";
+    String legacyRequestBodyWithAuthHeader = "grant_type=client_credentials&scope=scope";
+    String emptyScopeRequestBody = "grant_type=client_credentials&client_id=emptyScopeClient&client_secret=secret&scope=";
 
     public String callLegacyClient() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -63,6 +66,34 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
+    }
+
+    public String callLegacyClientWithAuthHeader() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Basic Y2xpZW50SURBQkM6bXlwYXNzd29yZA==");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBodyWithAuthHeader));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -101,7 +132,65 @@ public class TokenLimitHandlerTest {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
     }
 
-    @Test
+    public String callNonLegacyClientWithXForwardedFor() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "serverX");
+            request.getRequestHeaders().put(Headers.X_FORWARDED_FOR, "108.107.10.8");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
+    }
+
+    public String callExtra() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "serverX");
+            request.getRequestHeaders().put(Headers.X_FORWARDED_FOR, "108.107.10.9"); // distinct IP address
+            connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
+    }
+
+
     public void testOneRequest() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         SimpleConnectionHolder.ConnectionToken connectionToken = null;
@@ -133,6 +222,38 @@ public class TokenLimitHandlerTest {
         }
     }
 
+    @Test
+    public void testEmptyScopeRequest() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, emptyScopeRequestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            Assert.assertEquals("{\"accessToken\":\"abc\",\"counter\": 4}", body);
+        }
+    }
+
     /**
      * For non-legacy client, the token limit should be applied. And we should have at least one 400 response.
      * @throws Exception exception
@@ -158,6 +279,36 @@ public class TokenLimitHandlerTest {
         List<String> errorList = resultList.stream().filter(r->r.contains(":400")).collect(Collectors.toList());
         logger.info("errorList size = " + errorList.size());
         Assert.assertTrue(errorList.size()>0);
+    }
+
+    /**
+     * For non-legacy client with X_FORWARDED_FOR header, the token limit should be applied to the correct IP Address. And we should have at least one 400 response.
+     * @throws Exception exception
+     */
+    @Test
+    public void testHandleRequest_NonLegacyClientWithXForwardedFor() throws Exception {
+        Callable<String> task = this::callNonLegacyClientWithXForwardedFor;
+        List<Callable<String>> tasks = Collections.nCopies(3, task);
+        long start = System.currentTimeMillis();
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        List<Future<String>> futures = executorService.invokeAll(tasks);
+        List<String> resultList = new ArrayList<>(futures.size());
+        // Check for exceptions
+        for (Future<String> future : futures) {
+            // Throws an exception if an exception was thrown by the task.
+            logger.info("calling");
+            String s = future.get();
+            logger.info("future = " + s);
+            resultList.add(s);
+        }
+        // Add one extra call with NO XForwardedFor header to make sure that the token limit is applied to the correct IP Address
+        logger.info("calling extra");
+        resultList.add(callExtra());
+        long last = (System.currentTimeMillis() - start);
+        // make sure that there are EXACTLY one element as 400
+        List<String> errorList = resultList.stream().filter(r->r.contains(":400")).collect(Collectors.toList());
+        logger.info("errorList size = " + errorList.size());
+        Assert.assertTrue(errorList.size()==1);
     }
 
     /**

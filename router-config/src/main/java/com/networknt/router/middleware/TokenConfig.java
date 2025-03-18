@@ -3,18 +3,40 @@ package com.networknt.router.middleware;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@ConfigSchema(configKey = "token", configName = "token", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class TokenConfig {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfig.class);
     public static final String CONFIG_NAME = "token";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = ""
+    )
     boolean enabled;
+
+    @ArrayField(
+            configFieldName = APPLIED_PATH_PREFIXES,
+            externalizedKeyName = APPLIED_PATH_PREFIXES,
+            externalized = true,
+            description = "applied path prefixes for the token handler. Only the path prefixes listed here will\n" +
+                    "get the token based on the configuration in the client.yml section. This will allow\n" +
+                    "the share gateway to define only one default chain with some endpoints get the token\n" +
+                    "and others bypass this handler.",
+            items = String.class
+    )
     List<String> appliedPathPrefixes;
 
     private final Config config;

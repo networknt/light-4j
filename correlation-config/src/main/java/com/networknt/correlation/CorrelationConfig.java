@@ -17,6 +17,10 @@ package com.networknt.correlation;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.StringField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +29,7 @@ import java.util.Map;
 /**
  * Created by steve on 29/09/16.
  */
+@ConfigSchema(configKey = "correlation", configName = "correlation", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";
     private static final String ENABLED = "enabled";
@@ -33,10 +38,42 @@ public class CorrelationConfig {
     private static final String CORRELATION_MDC_FIELD = "correlationMdcField";
     private Map<String, Object> mappedConfig;
     private final Config config;
+
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            defaultValue = true,
+            externalized = true,
+            description = "If enabled is true, the handler will be injected into the request and response chain."
+    )
     boolean enabled;
-    String traceabilityMdcField;
-    String correlationMdcField;
+
+    @BooleanField(
+            configFieldName = AUTOGEN_CORRELATION_ID,
+            externalizedKeyName = AUTOGEN_CORRELATION_ID,
+            defaultValue = true,
+            externalized = true,
+            description = "If set to true, it will auto-generate the correlationID if it is not provided in the request"
+    )
     boolean autogenCorrelationID;
+
+    @StringField(
+            configFieldName = CORRELATION_MDC_FIELD,
+            externalizedKeyName = CORRELATION_MDC_FIELD,
+            externalized = true,
+            defaultValue = "cId",
+            description = "The MDC context field name for the correlation id value"
+    )
+    String correlationMdcField;
+
+    @StringField(
+            configFieldName = TRACEABILITY_MDC_FIELD,
+            externalizedKeyName = TRACEABILITY_MDC_FIELD,
+            externalized = true,
+            defaultValue = "tId",
+            description = "The MDC context field name for the traceability id value"
+    )
+    String traceabilityMdcField;
 
     private CorrelationConfig(String configName) {
         config = Config.getInstance();

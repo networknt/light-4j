@@ -10,4 +10,4 @@ client.tokenRtScope:
 
 
 client.multipleAuthServers: true
-client.tokenCcServiceIdAuthServers: "{\"LG_LOCAL_GET_TOKEN\":{\"server_url\":\"https://oauth.lightapi.net\",\"uri\":\"/oauth2/a4s3gpb46u9CEKol81d7/token\",\"client_id\":\"0oa6gpdkx3xnOX4Dj1d7\",\"client_secret\":\"fonr2JkSVg33AOAZXDaaiD8sq-gDWx4U3tYTqLRt\",\"scope\":[\"portal.w\"]},\"AppPublicGetToken\":{\"server_url\":\"https://oauth.lightapi.net\",\"uri\":\"/oauth2/ausaw13b2efZNle3U3d7/token\",\"client_id\":\"0oaaw150wu3J4quU11d7\",\"client_secret\":\"gP4QRkLKzc8p32l3MJhbrrNBlnxlQGmf5qO804nUDExk70KhpCHrlPQCvqm-Zh9m\",\"scope\":[\"app.w\"]}}"
+client.tokenCcServiceIdAuthServers: {"LG_LOCAL_GET_TOKEN":{"server_url":"https://oauth.lightapi.net","uri":"/oauth2/a4s3gpb46u9CEKol81d7/token","client_id":"0oa6gpdkx3xnOX4Dj1d7","client_secret":"fonr2JkSVg33AOAZXDaaiD8sq-gDWx4U3tYTqLRt","scope":["portal.w"]},"AppPublicGetToken":{"server_url":"https://oauth.lightapi.net","uri":"/oauth2/ausaw13b2efZNle3U3d7/token","client_id":"0oaaw150wu3J4quU11d7","client_secret":"gP4QRkLKzc8p32l3MJhbrrNBlnxlQGmf5qO804nUDExk70KhpCHrlPQCvqm-Zh9m","scope":["app.w"]}}

@@ -19,11 +19,17 @@ package com.networknt.basicauth;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(
+        configKey = "basic",
+        configName = "basic-auth",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class BasicAuthConfig {
     public static final String CONFIG_NAME = "basic-auth";
     private static final String ENABLED = "enabled";
@@ -37,11 +43,50 @@ public class BasicAuthConfig {
     public static final String ANONYMOUS = "anonymous";
     public static final String BEARER = "bearer";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable Basic Authentication Handler, default is true."
+    )
     boolean enabled;
+
+    @BooleanField(
+            configFieldName = ENABLE_AD,
+            externalizedKeyName = ENABLE_AD,
+            externalized = true,
+            defaultValue = true,
+            description = "Enable Ldap Authentication, default is true."
+    )
     boolean enableAD;
+
+    @BooleanField(
+            configFieldName = ALLOW_ANONYMOUS,
+            externalizedKeyName = ALLOW_ANONYMOUS,
+            externalized = true,
+            description = "Do we allow the anonymous to pass the authentication and limit it with some paths\n" +
+                          "to access? Default is false, and it should only be true in client-proxy."
+    )
     boolean allowAnonymous;
+
+    @BooleanField(
+            configFieldName = ALLOW_BEARER_TOKEN,
+            externalizedKeyName = ALLOW_BEARER_TOKEN,
+            externalized = true,
+            description = "Allow bearer token access to the service."
+    )
     boolean allowBearerToken;
+
+    @MapField(
+            configFieldName = USERS,
+            externalizedKeyName = USERS,
+            externalized = true,
+            description = "All user definitions and their path mappings.",
+            valueType = UserAuth.class
+    )
     Map<String, UserAuth> users;  // the key is the username to locate the object
+
     private final Config config;
     private Map<String, Object> mappedConfig;
 

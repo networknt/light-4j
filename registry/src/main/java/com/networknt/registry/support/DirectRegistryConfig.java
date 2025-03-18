@@ -1,6 +1,9 @@
 package com.networknt.registry.support;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.MapField;
+import com.networknt.config.schema.OutputFormat;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import org.slf4j.Logger;
@@ -10,12 +13,27 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@ConfigSchema(configKey = "direct-registry", configName = "direct-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DirectRegistryConfig {
     private static final Logger logger = LoggerFactory.getLogger(DirectRegistryConfig.class);
 
     public static final String CONFIG_NAME = "direct-registry";
     private static final String DIRECT_URLS = "directUrls";
+
+    @MapField(
+            configFieldName = DIRECT_URLS,
+            externalizedKeyName = DIRECT_URLS,
+            externalized = true,
+            description = "For light-gateway or http-sidecar that needs to reload configuration for the router hosts, you can define the\n" +
+                    "service to hosts mapping in this configuration to overwrite the definition in the service.yml file as part of\n" +
+                    "the parameters. This configuration will only be used if parameters in the service.yml for DirectRegistry is null.\n" +
+                    "\n" +
+                    "directUrls is the mapping between the serviceId to the hosts separated by comma. If environment tag is used, you\n" +
+                    "can add it to the serviceId separated with a vertical bar |",
+            valueType = List.class
+    )
     Map<String, List<URL>> directUrls;
+
     private final Config config;
     private Map<String, Object> mappedConfig;
 

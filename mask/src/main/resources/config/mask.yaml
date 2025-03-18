@@ -1,0 +1,5 @@
+string:
+  uri:
+    password=[^&]*: password=******
+regex: ${mask.regex:}
+json: ${mask.json:}

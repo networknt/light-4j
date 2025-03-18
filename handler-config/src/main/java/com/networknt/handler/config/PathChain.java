@@ -16,6 +16,8 @@
 
 package com.networknt.handler.config;
 
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.StringField;
 import com.networknt.utility.Util;
 
 import java.util.ArrayList;
@@ -27,8 +29,26 @@ import java.util.List;
 public class PathChain {
 
     private String source;
+
+    @StringField(
+            configFieldName = "path",
+            description = "The path to match",
+            pattern = "^/.*"
+    )
     private String path;
+
+    @StringField(
+            configFieldName = "method",
+            description = "The HTTP method to match",
+            pattern = "(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|TRACE|CONNECT)$"
+    )
     private String method;
+
+    @ArrayField(
+            configFieldName = "exec",
+            description = "The list of handlers",
+            items = String.class
+    )
     private List<String> exec;
 
     public String getSource() {

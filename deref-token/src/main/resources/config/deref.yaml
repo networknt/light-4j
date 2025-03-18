@@ -1,0 +1,2 @@
+#indicate if the deref handler is enabled or not.
+enabled: ${dereg.enabled:false}

@@ -18,12 +18,14 @@ package com.networknt.logging.model;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.*;
 
 import java.util.Map;
 
 /**
  * Config class for Logger handlers
  */
+@ConfigSchema(configKey = "logging", configName = "logging", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class LoggerConfig {
     public static final String CONFIG_NAME = "logging";
     private static final String ENABLED = "enabled";
@@ -32,11 +34,53 @@ public class LoggerConfig {
     private static final String DOWNSTREAM_HOST = "downstreamHost";
     private static final String DOWNSTREAM_FRAMEWORK = "downstreamFramework";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            defaultValue = true,
+            externalized = true,
+            description = "Indicate if the logging info is enabled or not."
+    )
     boolean enabled;
+
+    @IntegerField(
+            configFieldName = LOG_START,
+            externalizedKeyName = LOG_START,
+            defaultValue = 600000,
+            externalized = true,
+            description = "Indicate the default time period backward in millisecond for log content retrieve.\n" +
+                          "Default is an hour which indicate system will retrieve one hour log by default"
+    )
     long logStart;
+
+    @BooleanField(
+            configFieldName = DOWNSTREAM_ENABLED,
+            externalizedKeyName = DOWNSTREAM_ENABLED,
+            externalized = true,
+            description = "if the logger access needs to invoke down streams API. It is false by default."
+    )
     boolean downstreamEnabled;
+
+    @StringField(
+            configFieldName = DOWNSTREAM_HOST,
+            externalizedKeyName = DOWNSTREAM_HOST,
+            externalized = true,
+            defaultValue = "http://localhost:8081",
+            description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
+    )
     String downstreamHost;
+
+    @StringField(
+            configFieldName = DOWNSTREAM_FRAMEWORK,
+            externalizedKeyName = DOWNSTREAM_FRAMEWORK,
+            externalized = true,
+            defaultValue = "Light4j",
+            description = "down stream API framework that has the admin endpoints. Light4j, SpringBoot, Quarkus, Micronaut, Helidon, etc. If the adm endpoints are different between\n" +
+                          "different versions, you can use the framework plus version as the identifier. For example, Light4j-1.6.0, SpringBoot-2.4.0, etc."
+    )
     String downstreamFramework;
+
+
     private final Config config;
     private Map<String, Object> mappedConfig;
 
