@@ -82,7 +82,7 @@
         <version.jsr305>3.0.2</version.jsr305>
         <version.yaml-rule>2.0.1</version.yaml-rule>
         <version.http-client>1.0.13</version.http-client>
-        <version.snakeyaml>2.3</version.snakeyaml>
+        <version.snakeyaml>2.4</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
         <version.prometheus>0.16.0</version.prometheus>
         <version.javamail>1.6.2</version.javamail>
