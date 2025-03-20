@@ -1,4 +1,4 @@
-#indicate if PathServiceHandler is enabled or not
+# indicate if PathServiceHandler is enabled or not
 enabled: ${pathService.enabled:true}
-#mapping from request endpoints to serviceIds
+# mapping from request endpoints to serviceIds
 mapping: ${pathService.mapping:}

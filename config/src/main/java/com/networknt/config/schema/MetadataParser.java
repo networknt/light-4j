@@ -123,7 +123,7 @@ public class MetadataParser {
 
         if (AnnotationUtils.elementImplementsClass(currentRoot, Collection.class, processingEnvironment)
                 || AnnotationUtils.elementIsClass(currentRoot, Collection.class, processingEnvironment)) {
-            System.out.println("Array Type");
+
             rootMetadata.put(TYPE_KEY, ARRAY_TYPE);
             if (properties.isEmpty())
                 rootMetadata.put(ITEMS_KEY, DEFAULT_CONTAINER_PROPS);
@@ -131,7 +131,7 @@ public class MetadataParser {
         } else if (AnnotationUtils.elementImplementsClass(currentRoot, Map.class, processingEnvironment)
                 || AnnotationUtils.elementIsClass(currentRoot, Map.class, processingEnvironment)) {
 
-            System.out.println("Map Type");
+
             rootMetadata.put(TYPE_KEY, MAP_TYPE);
             if (properties.isEmpty())
                 rootMetadata.put(ADDITIONAL_PROPERTIES_KEY, DEFAULT_CONTAINER_PROPS);

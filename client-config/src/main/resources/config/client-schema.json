@@ -1,0 +1,509 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "tls", "oauth", "pathPrefixServices", "request" ],
+  "properties" : {
+    "tls" : {
+      "type" : "object",
+      "description" : "Settings for TLS",
+      "properties" : {
+        "verifyHostname" : {
+          "type" : "boolean",
+          "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate.",
+          "default" : true
+        },
+        "loadTrustStore" : {
+          "type" : "boolean",
+          "description" : "trust store contains certificates that server needs. Enable if tls is used.",
+          "default" : true
+        },
+        "tlsVersion" : {
+          "type" : "string",
+          "description" : "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1\nand 1.2 (deprecated and risky).",
+          "default" : "TLSv1.3"
+        },
+        "defaultGroupKey" : {
+          "type" : "string"
+        },
+        "keyStorePass" : {
+          "type" : "string",
+          "description" : "key store password",
+          "default" : "password"
+        },
+        "trustStorePass" : {
+          "type" : "string",
+          "description" : "trust store password",
+          "default" : "password"
+        },
+        "trustedNames" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        },
+        "loadKeyStore" : {
+          "type" : "boolean",
+          "description" : "key store contains client key and it should be loaded if two-way ssl is used."
+        },
+        "loadDefaultTrustStore" : {
+          "type" : "boolean",
+          "description" : "indicate of system load default cert.",
+          "default" : true
+        },
+        "keyPass" : {
+          "type" : "string",
+          "description" : "private key password",
+          "default" : "password"
+        },
+        "keyStore" : {
+          "type" : "string",
+          "description" : "key store location",
+          "default" : "client.keystore"
+        },
+        "trustStore" : {
+          "type" : "string",
+          "description" : "trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword",
+          "default" : "client.truststore"
+        },
+        "defaultCertPassword" : {
+          "type" : "string",
+          "description" : "public issued CA cert password",
+          "default" : "chageit"
+        }
+      }
+    },
+    "oauth" : {
+      "type" : "object",
+      "description" : "Settings for OAuth2 server communication.",
+      "properties" : {
+        "multipleAuthServers" : {
+          "type" : "boolean",
+          "description" : "OAuth 2.0 token endpoint configuration\nIf there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the\npath prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services."
+        },
+        "deref" : {
+          "type" : "object",
+          "description" : "de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.",
+          "properties" : {
+            "proxyPort" : {
+              "type" : "integer",
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "minimum" : 0,
+              "maximum" : 65535
+            },
+            "clientId" : {
+              "type" : "string",
+              "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+              "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+            },
+            "enableHttp2" : {
+              "type" : "boolean",
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
+            },
+            "clientSecret" : {
+              "type" : "string",
+              "description" : "client_secret for deref",
+              "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+            },
+            "server_url" : {
+              "type" : "string",
+              "description" : "Token service server url, this might be different than the above token server url.\nThe static url will be used if it is configured."
+            },
+            "serviceId" : {
+              "type" : "string",
+              "description" : "token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.",
+              "default" : "com.networknt.oauth2-token-1.0.0"
+            },
+            "proxyHost" : {
+              "type" : "string",
+              "description" : "For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal\nproxy server to access code, token and key services of OAuth 2.0, set up the proxyHost\nhere for the HTTPS traffic. This option is only working with server_url and serviceId\nbelow should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used."
+            },
+            "uri" : {
+              "type" : "string",
+              "description" : "the path for the key distribution endpoint",
+              "default" : "/oauth2/deref"
+            }
+          }
+        },
+        "sign" : {
+          "type" : "object",
+          "description" : "Sign endpoint configuration",
+          "properties" : {
+            "audience" : {
+              "type" : "string",
+              "description" : "audience for the token validation. It is optional and if it is not configured, no audience validation will be executed."
+            },
+            "enableHttp2" : {
+              "type" : "boolean",
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
+            },
+            "client_secret" : {
+              "type" : "string",
+              "description" : "client secret used to access the key distribution service.",
+              "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+            },
+            "server_url" : {
+              "type" : "string",
+              "description" : "key distribution server url. It will be used to establish connection if it exists.\nif it is not set, then a service lookup against serviceId will be taken to discover an instance."
+            },
+            "serviceId" : {
+              "type" : "string",
+              "description" : "the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.",
+              "default" : "com.networknt.oauth2-key-1.0.0"
+            },
+            "uri" : {
+              "type" : "string",
+              "description" : "the path for the key distribution endpoint",
+              "default" : "/oauth2/key"
+            },
+            "client_id" : {
+              "type" : "string",
+              "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+              "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+            }
+          }
+        },
+        "token" : {
+          "type" : "object",
+          "properties" : {
+            "cache" : {
+              "type" : "object",
+              "properties" : {
+                "capacity" : {
+                  "type" : "integer",
+                  "description" : "capacity of caching tokens in the client for downstream API calls.",
+                  "default" : 200
+                }
+              }
+            },
+            "client_credentials" : {
+              "type" : "object",
+              "description" : "the following section defines uri and parameters for client credentials grant type",
+              "properties" : {
+                "serviceIdAuthServers" : {
+                  "type" : "object",
+                  "description" : "The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is\nset as true. For detailed config options, please see the values.yml in the client module test.",
+                  "additionalProperties" : {
+                    "type" : "object",
+                    "properties" : {
+                      "proxyPort" : {
+                        "type" : "integer",
+                        "minimum" : 0,
+                        "maximum" : 65535
+                      },
+                      "audience" : {
+                        "type" : "string"
+                      },
+                      "enableHttp2" : {
+                        "type" : "boolean"
+                      },
+                      "scope" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "client_secret" : {
+                        "type" : "string"
+                      },
+                      "server_url" : {
+                        "type" : "string"
+                      },
+                      "proxyHost" : {
+                        "type" : "string"
+                      },
+                      "uri" : {
+                        "type" : "string"
+                      },
+                      "client_id" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "scope" : {
+                  "type" : "array",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client_secret for client credentials grant flow.",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "token endpoint for client credentials grant",
+                  "default" : "/oauth2/token"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id for client credentials grant flow.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
+            },
+            "tokenRenewBeforeExpired" : {
+              "type" : "integer",
+              "description" : "The scope token will be renewed automatically 1 minute before expiry",
+              "default" : 60000
+            },
+            "proxyHost" : {
+              "type" : "string",
+              "description" : "For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud\nand has an internal proxy server to access code, token and key services of OAuth 2.0, set up the\nproxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId\nbelow should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used."
+            },
+            "proxyPort" : {
+              "type" : "integer",
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "minimum" : 0,
+              "maximum" : 65535
+            },
+            "refresh_token" : {
+              "type" : "object",
+              "properties" : {
+                "scope" : {
+                  "type" : "array",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client_secret for refresh token grant flow",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "token endpoint for refresh token grant",
+                  "default" : "/oauth2/token"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id for refresh token grant flow.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
+            },
+            "enableHttp2" : {
+              "type" : "boolean",
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
+            },
+            "authorization_code" : {
+              "type" : "object",
+              "description" : "the following section defines uri and parameters for authorization code grant type",
+              "properties" : {
+                "scope" : {
+                  "type" : "array",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client_secret for authorization code grant flow.",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "redirect_uri" : {
+                  "type" : "string",
+                  "description" : "the web server uri that will receive the redirected authorization code",
+                  "default" : "http://localhost:8080/authorization"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "token endpoint for authorization code grant",
+                  "default" : "/oauth2/token"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id for authorization code grant flow.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
+            },
+            "earlyRefreshRetryDelay" : {
+              "type" : "integer",
+              "description" : "if scope token is not expired but in renew window, we need slow retry delay.",
+              "default" : 4000
+            },
+            "server_url" : {
+              "type" : "string",
+              "description" : "token server url. The default port number for token service is 6882. If this is set,\nit will take high priority than serviceId for the direct connection"
+            },
+            "serviceId" : {
+              "type" : "string",
+              "description" : "token service unique id for OAuth 2.0 provider. If server_url is not set above,\na service discovery action will be taken to find an instance of token service.",
+              "default" : "com.networknt.oauth2-token-1.0.0"
+            },
+            "expiredRefreshRetryDelay" : {
+              "type" : "integer",
+              "description" : "if scope token is expired, we need short delay so that we can retry faster.",
+              "default" : 2000
+            },
+            "key" : {
+              "type" : "object",
+              "description" : "light-oauth2 key distribution endpoint configuration for token verification",
+              "properties" : {
+                "serviceIdAuthServers" : {
+                  "type" : "object",
+                  "description" : "The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is\nset as true. For detailed config options, please see the values.yml in the client module test.",
+                  "additionalProperties" : {
+                    "type" : "object",
+                    "properties" : {
+                      "proxyPort" : {
+                        "type" : "integer",
+                        "minimum" : 0,
+                        "maximum" : 65535
+                      },
+                      "audience" : {
+                        "type" : "string"
+                      },
+                      "enableHttp2" : {
+                        "type" : "boolean"
+                      },
+                      "scope" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "client_secret" : {
+                        "type" : "string"
+                      },
+                      "server_url" : {
+                        "type" : "string"
+                      },
+                      "proxyHost" : {
+                        "type" : "string"
+                      },
+                      "uri" : {
+                        "type" : "string"
+                      },
+                      "client_id" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "audience" : {
+                  "type" : "string",
+                  "description" : "audience for the token validation. It is optional and if it is not configured, no audience validation will be executed."
+                },
+                "enableHttp2" : {
+                  "type" : "boolean",
+                  "description" : "set to true if the oauth2 provider supports HTTP/2",
+                  "default" : true
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client secret used to access the key distribution service.",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "server_url" : {
+                  "type" : "string",
+                  "description" : "key distribution server url for token verification. It will be used if it is configured.\nIf it is not set, a service lookup will be taken with serviceId to find an instance"
+                },
+                "serviceId" : {
+                  "type" : "string",
+                  "description" : "key serviceId for key distribution service, it will be used if above server_url is not configured.",
+                  "default" : "com.networknt.oauth2-key-1.0.0"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "the path for the key distribution endpoint",
+                  "default" : "/oauth2/key"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "pathPrefixServices" : {
+      "type" : "object",
+      "description" : "If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server\nto get the token or JWK. If two or more services have the same path, you must use serviceId in\nthe request header to use the serviceId to find the OAuth 2.0 provider configuration.",
+      "additionalProperties" : {
+        "type" : "string"
+      }
+    },
+    "request" : {
+      "type" : "object",
+      "description" : "Circuit breaker configuration for the client",
+      "properties" : {
+        "maxRequestRetry" : {
+          "type" : "integer",
+          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1.",
+          "default" : 3
+        },
+        "errorThreshold" : {
+          "type" : "integer",
+          "description" : "number of timeouts/errors to break the circuit",
+          "default" : 2
+        },
+        "maxReqPerConn" : {
+          "type" : "integer",
+          "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.",
+          "default" : 1000000
+        },
+        "connectionPoolSize" : {
+          "type" : "integer",
+          "description" : "the maximum host capacity of connection pool",
+          "default" : 1000
+        },
+        "connectionExpireTime" : {
+          "type" : "integer",
+          "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced.",
+          "default" : 1800000
+        },
+        "injectOpenTracing" : {
+          "type" : "boolean",
+          "description" : "if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used."
+        },
+        "minConnectionNumPerHost" : {
+          "type" : "integer",
+          "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.",
+          "default" : 250
+        },
+        "timeout" : {
+          "type" : "integer",
+          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout.",
+          "default" : 3000
+        },
+        "requestRetryDelay" : {
+          "type" : "integer",
+          "description" : "The delay time in milliseconds for each request retry.",
+          "default" : 1000
+        },
+        "maxConnectionNumPerHost" : {
+          "type" : "integer",
+          "description" : "maximum quantity of connection in connection pool for each host",
+          "default" : 1000
+        },
+        "resetTimeout" : {
+          "type" : "integer",
+          "description" : "reset the circuit after this timeout in millisecond",
+          "default" : 7000
+        },
+        "enableHttp2" : {
+          "type" : "boolean",
+          "description" : "the flag to indicate whether http/2 is enabled when calling client.callService()",
+          "default" : true
+        },
+        "injectCallerId" : {
+          "type" : "boolean",
+          "description" : "inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml"
+        }
+      }
+    }
+  }
+}

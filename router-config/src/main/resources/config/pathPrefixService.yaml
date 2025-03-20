@@ -1,4 +1,4 @@
-#indicate if PathPrefixServiceHandler is enabled or not
+# indicate if PathPrefixServiceHandler is enabled or not
 enabled: ${pathPrefixService.enabled:true}
-#mapping from request path prefixes to serviceIds
+# mapping from request path prefixes to serviceIds
 mapping: ${pathPrefixService.mapping:}

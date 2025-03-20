@@ -1,12 +1,12 @@
-#Email server host name or IP address
+# Email server host name or IP address
 host: ${email.host:mail.lightapi.net}
-#Email SMTP port number. Please don't use port 25 as it is not safe
+# Email SMTP port number. Please don't use port 25 as it is not safe
 port: ${email.port:587}
-#Email server user name
+# Email server user name
 user: ${email.user:}
-#Email server password
+# Email server password
 pass: ${email.pass:}
-#Email debug mode
+# Email debug mode
 debug: ${email.debug:true}
-#Email authentication
+# Email authentication
 auth: ${email.auth:true}

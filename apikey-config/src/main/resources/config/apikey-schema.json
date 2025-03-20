@@ -1,0 +1,34 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "hashEnabled", "pathPrefixAuths" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable or disable the api key filter."
+    },
+    "hashEnabled" : {
+      "type" : "boolean",
+      "description" : "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\nstored in the config file. It is more secure than put the encrypted key into the config file.\nThe default value is false. If you want to enable it, you need to use the following repo\nhttps://github.com/networknt/light-hash command line tool to hash the clear text key."
+    },
+    "pathPrefixAuths" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "headerName" : {
+            "type" : "string",
+            "pattern" : "^[a-zA-Z0-9-_]*$"
+          },
+          "apiKey" : {
+            "type" : "string"
+          },
+          "pathPrefix" : {
+            "type" : "string",
+            "pattern" : "^/.*"
+          }
+        }
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@ public enum OutputFormat {
     /**
      * Draft 07 JSON schema output.
      */
-    JSON_SCHEMA(".json"),
+    JSON_SCHEMA("-schema.json"),
 
     /**
      * Light4J YAML configuration output.

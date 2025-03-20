@@ -1,3 +1,3 @@
-#response encode handler for gzip and deflate
+# response encode handler for gzip and deflate
 enabled: ${response-encode.enabled:false}
 encoders: ${response-encode.encoders:["gzip", "deflate"]}
