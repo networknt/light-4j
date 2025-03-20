@@ -5,6 +5,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import java.lang.annotation.Annotation;
+import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.Optional;
 
 public class AnnotationUtils {
@@ -109,5 +111,51 @@ public class AnnotationUtils {
 
             else return Optional.of(annotation);
         }
+    }
+
+    /**
+     * Updates the property if the field is not the default value.
+     *
+     * @param field        The field to update.
+     * @param property     The property to update.
+     * @param key          The key to update.
+     * @param defaultValue The default value.
+     * @param type         The class type of the value.
+     * @param <T>          The type of the value.
+     */
+    public static <T> void updateIfNotDefault(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property, final String key, final Object defaultValue, final Class<T> type) {
+        final var value = getAsType(field.get(key), type);
+        updateIfNotDefault(property, value, key, defaultValue);
+    }
+
+    /**
+     * Updates the property if the field is not the default value.
+     *
+     * @param property     The property to update.
+     * @param key          The key to update.
+     * @param defaultValue The default value.
+     * @param <T>          The type of the value.
+     */
+    public static <T> void updateIfNotDefault(final LinkedHashMap<String, Object> property, final T value, final String key, final Object defaultValue) {
+        if (value != null && !Objects.equals(value, defaultValue))
+            property.put(key, value);
+    }
+
+    /**
+     * Casts the provided value to a specific class.
+     *
+     * @param value The value to cast.
+     * @param type  The class to cast to.
+     * @param <T>   The type to cast to.
+     * @return The cast value.
+     */
+    public static <T> T getAsType(final Object value, Class<T> type) {
+        if (value == null)
+            return null;
+
+        if (type.isInstance(value))
+            return type.cast(value);
+
+        else throw new IllegalArgumentException("Value is not of type " + type + ": " + value);
     }
 }

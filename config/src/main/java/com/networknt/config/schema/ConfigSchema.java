@@ -33,4 +33,9 @@ public @interface ConfigSchema {
      * Leaving this empty means no configuration files get written.
      */
     OutputFormat[] outputFormats() default {};
+
+    /**
+     * The description of the config file itself.
+     */
+    String configDescription() default DEFAULT_STRING;
 }

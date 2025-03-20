@@ -53,18 +53,36 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             final var configClassMetadata = config.getAnnotation(ConfigSchema.class);
 
             /* Get config path inside project folder */
-            final var modulePath = this.getPathInCurrentModule("../../src/main/resources/config/", configClassMetadata.configKey() + "_module");
+            final var modulePath = this.getPathInCurrentModule(
+                    "../../src/main/resources/config/",
+                    configClassMetadata.configKey() + "_module"
+            );
 
             /* Get config path inside target folder */
-            final var targetPathMirror = this.getPathInCurrentModule("config/", configClassMetadata.configKey() + "_target");
+            final var targetPathMirror = this.getPathInCurrentModule(
+                    "config/",
+                    configClassMetadata.configKey() + "_target"
+            );
 
             /* Generate a file inside the project folder and inside the target folder. */
             final var configMetadata = this.metadataParser.parseMetadata(config, this.processingEnv);
+
+            AnnotationUtils.updateIfNotDefault(
+                    configMetadata,
+                    configClassMetadata.configDescription(),
+                    MetadataParser.DESCRIPTION_KEY,
+                    ConfigSchema.DEFAULT_STRING
+            );
+
             for (final var output : configClassMetadata.outputFormats()) {
                 final var extension = output.getExtension();
 
                 /* write config in project folder. */
-                final var projectFile = this.resolveOrCreateFile(modulePath, configClassMetadata.configName() + extension).toPath();
+                final var projectFile = this.resolveOrCreateFile(
+                        modulePath,
+                        configClassMetadata.configName() + extension
+                ).toPath();
+
                 try (var writer = Files.newBufferedWriter(projectFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
@@ -73,7 +91,11 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 }
 
                 /* write config in target folder. */
-                final var targetFile = this.resolveOrCreateFile(targetPathMirror, configClassMetadata.configName() + extension).toPath();
+                final var targetFile = this.resolveOrCreateFile(
+                        targetPathMirror,
+                        configClassMetadata.configName() + extension
+                ).toPath();
+
                 try (var writer = Files.newBufferedWriter(targetFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
@@ -88,7 +110,8 @@ public class ConfigAnnotationParser extends AbstractProcessor {
 
     /**
      * Resolves a file in the given path, if the file does not exist, it will be created.
-     * @param path The path to the file.
+     *
+     * @param path     The path to the file.
      * @param fileName The name of the file.
      * @return The resolved file.
      */
@@ -101,10 +124,17 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 if (file.createNewFile())
                     LOG.debug("File {} created.", file.getName());
 
-                else LOG.warn("File {} already exists, the existing file will have it's contents overwritten.", file.getName());
+                else LOG.warn("File {} already exists, the existing file will have it's contents overwritten.",
+                        file.getName());
 
             } catch (IOException e) {
-                throw new RuntimeException("Could not create a new file '" + fileName + "', for the directory '" + file + "'. " + e.getMessage());
+                throw new RuntimeException(
+                        "Could not create a new file '" +
+                                fileName +
+                                "', for the directory '" +
+                                file + "'. " +
+                                e.getMessage()
+                );
             }
         }
 
@@ -116,7 +146,12 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         final var path = Objects.requireNonNullElse(relativeModulePath, "");
         final FileObject resource;
         try {
-            resource = this.processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "anchor" + tempAnchorName, (Element[]) null);
+            resource = this.processingEnv.getFiler().createResource(
+                    StandardLocation.CLASS_OUTPUT,
+                    "",
+                    "anchor" + tempAnchorName,
+                    (Element[]) null
+            );
         } catch (IOException e) {
             throw new RuntimeException("Could not create temp resource to find the current module", e);
         }

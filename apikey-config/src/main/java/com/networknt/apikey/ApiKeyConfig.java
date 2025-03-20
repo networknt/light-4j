@@ -14,7 +14,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "apikey", configName = "apikey", outputFormats = { OutputFormat.JSON_SCHEMA, OutputFormat.YAML })
+@ConfigSchema(
+        configKey = "apikey",
+        configName = "apikey",
+        configDescription = "ApiKey Authentication Security Configuration for light-4j",
+        outputFormats = {
+                OutputFormat.JSON_SCHEMA,
+                OutputFormat.YAML
+        }
+)
 public class ApiKeyConfig {
     private static final Logger logger = LoggerFactory.getLogger(ApiKeyConfig.class);
 

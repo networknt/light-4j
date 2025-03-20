@@ -2,6 +2,7 @@ package com.networknt.config.schema.generator;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
+import com.networknt.config.schema.AnnotationUtils;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MetadataParser;
 import org.yaml.snakeyaml.DumperOptions;
@@ -20,6 +21,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Generates Light4J style yaml configuration files.
@@ -67,7 +69,8 @@ public class YamlGenerator extends Generator {
     @Override
     public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException {
         final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
+        final var rootDescription = AnnotationUtils.getAsType(metadata.get(MetadataParser.DESCRIPTION_KEY), String.class);
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata, rootDescription), YAML_OPTIONS);
         final var fileContent = yaml.dump(json);
         os.write(fileContent.getBytes());
     }
@@ -75,7 +78,8 @@ public class YamlGenerator extends Generator {
     @Override
     public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
         final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata), YAML_OPTIONS);
+        final var rootDescription = AnnotationUtils.getAsType(metadata.get(MetadataParser.DESCRIPTION_KEY), String.class);
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata, rootDescription), YAML_OPTIONS);
         yaml.dump(json, writer);
     }
 
@@ -88,11 +92,11 @@ public class YamlGenerator extends Generator {
      * @param property The property to add the field to.
      */
     private void buildYamlProperty(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        final var externalized = Generator.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
+        final var externalized = AnnotationUtils.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
         final var isExternalized = externalized != null && externalized;
-        final var externalizedKeyName = Generator.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY_NAME), String.class);
-        final var uuid = Generator.getAsType(field.get(MetadataParser.ID_KEY), String.class);
-        final var configFieldName = Generator.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
+        final var externalizedKeyName = AnnotationUtils.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY_NAME), String.class);
+        final var uuid = AnnotationUtils.getAsType(field.get(MetadataParser.ID_KEY), String.class);
+        final var configFieldName = AnnotationUtils.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
         final var defaultValue = field.get(MetadataParser.DEFAULT_VALUE_KEY);
 
         /* Don't stringify non-string values if not externalized. */
@@ -114,15 +118,20 @@ public class YamlGenerator extends Generator {
 
         else if (defaultValue != null) {
             final var mapper = Config.getInstance().getMapper();
+            final var stringValue = (String) defaultValue;
+
             try {
-                final LinkedHashMap<String, Object> jsonMapValue = mapper.readValue((String) defaultValue, new TypeReference<>() {});
+                final var jsonMapValue = mapper.readValue(stringValue, new TypeReference<LinkedHashMap<String, Object>>() {});
                 property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonMapValue);
                 return;
+
             } catch (Exception me) {
+
                 try {
-                    final List<String> jsonListValue = mapper.readValue((String) defaultValue, new TypeReference<>() {});
+                    final var jsonListValue = mapper.readValue(stringValue, new TypeReference<List<String>>() {});
                     property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonListValue);
                     return;
+
                 } catch (Exception le) {
                     // do nothing
                 }
@@ -139,7 +148,7 @@ public class YamlGenerator extends Generator {
     @Override
     protected void parseArray(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
 
-        final var useSubObjectDefault = Generator.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
+        final var useSubObjectDefault = AnnotationUtils.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
         if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
             if (Generator.fieldIsSubMap(field, MetadataParser.ITEMS_KEY)) {
@@ -177,18 +186,22 @@ public class YamlGenerator extends Generator {
     @Override
     protected void parseObject(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
 
-        final var useSubObjectDefault = Generator.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
+        final var useSubObjectDefault = AnnotationUtils.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
         if (useSubObjectDefault != null && useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
             final LinkedHashMap<String, Object> props;
             if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY))
                 props = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
 
-            else if (Generator.fieldIsSubMap(field, MetadataParser.REF_KEY))
-                props = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.REF_KEY)).get(MetadataParser.PROPERTIES_KEY);
+            else if (Generator.fieldIsSubMap(field, MetadataParser.REF_KEY)) {
+                final var refProps = (LinkedHashMap<String, Object>) field.get(MetadataParser.REF_KEY);
+                props = (LinkedHashMap<String, Object>) refProps.get(MetadataParser.PROPERTIES_KEY);
+            }
 
-            else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY))
-                props = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY)).get(MetadataParser.PROPERTIES_KEY);
+            else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY)) {
+                final var additionalProps = (LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY);
+                props = (LinkedHashMap<String, Object>) additionalProps.get(MetadataParser.PROPERTIES_KEY);
+            }
 
             else props = new LinkedHashMap<>();
 
@@ -198,8 +211,8 @@ public class YamlGenerator extends Generator {
                 this.parseField((LinkedHashMap<String, Object>) value, objectProperties);
             });
 
-            final var configFieldName = Generator.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
-            final var uuid = Generator.getAsType(field.get(MetadataParser.ID_KEY), String.class);
+            final var configFieldName = AnnotationUtils.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
+            final var uuid = AnnotationUtils.getAsType(field.get(MetadataParser.ID_KEY), String.class);
             property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, objectProperties);
 
 
@@ -218,38 +231,52 @@ public class YamlGenerator extends Generator {
     }
 
 
+
     /**
      * Custom representer to add comments to the yaml schema.
      */
     public static class YamlCommentRepresenter extends Representer {
 
         public static final String REPRESENTER_SEPARATOR = "___";
+        private final AtomicBoolean firstNodeProcessed = new AtomicBoolean(false);
 
-        public YamlCommentRepresenter(final DumperOptions options, final LinkedHashMap<String, Object> metadata) {
+        public YamlCommentRepresenter(final DumperOptions options, final LinkedHashMap<String, Object> metadata, final String rootDescription) {
             super(options);
             this.representers.put(String.class, new RepresentString() {
-
-                final LinkedHashMap<String, Object> innerMetadata = metadata;
 
                 @Override
                 public Node representData(Object data) {
                     final String configFieldName;
                     final String uuid;
 
-                    if (((String) data).contains(REPRESENTER_SEPARATOR)) {
-                        final var parts = ((String) data).split(REPRESENTER_SEPARATOR);
+                    final var stringData = (String) data;
+                    if (stringData.contains(REPRESENTER_SEPARATOR)) {
+                        final var parts = stringData.split(REPRESENTER_SEPARATOR);
                         configFieldName = parts[0];
                         uuid = parts[1];
                     } else {
-                        configFieldName = (String) data;
+                        configFieldName = stringData;
                         uuid = null;
                     }
                     Node node = super.representData(configFieldName);
                     final var start = node.getStartMark();
                     final var end = node.getEndMark();
+                    final var descriptionBuilder = new StringBuilder();
 
-                    final var description = findCommentForNode(innerMetadata, configFieldName, uuid);
-                    if (description != null && !description.isEmpty())
+                    final var nodeDescription = findCommentForNode(metadata, configFieldName, uuid);
+
+                    if (!firstNodeProcessed.compareAndExchange(false, true) && rootDescription != null) {
+                        descriptionBuilder.append(rootDescription);
+                        descriptionBuilder.append('\n');
+                    }
+
+                    if (nodeDescription != null && !nodeDescription.isEmpty()) {
+                        descriptionBuilder.append(nodeDescription);
+                    }
+//                    final var description = findCommentForNode(metadata, configFieldName, uuid);
+
+                    final var description = descriptionBuilder.toString();
+                    if (!description.isEmpty())
                         this.addCommentsToNode(start, end, description, node);
 
                     return node;
@@ -271,7 +298,6 @@ public class YamlGenerator extends Generator {
 
                         for (final var line : lines)
                             commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + line, start, end)));
-
 
                     } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + description, start, end)));
 

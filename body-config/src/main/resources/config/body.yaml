@@ -1,14 +1,14 @@
-#Enable body parse flag
+# Enable body parse flag
 enabled: ${body.enabled:true}
-#cache request body as a string along with JSON object. The string formatted request body will be used for audit log.
-#you should only enable this if you have configured audit.yml to log the request body as it uses extra memory.
+# cache request body as a string along with JSON object. The string formatted request body will be used for audit log.
+# you should only enable this if you have configured audit.yml to log the request body as it uses extra memory.
 cacheRequestBody: ${body.cacheRequestBody:false}
-#log the full request body when RequestBodyInterceptor is enabled. This is useful for troubleshooting but not recommended
-#for production. The default value is false and only 16K of the request body will be logged.
+# log the full request body when RequestBodyInterceptor is enabled. This is useful for troubleshooting but not recommended
+# for production. The default value is false and only 16K of the request body will be logged.
 logFullRequestBody: ${body.logFullRequestBody:false}
-#cache response body as a string along with JSON object. The string formatted response body will be used for audit log.
-#you should only enable this if you have configured audit.yml to log the response body as it uses extra memory.
+# cache response body as a string along with JSON object. The string formatted response body will be used for audit log.
+# you should only enable this if you have configured audit.yml to log the response body as it uses extra memory.
 cacheResponseBody: ${body.cacheResponseBody:false}
-#log the full response body when ResponseBodyInterceptor is enabled. This is useful for troubleshooting but not recommended
-#for production. The default value is false and only 16K of the response body will be logged.
+# log the full response body when ResponseBodyInterceptor is enabled. This is useful for troubleshooting but not recommended
+# for production. The default value is false and only 16K of the response body will be logged.
 logFullResponseBody: ${body.logFullResponseBody:false}

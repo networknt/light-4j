@@ -1,197 +1,197 @@
-#Settings for TLS
+# Settings for TLS
 tls:
-  #if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load
-  #truststore that contains the self-signed certificate.
+  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load
+  # truststore that contains the self-signed certificate.
   verifyHostname: ${client.verifyHostname:true}
-  #indicate of system load default cert.
+  # indicate of system load default cert.
   loadDefaultTrustStore: ${client.loadDefaultTrustStore:true}
-  #trust store contains certificates that server needs. Enable if tls is used.
+  # trust store contains certificates that server needs. Enable if tls is used.
   loadTrustStore: ${client.loadTrustStore:true}
-  #trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: ${client.trustStore:client.truststore}
-  #trust store password
+  # trust store password
   trustStorePass: ${client.trustStorePass:password}
-  #key store contains client key and it should be loaded if two-way ssl is used.
+  # key store contains client key and it should be loaded if two-way ssl is used.
   loadKeyStore: ${client.loadKeyStore:false}
-  #key store location
+  # key store location
   keyStore: ${client.keyStore:client.keystore}
-  #key store password
+  # key store password
   keyStorePass: ${client.keyStorePass:password}
-  #private key password
+  # private key password
   keyPass: ${client.keyPass:password}
-  #public issued CA cert password
+  # public issued CA cert password
   defaultCertPassword: ${client.defaultCertPassword:chageit}
-  #TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
-  #and 1.2 (deprecated and risky).
+  # TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
+  # and 1.2 (deprecated and risky).
   tlsVersion: ${client.tlsVersion:TLSv1.3}
   defaultGroupKey: ${client.defaultGroupKey:}
   trustedNames: ${client.trustedNames:}
-#Settings for OAuth2 server communication.
+# Settings for OAuth2 server communication.
 oauth:
-  #OAuth 2.0 token endpoint configuration
-  #If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
-  #path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
+  # OAuth 2.0 token endpoint configuration
+  # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
+  # path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
   multipleAuthServers: ${client.multipleAuthServers:false}
   token:
     cache:
       capacity: 200
-    #The scope token will be renewed automatically 1 minute before expiry
+    # The scope token will be renewed automatically 1 minute before expiry
     tokenRenewBeforeExpired: ${client.tokenRenewBeforeExpired:60000}
-    #if scope token is expired, we need short delay so that we can retry faster.
+    # if scope token is expired, we need short delay so that we can retry faster.
     expiredRefreshRetryDelay: ${client.expiredRefreshRetryDelay:2000}
-    #if scope token is not expired but in renew window, we need slow retry delay.
+    # if scope token is not expired but in renew window, we need slow retry delay.
     earlyRefreshRetryDelay: ${client.earlyRefreshRetryDelay:4000}
-    #token server url. The default port number for token service is 6882. If this is set,
-    #it will take high priority than serviceId for the direct connection
+    # token server url. The default port number for token service is 6882. If this is set,
+    # it will take high priority than serviceId for the direct connection
     server_url: ${client.tokenServerUrl:}
-    #token service unique id for OAuth 2.0 provider. If server_url is not set above,
-    #a service discovery action will be taken to find an instance of token service.
+    # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+    # a service discovery action will be taken to find an instance of token service.
     serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
-    #For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
-    #and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
-    #proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
-    #below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+    # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+    # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+    # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
     proxyHost: ${client.tokenProxyHost:}
-    #We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
-    #a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
-    #the default value 443 is going to be used for the HTTP connection.
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
     proxyPort: ${client.tokenProxyPort:0}
-    #set to true if the oauth2 provider supports HTTP/2
+    # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: ${client.tokenEnableHttp2:true}
-    #the following section defines uri and parameters for authorization code grant type
+    # the following section defines uri and parameters for authorization code grant type
     authorization_code:
-      #token endpoint for authorization code grant
+      # token endpoint for authorization code grant
       uri: ${client.tokenAcUri:/oauth2/token}
-      #client_id for authorization code grant flow.
+      # client_id for authorization code grant flow.
       client_id: ${client.tokenAcClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-      #client_secret for authorization code grant flow.
+      # client_secret for authorization code grant flow.
       client_secret: ${client.tokenAcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-      #the web server uri that will receive the redirected authorization code
+      # the web server uri that will receive the redirected authorization code
       redirect_uri: ${client.tokenAcRedirectUri:http://localhost:8080/authorization}
-      #optional scope, default scope in the client registration will be used if not defined.
-      #If there are scopes specified here, they will be verified against the registered scopes.
-      #In values.yml, you define a list of strings for the scope(s).
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
       scope: ${client.tokenAcScope:}
-    #the following section defines uri and parameters for client credentials grant type
+    # the following section defines uri and parameters for client credentials grant type
     client_credentials:
-      #token endpoint for client credentials grant
+      # token endpoint for client credentials grant
       uri: ${client.tokenCcUri:/oauth2/token}
-      #client_id for client credentials grant flow.
+      # client_id for client credentials grant flow.
       client_id: ${client.tokenCcClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-      #client_secret for client credentials grant flow.
+      # client_secret for client credentials grant flow.
       client_secret: ${client.tokenCcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-      #optional scope, default scope in the client registration will be used if not defined.
-      #If there are scopes specified here, they will be verified against the registered scopes.
-      #In values.yml, you define a list of strings for the scope(s).
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
       scope: ${client.tokenCcScope:}
-      #The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
-      #set as true. For detailed config options, please see the values.yml in the client module test.
+      # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
+      # set as true. For detailed config options, please see the values.yml in the client module test.
       serviceIdAuthServers: ${client.tokenCcServiceIdAuthServers:}
     refresh_token:
-      #token endpoint for refresh token grant
+      # token endpoint for refresh token grant
       uri: ${client.tokenRtUri:/oauth2/token}
-      #client_id for refresh token grant flow.
+      # client_id for refresh token grant flow.
       client_id: ${client.tokenRtClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-      #client_secret for refresh token grant flow
+      # client_secret for refresh token grant flow
       client_secret: ${client.tokenRtClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-      #optional scope, default scope in the client registration will be used if not defined.
-      #If there are scopes specified here, they will be verified against the registered scopes.
-      #In values.yml, you define a list of strings for the scope(s).
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
       scope: ${client.tokenRtScope:}
-    #light-oauth2 key distribution endpoint configuration for token verification
+    # light-oauth2 key distribution endpoint configuration for token verification
     key:
-      #key distribution server url for token verification. It will be used if it is configured.
-      #If it is not set, a service lookup will be taken with serviceId to find an instance
+      # key distribution server url for token verification. It will be used if it is configured.
+      # If it is not set, a service lookup will be taken with serviceId to find an instance
       server_url: ${client.tokenKeyServerUrl:}
-      #key serviceId for key distribution service, it will be used if above server_url is not configured.
+      # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: ${client.tokenKeyServiceId:com.networknt.oauth2-key-1.0.0}
-      #the path for the key distribution endpoint
+      # the path for the key distribution endpoint
       uri: ${client.tokenKeyUri:/oauth2/key}
-      #client_id used to access key distribution service. It can be the same client_id with token service or not.
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
       client_id: ${client.tokenKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-      #client secret used to access the key distribution service.
+      # client secret used to access the key distribution service.
       client_secret: ${client.tokenKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-      #set to true if the oauth2 provider supports HTTP/2
+      # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: ${client.tokenKeyEnableHttp2:true}
-      #The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
-      #set as true. For detailed config options, please see the values.yml in the client module test.
+      # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
+      # set as true. For detailed config options, please see the values.yml in the client module test.
       serviceIdAuthServers: ${client.tokenKeyServiceIdAuthServers:}
-      #audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
+      # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
       audience: ${client.tokenKeyAudience:}
-  #Sign endpoint configuration
+  # Sign endpoint configuration
   sign:
-    #key distribution server url. It will be used to establish connection if it exists.
-    #if it is not set, then a service lookup against serviceId will be taken to discover an instance.
+    # key distribution server url. It will be used to establish connection if it exists.
+    # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
     server_url: ${client.signKeyServerUrl:}
-    #the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
+    # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
     serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
-    #the path for the key distribution endpoint
+    # the path for the key distribution endpoint
     uri: ${client.signKeyUri:/oauth2/key}
-    #client_id used to access key distribution service. It can be the same client_id with token service or not.
+    # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: ${client.signKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-    #client secret used to access the key distribution service.
+    # client secret used to access the key distribution service.
     client_secret: ${client.signKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-    #set to true if the oauth2 provider supports HTTP/2
+    # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: ${client.signKeyEnableHttp2:true}
-    #audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
+    # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
     audience: ${client.signKeyAudience:}
-  #de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
+  # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
-    #Token service server url, this might be different than the above token server url.
-    #The static url will be used if it is configured.
+    # Token service server url, this might be different than the above token server url.
+    # The static url will be used if it is configured.
     server_url: ${client.derefServerUrl:}
-    #For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal
-    #proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost
-    #here for the HTTPS traffic. This option is only working with server_url and serviceId
-    #below should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used.
+    # For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal
+    # proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost
+    # here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used.
     proxyHost: ${client.derefProxyHost:}
-    #We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
-    #a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
-    #the default value 443 is going to be used for the HTTP connection.
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
     proxyPort: ${client.derefProxyPort:0}
-    #token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
+    # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: ${client.derefServiceId:com.networknt.oauth2-token-1.0.0}
-    #set to true if the oauth2 provider supports HTTP/2
+    # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: ${client.derefEnableHttp2:true}
-    #the path for the key distribution endpoint
+    # the path for the key distribution endpoint
     uri: ${client.derefUri:/oauth2/deref}
-    #client_id used to access key distribution service. It can be the same client_id with token service or not.
+    # client_id used to access key distribution service. It can be the same client_id with token service or not.
     clientId: ${client.derefClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-    #client_secret for deref
+    # client_secret for deref
     clientSecret: ${client.derefClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
-#If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server
-#to get the token or JWK. If two or more services have the same path, you must use serviceId in
-#the request header to use the serviceId to find the OAuth 2.0 provider configuration.
+# If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server
+# to get the token or JWK. If two or more services have the same path, you must use serviceId in
+# the request header to use the serviceId to find the OAuth 2.0 provider configuration.
 pathPrefixServices: ${client.pathPrefixServices:}
-#Circuit breaker configuration for the client
+# Circuit breaker configuration for the client
 request:
-  #number of timeouts/errors to break the circuit
+  # number of timeouts/errors to break the circuit
   errorThreshold: ${client.errorThreshold:2}
-  #timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the
-  #connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout.
+  # timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the
+  # connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout.
   timeout: ${client.timeout:3000}
-  #reset the circuit after this timeout in millisecond
+  # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
-  #if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
+  # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
   injectOpenTracing: ${client.injectOpenTracing:false}
-  #inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
+  # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
   injectCallerId: ${client.injectCallerId:false}
-  #the flag to indicate whether http/2 is enabled when calling client.callService()
+  # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
-  #the maximum host capacity of connection pool
+  # the maximum host capacity of connection pool
   connectionPoolSize: ${client.connectionPoolSize:1000}
-  #Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.
-  #This is one way to force the connection to be closed so that the client-side discovery can be balanced.
+  # Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.
+  # This is one way to force the connection to be closed so that the client-side discovery can be balanced.
   connectionExpireTime: ${client.connectionExpireTime:1800000}
-  #The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after
-  #sending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.
+  # The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after
+  # sending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.
   maxReqPerConn: ${client.maxReqPerConn:1000000}
-  #maximum quantity of connection in connection pool for each host
+  # maximum quantity of connection in connection pool for each host
   maxConnectionNumPerHost: ${client.maxConnectionNumPerHost:1000}
-  #minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
-  #by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
+  # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
+  # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
   minConnectionNumPerHost: ${client.minConnectionNumPerHost:250}
-  #Maximum request retry times for each request. If you don't want to retry, set it to 1.
+  # Maximum request retry times for each request. If you don't want to retry, set it to 1.
   maxRequestRetry: ${client.maxRequestRetry:3}
-  #The delay time in milliseconds for each request retry.
+  # The delay time in milliseconds for each request retry.
   requestRetryDelay: ${client.requestRetryDelay:1000}

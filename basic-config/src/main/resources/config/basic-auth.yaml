@@ -1,11 +1,11 @@
-#Enable Basic Authentication Handler, default is true.
+# Enable Basic Authentication Handler, default is true.
 enabled: ${basic.enabled:true}
-#Enable Ldap Authentication, default is true.
+# Enable Ldap Authentication, default is true.
 enableAD: ${basic.enableAD:true}
-#Do we allow the anonymous to pass the authentication and limit it with some paths
-#to access? Default is false, and it should only be true in client-proxy.
+# Do we allow the anonymous to pass the authentication and limit it with some paths
+# to access? Default is false, and it should only be true in client-proxy.
 allowAnonymous: ${basic.allowAnonymous:false}
-#Allow bearer token access to the service.
+# Allow bearer token access to the service.
 allowBearerToken: ${basic.allowBearerToken:false}
-#All user definitions and their path mappings.
+# All user definitions and their path mappings.
 users: ${basic.users:}
