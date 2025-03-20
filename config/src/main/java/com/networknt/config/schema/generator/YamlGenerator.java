@@ -24,8 +24,6 @@ import java.util.List;
 /**
  * Generates Light4J style yaml configuration files.
  *
- * // TODO - YAML keeps printing single quotes on special chars
- *
  * @author Kalev Gonvick
  */
 public class YamlGenerator extends Generator {
@@ -130,8 +128,6 @@ public class YamlGenerator extends Generator {
                 }
             }
         }
-
-        System.out.println(defaultValue);
 
         if (isExternalized)
             builder.append(EXTERNAL_CONFIG_SUFFIX);
@@ -274,10 +270,10 @@ public class YamlGenerator extends Generator {
                         final var lines = description.split("\n");
 
                         for (final var line : lines)
-                            commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, line, start, end)));
+                            commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + line, start, end)));
 
 
-                    } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, description, start, end)));
+                    } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + description, start, end)));
 
                     node.setBlockComments(commentLines);
                 }

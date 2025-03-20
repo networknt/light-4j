@@ -36,12 +36,10 @@ public class AnnotationUtils {
 
         for (final var implementedInterface : elementClass.get().getInterfaces()) {
             if (implementedInterface.equals(clazz)) {
-                System.out.println(element.getSimpleName() + " implements " + clazz.getSimpleName());
                 return true;
             }
         }
 
-        System.out.println(element.getSimpleName() + " does NOT implement " + clazz.getSimpleName());
         return false;
     }
 

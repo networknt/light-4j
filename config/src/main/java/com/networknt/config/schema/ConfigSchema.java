@@ -18,7 +18,6 @@ public @interface ConfigSchema {
     double DEFAULT_MIN_NUMBER = Double.MIN_VALUE;
     boolean DEFAULT_BOOLEAN = false;
 
-
     /**
      * The name of the parameter key of the configuration file.
      */
