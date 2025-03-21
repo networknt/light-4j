@@ -1,3 +1,4 @@
+# This is the configuration file for light-4j Http2Client and jdk 11 http-client.
 # Settings for TLS
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load
@@ -20,7 +21,7 @@ tls:
   # private key password
   keyPass: ${client.keyPass:password}
   # public issued CA cert password
-  defaultCertPassword: ${client.defaultCertPassword:chageit}
+  defaultCertPassword: ${client.defaultCertPassword:changeit}
   # TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
   # and 1.2 (deprecated and risky).
   tlsVersion: ${client.tlsVersion:TLSv1.3}
@@ -67,10 +68,12 @@ oauth:
       # client_secret for authorization code grant flow.
       client_secret: ${client.tokenAcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # the web server uri that will receive the redirected authorization code
-      redirect_uri: ${client.tokenAcRedirectUri:http://localhost:8080/authorization}
+      redirect_uri: ${client.tokenAcRedirectUri:https://localhost:3000/authorization}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
       scope: ${client.tokenAcScope:}
     # the following section defines uri and parameters for client credentials grant type
     client_credentials:
@@ -83,6 +86,8 @@ oauth:
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
       scope: ${client.tokenCcScope:}
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
       # set as true. For detailed config options, please see the values.yml in the client module test.
@@ -97,6 +102,8 @@ oauth:
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
       scope: ${client.tokenRtScope:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
@@ -168,7 +175,7 @@ request:
   # number of timeouts/errors to break the circuit
   errorThreshold: ${client.errorThreshold:2}
   # timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the
-  # connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout.
+  # connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000.
   timeout: ${client.timeout:3000}
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
@@ -191,7 +198,7 @@ request:
   # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
   # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
   minConnectionNumPerHost: ${client.minConnectionNumPerHost:250}
-  # Maximum request retry times for each request. If you don't want to retry, set it to 1.
+  # Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.
   maxRequestRetry: ${client.maxRequestRetry:3}
-  # The delay time in milliseconds for each request retry.
+  # The delay time in milliseconds for each request retry. The default value is 1000.
   requestRetryDelay: ${client.requestRetryDelay:1000}

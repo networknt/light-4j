@@ -28,6 +28,7 @@ import java.util.Map;
 @ConfigSchema(
         configKey = "basic",
         configName = "basic-auth",
+        configDescription = "Basic Authentication Security Configuration for light-4j",
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
 )
 public class BasicAuthConfig {
@@ -47,7 +48,7 @@ public class BasicAuthConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = false,
             description = "Enable Basic Authentication Handler, default is true."
     )
     boolean enabled;
@@ -74,7 +75,9 @@ public class BasicAuthConfig {
             configFieldName = ALLOW_BEARER_TOKEN,
             externalizedKeyName = ALLOW_BEARER_TOKEN,
             externalized = true,
-            description = "Allow bearer token access to the service."
+            description = "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\n" +
+                    "authorization defined under username bearer. This feature is used in proxy-client\n" +
+                    "that support multiple clients with different authorizations.\n"
     )
     boolean allowBearerToken;
 
@@ -82,7 +85,11 @@ public class BasicAuthConfig {
             configFieldName = USERS,
             externalizedKeyName = USERS,
             externalized = true,
-            description = "All user definitions and their path mappings.",
+            description = "usernames and passwords in a list, the password can be encrypted like user2 in test.\n" +
+                    "As we are supporting multiple users, so leave the passwords in this file with users.\n" +
+                    "For each user, you can specify a list of optional paths that this user is allowed to\n" +
+                    "access. A special user anonymous can be used to set the paths for client without an\n" +
+                    "authorization header. The paths are optional and used for proxy only to authorize.\n",
             valueType = UserAuth.class
     )
     Map<String, UserAuth> users;  // the key is the username to locate the object

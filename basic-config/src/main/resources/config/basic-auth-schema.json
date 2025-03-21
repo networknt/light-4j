@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable Basic Authentication Handler, default is true.",
-      "default" : true
+      "description" : "Enable Basic Authentication Handler, default is true."
     },
     "enableAD" : {
       "type" : "boolean",
@@ -19,11 +18,11 @@
     },
     "allowBearerToken" : {
       "type" : "boolean",
-      "description" : "Allow bearer token access to the service."
+      "description" : "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\nauthorization defined under username bearer. This feature is used in proxy-client\nthat support multiple clients with different authorizations.\n"
     },
     "users" : {
       "type" : "object",
-      "description" : "All user definitions and their path mappings.",
+      "description" : "usernames and passwords in a list, the password can be encrypted like user2 in test.\nAs we are supporting multiple users, so leave the passwords in this file with users.\nFor each user, you can specify a list of optional paths that this user is allowed to\naccess. A special user anonymous can be used to set the paths for client without an\nauthorization header. The paths are optional and used for proxy only to authorize.\n",
       "additionalProperties" : {
         "type" : "object",
         "properties" : {

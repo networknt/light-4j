@@ -38,7 +38,8 @@ public class ApiKeyConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = "Enable or disable the api key filter."
+            defaultValue = true,
+            description = "Enable ApiKey Authentication Handler, default is false."
     )
     boolean enabled;
 
@@ -57,7 +58,12 @@ public class ApiKeyConfig {
             configFieldName = PATH_PREFIX_AUTHS,
             externalizedKeyName = PATH_PREFIX_AUTHS,
             externalized = true,
-            items = ApiKey.class
+            items = ApiKey.class,
+            description = "path prefix to the api key mapping. It is a list of map between the path prefix and the api key\n" +
+                    "for apikey authentication. In the handler, it loops through the list and find the matching path\n" +
+                    "prefix. Once found, it will check if the apikey is equal to allow the access or return an error.\n" +
+                    "The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test\n" +
+                    "resources/config folder for configuration examples.\n"
     )
     List<ApiKey> pathPrefixAuths;
 

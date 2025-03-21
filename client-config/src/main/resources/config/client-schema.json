@@ -68,7 +68,7 @@
         "defaultCertPassword" : {
           "type" : "string",
           "description" : "public issued CA cert password",
-          "default" : "chageit"
+          "default" : "changeit"
         }
       }
     },
@@ -172,7 +172,7 @@
               "properties" : {
                 "capacity" : {
                   "type" : "integer",
-                  "description" : "capacity of caching tokens in the client for downstream API calls.",
+                  "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200.",
                   "default" : 200
                 }
               }
@@ -224,7 +224,7 @@
                 },
                 "scope" : {
                   "type" : "array",
-                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).\n- petstore.r\n- petstore.w\n",
                   "items" : {
                     "type" : "string"
                   }
@@ -266,7 +266,7 @@
               "properties" : {
                 "scope" : {
                   "type" : "array",
-                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).\n- petstore.r\n- petstore.w\n",
                   "items" : {
                     "type" : "string"
                   }
@@ -299,7 +299,7 @@
               "properties" : {
                 "scope" : {
                   "type" : "array",
-                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).\n- petstore.r\n- petstore.w\n",
                   "items" : {
                     "type" : "string"
                   }
@@ -312,7 +312,7 @@
                 "redirect_uri" : {
                   "type" : "string",
                   "description" : "the web server uri that will receive the redirected authorization code",
-                  "default" : "http://localhost:8080/authorization"
+                  "default" : "https://localhost:3000/authorization"
                 },
                 "uri" : {
                   "type" : "string",
@@ -442,7 +442,7 @@
       "properties" : {
         "maxRequestRetry" : {
           "type" : "integer",
-          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1.",
+          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.",
           "default" : 3
         },
         "errorThreshold" : {
@@ -476,12 +476,12 @@
         },
         "timeout" : {
           "type" : "integer",
-          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout.",
+          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000.",
           "default" : 3000
         },
         "requestRetryDelay" : {
           "type" : "integer",
-          "description" : "The delay time in milliseconds for each request retry.",
+          "description" : "The delay time in milliseconds for each request retry. The default value is 1000.",
           "default" : 1000
         },
         "maxConnectionNumPerHost" : {

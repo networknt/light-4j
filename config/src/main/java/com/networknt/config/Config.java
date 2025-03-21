@@ -483,7 +483,7 @@ public abstract class Config {
                     configFileDir = absolutePath;
                 } catch (FileNotFoundException ex) {
                     if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
-                        logger.trace("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                        logger.trace("Unable to load config from externalized folder for {}", Encode.forJava(configFilename + " in " + absolutePath));
                     }
                 }
                 // absolute path do not need to continue
@@ -491,31 +491,32 @@ public abstract class Config {
             }
             if (inStream != null) {
                 if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
-                    logger.trace("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
+                    logger.trace("Config loaded from externalized folder for {}", Encode.forJava(configFilename + " in " + configFileDir));
                 }
                 return inStream;
             }
             if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
-                logger.trace("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
+                logger.trace("Trying to load config from classpath directory for file {}", Encode.forJava(configFilename));
             }
             inStream = this.getClassLoader().getResourceAsStream(configFilename);
             if (inStream != null) {
                 if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
-                    logger.trace("config loaded from classpath for " + Encode.forJava(configFilename));
+                    logger.trace("config loaded from classpath for {}", Encode.forJava(configFilename));
                 }
                 return inStream;
             }
             inStream = this.getClassLoader().getResourceAsStream("config/" + configFilename);
             if (inStream != null) {
                 if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
-                    logger.trace("Config loaded from default folder for " + Encode.forJava(configFilename));
+                    logger.trace("Config loaded from default folder for {}", Encode.forJava(configFilename));
                 }
                 return inStream;
             }
+            assert configFilename != null;
             if (configFilename.endsWith(CONFIG_EXT_YML)) {
-                logger.trace("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
+                logger.trace("Unable to load config {}. Looking for the same file name with extension yaml...", Encode.forJava(configFilename));
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
-                logger.trace("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
+                logger.trace("Unable to load config {}. Looking for the same file name with extension json...", Encode.forJava(configFilename));
             } else if (configFilename.endsWith(CONFIG_EXT_JSON)) {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }

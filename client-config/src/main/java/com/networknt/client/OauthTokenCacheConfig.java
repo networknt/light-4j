@@ -8,7 +8,7 @@ public class OauthTokenCacheConfig {
             configFieldName = CAPACITY,
             externalizedKeyName = "tokenCacheCapacity",
             defaultValue = 200,
-            description = "capacity of caching tokens in the client for downstream API calls."
+            description = "Capacity of caching tokens in the client for downstream API calls. The default value is 200."
     )
     private int capacity;
 

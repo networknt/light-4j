@@ -35,7 +35,7 @@ public class RequestConfig {
             defaultValue = 3000,
             description = "timeout in millisecond to indicate a client error. " +
                     "If light-4j Http2Client is used, it is the timeout to get the\n" +
-                    "connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout."
+                    "connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
     )
     private int timeout;
 
@@ -134,7 +134,7 @@ public class RequestConfig {
             externalizedKeyName = MAX_REQUEST_RETRY,
             externalized = true,
             defaultValue = 3,
-            description = "Maximum request retry times for each request. If you don't want to retry, set it to 1."
+            description = "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
     )
     private int maxRequestRetry;
 
@@ -143,7 +143,7 @@ public class RequestConfig {
             externalizedKeyName = REQUEST_RETRY_DELAY,
             externalized = true,
             defaultValue = 1000,
-            description = "The delay time in milliseconds for each request retry."
+            description = "The delay time in milliseconds for each request retry. The default value is 1000."
     )
     private int requestRetryDelay;
 

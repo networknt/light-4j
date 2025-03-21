@@ -1,23 +1,17 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "headers", "audit", "statusCode", "responseTime", "auditOnError", "mask", "timestampFormat", "requestBodyMaxSize", "responseBodyMaxSize", "enabled" ],
+  "required" : [ "enabled", "mask", "statusCode", "responseTime", "auditOnError", "timestampFormat", "headers", "audit", "requestBodyMaxSize", "responseBodyMaxSize" ],
   "properties" : {
-    "headers" : {
-      "type" : "array",
-      "description" : "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.",
-      "default" : [ "X-Correlation-Id", "X-Traceability-Id", "caller_id" ],
-      "items" : {
-        "type" : "string"
-      }
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable Audit Logging",
+      "default" : true
     },
-    "audit" : {
-      "type" : "array",
-      "description" : "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.",
-      "default" : [ "client_id", "user_id", "scope_client_id", "endpoint", "serviceId" ],
-      "items" : {
-        "type" : "string"
-      }
+    "mask" : {
+      "type" : "boolean",
+      "description" : "Enable mask in the audit log",
+      "default" : true
     },
     "statusCode" : {
       "type" : "boolean",
@@ -33,14 +27,25 @@
       "type" : "boolean",
       "description" : "when auditOnError is true:\n - it will only log when status code >= 400\nwhen auditOnError is false:\n - it will log on every request\nlog level is controlled by logLevel"
     },
-    "mask" : {
-      "type" : "boolean",
-      "description" : "Enable mask in the audit log",
-      "default" : true
-    },
     "timestampFormat" : {
       "type" : "string",
       "description" : "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\nfor some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format."
+    },
+    "headers" : {
+      "type" : "array",
+      "description" : "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.\nCorrelation Id\n- X-Correlation-Id\nTraceability Id\n- X-Traceability-Id\ncaller id for metrics\n- caller_id\n",
+      "default" : [ "X-Correlation-Id", "X-Traceability-Id", "caller_id" ],
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "audit" : {
+      "type" : "array",
+      "description" : "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.\nClient Id\n- client_id\nUser Id in id token, this is optional\n- user_id\nClient Id in scope/access token, this is optional\n- scope_client_id\nRequest endpoint uri@method.\n- endpoint\nService ID assigned to the service, this is optional and must be set by the service in its implementation\n- serviceId\nRequest Body, this is optional and must be set by the service in its implementation\n- requestBody\nResponse payload, this is optional and must be set by the service in its implementation\n- responseBody\n",
+      "default" : [ "client_id", "user_id", "scope_client_id", "endpoint", "serviceId" ],
+      "items" : {
+        "type" : "string"
+      }
     },
     "requestBodyMaxSize" : {
       "type" : "integer",
@@ -51,11 +56,6 @@
       "type" : "integer",
       "description" : "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
       "default" : 4096
-    },
-    "enabled" : {
-      "type" : "boolean",
-      "description" : "Enable Audit Logging",
-      "default" : true
     }
   }
 }
