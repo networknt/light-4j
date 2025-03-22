@@ -33,7 +33,13 @@ import java.util.function.Consumer;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "audit", configName = "audit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "audit",
+        configName = "audit",
+        configDescription = "AuditHandler will pick some important fields from headers and tokens and logs into an audit appender\n" +
+                "defined in the logback.xml configuration file.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
@@ -55,31 +61,23 @@ public class AuditConfig {
     private Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
 
-    @ArrayField(
-            configFieldName = HEADERS,
-            externalizedKeyName = HEADERS,
-            description = "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
-                    "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            description = "Enable Audit Logging",
             externalized = true,
-            items = String.class,
-            defaultValue = "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
+            defaultValue = true
     )
-    private List<String> headerList;
+    private boolean enabled;
 
-    @ArrayField(
-            configFieldName = AUDIT,
-            externalizedKeyName = AUDIT,
-            description = "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
-                    "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+    @BooleanField(
+            configFieldName = MASK,
+            externalizedKeyName = MASK,
+            description = "Enable mask in the audit log",
             externalized = true,
-            items = String.class,
-            defaultValue = "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
+            defaultValue = true
     )
-    private List<String> auditList;
-
-    private final Config config;
-    // A customized logger appender defined in default logback.xml
-    private Consumer<String> auditFunc;
+    private boolean mask;
 
     @BooleanField(
             configFieldName = STATUS_CODE,
@@ -99,6 +97,10 @@ public class AuditConfig {
     )
     private boolean responseTime;
 
+    private final Config config;
+    // A customized logger appender defined in default logback.xml
+    private Consumer<String> auditFunc;
+
     @BooleanField(
             configFieldName = AUDIT_ON_ERROR,
             externalizedKeyName = AUDIT_ON_ERROR,
@@ -111,15 +113,6 @@ public class AuditConfig {
     )
     private boolean auditOnError;
 
-    @BooleanField(
-            configFieldName = MASK,
-            externalizedKeyName = MASK,
-            description = "Enable mask in the audit log",
-            externalized = true,
-            defaultValue = true
-    )
-    private boolean mask;
-
     @StringField(
             configFieldName = TIMESTAMP_FORMAT,
             externalizedKeyName = TIMESTAMP_FORMAT,
@@ -128,6 +121,48 @@ public class AuditConfig {
             externalized = true
     )
     private String timestampFormat;
+
+    @ArrayField(
+            configFieldName = HEADERS,
+            externalizedKeyName = HEADERS,
+            description = "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
+                    "string as default value in the template and values.yml. You can also use a list of strings in YAML format.\n" +
+                    "Correlation Id\n" +
+                    "- X-Correlation-Id\n" +
+                    "Traceability Id\n" +
+                    "- X-Traceability-Id\n" +
+                    "caller id for metrics\n" +
+                    "- caller_id\n",
+            externalized = true,
+            items = String.class,
+            defaultValue = "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
+    )
+    private List<String> headerList;
+
+    @ArrayField(
+            configFieldName = AUDIT,
+            externalizedKeyName = AUDIT,
+            description = "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
+                    "string as default value in the template and values.yml. You can also use a list of strings in YAML format.\n" +
+                    "Client Id\n" +
+                    "- client_id\n" +
+                    "User Id in id token, this is optional\n" +
+                    "- user_id\n" +
+                    "Client Id in scope/access token, this is optional\n" +
+                    "- scope_client_id\n" +
+                    "Request endpoint uri@method.\n" +
+                    "- endpoint\n" +
+                    "Service ID assigned to the service, this is optional and must be set by the service in its implementation\n" +
+                    "- serviceId\n" +
+                    "Request Body, this is optional and must be set by the service in its implementation\n" +
+                    "- requestBody\n" +
+                    "Response payload, this is optional and must be set by the service in its implementation\n" +
+                    "- responseBody\n",
+            externalized = true,
+            items = String.class,
+            defaultValue = "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
+    )
+    private List<String> auditList;
 
     @IntegerField(
             configFieldName = REQUEST_BODY_MAX_SIZE,
@@ -149,14 +184,6 @@ public class AuditConfig {
     )
     private int responseBodyMaxSize;
 
-    @BooleanField(
-            configFieldName = ENABLED,
-            externalizedKeyName = ENABLED,
-            description = "Enable Audit Logging",
-            externalized = true,
-            defaultValue = true
-    )
-    private boolean enabled;
 
     private AuditConfig() {
         this(CONFIG_NAME);
@@ -248,11 +275,7 @@ public class AuditConfig {
     }
 
     private void setLogLevel() {
-        Object object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
-        if (object != null) {
-            auditOnError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
-            auditFunc = auditOnError ? LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
-        }
+        auditFunc = auditOnError ? LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
     }
 
     private void setLists() {

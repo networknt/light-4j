@@ -108,7 +108,7 @@ public class TlsConfig {
             configFieldName = DEFAULT_CERT_PASSWORD,
             externalizedKeyName = DEFAULT_CERT_PASSWORD,
             externalized = true,
-            defaultValue = "chageit",
+            defaultValue = "changeit",
             description = "public issued CA cert password"
     )
     private char[] defaultCertPassword;

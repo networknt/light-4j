@@ -1,4 +1,4 @@
-#indicate if ServiceDictHandler is enabled or not
+# indicate if ServiceDictHandler is enabled or not
 enabled: ${serviceDict.enabled:true}
-#mapping from 'pathPrefix@requestMethod' to serviceIds
+# mapping from 'pathPrefix@requestMethod' to serviceIds
 mapping: ${serviceDict.mapping:}

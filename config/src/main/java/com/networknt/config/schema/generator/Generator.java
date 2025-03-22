@@ -1,5 +1,6 @@
 package com.networknt.config.schema.generator;
 
+import com.networknt.config.schema.AnnotationUtils;
 import com.networknt.config.schema.MetadataParser;
 import com.networknt.config.schema.OutputFormat;
 
@@ -154,41 +155,6 @@ public abstract class Generator {
     }
 
     /**
-     * Casts the provided value to a specific class.
-     *
-     * @param value The value to cast.
-     * @param type  The class to cast to.
-     * @param <T>   The type to cast to.
-     * @return The cast value.
-     */
-    protected static <T> T getAsType(final Object value, Class<T> type) {
-        if (value == null)
-            return null;
-
-        if (type.isInstance(value))
-            return type.cast(value);
-
-        else throw new IllegalArgumentException("Value is not of type " + type + ": " + value);
-    }
-
-    /**
-     * Updates the property if the field is not the default value.
-     *
-     * @param field        The field to update.
-     * @param property     The property to update.
-     * @param key          The key to update.
-     * @param defaultValue The default value.
-     * @param type         The class type of the value.
-     * @param <T>          The type of the value.
-     */
-    protected static <T> void updateIfNotDefault(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property, final String key, final Object defaultValue, final Class<T> type) {
-        final var value = getAsType(field.get(key), type);
-        if (value != null && !Objects.equals(value, defaultValue))
-            property.put(key, value);
-
-    }
-
-    /**
      * Common check to see if the current hashmap contains another hashmap at a specific field.
      *
      * @param map   The map to check.
@@ -207,7 +173,7 @@ public abstract class Generator {
      * @param property The property to update.
      */
     protected void parseField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        final var type = getAsType(field.get(MetadataParser.TYPE_KEY), String.class);
+        final var type = AnnotationUtils.getAsType(field.get(MetadataParser.TYPE_KEY), String.class);
         switch (type) {
             case MetadataParser.ARRAY_TYPE:
                 this.parseArray(field, property);

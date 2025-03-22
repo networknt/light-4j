@@ -29,7 +29,12 @@ import java.util.Map;
 /**
  * Created by steve on 29/09/16.
  */
-@ConfigSchema(configKey = "correlation", configName = "correlation", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "correlation",
+        configName = "correlation",
+        configDescription = "Correlation Handler Configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";
     private static final String ENABLED = "enabled";

@@ -43,7 +43,7 @@ public class OAuthTokenAuthorizationCodeConfig {
             configFieldName = REDIRECT_URI,
             externalizedKeyName = "tokenAcRedirectUri",
             externalized = true,
-            defaultValue = "http://localhost:8080/authorization",
+            defaultValue = "https://localhost:3000/authorization",
             description = "the web server uri that will receive the redirected authorization code"
     )
     private String redirect_uri;
@@ -55,7 +55,9 @@ public class OAuthTokenAuthorizationCodeConfig {
             items = String.class,
             description = "optional scope, default scope in the client registration will be used if not defined.\n" +
                     "If there are scopes specified here, they will be verified against the registered scopes.\n" +
-                    "In values.yml, you define a list of strings for the scope(s)."
+                    "In values.yml, you define a list of strings for the scope(s).\n" +
+                    "- petstore.r\n" +
+                    "- petstore.w\n"
     )
     private List<String> scope;
 
