@@ -1,5 +1,26 @@
 # Change Log
 
+## [2.2.1](https://github.com/networknt/light-4j/tree/2.2.1) (2025-03-22)
+
+
+**Merged pull requests:**
+
+
+- JSON Schema & YAML Config Generation Enhancement [\#2482](https://github.com/networknt/light-4j/pull/2482) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#2478 update dependency of mysql [\#2479](https://github.com/networknt/light-4j/pull/2479) ([stevehu](https://github.com/stevehu))
+- fixes \#2476 update email dependency from javax to jakarta [\#2477](https://github.com/networknt/light-4j/pull/2477) ([stevehu](https://github.com/stevehu))
+- Sync [\#2475](https://github.com/networknt/light-4j/pull/2475) ([stevehu](https://github.com/stevehu))
+- 2473 remaining config conversion [\#2474](https://github.com/networknt/light-4j/pull/2474) ([KalevGonvick](https://github.com/KalevGonvick))
+- 2469 client config module refactor [\#2472](https://github.com/networknt/light-4j/pull/2472) ([KalevGonvick](https://github.com/KalevGonvick))
+- 2467 multi module schema generation [\#2468](https://github.com/networknt/light-4j/pull/2468) ([KalevGonvick](https://github.com/KalevGonvick))
+- 2463 add configuration schema generation to basic config [\#2466](https://github.com/networknt/light-4j/pull/2466) ([KalevGonvick](https://github.com/KalevGonvick))
+- 2459 mirroredtypeexceptions occur when using config generator annotations [\#2465](https://github.com/networknt/light-4j/pull/2465) ([stevehu](https://github.com/stevehu))
+- 2459 mirroredtypeexceptions occur when using config generator annotations [\#2461](https://github.com/networknt/light-4j/pull/2461) ([stevehu](https://github.com/stevehu))
+- MirroredTypeException Fix [\#2460](https://github.com/networknt/light-4j/pull/2460) ([KalevGonvick](https://github.com/KalevGonvick))
+- 2452 create config file generator so configurations are always in sync with the pojo [\#2458](https://github.com/networknt/light-4j/pull/2458) ([stevehu](https://github.com/stevehu))
+- Added metrics attachment for handler execution. [\#2454](https://github.com/networknt/light-4j/pull/2454) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.2.0](https://github.com/networknt/light-4j/tree/2.2.0) (2025-02-12)
 
 
