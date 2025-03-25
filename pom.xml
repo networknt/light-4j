@@ -121,7 +121,6 @@
         <module>security-config</module>
         <module>client-config</module>
         <module>client</module>
-        <module>expect100continue</module>
         <module>audit</module>
         <module>audit-config</module>
         <module>dump</module>
