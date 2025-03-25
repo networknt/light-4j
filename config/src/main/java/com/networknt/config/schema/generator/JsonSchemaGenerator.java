@@ -1,6 +1,8 @@
 package com.networknt.config.schema.generator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.AnnotationUtils;
 import com.networknt.config.schema.ConfigSchema;
@@ -21,7 +23,16 @@ import java.util.Objects;
 public class JsonSchemaGenerator extends Generator {
 
     private final static String JSON_DRAFT = "http://json-schema.org/draft-07/schema#";
-    private final ObjectMapper objectWriter = new ObjectMapper();
+    private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final static DefaultPrettyPrinter DEFAULT_PRETTY_PRINTER = new DefaultPrettyPrinter();
+    private final static DefaultIndenter DEFAULT_INDENTER = new DefaultIndenter();
+    static {
+        DEFAULT_INDENTER.withLinefeed("\n");
+        DEFAULT_PRETTY_PRINTER.withObjectIndenter(DEFAULT_INDENTER);
+        DEFAULT_PRETTY_PRINTER.withArrayIndenter(DEFAULT_INDENTER);
+        OBJECT_MAPPER.setDefaultPrettyPrinter(DEFAULT_PRETTY_PRINTER);
+    }
+
 
     public JsonSchemaGenerator(final String configKey, final String configName) {
         super(configKey, configName);
@@ -30,19 +41,19 @@ public class JsonSchemaGenerator extends Generator {
     @Override
     public void writeSchemaToFile(OutputStream os, LinkedHashMap<String, Object> metadata) throws IOException {
         final var schemaMap = this.prepJsonMetadataObject(metadata);
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, schemaMap);
+        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, schemaMap);
     }
 
     @Override
     public void writeSchemaToFile(final FileObject source, final LinkedHashMap<String, Object> metadata) throws IOException {
         final var schemaMap = this.prepJsonMetadataObject(metadata);
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(source.openOutputStream(), schemaMap);
+        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(source.openOutputStream(), schemaMap);
     }
 
     @Override
     public void writeSchemaToFile(final Writer br, final LinkedHashMap<String, Object> metadata) throws IOException {
         final var schemaMap = this.prepJsonMetadataObject(metadata);
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
+        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
     }
 
     /**
@@ -177,7 +188,7 @@ public class JsonSchemaGenerator extends Generator {
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
             try {
-                property.put("default", this.objectWriter.readValue(presentValue, Object.class));
+                property.put("default", this.OBJECT_MAPPER.readValue(presentValue, Object.class));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -228,7 +239,7 @@ public class JsonSchemaGenerator extends Generator {
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
             try {
-                property.put("default", this.objectWriter.readValue(presentValue, Object.class));
+                property.put("default", this.OBJECT_MAPPER.readValue(presentValue, Object.class));
             } catch (JsonProcessingException e) {
                 // Do nothing, don't bother with the default value.
             }

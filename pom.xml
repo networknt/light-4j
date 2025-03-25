@@ -198,6 +198,7 @@
         <module>unified-config</module>
         <module>unified-security</module>
         <module>token-limit</module>
+        <module>expect100continue</module>
     </modules>
 
     <dependencyManagement>
