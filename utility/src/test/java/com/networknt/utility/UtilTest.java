@@ -19,7 +19,9 @@ package com.networknt.utility;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UtilTest {
@@ -45,6 +47,45 @@ public class UtilTest {
         System.out.println("uuid = " + id7);
         System.out.println("uuid = " + id8);
         System.out.println("uuid = " + id9);
+        Assert.assertNotEquals(id1, id2);
+    }
+
+    @Test
+    public void testGetCleanUUID() {
+        List<String> validUUIDs = new ArrayList<>();
+
+        // Generate UUIDs until we have 10 without "-" or "_"
+        while (validUUIDs.size() < 10) {
+            String uuid = Util.getUUID();
+            if (!uuid.contains("-") && !uuid.contains("_")) {
+                validUUIDs.add(uuid);
+            }
+        }
+
+        // Assign to individual variables
+        String id0 = validUUIDs.get(0);
+        String id1 = validUUIDs.get(1);
+        String id2 = validUUIDs.get(2);
+        String id3 = validUUIDs.get(3);
+        String id4 = validUUIDs.get(4);
+        String id5 = validUUIDs.get(5);
+        String id6 = validUUIDs.get(6);
+        String id7 = validUUIDs.get(7);
+        String id8 = validUUIDs.get(8);
+        String id9 = validUUIDs.get(9);
+
+        // Print results
+        System.out.println("uuid = " + id0);
+        System.out.println("uuid = " + id1);
+        System.out.println("uuid = " + id2);
+        System.out.println("uuid = " + id3);
+        System.out.println("uuid = " + id4);
+        System.out.println("uuid = " + id5);
+        System.out.println("uuid = " + id6);
+        System.out.println("uuid = " + id7);
+        System.out.println("uuid = " + id8);
+        System.out.println("uuid = " + id9);
+
         Assert.assertNotEquals(id1, id2);
     }
 
