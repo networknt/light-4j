@@ -55,7 +55,7 @@ public class UtilTest {
         List<String> validUUIDs = new ArrayList<>();
 
         // Generate UUIDs until we have 10 without "-" or "_"
-        while (validUUIDs.size() < 10) {
+        while (validUUIDs.size() < 20) {
             String uuid = Util.getUUID();
             if (!uuid.contains("-") && !uuid.contains("_")) {
                 validUUIDs.add(uuid);
@@ -73,18 +73,38 @@ public class UtilTest {
         String id7 = validUUIDs.get(7);
         String id8 = validUUIDs.get(8);
         String id9 = validUUIDs.get(9);
+        String id10 = validUUIDs.get(10);
+        String id11 = validUUIDs.get(11);
+        String id12 = validUUIDs.get(12);
+        String id13 = validUUIDs.get(13);
+        String id14 = validUUIDs.get(14);
+        String id15 = validUUIDs.get(15);
+        String id16 = validUUIDs.get(16);
+        String id17 = validUUIDs.get(17);
+        String id18 = validUUIDs.get(18);
+        String id19 = validUUIDs.get(19);
 
         // Print results
-        System.out.println("uuid = " + id0);
-        System.out.println("uuid = " + id1);
-        System.out.println("uuid = " + id2);
-        System.out.println("uuid = " + id3);
-        System.out.println("uuid = " + id4);
-        System.out.println("uuid = " + id5);
-        System.out.println("uuid = " + id6);
-        System.out.println("uuid = " + id7);
-        System.out.println("uuid = " + id8);
-        System.out.println("uuid = " + id9);
+        System.out.println(id0);
+        System.out.println(id1);
+        System.out.println(id2);
+        System.out.println(id3);
+        System.out.println(id4);
+        System.out.println(id5);
+        System.out.println(id6);
+        System.out.println(id7);
+        System.out.println(id8);
+        System.out.println(id9);
+        System.out.println(id10);
+        System.out.println(id11);
+        System.out.println(id12);
+        System.out.println(id13);
+        System.out.println(id14);
+        System.out.println(id15);
+        System.out.println(id16);
+        System.out.println(id17);
+        System.out.println(id18);
+        System.out.println(id19);
 
         Assert.assertNotEquals(id1, id2);
     }
