@@ -94,6 +94,7 @@
         <version.httpclient>4.5.14</version.httpclient>
         <version.jsonpath>2.9.0</version.jsonpath>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
+        <version.uuid>6.1.1</version.uuid>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.7.0</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
@@ -755,6 +756,11 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.f4b6a3</groupId>
+                <artifactId>uuid-creator</artifactId>
+                <version>${version.uuid}</version>
             </dependency>
 
             <!-- Test dependencies -->

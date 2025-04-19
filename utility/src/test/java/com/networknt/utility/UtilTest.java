@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class UtilTest {
+    /*
     @Test
     public void testGetUUID() {
         String id0 = Util.getUUID();
@@ -108,6 +109,7 @@ public class UtilTest {
 
         Assert.assertNotEquals(id1, id2);
     }
+    */
 
     @Test
     public void testGetJarVersion() {

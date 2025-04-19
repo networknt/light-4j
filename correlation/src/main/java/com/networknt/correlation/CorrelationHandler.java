@@ -23,6 +23,7 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
+import com.networknt.utility.UuidUtil;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -78,7 +79,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         if (cId == null && (config.isAutogenCorrelationID())) {
 
             // generate a UUID and put it into the request header
-            cId = Util.getUUID();
+            cId = UuidUtil.uuidToBase64(UuidUtil.getUUID());
             exchange.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cId);
             String tId = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
 

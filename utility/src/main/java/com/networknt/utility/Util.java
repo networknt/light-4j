@@ -42,32 +42,6 @@ public class Util {
     public static final List<String> METHODS = Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH");
 
     /**
-     * Generate UUID across the entire app and it is used for correlationId.
-     *
-     * @return String correlationId
-     */
-    public static String getUUID() {
-        UUID id = UUID.randomUUID();
-        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-        bb.putLong(id.getMostSignificantBits());
-        bb.putLong(id.getLeastSignificantBits());
-        return Base64.encodeBase64URLSafeString(bb.array());
-    }
-
-    /**
-     * Get well formatted UUID without - and _
-     *
-     * @return uuid string
-     */
-    public static String getAlphaNumUUID() {
-        String uuid;
-        do {
-            uuid = getUUID();
-        } while (uuid.contains("-") || uuid.contains("_"));
-        return uuid;
-    }
-
-    /**
      * Quote the given string if needed
      *
      * @param value The value to quote (e.g. bob)
