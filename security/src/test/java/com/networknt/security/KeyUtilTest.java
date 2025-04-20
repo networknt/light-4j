@@ -1,6 +1,7 @@
 package com.networknt.security;
 
 import com.networknt.utility.HashUtil;
+import com.networknt.utility.UuidUtil;
 import org.junit.Test;
 
 import java.security.KeyPair;
@@ -32,7 +33,7 @@ public class KeyUtilTest {
     @Test
     public void testGenerateJwk() throws Exception {
         KeyPair longKeyPair = KeyUtil.generateKeyPair("RSA", 2048);
-        String longKeyId = HashUtil.generateUUID();
+        String longKeyId = UuidUtil.uuidToBase64(UuidUtil.getUUID());
         System.out.println("longKeyId = " + longKeyId);
         String publicKey = KeyUtil.serializePublicKey(longKeyPair.getPublic());
         System.out.println("long public key = " + publicKey);
@@ -40,7 +41,7 @@ public class KeyUtilTest {
         System.out.println("long private key = " + privateKey);
 
         KeyPair currKeyPair = KeyUtil.generateKeyPair("RSA", 2048);
-        String currKeyId = HashUtil.generateUUID();
+        String currKeyId = UuidUtil.uuidToBase64(UuidUtil.getUUID());
         System.out.println("currKeyId = " + currKeyId);
         publicKey = KeyUtil.serializePublicKey(currKeyPair.getPublic());
         System.out.println("curr public key = " + publicKey);
