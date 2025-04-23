@@ -32,10 +32,10 @@ import java.util.Map;
 
 /**
  * This is a handler that manipulate request and response headers based on the configuration.
- *
+ * <p>
  * Although one header key can support multiple values in HTTP, but it is not supported here.
  * If the key exists during update, the original value will be replaced by the new value.
- *
+ * <p>
  * A new feature is added to the handler to manipulate the headers per request path basis to
  * support the light-gateway use cases with multiple downstream APIs.
  *
@@ -55,12 +55,14 @@ public class HeaderHandler implements MiddlewareHandler {
 
     /**
      * Please don't use this constructor. It is used by test case only to inject config object.
+     *
      * @param cfg HeaderConfig
      * @deprecated
      */
     public HeaderHandler(HeaderConfig cfg) {
         config = cfg;
     }
+
     /**
      * Check iterate the configuration on both request and response section and update
      * headers accordingly.
@@ -70,74 +72,88 @@ public class HeaderHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("HeaderHandler.handleRequest starts.");
+        logger.debug("HeaderHandler.handleRequest starts.");
+
         // handle all request header
         List<String> requestHeaderRemove = config.getRequestRemoveList();
-        if(requestHeaderRemove != null) {
+        if (requestHeaderRemove != null) {
             requestHeaderRemove.forEach(s -> exchange.getRequestHeaders().remove(s));
         }
-        Map<String, Object> requestHeaderUpdate = config.getRequestUpdateMap();
-        if(requestHeaderUpdate != null) {
-            requestHeaderUpdate.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), (String)v));
+
+        Map<String, String> requestHeaderUpdate = config.getRequestUpdateMap();
+        if (requestHeaderUpdate != null) {
+            requestHeaderUpdate.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), v));
         }
 
         // handle all response header
         List<String> responseHeaderRemove = config.getResponseRemoveList();
-        if(responseHeaderRemove != null) {
+        if (responseHeaderRemove != null) {
             responseHeaderRemove.forEach(s -> exchange.getResponseHeaders().remove(s));
         }
-        Map<String, Object> responseHeaderUpdate = config.getResponseUpdateMap();
-        if(responseHeaderUpdate != null) {
-            responseHeaderUpdate.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), (String)v));
+
+        Map<String, String> responseHeaderUpdate = config.getResponseUpdateMap();
+        if (responseHeaderUpdate != null) {
+            responseHeaderUpdate.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), v));
         }
+
         // handler per path prefix header if configured.
-        Map<String, Object> pathPrefixHeader = config.getPathPrefixHeader();
-        if(pathPrefixHeader != null) {
+        Map<String, HeaderPathPrefixConfig> pathPrefixHeader = config.getPathPrefixHeader();
+
+        if (pathPrefixHeader != null) {
             String requestPath = exchange.getRequestPath();
-            for(Map.Entry<String, Object> entry: config.getPathPrefixHeader().entrySet()) {
-                if(requestPath.startsWith(entry.getKey())) {
-                    if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + entry.getKey());
-                    Map<String, Object> valueMap = (Map<String, Object>)entry.getValue();
+
+            for (Map.Entry<String, HeaderPathPrefixConfig> entry : config.getPathPrefixHeader().entrySet()) {
+
+                if (requestPath.startsWith(entry.getKey())) {
+                    logger.trace("found with requestPath = {} prefix = {}", requestPath, entry.getKey());
+
+                    HeaderPathPrefixConfig pathPrefixConfig = entry.getValue();
+
                     // handle the request header for the request path
-                    Map<String, Object> requestHeaderMap = (Map<String, Object>)valueMap.get(HeaderConfig.REQUEST);
-                    if(requestHeaderMap != null) {
-                        List<String> requestHeaderRemoveList = (List<String>)requestHeaderMap.get(HeaderConfig.REMOVE);
-                        if(requestHeaderRemoveList != null) {
+                    HeaderRequestConfig requestHeaderMap = pathPrefixConfig.getRequest();
+                    if (requestHeaderMap != null) {
+
+                        List<String> requestHeaderRemoveList = requestHeaderMap.getRemove();
+                        if (requestHeaderRemoveList != null) {
                             requestHeaderRemoveList.forEach(s -> {
                                 exchange.getRequestHeaders().remove(s);
-                                if(logger.isTraceEnabled()) logger.trace("remove request header " + s);
+                                logger.trace("remove request header {}", s);
                             });
                         }
-                        Map<String, Object> requestHeaderUpdateMap = (Map<String, Object>)requestHeaderMap.get(HeaderConfig.UPDATE);
-                        if(requestHeaderUpdateMap != null) {
+
+                        Map<String, String> requestHeaderUpdateMap = requestHeaderMap.getUpdate();
+                        if (requestHeaderUpdateMap != null) {
                             requestHeaderUpdateMap.forEach((k, v) -> {
-                                exchange.getRequestHeaders().put(new HttpString(k), (String)v);
-                                if(logger.isTraceEnabled()) logger.trace("update request header " + k + " with value " + v);
+                                exchange.getRequestHeaders().put(new HttpString(k), v);
+                                logger.trace("update request header {} with value {}", k, v);
                             });
                         }
                     }
+
                     // handle the response header for the request path
-                    Map<String, Object> responseHeaderMap = (Map<String, Object>)valueMap.get(HeaderConfig.RESPONSE);
-                    if(responseHeaderMap != null) {
-                        List<String> responseHeaderRemoveList = (List<String>)responseHeaderMap.get(HeaderConfig.REMOVE);
-                        if(responseHeaderRemoveList != null) {
+                    HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
+                    if (responseHeaderMap != null) {
+
+                        List<String> responseHeaderRemoveList = responseHeaderMap.getRemove();
+                        if (responseHeaderRemoveList != null) {
                             responseHeaderRemoveList.forEach(s -> {
                                 exchange.getResponseHeaders().remove(s);
-                                if(logger.isTraceEnabled()) logger.trace("remove response header " + s);
+                                logger.trace("remove response header {}", s);
                             });
                         }
-                        Map<String, Object> responseHeaderUpdateMap = (Map<String, Object>)responseHeaderMap.get(HeaderConfig.UPDATE);
-                        if(responseHeaderUpdateMap != null) {
+
+                        Map<String, String> responseHeaderUpdateMap = responseHeaderMap.getUpdate();
+                        if (responseHeaderUpdateMap != null) {
                             responseHeaderUpdateMap.forEach((k, v) -> {
-                                exchange.getResponseHeaders().put(new HttpString(k), (String)v);
-                                if(logger.isTraceEnabled()) logger.trace("update response header " + k + " with value " + v);
+                                exchange.getResponseHeaders().put(new HttpString(k), v);
+                                logger.trace("update response header {} with value {}", k, v);
                             });
                         }
                     }
                 }
             }
         }
-        if(logger.isDebugEnabled()) logger.debug("HeaderHandler.handleRequest ends.");
+        logger.debug("HeaderHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
@@ -167,6 +183,6 @@ public class HeaderHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
+        if (logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
     }
 }

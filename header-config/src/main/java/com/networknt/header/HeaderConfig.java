@@ -1,32 +1,62 @@
 package com.networknt.header;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.Config;
+import com.networknt.config.schema.*;
+
+import java.io.IOException;
 import java.util.*;
 
+@ConfigSchema(configKey = "header", configName = "header", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class HeaderConfig {
-    public static Logger logger = LoggerFactory.getLogger(HeaderConfig.class);
-
     public static final String CONFIG_NAME = "header";
     public static final String ENABLED = "enabled";
     public static final String REQUEST = "request";
     public static final String RESPONSE = "response";
-    public static final String REMOVE = "remove";
-    public static final String UPDATE = "update";
     public static final String PATH_PREFIX_HEADER = "pathPrefixHeader";
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            description = "Enable header handler or not. The default to false and it can be enabled in the externalized\n" +
+                    "values.yml file. It is mostly used in the http-sidecar, light-proxy or light-router."
+    )
     boolean enabled;
-    List<String> requestRemoveList;
-    Map<String, Object> requestUpdateMap;
 
-    List<String> responseRemoveList;
-    Map<String, Object> responseUpdateMap;
-    Map<String, Object> pathPrefixHeader;
+    @ObjectField(
+            configFieldName = "request",
+            description = "Request header manipulation",
+            useSubObjectDefault = true,
+            ref = HeaderRequestConfig.class
+    )
+    HeaderRequestConfig request;
+
+    @ObjectField(
+            configFieldName = "response",
+            description = "Response header manipulation",
+            useSubObjectDefault = true,
+            ref = HeaderResponseConfig.class
+    )
+    HeaderResponseConfig response;
+
+    @MapField(
+            configFieldName = "pathPrefixHeader",
+            externalizedKeyName = "pathPrefixHeader",
+            externalized = true,
+            description = "requestPath specific header configuration. The entire object is a map with path prefix as the\n" +
+                    "key and request/response like above as the value. For config format, please refer to test folder.",
+            valueType = HeaderPathPrefixConfig.class
+    )
+    Map<String, HeaderPathPrefixConfig> pathPrefixHeader;
+
     private Config config;
     private Map<String, Object> mappedConfig;
 
@@ -40,11 +70,11 @@ public class HeaderConfig {
      * @param configName String
      */
     private HeaderConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+        this.config = Config.getInstance();
+        this.mappedConfig = this.config.getJsonMapConfigNoCache(configName);
+        if (this.mappedConfig != null) {
+            this.setValues();
+        }
     }
 
     public static HeaderConfig load() {
@@ -56,218 +86,104 @@ public class HeaderConfig {
     }
 
     void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+        this.mappedConfig = this.config.getJsonMapConfigNoCache(CONFIG_NAME);
+        if (this.mappedConfig != null) {
+            this.setValues();
+        }
+    }
+
+    private void setValues() {
+        final var mapper = Config.getInstance().getMapper();
+        if (this.mappedConfig.get(ENABLED) != null) {
+            this.enabled = Config.loadBooleanValue(ENABLED, this.mappedConfig.get(ENABLED));
+        }
+        if (this.mappedConfig.get(REQUEST) instanceof Map) {
+            this.request = mapper.convertValue(mappedConfig.get(REQUEST), HeaderRequestConfig.class);
+        }
+
+        if (this.mappedConfig.get(RESPONSE) instanceof Map) {
+            this.response = mapper.convertValue(mappedConfig.get(RESPONSE), HeaderResponseConfig.class);
+        }
+
+        if (this.mappedConfig.get(PATH_PREFIX_HEADER) instanceof Map) {
+            this.pathPrefixHeader = mapper.convertValue(mappedConfig.get(PATH_PREFIX_HEADER), new TypeReference<>(){});
+        }
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Map<String, Object> getPathPrefixHeader() {
+    public Map<String, HeaderPathPrefixConfig> getPathPrefixHeader() {
         return pathPrefixHeader;
     }
 
-    public void setPathPrefixHeader(Map<String, Object> pathPrefixHeader) {
-        this.pathPrefixHeader = pathPrefixHeader;
-    }
-
-    private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-    }
-
     public List<String> getRequestRemoveList() {
-        return requestRemoveList;
+        return this.request.getRemove();
     }
 
-    public void setRequestRemoveList(List<String> requestRemoveList) {
-        this.requestRemoveList = requestRemoveList;
-    }
-
-    public Map<String, Object> getRequestUpdateMap() {return requestUpdateMap; }
-
-    public void setRequestUpdateMap(Map<String, Object> requestUpdateMap) {
-        this.requestUpdateMap = requestUpdateMap;
+    public Map<String, String> getRequestUpdateMap() {
+        return this.request.getUpdate();
     }
 
     public List<String> getResponseRemoveList() {
-        return responseRemoveList;
+        return this.response.getRemove();
     }
 
-    public void setResponseRemoveList(List<String> responseRemoveList) {
-        this.responseRemoveList = responseRemoveList;
-    }
-
-    public Map<String, Object> getResponseUpdateMap() {return responseUpdateMap; }
-
-    public void setResponseUpdateMap(Map<String, Object> responseUpdateMap) {
-        this.responseUpdateMap = responseUpdateMap;
+    public Map<String, String> getResponseUpdateMap() {
+        return this.response.getUpdate();
     }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
-    private void setConfigList() {
-        if (mappedConfig.get(REQUEST) != null) {
-            Map<String, Object> requestMap = (Map<String, Object>)mappedConfig.get(REQUEST);
-            Object requestRemove = requestMap.get(REMOVE);
-            if(requestRemove != null) {
-                if(requestRemove instanceof String) {
-                    String s = (String)requestRemove;
-                    s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("request remove s = " + s);
-                    if(s.startsWith("[")) {
-                        // this is a JSON string, and we need to parse it.
-                        try {
-                            requestRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                        } catch (Exception e) {
-                            throw new ConfigException("could not parse the request.remove json with a list of strings.");
-                        }
-                    } else {
-                        // this is a comma separated string.
-                        requestRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
-                    }
-                } else if (requestRemove instanceof List) {
-                    requestRemoveList = (List<String>)requestRemove;
-                } else {
-                    throw new ConfigException("request remove list is missing or wrong type.");
-                }
-            }
-        }
 
-        if (mappedConfig.get(RESPONSE) != null) {
-            Map<String, Object> responseMap = (Map<String, Object>)mappedConfig.get(RESPONSE);
-            Object responseRemove = responseMap.get(REMOVE);
-            if(responseRemove != null) {
-                if(responseRemove instanceof String) {
-                    String s = (String)responseRemove;
-                    s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("response remove s = " + s);
-                    if(s.startsWith("[")) {
-                        // this is a JSON string, and we need to parse it.
-                        try {
-                            responseRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                        } catch (Exception e) {
-                            throw new ConfigException("could not parse the response.remove json with a list of strings.");
-                        }
-                    } else {
-                        // this is a comma separated string.
-                        responseRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
-                    }
-                } else if (responseRemove instanceof List) {
-                    responseRemoveList = (List<String>)responseRemove;
-                } else {
-                    throw new ConfigException("response remove list is missing or wrong type.");
+    /**
+     * This is used to resolve the type field for remove headers. Either in list or string format.
+     */
+    protected static class HeaderRemoveDeserializer extends JsonDeserializer<List<String>> {
+
+        @Override
+        public List<String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+            final var mapper = (ObjectMapper) jsonParser.getCodec();
+            final JsonNode root = mapper.readTree(jsonParser);
+
+            if (root.isArray()) {
+                return mapper.convertValue(root, new TypeReference<>() {});
+
+            } else if (root.isTextual()) {
+                final var s = mapper.convertValue(root, String.class);
+                final List<String> list = new ArrayList<>();
+                for (String header : s.split(",")) {
+                    list.add(header.trim());
                 }
+                return list;
             }
+            return List.of();
         }
     }
 
-    private void setConfigMap() {
-        if (mappedConfig.get(REQUEST) != null) {
-            Map<String, Object> requestMap = (Map<String, Object>)mappedConfig.get(REQUEST);
-            Object requestUpdate = requestMap.get(UPDATE);
-            if(requestUpdate != null) {
-                if(requestUpdate instanceof String) {
-                    String s = (String)requestUpdate;
-                    s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("request update s = " + s);
-                    if(s.startsWith("{")) {
-                        // json format
-                        try {
-                            requestUpdateMap = JsonMapper.string2Map(s);
-                        } catch (Exception e) {
-                            throw new ConfigException("could not parse the request.update json with a map of string and object.");
-                        }
-                    } else {
-                        // comma separated
-                        requestUpdateMap = new HashMap<>();
-                        String[] pairs = s.split(",");
-                        for (int i = 0; i < pairs.length; i++) {
-                            String pair = pairs[i];
-                            String[] keyValue = pair.split(":");
-                            requestUpdateMap.put(keyValue[0], keyValue[1]);
-                        }
-                    }
-                } else if (requestUpdate instanceof Map) {
-                    requestUpdateMap = (Map)requestUpdate;
-                } else {
-                    throw new ConfigException("request update must be a string object map.");
-                }
-            }
-        }
+    /**
+     * This is used to resolve the type of field for update headers. Either in map or string format.
+     */
+    protected static class HeaderUpdateDeserializer extends JsonDeserializer<Map<String, String>> {
 
-        if (mappedConfig.get(RESPONSE) != null) {
-            Map<String, Object> responseMap = (Map<String, Object>)mappedConfig.get(RESPONSE);
-            Object responseUpdate = responseMap.get(UPDATE);
-            if(responseUpdate != null) {
-                if(responseUpdate instanceof String) {
-                    String s = (String)responseUpdate;
-                    s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("response update s = " + s);
-                    if(s.startsWith("{")) {
-                        // json format
-                        try {
-                            responseUpdateMap = JsonMapper.string2Map(s);
-                        } catch (Exception e) {
-                            throw new ConfigException("could not parse the response.update json with a map of string and object.");
-                        }
-                    } else {
-                        // comma separated
-                        responseUpdateMap = new HashMap<>();
-                        String[] pairs = s.split(",");
-                        for (int i = 0; i < pairs.length; i++) {
-                            String pair = pairs[i];
-                            String[] keyValue = pair.split(":");
-                            responseUpdateMap.put(keyValue[0], keyValue[1]);
-                        }
-                    }
-                } else if (responseUpdate instanceof Map) {
-                    responseUpdateMap = (Map)responseUpdate;
-                } else {
-                    throw new ConfigException("response update must be a string object map.");
+        @Override
+        public Map<String, String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+            final var mapper = (ObjectMapper) jsonParser.getCodec();
+            final JsonNode root = mapper.readTree(jsonParser);
+            if (root.isObject())
+                return mapper.convertValue(root, new TypeReference<>(){});
+            else if (root.isTextual()) {
+                String s = mapper.convertValue(root, String.class);
+                Map<String, String> map = new LinkedHashMap<>();
+                for(String keyValue : s.split(",")) {
+                    String[] pairs = keyValue.split(":", 2);
+                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
                 }
+                return map;
             }
-        }
-
-        // load pathPrefixHeader here.
-        if(mappedConfig.get(PATH_PREFIX_HEADER) != null) {
-            Object pathPrefixHeaderObj = mappedConfig.get(PATH_PREFIX_HEADER);
-            if(pathPrefixHeaderObj != null) {
-                if(pathPrefixHeaderObj instanceof String) {
-                    String s = (String)pathPrefixHeaderObj;
-                    s = s.trim();
-                    if(logger.isTraceEnabled()) logger.trace("pathPrefixHeader s = " + s);
-                    if(s.startsWith("{")) {
-                        // json format
-                        try {
-                            pathPrefixHeader = JsonMapper.string2Map(s);
-                        } catch (Exception e) {
-                            throw new ConfigException("could not parse the pathPrefixHeader json with a map of string and object.");
-                        }
-                    } else {
-                        // comma separated
-                        pathPrefixHeader = new HashMap<>();
-                        String[] pairs = s.split(",");
-                        for (int i = 0; i < pairs.length; i++) {
-                            String pair = pairs[i];
-                            String[] keyValue = pair.split(":");
-                            pathPrefixHeader.put(keyValue[0], keyValue[1]);
-                        }
-                    }
-                } else if (pathPrefixHeaderObj instanceof Map) {
-                    pathPrefixHeader = (Map)pathPrefixHeaderObj;
-                } else {
-                    throw new ConfigException("pathPrefixHeader must be a string object map.");
-                }
-            }
+            return Map.of();
         }
     }
 }
