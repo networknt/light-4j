@@ -62,7 +62,7 @@ buildNumber: ${server.buildNumber:}
 shutdownGracefulPeriod: ${server.shutdownGracefulPeriod:0}
 # The following parameters are for advanced users to fine tune the service in a container environment. Please leave
 # these values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/
-#
+# 
 # Unique service name. Used in microservice to associate a given name to a service with configuration
 # or as a key within the configuration of a particular domain
 serviceName: ${server.serviceName:}

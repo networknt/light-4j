@@ -48,7 +48,7 @@ public class UuidUtilTest {
         Path outputPath = Paths.get(outputFilename);
 
         try {
-            processSqlFile(inputPath, outputPath, BASE64_SQL_KEY_PATTERN);
+            processFile(inputPath, outputPath, BASE64_SQL_KEY_PATTERN);
         } catch (IOException e) {
             System.err.println("Error processing files: " + e.getMessage());
             e.printStackTrace();
@@ -60,12 +60,12 @@ public class UuidUtilTest {
     @Ignore
     public void testEventUuidConverter() {
         String inputFilename = "/home/steve/lightapi/event-importer/local.json";
-        String outputFilename = "/home/steve/lightapi/event-importer/output.sql";
+        String outputFilename = "/home/steve/lightapi/event-importer/local.txt";
         Path inputPath = Paths.get(inputFilename);
         Path outputPath = Paths.get(outputFilename);
 
         try {
-            processSqlFile(inputPath, outputPath, BASE64_EVENT_KEY_PATTERN);
+            processFile(inputPath, outputPath, BASE64_EVENT_KEY_PATTERN);
         } catch (IOException e) {
             System.err.println("Error processing files: " + e.getMessage());
             e.printStackTrace();
@@ -85,7 +85,7 @@ public class UuidUtilTest {
         System.out.println("Map2: " + map2);
     }
 
-    public static void processSqlFile(Path inputPath, Path outputPath, Pattern pattern) throws IOException {
+    public static void processFile(Path inputPath, Path outputPath, Pattern pattern) throws IOException {
         System.out.println("Processing " + inputPath + "...");
 
         // 1. Read the entire SQL script content
