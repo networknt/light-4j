@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 @ConfigSchema(configKey = "server", configName = "server", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
-public class ServerConfig {
+public class  ServerConfig {
     public static Logger logger = LoggerFactory.getLogger(ServerConfig.class);
 
     public static final String CONFIG_NAME = "server";

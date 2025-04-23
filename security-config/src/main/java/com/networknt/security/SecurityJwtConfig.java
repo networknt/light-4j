@@ -63,7 +63,7 @@ public class SecurityJwtConfig {
     }
 
     /**
-     * This is used to
+     * This is used to resolve the type of field for certificates. Either in map or string format.
      */
     private static class CertificateDeserializer extends JsonDeserializer<Map<String, Object>> {
 
