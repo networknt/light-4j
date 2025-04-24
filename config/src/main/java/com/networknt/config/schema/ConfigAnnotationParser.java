@@ -27,11 +27,13 @@ import java.util.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ConfigAnnotationParser extends AbstractProcessor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigAnnotationParser.class);
-
     private MetadataParser metadataParser;
+    private static final String BUILD_COMMAND_PROPERTY = "sun.java.command";
+    private static final String PROFILE_FLAG = "-P";
+    private static final String SCHEMA_GENERATION_PROFILE = "schema-generation";
 
     private ProcessingEnvironment processingEnv;
+    private boolean generated = false;
 
     @Override
     public synchronized void init(final ProcessingEnvironment processingEnv) {
@@ -42,9 +44,44 @@ public class ConfigAnnotationParser extends AbstractProcessor {
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
-        final var configs = roundEnv.getElementsAnnotatedWith(ConfigSchema.class);
 
-        if (roundEnv.processingOver()) {
+        final var configs = roundEnv.getElementsAnnotatedWith(ConfigSchema.class);
+        if (roundEnv.processingOver() || this.generated) {
+            return true;
+        }
+
+        var schemaEnabled = false;
+        final var javaCmd = System.getProperty(BUILD_COMMAND_PROPERTY);
+        final var cmdProps = javaCmd.split(" ");
+        if (cmdProps.length == 0) {
+            return true;
+        }
+
+        var x = 0;
+        var profilesDefined = false;
+        for (;x < cmdProps.length; x++) {
+            if (cmdProps[x].equals(PROFILE_FLAG)) {
+                x = x + 1;
+                profilesDefined = true;
+                break;
+            }
+        }
+
+        if (!profilesDefined) {
+            System.out.println("No profiles defined, skipping schema-generation...");
+            return true;
+        }
+
+        final var profileArr = cmdProps[x].split(",");
+        for (var profile : profileArr) {
+            if (profile.equals(SCHEMA_GENERATION_PROFILE)) {
+                schemaEnabled = true;
+                break;
+            }
+        }
+
+        if (!schemaEnabled) {
+            System.out.println(SCHEMA_GENERATION_PROFILE + " profile is disabled, skipping schema generation...");
             return true;
         }
 
@@ -105,6 +142,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             }
 
         }
+        this.generated = true;
         return true;
     }
 
@@ -122,10 +160,9 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             try {
 
                 if (file.createNewFile())
-                    LOG.debug("File {} created.", file.getName());
+                    System.out.println("File " + file.getName() + " created.");
 
-                else LOG.warn("File {} already exists, the existing file will have it's contents overwritten.",
-                        file.getName());
+                else System.out.println("File " + file.getName() + " already exists, the existing file will have it's contents overwritten.");
 
             } catch (IOException e) {
                 throw new RuntimeException(
