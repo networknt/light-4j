@@ -243,7 +243,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
                 try {
                     JsonNode jwtNode = mapper.readTree(cachedResponseEntity.getBody());
-                    // update expire_in field with remaining time from cache.timestamp till now is seconds
+                    // update expire_in field with remaining time from cache.timestamp till now in seconds
                     updatedExpireIn = jwtNode.get(EXPIRE_IN).asLong() - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - cachedResponseEntity.getTimestamp());
                     if(logger.isTraceEnabled()) logger.trace("Original Expire_in = {} updated to remaining Expire_in = {}", jwtNode.get(EXPIRE_IN), updatedExpireIn);
                     ((ObjectNode)jwtNode).put(EXPIRE_IN, updatedExpireIn);
