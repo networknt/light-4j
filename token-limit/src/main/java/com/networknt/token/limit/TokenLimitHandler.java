@@ -1,12 +1,18 @@
 package com.networknt.token.limit;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.cache.CacheManager;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.http.CachedResponseEntity;
 import com.networknt.http.ResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -20,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,6 +53,8 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
     static final String BASIC_PREFIX = "BASIC";
+    static final String EXPIRE_IN = "expire_in";
+
 
     private volatile HttpHandler next;
     private final TokenLimitConfig config;
@@ -180,12 +189,12 @@ public class TokenLimitHandler implements MiddlewareHandler {
             if(legacyClient.contains(clientId)) {
                 if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
                 //  check if cache key exists in cache manager, if exists return cached token
-                ResponseEntity<String> responseEntity = (ResponseEntity) cacheManager.get(CLIENT_TOKEN, key);
-                if (responseEntity != null) {
+                CachedResponseEntity<String> cachedResponseEntity = getUpdatedResponseEntity((CachedResponseEntity) cacheManager.get(CLIENT_TOKEN, key));
+                if (cachedResponseEntity != null) {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
-                    exchange.getResponseHeaders().putAll(responseEntity.getHeaders());
-                    exchange.setStatusCode(responseEntity.getStatusCode().value());
-                    exchange.getResponseSender().send(responseEntity.getBody());
+                    exchange.getResponseHeaders().putAll(cachedResponseEntity.getHeaders());
+                    exchange.setStatusCode(cachedResponseEntity.getStatusCode().value());
+                    exchange.getResponseSender().send(cachedResponseEntity.getBody());
                 } else {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has NO token cached, calling next handler.", key);
                     exchange.putAttachment(AttachmentConstants.RESPONSE_CACHE, new CacheTask(CLIENT_TOKEN, key));
@@ -223,6 +232,28 @@ public class TokenLimitHandler implements MiddlewareHandler {
         }
         Handler.next(exchange, next);
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest ends.");
+    }
+
+    private CachedResponseEntity<String> getUpdatedResponseEntity(CachedResponseEntity<String> cachedResponseEntity) {
+        if (cachedResponseEntity != null && cachedResponseEntity.getBody() != null) {
+            // check if the response body is empty, if not, set the content type to application/json
+            if (cachedResponseEntity.getBody().length() > 0) {
+                ObjectMapper mapper = new ObjectMapper();
+                long updatedExpireIn = 0L;
+
+                try {
+                    JsonNode jwtNode = mapper.readTree(cachedResponseEntity.getBody());
+                    // update expire_in field with remaining time from cache.timestamp till now is seconds
+                    updatedExpireIn = jwtNode.get(EXPIRE_IN).asLong() - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - cachedResponseEntity.getTimestamp());
+                    if(logger.isTraceEnabled()) logger.trace("Original Expire_in = {} updated to remaining Expire_in = {}", jwtNode.get(EXPIRE_IN), updatedExpireIn);
+                    ((ObjectNode)jwtNode).put(EXPIRE_IN, updatedExpireIn);
+                    return new CachedResponseEntity<String>(jwtNode.toString(), cachedResponseEntity.getHeaders(), cachedResponseEntity.getStatusCode(), cachedResponseEntity.getTimestamp());
+                } catch (JsonProcessingException e) {
+                    logger.error("Error parsing response body and updating expire_in field. Will proceed with cached response.", e);
+                }
+            }
+        }
+        return cachedResponseEntity;
     }
 
     public Map<String, String> convertStringToHashMap(String input) {
