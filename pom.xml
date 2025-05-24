@@ -53,14 +53,14 @@
     </scm>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
+      <repository>
+        <id>central</id>
+        <url>https://central.sonatype.com/service/local/staging/deploy/maven2/</url>
+      </repository>
+      <snapshotRepository>
+        <id>central</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      </snapshotRepository>
     </distributionManagement>
 
     <properties>
@@ -96,7 +96,6 @@
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.uuid>6.1.1</version.uuid>
         <version.maven-version>2.7</version.maven-version>
-        <version.nexus-staging-maven>1.7.0</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
         <version.maven-surefire>3.0.0-M5</version.maven-surefire>
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
@@ -904,17 +903,6 @@
                 <version>${version.maven-version}</version>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>${version.nexus-staging-maven}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${version.maven-compiler}</version>
@@ -922,18 +910,6 @@
                     <release>${java.version}</release>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>${version.maven-deploy}</version>
-            </plugin>
-            <!--
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>${version.maven-release}</version>
-			</plugin>
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -1244,14 +1220,18 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
