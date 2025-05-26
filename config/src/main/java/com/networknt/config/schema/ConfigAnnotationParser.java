@@ -27,11 +27,13 @@ import java.util.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ConfigAnnotationParser extends AbstractProcessor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigAnnotationParser.class);
-
     private MetadataParser metadataParser;
+    private static final String BUILD_COMMAND_PROPERTY = "sun.java.command";
+    private static final String PROFILE_FLAG = "-P";
+    private static final String SCHEMA_GENERATION_PROFILE = "schema-generation";
 
     private ProcessingEnvironment processingEnv;
+    private boolean generated = false;
 
     @Override
     public synchronized void init(final ProcessingEnvironment processingEnv) {
@@ -42,9 +44,44 @@ public class ConfigAnnotationParser extends AbstractProcessor {
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
-        final var configs = roundEnv.getElementsAnnotatedWith(ConfigSchema.class);
 
-        if (roundEnv.processingOver()) {
+        final var configs = roundEnv.getElementsAnnotatedWith(ConfigSchema.class);
+        if (roundEnv.processingOver() || this.generated) {
+            return true;
+        }
+
+        var schemaEnabled = false;
+        final var javaCmd = System.getProperty(BUILD_COMMAND_PROPERTY);
+        final var cmdProps = javaCmd.split(" ");
+        if (cmdProps.length == 0) {
+            return true;
+        }
+
+        var x = 0;
+        var profilesDefined = false;
+        for (;x < cmdProps.length; x++) {
+            if (cmdProps[x].equals(PROFILE_FLAG)) {
+                x = x + 1;
+                profilesDefined = true;
+                break;
+            }
+        }
+
+        if (!profilesDefined) {
+            System.out.println("No profiles defined, skipping schema-generation...");
+            return true;
+        }
+
+        final var profileArr = cmdProps[x].split(",");
+        for (var profile : profileArr) {
+            if (profile.equals(SCHEMA_GENERATION_PROFILE)) {
+                schemaEnabled = true;
+                break;
+            }
+        }
+
+        if (!schemaEnabled) {
+            System.out.println(SCHEMA_GENERATION_PROFILE + " profile is disabled, skipping schema generation...");
             return true;
         }
 
@@ -53,18 +90,36 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             final var configClassMetadata = config.getAnnotation(ConfigSchema.class);
 
             /* Get config path inside project folder */
-            final var modulePath = this.getPathInCurrentModule("../../src/main/resources/config/", configClassMetadata.configKey() + "_module");
+            final var modulePath = this.getPathInCurrentModule(
+                    "../../src/main/resources/config/",
+                    configClassMetadata.configKey() + "_module"
+            );
 
             /* Get config path inside target folder */
-            final var targetPathMirror = this.getPathInCurrentModule("config/", configClassMetadata.configKey() + "_target");
+            final var targetPathMirror = this.getPathInCurrentModule(
+                    "config/",
+                    configClassMetadata.configKey() + "_target"
+            );
 
             /* Generate a file inside the project folder and inside the target folder. */
             final var configMetadata = this.metadataParser.parseMetadata(config, this.processingEnv);
+
+            AnnotationUtils.updateIfNotDefault(
+                    configMetadata,
+                    configClassMetadata.configDescription(),
+                    MetadataParser.DESCRIPTION_KEY,
+                    ConfigSchema.DEFAULT_STRING
+            );
+
             for (final var output : configClassMetadata.outputFormats()) {
                 final var extension = output.getExtension();
 
                 /* write config in project folder. */
-                final var projectFile = this.resolveOrCreateFile(modulePath, configClassMetadata.configName() + extension).toPath();
+                final var projectFile = this.resolveOrCreateFile(
+                        modulePath,
+                        configClassMetadata.configName() + extension
+                ).toPath();
+
                 try (var writer = Files.newBufferedWriter(projectFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
@@ -73,7 +128,11 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 }
 
                 /* write config in target folder. */
-                final var targetFile = this.resolveOrCreateFile(targetPathMirror, configClassMetadata.configName() + extension).toPath();
+                final var targetFile = this.resolveOrCreateFile(
+                        targetPathMirror,
+                        configClassMetadata.configName() + extension
+                ).toPath();
+
                 try (var writer = Files.newBufferedWriter(targetFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
@@ -83,12 +142,14 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             }
 
         }
+        this.generated = true;
         return true;
     }
 
     /**
      * Resolves a file in the given path, if the file does not exist, it will be created.
-     * @param path The path to the file.
+     *
+     * @param path     The path to the file.
      * @param fileName The name of the file.
      * @return The resolved file.
      */
@@ -99,12 +160,18 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             try {
 
                 if (file.createNewFile())
-                    LOG.debug("File {} created.", file.getName());
+                    System.out.println("File " + file.getName() + " created.");
 
-                else LOG.warn("File {} already exists, the existing file will have it's contents overwritten.", file.getName());
+                else System.out.println("File " + file.getName() + " already exists, the existing file will have it's contents overwritten.");
 
             } catch (IOException e) {
-                throw new RuntimeException("Could not create a new file '" + fileName + "', for the directory '" + file + "'. " + e.getMessage());
+                throw new RuntimeException(
+                        "Could not create a new file '" +
+                                fileName +
+                                "', for the directory '" +
+                                file + "'. " +
+                                e.getMessage()
+                );
             }
         }
 
@@ -116,7 +183,12 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         final var path = Objects.requireNonNullElse(relativeModulePath, "");
         final FileObject resource;
         try {
-            resource = this.processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "anchor" + tempAnchorName, (Element[]) null);
+            resource = this.processingEnv.getFiler().createResource(
+                    StandardLocation.CLASS_OUTPUT,
+                    "",
+                    "anchor" + tempAnchorName,
+                    (Element[]) null
+            );
         } catch (IOException e) {
             throw new RuntimeException("Could not create temp resource to find the current module", e);
         }

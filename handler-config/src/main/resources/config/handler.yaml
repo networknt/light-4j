@@ -1,45 +1,45 @@
-enabled: true
-#Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
-#set the Status Object in the AUDIT_INFO, for auditing purposes
-#default, if not set:false
+enabled: false
+# Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+# set the Status Object in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
 auditOnError: ${handler.auditOnError:false}
-#set the StackTrace in the AUDIT_INFO, for auditing purposes
-#default, if not set:false
+# set the StackTrace in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
 auditStackTrace: ${handler.auditStackTrace:false}
-#Indicate if the handler middleware should report handler duration.
+# Indicate if the handler middleware should report handler duration.
 reportHandlerDuration: ${handler.reportHandlerDuration:false}
-#The log level for the handler metrics.
+# The log level for the handler metrics.
 handlerMetricsLogLevel: ${handler.handlerMetricsLogLevel:DEBUG}
-#Base Path of the API endpoints
+# Base Path of the API endpoints
 basePath: ${handler.basePath:/}
-#------------------------------------------------------------------------------
-#Support individual handler chains for each separate endpoint. It allows framework
-#handlers like health check, server info to bypass majority of the middleware handlers
-#and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.
+# ------------------------------------------------------------------------------
+# Support individual handler chains for each separate endpoint. It allows framework
+# handlers like health check, server info to bypass majority of the middleware handlers
+# and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.
 #
-#handlers  --  list of handlers to be used across chains in this microservice
-#              including the routing handlers for ALL endpoints
-#          --  format: fully qualified handler class name@optional:given name
-#chains    --  allows forming of [1..N] chains, which could be wholly or
-#              used to form handler chains for each endpoint
-#              ex.: default chain below, reused partially across multiple endpoints
-#paths     --  list all the paths to be used for routing within the microservice
-#          ----  path: the URI for the endpoint (ex.: path: '/v1/pets')
-#          ----  method: the operation in use (ex.: 'post')
-#          ----  exec: handlers to be executed -- this element forms the list and
-#                      the order of execution for the handlers
+# handlers  --  list of handlers to be used across chains in this microservice
+#               including the routing handlers for ALL endpoints
+#           --  format: fully qualified handler class name@optional:given name
+# chains    --  allows forming of [1..N] chains, which could be wholly or
+#               used to form handler chains for each endpoint
+#               ex.: default chain below, reused partially across multiple endpoints
+# paths     --  list all the paths to be used for routing within the microservice
+#           ----  path: the URI for the endpoint (ex.: path: '/v1/pets')
+#           ----  method: the operation in use (ex.: 'post')
+#           ----  exec: handlers to be executed -- this element forms the list and
+#                       the order of execution for the handlers
 #
-#IMPORTANT NOTES:
-#- to avoid executing a handler, it has to be removed/commented out in the chain
-#  or change the enabled:boolean to false for a middleware handler configuration.
-#- all handlers, routing handler included, are to be listed in the execution chain
-#- for consistency, give a name to each handler; it is easier to refer to a name
-#  vs a fully qualified class name and is more elegant
-#- you can list in chains the fully qualified handler class names, and avoid using the
-#  handlers element altogether
-#------------------------------------------------------------------------------
+# IMPORTANT NOTES:
+# - to avoid executing a handler, it has to be removed/commented out in the chain
+#   or change the enabled:boolean to false for a middleware handler configuration.
+# - all handlers, routing handler included, are to be listed in the execution chain
+# - for consistency, give a name to each handler; it is easier to refer to a name
+#   vs a fully qualified class name and is more elegant
+# - you can list in chains the fully qualified handler class names, and avoid using the
+#   handlers element altogether
+# ------------------------------------------------------------------------------
 handlers: ${handler.handlers:}
-#If there is no matched path, then it goes here first. If this is not set, then an error
-#will be returned.
+# If there is no matched path, then it goes here first. If this is not set, then an error
+# will be returned.
 defaultHandlers: ${handler.defaultHandlers:}
 paths: ${handler.paths:}

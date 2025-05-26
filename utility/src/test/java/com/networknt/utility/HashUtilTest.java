@@ -44,9 +44,4 @@ public class HashUtilTest {
         Assert.assertTrue(HashUtil.validatePassword(s.toCharArray(), hashedPass));
     }
 
-    @Test
-    public void testGenerateUUID() {
-        String s = HashUtil.generateUUID();
-        System.out.println("s = " + s);
-    }
 }

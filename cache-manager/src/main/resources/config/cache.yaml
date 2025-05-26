@@ -1,10 +1,10 @@
-#There will be multiple caches per application and each cache should have it own name and expiryInMinutes. The
-#caches are lists of caches. The cache name is used to identify the cache and the expiryInMinutes the expiry time.
-#caches:
-#  - cacheName: cache1
-#    expiryInMinutes: 60
-#    maxSize: 1000
-#  - cacheName: cache2
-#    expiryInMinutes: 120
-#    maxSize: 100
+# There will be multiple caches per application and each cache should have it own name and expiryInMinutes. The
+# caches are lists of caches. The cache name is used to identify the cache and the expiryInMinutes the expiry time.
+# caches:
+#   - cacheName: cache1
+#     expiryInMinutes: 60
+#     maxSize: 1000
+#   - cacheName: cache2
+#     expiryInMinutes: 120
+#     maxSize: 100
 caches: ${cache.caches:}

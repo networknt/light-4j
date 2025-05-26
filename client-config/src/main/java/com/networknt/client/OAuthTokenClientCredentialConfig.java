@@ -50,7 +50,9 @@ public class OAuthTokenClientCredentialConfig {
             items = String.class,
             description = "optional scope, default scope in the client registration will be used if not defined.\n" +
                     "If there are scopes specified here, they will be verified against the registered scopes.\n" +
-                    "In values.yml, you define a list of strings for the scope(s)."
+                    "In values.yml, you define a list of strings for the scope(s).\n" +
+                    "- petstore.r\n" +
+                    "- petstore.w\n"
     )
     private List<String> scope;
 

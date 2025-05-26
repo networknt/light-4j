@@ -1,0 +1,19 @@
+# Enable header handler or not. The default to false and it can be enabled in the externalized
+# values.yml file. It is mostly used in the http-sidecar, light-proxy or light-router.
+enabled: ${header.enabled:false}
+# Request header manipulation
+request:
+  # Remove all the request headers listed here. The value is a list of keys
+  remove: ${header.request.remove:}
+  # List of key value pairs to update headers.
+  update: ${header.request.update:}
+# Response header manipulation
+response:
+  # Remove all the response headers listed here. The value is a list of keys.
+  remove: ${header.response.remove:}
+  # Add or update the header with key/value pairs. The value is a map of key and value pairs.
+  # Although HTTP header supports multiple values per key, it is not supported here.
+  update: ${header.response.update:}
+# requestPath specific header configuration. The entire object is a map with path prefix as the
+# key and request/response like above as the value. For config format, please refer to test folder.
+pathPrefixHeader: ${header.pathPrefixHeader:}

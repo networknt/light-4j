@@ -1,10 +1,10 @@
-#The driver class name for the database connection.
+# The driver class name for the database connection.
 driverClassName: ${db-provider.driverClassName:org.postgresql.Driver}
-#JDBC connection URL
+# JDBC connection URL
 jdbcUrl: ${db-provider.jdbcUrl:jdbc:postgresql://timescale:5432/configserver}
-#JDBC connection username
+# JDBC connection username
 username: ${db-provider.username:postgres}
-#JDBC connection password
+# JDBC connection password
 password: ${db-provider.password:secret}
-#Maximum number of connections in the pool
+# Maximum number of connections in the pool
 maximumPoolSize: ${db-provider.maximumPoolSize:3}

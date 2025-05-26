@@ -1,6 +1,8 @@
-package com.networknt.handler;
+package com.networknt.expect100continue;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.io.IoCallback;
@@ -43,19 +45,19 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
 
             } else if (shouldRespondInPlace) {
 
-                    LOG.debug("Expect header detected in request, and path is configured to respond in place. Sending 100 Continue response.");
-                    HttpContinue.sendContinueResponse(exchange, new IoCallback() {
-                        @Override
-                        public void onComplete(final HttpServerExchange exchange, final Sender sender) {
-                            LOG.debug("In place 100 Continue response sent successfully. Removing Expect header before continuing.");
-                            exchange.getRequestHeaders().remove(Headers.EXPECT);
-                        }
+                LOG.debug("Expect header detected in request, and path is configured to respond in place. Sending 100 Continue response.");
+                HttpContinue.sendContinueResponse(exchange, new IoCallback() {
+                    @Override
+                    public void onComplete(final HttpServerExchange exchange, final Sender sender) {
+                        LOG.debug("In place 100 Continue response sent successfully. Removing Expect header before continuing.");
+                        exchange.getRequestHeaders().remove(Headers.EXPECT);
+                    }
 
-                        @Override
-                        public void onException(final HttpServerExchange exchange, final Sender sender, final IOException e) {
-                            LOG.error("Failed to send 100 Continue response.", e);
-                        }
-                    });
+                    @Override
+                    public void onException(final HttpServerExchange exchange, final Sender sender, final IOException e) {
+                        LOG.error("Failed to send 100 Continue response.", e);
+                    }
+                });
 
             } else {
                 LOG.debug("Expect header detected in request, but path is ignored. Removing Expect header before continuing.");

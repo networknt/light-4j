@@ -6,6 +6,7 @@ import com.networknt.handler.LightHttpHandler;
 import com.networknt.monad.Result;
 import com.networknt.router.middleware.TokenHandler;
 import com.networknt.utility.HashUtil;
+import com.networknt.utility.UuidUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -106,7 +107,7 @@ public class OAuthServerGetHandler implements LightHttpHandler {
                     }
                 } else {
                     // generate a dummy token just to complete the consumer workflow without code change.
-                    resMap.put("access_token", HashUtil.generateUUID());
+                    resMap.put("access_token", UuidUtil.uuidToBase64(UuidUtil.getUUID()));
                     resMap.put("token_type", "bearer");
                     resMap.put("expires_in", 600);
                 }

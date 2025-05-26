@@ -1067,6 +1067,16 @@ ERR11642:
   code: ERR11642
   message: INVALID_REMOTE_URL
   description: Invalid remote url %s.
+ERR11643:
+  statusCode: 400
+  code: ERR11643
+  message: KAFKA_ACCESS_ERROR
+  description: Kafka access error %s.
+ERR11644:
+  statusCode: 400
+  code: ERR11644
+  message: INVALID_VARIABLE_FORMAT
+  description: Invalid variable %s format with value %s.
 
 
 # OAuth2 service error 12000-12099

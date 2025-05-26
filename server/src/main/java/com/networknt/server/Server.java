@@ -133,7 +133,8 @@ public class Server {
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
             logger.error("Server is not operational! Failed with exception", e);
-            System.out.println("Failed to start server:" + e.getMessage());
+            System.out.println("Failed to start server:");
+            e.printStackTrace(System.out);
             // send a graceful system shutdown
             System.exit(1);
         }

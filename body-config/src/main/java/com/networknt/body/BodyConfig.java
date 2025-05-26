@@ -28,7 +28,12 @@ import java.util.Map;
 /**
  * Created by steve on 29/09/16.
  */
-@ConfigSchema(configKey = "body", configName = "body", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "body",
+        configName = "body",
+        configDescription = "The config for the body handler.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class BodyConfig {
     private static final Logger logger = LoggerFactory.getLogger(BodyConfig.class);
 

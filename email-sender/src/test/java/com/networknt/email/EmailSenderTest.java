@@ -19,8 +19,7 @@ package com.networknt.email;
 import com.networknt.config.Config;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import javax.mail.MessagingException;
+import jakarta.mail.*;
 import java.io.File;
 
 public class EmailSenderTest {

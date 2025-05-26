@@ -1,0 +1,74 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "request", "response", "pathPrefixHeader" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable header handler or not. The default to false and it can be enabled in the externalized\nvalues.yml file. It is mostly used in the http-sidecar, light-proxy or light-router."
+    },
+    "request" : {
+      "type" : "object",
+      "description" : "Request header manipulation",
+      "properties" : {
+        "update" : {
+          "type" : "object",
+          "description" : "List of key value pairs to update headers.",
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        },
+        "remove" : {
+          "type" : "array",
+          "description" : "Remove all the request headers listed here. The value is a list of keys",
+          "items" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "response" : {
+      "type" : "object",
+      "description" : "Response header manipulation",
+      "properties" : {
+        "update" : {
+          "type" : "object",
+          "description" : "Add or update the header with key/value pairs. The value is a map of key and value pairs.\nAlthough HTTP header supports multiple values per key, it is not supported here.",
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        },
+        "remove" : {
+          "type" : "array",
+          "description" : "Remove all the response headers listed here. The value is a list of keys.",
+          "items" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "pathPrefixHeader" : {
+      "type" : "object",
+      "description" : "requestPath specific header configuration. The entire object is a map with path prefix as the\nkey and request/response like above as the value. For config format, please refer to test folder.",
+      "additionalProperties" : {
+        "type" : "object",
+        "properties" : {
+          "update" : {
+            "type" : "object",
+            "description" : "Modify the response for this specific path",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "remove" : {
+            "type" : "array",
+            "description" : "Modify the request for this specific path",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

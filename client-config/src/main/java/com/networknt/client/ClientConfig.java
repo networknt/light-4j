@@ -11,7 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-@ConfigSchema(configKey = "client", configName = "client", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "client",
+        configName = "client",
+        configDescription = "This is the configuration file for light-4j Http2Client and jdk 11 http-client.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public final class ClientConfig {
     private static final Logger logger = LoggerFactory.getLogger(ClientConfig.class);
     public static final String CONFIG_NAME = "client";
