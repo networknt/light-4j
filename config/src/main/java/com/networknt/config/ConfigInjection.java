@@ -92,7 +92,7 @@ public class ConfigInjection {
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String configName) {
-        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        List<Object> exclusionConfigFileList = (exclusionMap == null || exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return SCALABLE_CONFIG.equals(configName)
                 || exclusionConfigFileList.contains(configName);
     }
