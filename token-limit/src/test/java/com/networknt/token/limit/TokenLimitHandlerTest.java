@@ -49,6 +49,12 @@ public class TokenLimitHandlerTest {
     String legacyRequestBodyWithAuthHeader = "grant_type=client_credentials&scope=scope";
     String emptyScopeRequestBody = "grant_type=client_credentials&client_id=emptyScopeClient&client_secret=secret&scope=";
 
+    @Before
+    public void setUp() {
+        // Reset the static counter in TestHandler before each test
+        TestHandler.counter = 0;
+    }
+
     public String callLegacyClient() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         SimpleConnectionHolder.ConnectionToken connectionToken = null;
@@ -250,7 +256,7 @@ public class TokenLimitHandlerTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("{\"accessToken\":\"abc\",\"counter\": 4}", body);
+            Assert.assertEquals("{\"accessToken\":\"abc\",\"counter\": 0}", body);
         }
     }
 
