@@ -9,7 +9,7 @@ import io.undertow.util.Headers;
 import java.util.UUID;
 
 public class TestHandler implements LightHttpHandler {
-    private static int counter = 0;
+    public static int counter = 0;
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
