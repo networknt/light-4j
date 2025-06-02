@@ -53,7 +53,6 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
     static final String BASIC_PREFIX = "BASIC";
-    static final String EXPIRE_IN = "expire_in";
 
 
     private volatile HttpHandler next;
@@ -189,7 +188,8 @@ public class TokenLimitHandler implements MiddlewareHandler {
             if(legacyClient.contains(clientId)) {
                 if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
                 //  check if cache key exists in cache manager, if exists return cached token
-                CachedResponseEntity<String> cachedResponseEntity = getUpdatedResponseEntity((CachedResponseEntity) cacheManager.get(CLIENT_TOKEN, key));
+                String expireKey = config.getExpireKey();
+                CachedResponseEntity<String> cachedResponseEntity = expireKey.isEmpty() ? (CachedResponseEntity) cacheManager.get(CLIENT_TOKEN, key) : getUpdatedResponseEntity((CachedResponseEntity) cacheManager.get(CLIENT_TOKEN, key), expireKey);
                 if (cachedResponseEntity != null) {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
                     exchange.getResponseHeaders().putAll(cachedResponseEntity.getHeaders());
@@ -234,7 +234,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest ends.");
     }
 
-    private CachedResponseEntity<String> getUpdatedResponseEntity(CachedResponseEntity<String> cachedResponseEntity) {
+    private CachedResponseEntity<String> getUpdatedResponseEntity(CachedResponseEntity<String> cachedResponseEntity, String expireKey) {
         if (cachedResponseEntity != null && cachedResponseEntity.getBody() != null) {
             // check if the response body is empty, if not, set the content type to application/json
             if (cachedResponseEntity.getBody().length() > 0) {
@@ -243,13 +243,13 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
                 try {
                     JsonNode jwtNode = mapper.readTree(cachedResponseEntity.getBody());
-                    // update expire_in field with remaining time from cache.timestamp till now in seconds
-                    updatedExpireIn = jwtNode.get(EXPIRE_IN).asLong() - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - cachedResponseEntity.getTimestamp());
-                    if(logger.isTraceEnabled()) logger.trace("Original Expire_in = {} updated to remaining Expire_in = {}", jwtNode.get(EXPIRE_IN), updatedExpireIn);
-                    ((ObjectNode)jwtNode).put(EXPIRE_IN, updatedExpireIn);
+                    // update expire field with remaining time from cache.timestamp till now in seconds
+                    updatedExpireIn = jwtNode.get(expireKey).asLong() - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - cachedResponseEntity.getTimestamp());
+                    if(logger.isTraceEnabled()) logger.trace("Original expire field value = {} updated to value = {}", jwtNode.get(expireKey), updatedExpireIn);
+                    ((ObjectNode)jwtNode).put(expireKey, updatedExpireIn);
                     return new CachedResponseEntity<String>(jwtNode.toString(), cachedResponseEntity.getHeaders(), cachedResponseEntity.getStatusCode(), cachedResponseEntity.getTimestamp());
                 } catch (JsonProcessingException e) {
-                    logger.error("Error parsing response body and updating expire_in field. Will proceed with cached response.", e);
+                    logger.error("Error parsing response body and updating " + expireKey + " field. Will proceed with cached response.", e);
                 }
             }
         }

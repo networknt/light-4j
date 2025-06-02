@@ -19,12 +19,14 @@ public class TokenLimitConfig {
     private static final String DUPLICATE_LIMIT = "duplicateLimit";
     private static final String TOKEN_PATH_TEMPLATES = "tokenPathTemplates";
     private static final String LEGACY_CLIENT = "legacyClient";
+    private static final String EXPIRE_KEY = "expireKey";
 
     boolean enabled;
     boolean errorOnLimit;
     int duplicateLimit;
     List<String> tokenPathTemplates;
     List<String> legacyClient;
+    String expireKey;
 
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -103,6 +105,13 @@ public class TokenLimitConfig {
         return mappedConfig;
     }
 
+    public String getExpireKey() {
+        return expireKey;
+    }
+    public void setExpireKey(String expireKey) {
+        this.expireKey = expireKey;
+    }
+
     private void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
         if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
@@ -110,6 +119,8 @@ public class TokenLimitConfig {
         if(object != null) errorOnLimit = Config.loadBooleanValue(ERROR_ON_LIMIT, object);
         object = mappedConfig.get(DUPLICATE_LIMIT);
         if (object != null) duplicateLimit = Config.loadIntegerValue(DUPLICATE_LIMIT, object);
+        object = getMappedConfig().get(EXPIRE_KEY);
+        if(object != null) expireKey = ((String) object);
     }
 
     private void setTokenPathTemplatesList() {
