@@ -13,6 +13,10 @@ header.response.update: key1:value1,key2:value2
 # are not use the config-server that requires only the string as the value.
 # when using config-server, convert the following value into a JSON string.
 header.pathPrefixHeader:
+  /extraHeaders:
+    response:
+      remove:
+        - extraHeader
   /petstore:
     request:
       remove:
