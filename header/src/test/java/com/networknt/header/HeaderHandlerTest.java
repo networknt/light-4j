@@ -139,6 +139,12 @@ public class HeaderHandlerTest {
                     headers.put("responseHeaders", responseHeaders);
                     exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(headers));
                 })
+                .add(Methods.GET, "/extraHeaders", exchange -> {
+                    Map<String, String> responseHeaders = new HashMap<>();
+                    responseHeaders.put("extraHeader", "extraHeaderValue");
+                    exchange.getResponseHeaders().put(new HttpString("extraHeader"), "extraHeader");
+                    exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(responseHeaders));
+                })
                 .add(Methods.GET, "/get", exchange -> {
                     Map<String, Map<String, String>> headers = new HashMap<>();
                     Map<String, String> requestHeaders = new HashMap<>();
@@ -197,6 +203,36 @@ public class HeaderHandlerTest {
         Assert.assertEquals(200, statusCode);
 	List<String> possibleJson = getPossibleJson("key1", "value1", "key2", "value2", "key1", "value1", "key2", "value2");
         Assert.assertTrue(possibleJson.contains(body));
+    }
+
+    @Test
+    public void testResponseHeaderRemoval() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/extraHeaders").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+
+        Assert.assertEquals(200, statusCode);
+
+        var responseHeaders = reference.get().getResponseHeaders();
+        Assert.assertFalse(responseHeaders.contains("extraHeader"));
     }
 
     @Test

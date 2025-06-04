@@ -21,11 +21,14 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
+import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.ConduitFactory;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.conduits.StreamSinkConduit;
 
 import java.util.List;
 import java.util.Map;
@@ -130,26 +133,32 @@ public class HeaderHandler implements MiddlewareHandler {
                         }
                     }
 
-                    // handle the response header for the request path
-                    HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
-                    if (responseHeaderMap != null) {
+                    exchange.addResponseWrapper(new ConduitWrapper<>() {
+                        final HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
+                        @Override
+                        public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange responseExchange) {
+                            if (responseHeaderMap != null) {
 
-                        List<String> responseHeaderRemoveList = responseHeaderMap.getRemove();
-                        if (responseHeaderRemoveList != null) {
-                            responseHeaderRemoveList.forEach(s -> {
-                                exchange.getResponseHeaders().remove(s);
-                                logger.trace("remove response header {}", s);
-                            });
-                        }
+                                List<String> responseHeaderRemoveList = responseHeaderMap.getRemove();
+                                if (responseHeaderRemoveList != null) {
+                                    responseHeaderRemoveList.forEach(s -> {
+                                        responseExchange.getResponseHeaders().remove(s);
+                                        logger.trace("remove response header {}", s);
+                                    });
+                                }
 
-                        Map<String, String> responseHeaderUpdateMap = responseHeaderMap.getUpdate();
-                        if (responseHeaderUpdateMap != null) {
-                            responseHeaderUpdateMap.forEach((k, v) -> {
-                                exchange.getResponseHeaders().put(new HttpString(k), v);
-                                logger.trace("update response header {} with value {}", k, v);
-                            });
+                                Map<String, String> responseHeaderUpdateMap = responseHeaderMap.getUpdate();
+                                if (responseHeaderUpdateMap != null) {
+                                    responseHeaderUpdateMap.forEach((k, v) -> {
+                                        responseExchange.getResponseHeaders().put(new HttpString(k), v);
+                                        logger.trace("update response header {} with value {}", k, v);
+                                    });
+                                }
+                            }
+
+                            return factory.create();
                         }
-                    }
+                    });
                 }
             }
         }
