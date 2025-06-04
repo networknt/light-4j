@@ -133,6 +133,7 @@ public class HeaderHandler implements MiddlewareHandler {
                         }
                     }
 
+                    // Add response header manipulation after the response is ready to send back.
                     exchange.addResponseWrapper(new ConduitWrapper<>() {
                         final HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
                         @Override

@@ -103,14 +103,8 @@ public class HeaderHandlerTest {
                     headers.put("requestHeaders", requestHeaders);
 
                     Map<String, String> responseHeaders = new HashMap<>();
-                    String headerC = exchange.getResponseHeaders().getFirst("headerC");
-                    if(headerC != null) responseHeaders.put("headerC", headerC);
-                    String headerD = exchange.getResponseHeaders().getFirst("headerD");
-                    if(headerD != null) responseHeaders.put("headerD", headerD);
-                    String keyC = exchange.getResponseHeaders().getFirst("keyC");
-                    if(keyC != null) responseHeaders.put("keyC", keyC);
-                    String keyD = exchange.getResponseHeaders().getFirst("keyD");
-                    if(keyD != null) responseHeaders.put("keyD", keyD);
+                    responseHeaders.put("keyC", "valueC");
+                    responseHeaders.put("keyD", "valueD");
                     headers.put("responseHeaders", responseHeaders);
                     exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(headers));
                 })
@@ -128,14 +122,8 @@ public class HeaderHandlerTest {
                     headers.put("requestHeaders", requestHeaders);
 
                     Map<String, String> responseHeaders = new HashMap<>();
-                    String headerG = exchange.getResponseHeaders().getFirst("headerG");
-                    if(headerG != null) responseHeaders.put("headerG", headerG);
-                    String headerH = exchange.getResponseHeaders().getFirst("headerH");
-                    if(headerH != null) responseHeaders.put("headerH", headerH);
-                    String keyG = exchange.getResponseHeaders().getFirst("keyG");
-                    if(keyG != null) responseHeaders.put("keyG", keyG);
-                    String keyH = exchange.getResponseHeaders().getFirst("keyH");
-                    if(keyH != null) responseHeaders.put("keyH", keyH);
+                    responseHeaders.put("keyG", "valueG");
+                    responseHeaders.put("keyH", "valueH");
                     headers.put("responseHeaders", responseHeaders);
                     exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(headers));
                 })
@@ -264,6 +252,9 @@ public class HeaderHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
+        var responseHeaders = reference.get().getResponseHeaders();
+        Assert.assertTrue(responseHeaders.contains("keyC"));
+        Assert.assertTrue(responseHeaders.contains("keyD"));
 	List<String> possibleJson = getPossibleJson("keyA", "valueA", "keyB", "valueB", "keyC", "valueC", "keyD", "valueD");
         Assert.assertTrue(possibleJson.contains(body));
     }
