@@ -27,6 +27,7 @@
 
     <artifactId>proxy-handler</artifactId>
     <packaging>jar</packaging>
+    <name>proxy-handler</name>
     <description>A module contains proxy-handler that is shared between ingress-proxy and egress-router.</description>
 
     <dependencies>

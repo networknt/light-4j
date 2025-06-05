@@ -27,6 +27,7 @@
 
     <artifactId>service</artifactId>
     <packaging>jar</packaging>
+    <name>service</name>
     <description>A singleton service factory for dependency injection without spring.</description>
 
     <dependencies>

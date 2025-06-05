@@ -12,6 +12,7 @@
 
     <artifactId>content</artifactId>
     <packaging>jar</packaging>
+    <name>content</name>
     <description>A handler that uses a default Content-Type header setting in the content.yml or the request Content-Type to return the data.</description>
 
     <dependencies>

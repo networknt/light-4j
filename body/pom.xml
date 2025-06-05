@@ -27,6 +27,7 @@
 
     <artifactId>body</artifactId>
     <packaging>jar</packaging>
+    <name>body</name>
     <description>A body parser handler that parses the body based on content type</description>
 
     <dependencies>

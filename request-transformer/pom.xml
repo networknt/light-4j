@@ -27,6 +27,7 @@
 
     <artifactId>request-transformer</artifactId>
     <packaging>jar</packaging>
+    <name>request-transformer</name>
     <description>A rule-engine based request transformer to update the request in the handler chain.</description>
 
     <dependencies>

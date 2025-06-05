@@ -27,6 +27,7 @@
 
     <artifactId>health</artifactId>
     <packaging>jar</packaging>
+    <name>health</name>
     <description>A handler endpoint that output OK only for other application to check if this service is alive</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>info</artifactId>
     <packaging>jar</packaging>
+    <name>info</name>
     <description>A handler endpoint that output all the installed components and their configurations</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>cluster</artifactId>
     <packaging>jar</packaging>
+    <name>cluster</name>
     <description>A cluster module for service discovery and load balance.</description>
 
     <dependencies>

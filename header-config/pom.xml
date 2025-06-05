@@ -27,6 +27,7 @@
 
     <artifactId>header-config</artifactId>
     <packaging>jar</packaging>
+    <name>header-config</name>
     <description>A header config module that is used by light-4j and light-aws-lambda</description>
 
     <dependencies>

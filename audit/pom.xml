@@ -27,6 +27,7 @@
 
     <artifactId>audit</artifactId>
     <packaging>jar</packaging>
+    <name>audit</name>
     <description>A audit logger module that dump request and response based on configuration</description>
 
     <dependencies>

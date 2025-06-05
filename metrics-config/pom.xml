@@ -27,6 +27,7 @@
 
     <artifactId>metrics-config</artifactId>
     <packaging>jar</packaging>
+    <name>metrics-config</name>
     <description>A metrics config module to be shared with light-aws-lambda</description>
 
     <dependencies>

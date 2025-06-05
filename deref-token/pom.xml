@@ -27,6 +27,7 @@
 
     <artifactId>deref-token</artifactId>
     <packaging>jar</packaging>
+    <name>deref-token</name>
     <description>A middleware handler that is responsible for exchanging an opaque token to a JWT on external access point.</description>
 
     <dependencies>

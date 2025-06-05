@@ -27,6 +27,7 @@
 
     <artifactId>basic-auth</artifactId>
     <packaging>jar</packaging>
+    <name>basic-auth</name>
     <description>A middleware handler that does basic authentication.</description>
 
     <dependencies>

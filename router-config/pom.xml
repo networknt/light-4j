@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>router-config</artifactId>
     <packaging>jar</packaging>
+    <name>router-config</name>
     <description>A config module for egress-router shared with light-lambda-native.</description>
 
     <dependencies>

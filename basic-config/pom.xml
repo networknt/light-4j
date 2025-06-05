@@ -27,6 +27,7 @@
 
     <artifactId>basic-config</artifactId>
     <packaging>jar</packaging>
+    <name>basic-config</name>
     <description>A config module for basic auth handler shared with lambda-native.</description>
 
     <dependencies>

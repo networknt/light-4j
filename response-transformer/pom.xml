@@ -27,6 +27,7 @@
 
     <artifactId>response-transformer</artifactId>
     <packaging>jar</packaging>
+    <name>response-transformer</name>
     <description>A rule-engine based response transformer to update the response in the middleware chain.</description>
 
     <dependencies>

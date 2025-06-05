@@ -27,6 +27,7 @@
 
     <artifactId>ruleloader-config</artifactId>
     <packaging>jar</packaging>
+    <name>ruleloader-config</name>
     <description>A config module for rule-loader to load YAML rules.</description>
 
     <dependencies>

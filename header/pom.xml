@@ -27,6 +27,7 @@
 
     <artifactId>header</artifactId>
     <packaging>jar</packaging>
+    <name>header</name>
     <description>A header manipulation handler that can add/update/remove headers based on the config</description>
 
     <dependencies>

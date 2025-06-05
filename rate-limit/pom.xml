@@ -27,6 +27,7 @@
 
     <artifactId>rate-limit</artifactId>
     <packaging>jar</packaging>
+    <name>rate-limit</name>
     <description>A handler that does rate limit in order to prevent attacks for public facing services.</description>
 
     <dependencies>

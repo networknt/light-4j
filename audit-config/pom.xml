@@ -27,6 +27,7 @@
 
     <artifactId>audit-config</artifactId>
     <packaging>jar</packaging>
+    <name>audit-config</name>
     <description>A audit config module that is shared between light-4j and light-aws-lambda</description>
 
     <dependencies>

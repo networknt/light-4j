@@ -27,6 +27,7 @@
 
     <artifactId>ldap-util</artifactId>
     <packaging>jar</packaging>
+    <name>ldap-util</name>
     <description>A module that supports Active Directory integration with LDAP.</description>
 
     <dependencies>

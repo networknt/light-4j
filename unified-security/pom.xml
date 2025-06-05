@@ -27,6 +27,7 @@
 
     <artifactId>unified-security</artifactId>
     <packaging>jar</packaging>
+    <name>unified-security</name>
     <description>A unified-security module that contains a handle to invoke other security handlers</description>
 
     <dependencies>

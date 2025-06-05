@@ -27,6 +27,7 @@
 
     <artifactId>ip-whitelist</artifactId>
     <packaging>jar</packaging>
+    <name>ip-whitelist</name>
     <description>A middleware handler for IP whitelisting per endpoint.</description>
 
     <dependencies>

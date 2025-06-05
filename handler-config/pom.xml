@@ -27,6 +27,7 @@
 
     <artifactId>handler-config</artifactId>
     <packaging>jar</packaging>
+    <name>handler-config</name>
     <description>A config module for handler.</description>
 
     <dependencies>

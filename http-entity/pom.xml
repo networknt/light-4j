@@ -27,6 +27,7 @@
 
     <artifactId>http-entity</artifactId>
     <packaging>jar</packaging>
+    <name>http-entity</name>
     <description>A module that contains all the HTTP objects extended from springframework.</description>
 
     <dependencies>

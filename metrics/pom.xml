@@ -27,6 +27,7 @@
 
     <artifactId>metrics</artifactId>
     <packaging>jar</packaging>
+    <name>metrics</name>
     <description>A metrics handler to log statistic info on the server</description>
 
     <dependencies>

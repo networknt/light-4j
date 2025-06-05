@@ -12,6 +12,7 @@
 
     <artifactId>ingress-proxy</artifactId>
     <packaging>jar</packaging>
+    <name>ingress-proxy</name>
     <description>A module that contains all proxy related handler and util classes.</description>
 
     <dependencies>

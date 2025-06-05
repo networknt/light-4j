@@ -27,6 +27,7 @@
 
     <artifactId>sanitizer-config</artifactId>
     <packaging>jar</packaging>
+    <name>sanitizer-config</name>
     <description>A config module for sanitizer handler</description>
 
     <dependencies>

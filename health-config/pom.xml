@@ -27,6 +27,7 @@
 
     <artifactId>health-config</artifactId>
     <packaging>jar</packaging>
+    <name>health-config</name>
     <description>A module that contains HealthConfig to be shared with light-aws-lambda</description>
 
     <dependencies>

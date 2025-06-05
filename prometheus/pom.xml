@@ -27,6 +27,7 @@
 
     <artifactId>prometheus</artifactId>
     <packaging>jar</packaging>
+    <name>prometheus</name>
     <description>A prometheus metrics handler to log statistic info on the server</description>
 
     <dependencies>

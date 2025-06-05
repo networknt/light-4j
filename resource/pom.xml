@@ -12,6 +12,7 @@
 
     <artifactId>resource</artifactId>
     <packaging>jar</packaging>
+    <name>resource</name>
     <description>Handler endpoints that will provide clients the ability to server static content.</description>
 
     <dependencies>

@@ -12,6 +12,7 @@
 
     <artifactId>expect100continue</artifactId>
     <packaging>jar</packaging>
+    <name>expect100continue</name>
     <description>A handler that deals with 100-continue request flows.</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>limit-config</artifactId>
     <packaging>jar</packaging>
+    <name>limit-config</name>
     <description>A config module for rate limit that is used by light-4j and light-aws-lambda.</description>
 
     <dependencies>

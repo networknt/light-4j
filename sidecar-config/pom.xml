@@ -10,8 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sidecar-config</artifactId>
-
+    <packaging>jar</packaging>
+    <name>sidecar-config</name>
     <description>This is the config module for sidecar to support east-west traffic.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>

@@ -27,6 +27,7 @@
 
     <artifactId>http-url</artifactId>
     <packaging>jar</packaging>
+    <name>http-url</name>
     <description>A utility module that contains url manipulation classes.</description>
 
     <dependencies>

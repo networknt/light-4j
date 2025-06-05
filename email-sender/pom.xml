@@ -27,6 +27,7 @@
 
     <artifactId>email-sender</artifactId>
     <packaging>jar</packaging>
+    <name>unified-config</name>
     <description>An email utility that is responsible for sending emails.</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>exception</artifactId>
     <packaging>jar</packaging>
+    <name>exception</name>
     <description>A server exception handler for both runtime exceptions and ApiException if they are not handled in the
         handler chain
     </description>

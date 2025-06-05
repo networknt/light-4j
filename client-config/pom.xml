@@ -27,6 +27,7 @@
 
     <artifactId>client-config</artifactId>
     <packaging>jar</packaging>
+    <name>client-config</name>
     <description>A client-config module that is used by light-4j Undertow client and light-aws-lambda JDK 11 client.
     </description>
 

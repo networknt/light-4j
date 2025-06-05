@@ -27,6 +27,7 @@
 
     <artifactId>consul</artifactId>
     <packaging>jar</packaging>
+    <name>consul</name>
     <description>A consul module for service registry and discovery.</description>
 
     <dependencies>

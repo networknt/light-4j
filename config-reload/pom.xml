@@ -11,6 +11,7 @@
 
     <artifactId>config-reload</artifactId>
     <packaging>jar</packaging>
+    <name>config-reload</name>
     <description>This module will admin handler for re-load config values from config server runtime.</description>
     <dependencies>
         <dependency>

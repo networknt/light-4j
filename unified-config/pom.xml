@@ -27,6 +27,7 @@
 
     <artifactId>unified-config</artifactId>
     <packaging>jar</packaging>
+    <name>unified-config</name>
     <description>A unified-security config module that is used by the all frameworks</description>
 
     <dependencies>

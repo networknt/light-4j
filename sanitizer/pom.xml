@@ -27,6 +27,7 @@
 
     <artifactId>sanitizer</artifactId>
     <packaging>jar</packaging>
+    <name>sanitizer</name>
     <description>A handler that sanitize cross site scripting for request</description>
 
     <dependencies>

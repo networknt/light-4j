@@ -27,6 +27,7 @@
 
     <artifactId>db-provider</artifactId>
     <packaging>jar</packaging>
+    <name>db-provider</name>
     <description>A provider interface to help developers to start an API that connection to one database.</description>
 
     <dependencies>

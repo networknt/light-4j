@@ -27,6 +27,7 @@
 
     <artifactId>portal-registry</artifactId>
     <packaging>jar</packaging>
+    <name>portal-registry</name>
     <description>A registry and discovery client that integrates with light-portal</description>
 
     <dependencies>

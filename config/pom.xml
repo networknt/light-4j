@@ -27,6 +27,7 @@
 
     <artifactId>config</artifactId>
     <packaging>jar</packaging>
+    <name>config</name>
     <description>A module that handles externalized configuration files.</description>
 
     <dependencies>

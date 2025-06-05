@@ -27,6 +27,7 @@
 
     <artifactId>cache-explorer</artifactId>
     <packaging>jar</packaging>
+    <name>cache-explorer</name>
     <description>A handler that expose the caches from adm endpoints.</description>
 
     <dependencies>

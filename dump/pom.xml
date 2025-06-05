@@ -27,6 +27,7 @@
 
     <artifactId>dump</artifactId>
     <packaging>jar</packaging>
+    <name>dump</name>
     <description>A logger module that dump full request and response for debugging</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>utility</artifactId>
     <packaging>jar</packaging>
+    <name>utility</name>
     <description>A utility module that contains all the utilities shared across other modules.</description>
 
     <dependencies>

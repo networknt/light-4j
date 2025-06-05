@@ -27,6 +27,7 @@
 
     <artifactId>traceability</artifactId>
     <packaging>jar</packaging>
+    <name>traceability</name>
     <description>A handler that checks if X-Traceability-Id in the request header and put it into response header if yes.</description>
 
     <dependencies>

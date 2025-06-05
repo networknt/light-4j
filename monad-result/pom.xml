@@ -27,6 +27,7 @@
 
     <artifactId>monad-result</artifactId>
     <packaging>jar</packaging>
+    <name>monad-result</name>
     <description>A monad result wraps a T if success and Status if failure.</description>
 
     <dependencies>

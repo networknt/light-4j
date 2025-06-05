@@ -22,11 +22,12 @@
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
         <version>2.2.2</version>
-        <relativePath>..</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>switcher</artifactId>
     <packaging>jar</packaging>
+    <name>switcher</name>
     <description>A switcher module that has on and off status and listeners to be called once status is changed.</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>rule-loader</artifactId>
     <packaging>jar</packaging>
+    <name>rule-loader</name>
     <description>A module that contains a startup hook that is used to load YAML rules from the light-portal during startup.</description>
 
     <dependencies>

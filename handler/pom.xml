@@ -27,6 +27,7 @@
 
     <artifactId>handler</artifactId>
     <packaging>jar</packaging>
+    <name>handler</name>
     <description>A module defines interface or abstract classes for handlers.</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>caffeine-cache</artifactId>
     <packaging>jar</packaging>
+    <name>Caffeine Cache</name>
     <description>A cache manager implementation based on the caffeine cache.</description>
 
     <dependencies>

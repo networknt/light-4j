@@ -27,6 +27,7 @@
 
     <artifactId>traceability-config</artifactId>
     <packaging>jar</packaging>
+    <name>traceability-config</name>
     <description>A config module for light-4j and light-aws-lambda.</description>
 
     <dependencies>

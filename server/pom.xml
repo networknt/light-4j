@@ -27,6 +27,7 @@
 
     <artifactId>server</artifactId>
     <packaging>jar</packaging>
+    <name>server</name>
     <description>A server modules of framework.</description>
 
     <dependencies>

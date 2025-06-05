@@ -27,6 +27,7 @@
 
     <artifactId>cache-manager</artifactId>
     <packaging>jar</packaging>
+    <name>cache-manager</name>
     <description>A centralized cache manager for all in-memory caches across the entire application.</description>
 
     <dependencies>

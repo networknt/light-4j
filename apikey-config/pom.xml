@@ -27,6 +27,7 @@
 
     <artifactId>apikey-config</artifactId>
     <packaging>jar</packaging>
+    <name>apikey-config</name>
     <description>A config module for api-key that is shared with light-lambda-native.</description>
 
     <dependencies>

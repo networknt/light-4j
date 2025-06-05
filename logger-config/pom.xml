@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>logger-config</artifactId>
     <packaging>jar</packaging>
+    <name>logger-config</name>
     <description>This module will provide the configuration about logging and switch logging level.</description>
     <dependencies>
         <dependency>

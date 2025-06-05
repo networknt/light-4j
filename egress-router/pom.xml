@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>egress-router</artifactId>
     <packaging>jar</packaging>
+    <name>Egress Router</name>
     <description>A module that contains all router related handler and util classes.</description>
 
     <dependencies>

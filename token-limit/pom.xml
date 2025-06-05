@@ -27,6 +27,7 @@
 
     <artifactId>token-limit</artifactId>
     <packaging>jar</packaging>
+    <name>token-limit</name>
     <description>A handler that does rate limit for OAuth 2.0 token endpoint to identify consumers that do not cache tokens.</description>
 
     <dependencies>

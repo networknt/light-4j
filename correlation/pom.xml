@@ -27,6 +27,7 @@
 
     <artifactId>correlation</artifactId>
     <packaging>jar</packaging>
+    <name>correlation</name>
     <description>A handler that create corralationId if it doesn't exist in request header in API/service.</description>
 
     <dependencies>

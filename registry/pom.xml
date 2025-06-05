@@ -27,6 +27,7 @@
 
     <artifactId>registry</artifactId>
     <packaging>jar</packaging>
+    <name>registry</name>
     <description>A registry and discovery module that register the services and discover them from centralized registry.</description>
 
     <dependencies>

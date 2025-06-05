@@ -27,6 +27,7 @@
 
     <artifactId>decryptor</artifactId>
     <packaging>jar</packaging>
+    <name>decryptor</name>
     <description>A reference implementation of decryptor for secret.yml encrypted values.</description>
 
     <dependencies>

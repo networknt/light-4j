@@ -27,6 +27,7 @@
 
     <artifactId>encode-decode</artifactId>
     <packaging>jar</packaging>
+    <name>unified-config</name>
     <description>Request decode and response encode for data compression.</description>
 
     <dependencies>

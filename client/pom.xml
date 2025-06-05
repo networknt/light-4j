@@ -27,6 +27,7 @@
 
     <artifactId>client</artifactId>
     <packaging>jar</packaging>
+    <name>client</name>
     <description>A client module that is used by API consumer to call an API or from an API calling another API.
     </description>
 

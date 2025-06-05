@@ -27,6 +27,7 @@
 
     <artifactId>restrans-config</artifactId>
     <packaging>jar</packaging>
+    <name>restrans-config</name>
     <description>A config module for rule-engine based response transformer.</description>
 
     <dependencies>

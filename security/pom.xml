@@ -27,6 +27,7 @@
 
     <artifactId>security</artifactId>
     <packaging>jar</packaging>
+    <name>security</name>
     <description>A security module that contains all handlers to protect your server</description>
 
     <dependencies>

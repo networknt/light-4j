@@ -27,6 +27,7 @@
 
     <artifactId>status</artifactId>
     <packaging>jar</packaging>
+    <name>Status</name>
     <description>A http status response that is sent to the consumer if an error occurs.</description>
 
     <dependencies>

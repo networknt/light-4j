@@ -27,6 +27,7 @@
 
     <artifactId>info-config</artifactId>
     <packaging>jar</packaging>
+    <name>info-config</name>
     <description>A server info configuration module shared with light-aws-lambda</description>
 
     <dependencies>

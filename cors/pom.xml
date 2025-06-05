@@ -27,6 +27,7 @@
 
     <artifactId>cors</artifactId>
     <packaging>jar</packaging>
+    <name>cors</name>
     <description>A cors handler for single page applications from another domain to call services.</description>
 
     <dependencies>

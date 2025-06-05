@@ -27,6 +27,7 @@
 
     <artifactId>reqtrans-config</artifactId>
     <packaging>jar</packaging>
+    <name>reqtrans-config</name>
     <description>A config module for rule-engine based request transformer.</description>
 
     <dependencies>

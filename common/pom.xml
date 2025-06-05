@@ -27,6 +27,7 @@
 
     <artifactId>common</artifactId>
     <packaging>jar</packaging>
+    <name>common</name>
     <description>A common module that contains some shared classes between client and server.</description>
 
     <dependencies>

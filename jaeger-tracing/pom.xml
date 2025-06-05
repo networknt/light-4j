@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jaeger-tracing</artifactId>
     <packaging>jar</packaging>
+    <name>jaeger-tracing</name>
     <description>This module integrates the Jaeger Tracing client to register and capture distributed tracing info to Jaeger Tracer.</description>
     <dependencies>
         <dependency>

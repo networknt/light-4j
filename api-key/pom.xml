@@ -27,6 +27,7 @@
 
     <artifactId>api-key</artifactId>
     <packaging>jar</packaging>
+    <name>api-key</name>
     <description>A middleware handler that does api-key verification.</description>
 
     <dependencies>

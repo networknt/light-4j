@@ -27,6 +27,7 @@
 
     <artifactId>security-config</artifactId>
     <packaging>jar</packaging>
+    <name>security-config</name>
     <description>A security config module that is used by the security and light-aws-lambda</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>server-config</artifactId>
     <packaging>jar</packaging>
+    <name>server-config</name>
     <description>A server config of server module.</description>
 
     <dependencies>

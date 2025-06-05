@@ -27,6 +27,7 @@
 
     <artifactId>correlation-config</artifactId>
     <packaging>jar</packaging>
+    <name>correlation-config</name>
     <description>A config module for correlation that is used in light-4j and light-aws-lambda.</description>
 
     <dependencies>

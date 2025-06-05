@@ -27,6 +27,7 @@
 
     <artifactId>mask</artifactId>
     <packaging>jar</packaging>
+    <name>mask</name>
     <description>A utility that mask sensitive info in string or json before log it.</description>
 
     <dependencies>

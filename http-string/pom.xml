@@ -27,6 +27,7 @@
 
     <artifactId>http-string</artifactId>
     <packaging>jar</packaging>
+    <name>http-string</name>
     <description>A utility module that contains Undertow HttpString constants.</description>
 
     <dependencies>

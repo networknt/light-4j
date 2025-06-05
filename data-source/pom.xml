@@ -27,6 +27,7 @@
 
     <artifactId>data-source</artifactId>
     <packaging>jar</packaging>
+    <name>data-source</name>
     <description>A utility to manage multiple named SQL database connection pools.</description>
 
     <dependencies>
