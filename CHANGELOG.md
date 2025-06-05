@@ -15,6 +15,8 @@
 - fixes \#2489 add two error codes for portal command [\#2490](https://github.com/networknt/light-4j/pull/2490) ([stevehu](https://github.com/stevehu))
 - fixes \#2486 add stack trace when server is started [\#2487](https://github.com/networknt/light-4j/pull/2487) ([stevehu](https://github.com/stevehu))
 - moved expect100continue handler to isolated module. [\#2485](https://github.com/networknt/light-4j/pull/2485) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.2.1](https://github.com/networknt/light-4j/tree/2.2.1) (2025-03-22)
 
 
