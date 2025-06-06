@@ -133,10 +133,6 @@
         <version.maven-deploy>3.1.1</version.maven-deploy>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
-<<<<<<< HEAD
-=======
-        <version.maven-gpg>3.2.7</version.maven-gpg>
->>>>>>> e59b0250069c4cd7bfeb8ba9456f8cc34456ce07
         <version.testcontainers>1.8.0</version.testcontainers>
         <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
