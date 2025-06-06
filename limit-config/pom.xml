@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>limit-config</artifactId>
     <packaging>jar</packaging>
+    <name>limit-config</name>
     <description>A config module for rate limit that is used by light-4j and light-aws-lambda.</description>
 
     <dependencies>

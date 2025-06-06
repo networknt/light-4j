@@ -5,13 +5,14 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>content</artifactId>
     <packaging>jar</packaging>
+    <name>content</name>
     <description>A handler that uses a default Content-Type header setting in the content.yml or the request Content-Type to return the data.</description>
 
     <dependencies>

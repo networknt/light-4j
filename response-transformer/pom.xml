@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>response-transformer</artifactId>
     <packaging>jar</packaging>
+    <name>response-transformer</name>
     <description>A rule-engine based response transformer to update the response in the middleware chain.</description>
 
     <dependencies>

@@ -1,5 +1,22 @@
 # Change Log
 
+## [2.2.2](https://github.com/networknt/light-4j/tree/2.2.2) (2025-06-05)
+
+
+**Merged pull requests:**
+
+
+- 2509 header handler response not working as intended [\#2510](https://github.com/networknt/light-4j/pull/2510) ([KalevGonvick](https://github.com/KalevGonvick))
+- Fix typo by exposing as configuration [\#2508](https://github.com/networknt/light-4j/pull/2508) ([DiogoFKT](https://github.com/DiogoFKT))
+- Sync [\#2506](https://github.com/networknt/light-4j/pull/2506) ([stevehu](https://github.com/stevehu))
+- Change default value of enabled to false and fix a bug [\#2501](https://github.com/networknt/light-4j/pull/2501) ([atmoshaman](https://github.com/atmoshaman))
+- added new 'schema-generation' profile to toggle schema generation. [\#2498](https://github.com/networknt/light-4j/pull/2498) ([KalevGonvick](https://github.com/KalevGonvick))
+- added header config schema and yaml generation [\#2496](https://github.com/networknt/light-4j/pull/2496) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#2489 add two error codes for portal command [\#2490](https://github.com/networknt/light-4j/pull/2490) ([stevehu](https://github.com/stevehu))
+- fixes \#2486 add stack trace when server is started [\#2487](https://github.com/networknt/light-4j/pull/2487) ([stevehu](https://github.com/stevehu))
+- moved expect100continue handler to isolated module. [\#2485](https://github.com/networknt/light-4j/pull/2485) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.2.1](https://github.com/networknt/light-4j/tree/2.2.1) (2025-03-22)
 
 

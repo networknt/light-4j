@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>decryptor</artifactId>
     <packaging>jar</packaging>
+    <name>decryptor</name>
     <description>A reference implementation of decryptor for secret.yml encrypted values.</description>
 
     <dependencies>

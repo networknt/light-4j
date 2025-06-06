@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>consul</artifactId>
     <packaging>jar</packaging>
+    <name>consul</name>
     <description>A consul module for service registry and discovery.</description>
 
     <dependencies>

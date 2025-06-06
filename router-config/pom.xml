@@ -5,12 +5,13 @@
     <parent>
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>router-config</artifactId>
     <packaging>jar</packaging>
+    <name>router-config</name>
     <description>A config module for egress-router shared with light-lambda-native.</description>
 
     <dependencies>

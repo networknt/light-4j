@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>rate-limit</artifactId>
     <packaging>jar</packaging>
+    <name>rate-limit</name>
     <description>A handler that does rate limit in order to prevent attacks for public facing services.</description>
 
     <dependencies>

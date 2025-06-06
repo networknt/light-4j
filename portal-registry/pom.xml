@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>portal-registry</artifactId>
     <packaging>jar</packaging>
+    <name>portal-registry</name>
     <description>A registry and discovery client that integrates with light-portal</description>
 
     <dependencies>

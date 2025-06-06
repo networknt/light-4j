@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>unified-security</artifactId>
     <packaging>jar</packaging>
+    <name>unified-security</name>
     <description>A unified-security module that contains a handle to invoke other security handlers</description>
 
     <dependencies>

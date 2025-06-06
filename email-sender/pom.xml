@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>email-sender</artifactId>
     <packaging>jar</packaging>
+    <name>unified-config</name>
     <description>An email utility that is responsible for sending emails.</description>
 
     <dependencies>

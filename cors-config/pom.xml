@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>cors-config</artifactId>
     <packaging>jar</packaging>
+    <name>cors-config</name>
     <description>A cors config for cors handler for single page applications.</description>
 
     <dependencies>

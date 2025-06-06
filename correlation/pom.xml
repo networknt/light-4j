@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>correlation</artifactId>
     <packaging>jar</packaging>
+    <name>correlation</name>
     <description>A handler that create corralationId if it doesn't exist in request header in API/service.</description>
 
     <dependencies>

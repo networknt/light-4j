@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>basic-auth</artifactId>
     <packaging>jar</packaging>
+    <name>basic-auth</name>
     <description>A middleware handler that does basic authentication.</description>
 
     <dependencies>

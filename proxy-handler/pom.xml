@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>proxy-handler</artifactId>
     <packaging>jar</packaging>
+    <name>proxy-handler</name>
     <description>A module contains proxy-handler that is shared between ingress-proxy and egress-router.</description>
 
     <dependencies>

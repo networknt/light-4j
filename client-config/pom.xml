@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>client-config</artifactId>
     <packaging>jar</packaging>
+    <name>client-config</name>
     <description>A client-config module that is used by light-4j Undertow client and light-aws-lambda JDK 11 client.
     </description>
 

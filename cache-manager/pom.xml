@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>cache-manager</artifactId>
     <packaging>jar</packaging>
+    <name>cache-manager</name>
     <description>A centralized cache manager for all in-memory caches across the entire application.</description>
 
     <dependencies>

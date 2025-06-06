@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.2.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>http-entity</artifactId>
     <packaging>jar</packaging>
+    <name>http-entity</name>
     <description>A module that contains all the HTTP objects extended from springframework.</description>
 
     <dependencies>
