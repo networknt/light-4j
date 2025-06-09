@@ -1,8 +1,15 @@
 package com.networknt.router.middleware;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.oauth.Jwt;
+import com.networknt.client.oauth.OauthHelper;
+import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.monad.Result;
+import com.networknt.monad.Success;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -20,6 +27,7 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -135,6 +143,61 @@ public class TokenHandlerTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
         Assert.assertEquals(200, statusCode);
+    }
+
+    @Test
+    public void testGetJwtToken_Success() {
+        TokenHandler.cache.clear();
+        String serviceId = "service1";
+        long currentTime = System.currentTimeMillis();
+
+        // Mock cached JWT
+        Jwt cachedJwt = new Jwt(new Jwt.Key(serviceId));
+        cachedJwt.setExpire(currentTime + 60000); // Token expires in 60 seconds
+        TokenHandler.cache.put(serviceId, cachedJwt);
+
+        // Call the method
+        Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
+
+        // Verify the result
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(cachedJwt, result.getResult());
+    }
+
+    @Test
+    public void testGetJwtToken_Failure() {
+        TokenHandler.cache.clear();
+        String serviceId = "service1";
+
+        // Call the method
+        Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
+
+        // Verify the result
+        Assert.assertTrue(result.isFailure());
+        Assert.assertNull(TokenHandler.cache.get(serviceId)); // Verify cache is not updated
+    }
+
+    @Test
+    public void testBuildConfigMap() {
+        final var config = ClientConfig.get().getOAuth().getToken().getClientCredentials().getServiceIdAuthServers();
+        Assert.assertNotNull(config);
+
+        final var serviceConfig = config.get("service1");
+        Assert.assertNotNull(serviceConfig);
+
+        final var mapper = Config.getInstance().getMapper();
+        final var configMap = mapper.convertValue(serviceConfig, new TypeReference<Map<String, Object>>() {
+        });
+        Assert.assertNotNull(configMap);
+
+        final var completeAuthConfig = TokenHandler.buildAuthConfig(configMap, ClientConfig.get().getOAuth().getToken());
+        Assert.assertNotNull(completeAuthConfig);
+
+        // config should contain token config values
+        Assert.assertTrue(completeAuthConfig.containsKey("tokenRenewBeforeExpired") && (int) completeAuthConfig.get("tokenRenewBeforeExpired") == 30000);
+
+        // config should not contain proxy settings
+        Assert.assertFalse(completeAuthConfig.containsKey("proxyPort"));
     }
 
 }

@@ -1,5 +1,7 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
@@ -7,62 +9,66 @@ import com.networknt.config.schema.StringField;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthServerConfig {
 
     @StringField(
             configFieldName = "server_url"
     )
-    private String server_url;
+    @JsonProperty("server_url")
+    private String serverUrl = null;
 
     @StringField(
             configFieldName = "proxyHost"
     )
-    private String proxyHost;
+    private String proxyHost = null;
 
     @IntegerField(
             configFieldName = "proxyPort",
             min = 0,
             max = 65535
     )
-    private int proxyPort;
+    private Integer proxyPort = null;
 
     @BooleanField(
             configFieldName = "enableHttp2"
     )
-    private boolean enableHttp2;
+    private Boolean enableHttp2 = null;
 
     @StringField(
             configFieldName = "uri"
     )
-    private String uri;
+    private String uri = null;
 
     @StringField(
             configFieldName = "client_id"
     )
-    private char[] client_id;
+    @JsonProperty("client_id")
+    private char[] clientId = null;
 
     @StringField(
             configFieldName = "client_secret"
     )
-    private char[] client_secret;
+    @JsonProperty("client_secret")
+    private char[] clientSecret = null;
 
     @ArrayField(
             configFieldName = "scope",
             items = String.class
     )
-    private List<String> scope;
+    private List<String> scope = null;
 
     @StringField(
             configFieldName = "audience"
     )
-    private String audience;
+    private String audience = null;
 
 
-    public String getServer_url() {
-        return server_url;
+    public String getServerUrl() {
+        return serverUrl;
     }
 
-    public boolean isEnableHttp2() {
+    public Boolean isEnableHttp2() {
         return enableHttp2;
     }
 
@@ -70,12 +76,12 @@ public class AuthServerConfig {
         return uri;
     }
 
-    public char[] getClient_id() {
-        return client_id;
+    public char[] getClientId() {
+        return clientId;
     }
 
-    public char[] getClient_secret() {
-        return client_secret;
+    public char[] getClientSecret() {
+        return clientSecret;
     }
 
     public List<String> getScope() {
@@ -90,7 +96,7 @@ public class AuthServerConfig {
         return proxyHost;
     }
 
-    public int getProxyPort() {
+    public Integer getProxyPort() {
         return proxyPort;
     }
 }
