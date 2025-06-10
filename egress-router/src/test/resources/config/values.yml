@@ -95,6 +95,10 @@ router.pathPrefixMaxRequestTime: "{\"/v1/address\":5000,\"/v2/address\":10000,\"
 # router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000,"/v1/pets/{petId}": 5000}
 
 # client.yml
+client.tokenRenewBeforeExpired: 30000
+client.expiredRefreshRetryDelay: 1000
+client.earlyRefreshRetryDelay: 1000
+
 # test configuration for the TokenHandler with multiple OAuth 2.0 providers.
 client.multipleAuthServers: true
 client.tokenCcServiceIdAuthServers:

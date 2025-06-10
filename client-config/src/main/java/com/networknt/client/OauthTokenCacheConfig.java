@@ -1,18 +1,21 @@
 package com.networknt.client;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.IntegerField;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OauthTokenCacheConfig {
 
-    public static final String CAPACITY = "capacity";
     @IntegerField(
-            configFieldName = CAPACITY,
+            configFieldName = ClientConfig.CAPACITY,
             externalizedKeyName = "tokenCacheCapacity",
             defaultValue = 200,
             description = "Capacity of caching tokens in the client for downstream API calls. The default value is 200."
     )
-    private int capacity;
+    @JsonProperty(ClientConfig.CAPACITY)
+    private Integer capacity = 200;
 
-    public int getCapacity() {
+    public Integer getCapacity() {
         return capacity;
     }
 }
