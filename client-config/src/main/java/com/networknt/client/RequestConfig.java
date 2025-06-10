@@ -12,7 +12,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.ERROR_THRESHOLD,
             externalizedKeyName = ClientConfig.ERROR_THRESHOLD,
             externalized = true,
-            defaultValue = 2,
+            defaultValue = "2",
             description = "number of timeouts/errors to break the circuit"
     )
     @JsonProperty(ClientConfig.ERROR_THRESHOLD)
@@ -22,7 +22,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.TIMEOUT,
             externalizedKeyName = ClientConfig.TIMEOUT,
             externalized = true,
-            defaultValue = 3000,
+            defaultValue = "3000",
             description = "timeout in millisecond to indicate a client error. " +
                     "If light-4j Http2Client is used, it is the timeout to get the\n" +
                     "connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
@@ -34,7 +34,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.RESET_TIMEOUT,
             externalizedKeyName = ClientConfig.RESET_TIMEOUT,
             externalized = true,
-            defaultValue = 7000,
+            defaultValue = "7000",
             description = "reset the circuit after this timeout in millisecond"
     )
     @JsonProperty(ClientConfig.RESET_TIMEOUT)
@@ -64,7 +64,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = ClientConfig.ENABLE_HTTP_2,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "the flag to indicate whether http/2 is enabled when calling client.callService()"
     )
     @JsonProperty(ClientConfig.ENABLE_HTTP2)
@@ -74,7 +74,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.CONNECTION_POOL_SIZE,
             externalizedKeyName = ClientConfig.CONNECTION_POOL_SIZE,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "the maximum host capacity of connection pool"
     )
     @JsonProperty(ClientConfig.CONNECTION_POOL_SIZE)
@@ -84,7 +84,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.CONNECTION_EXPIRE_TIME,
             externalizedKeyName = ClientConfig.CONNECTION_EXPIRE_TIME,
             externalized = true,
-            defaultValue = 1800000,
+            defaultValue = "1800000",
             description = "Connection expire time when connection pool is used. " +
                     "By default, the cached connection will be closed after 30 minutes.\n" +
                     "This is one way to force the connection to be closed so that " +
@@ -97,7 +97,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.MAX_REQ_PER_CONN,
             externalizedKeyName = ClientConfig.MAX_REQ_PER_CONN,
             externalized = true,
-            defaultValue = 1000000,
+            defaultValue = "1000000",
             description = "The maximum request limitation for each connection in the connection pool. " +
                     "By default, a connection will be closed after\n" +
                     "sending 1 million requests. " +
@@ -110,7 +110,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
             externalizedKeyName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "maximum quantity of connection in connection pool for each host"
     )
     @JsonProperty(ClientConfig.MAX_CONNECTION_NUM_PER_HOST)
@@ -120,7 +120,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
             externalizedKeyName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
             externalized = true,
-            defaultValue = 250,
+            defaultValue = "250",
             description = "minimum quantity of connection in connection pool for each host. " +
                     "The corresponding connection number will shrink to minConnectionNumPerHost\n" +
                     "by remove least recently used connections when the connection number " +
@@ -133,7 +133,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.MAX_REQUEST_RETRY,
             externalizedKeyName = ClientConfig.MAX_REQUEST_RETRY,
             externalized = true,
-            defaultValue = 3,
+            defaultValue = "3",
             description = "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
     )
     @JsonProperty(ClientConfig.MAX_REQUEST_RETRY)
@@ -143,7 +143,7 @@ public class RequestConfig {
             configFieldName = ClientConfig.REQUEST_RETRY_DELAY,
             externalizedKeyName = ClientConfig.REQUEST_RETRY_DELAY,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "The delay time in milliseconds for each request retry. The default value is 1000."
     )
     @JsonProperty(ClientConfig.REQUEST_RETRY_DELAY)

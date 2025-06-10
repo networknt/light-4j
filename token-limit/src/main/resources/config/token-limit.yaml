@@ -1,0 +1,29 @@
+# indicate if the handler is enabled or not. By default, it is enabled
+enabled: ${token-limit.enabled:true}
+# return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,
+# a warning message should be logged. Also, this handler can be disabled on production for performance.
+errorOnLimit: ${token-limit.errorOnLimit:true}
+# The max number of duplicated token requests. Once this number is passed, the limit is triggered. This
+# number is set based on the number of client instances as each instance might get its token if there
+# is no distributed cache. The duplicated tokens are calculated based on the local in memory cache per
+# light-gateway or oauth-kafka instance. Note: cache.yml needs to be configured.
+duplicateLimit: ${token-limit.duplicateLimit:2}
+# Different OAuth 2.0 providers have different token request path. To make sure that this handler only
+# applied to the token endpoint, we define a list of path templates here to ensure request path is matched.
+# The following is an example with two different OAuth 2.0 providers in values.yml file.
+# token-limit.tokenPathTemplates:
+#   - /oauth2/(?<instanceId>[^/]+)/v1/token
+#   - /oauth2/(?<instanceId>[^/]+)/token
+tokenPathTemplates: ${token-limit.tokenPathTemplates:}
+# List of ClientID that should be treated as Legacy and thus excluded from the token limit rules.
+# This should only be used by approved legacy clients. The client ID is case insensitive.
+# token-limit.legacyClient:
+#   - 5oa66u56irXiekTUF1d6
+#   - 6oa66u56irXiekABC1d4
+legacyClient: ${token-limit.legacyClient:}
+# Expire key field name for the token limit cache feature. This is used to parse the response from
+# the Auth Server, extract the expire time of the token and update to account for the time drift.
+# The default value is "expires_in" and unit is seconds. If there's no such field in the response,
+# set this property as empty ("") so the handler will skip the parsing and return the unmodified
+# response payload as it was cached.
+expireKey: ${token-limit.expireKey:expires_in}

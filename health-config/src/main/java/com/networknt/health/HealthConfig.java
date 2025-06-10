@@ -43,7 +43,7 @@ public class HealthConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "true to enable this middleware handler. By default, the health check is enabled."
     )
@@ -61,7 +61,7 @@ public class HealthConfig {
     @IntegerField(
             configFieldName = TIMEOUT,
             externalizedKeyName = TIMEOUT,
-            defaultValue = 2000,
+            defaultValue = "2000",
             externalized = true,
             description = "timeout in milliseconds for the health check. If the duration is passed, a failure will return.\n" +
                     "It is to prevent taking too much time to check subsystems that are not available or timeout.\n" +

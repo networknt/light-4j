@@ -33,8 +33,6 @@ public class OAuthDerefConfig {
     @IntegerField(
             configFieldName = ClientConfig.PROXY_PORT,
             externalizedKeyName = "derefProxyPort",
-            min = 0,
-            max = 65535,
             externalized = true,
             description = "We only support HTTPS traffic for the proxy and the default port is 443. " +
                     "If your proxy server has\n" +
@@ -59,7 +57,7 @@ public class OAuthDerefConfig {
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP2,
             externalizedKeyName = "derefEnableHttp2",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )

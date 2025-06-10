@@ -66,7 +66,7 @@ public class AuditConfig {
             externalizedKeyName = ENABLED,
             description = "Enable Audit Logging",
             externalized = true,
-            defaultValue = true
+            defaultValue = "true"
     )
     private boolean enabled;
 
@@ -75,7 +75,7 @@ public class AuditConfig {
             externalizedKeyName = MASK,
             description = "Enable mask in the audit log",
             externalized = true,
-            defaultValue = true
+            defaultValue = "true"
     )
     private boolean mask;
 
@@ -84,7 +84,7 @@ public class AuditConfig {
             externalizedKeyName = STATUS_CODE,
             description = "Output response status code.",
             externalized = true,
-            defaultValue = true
+            defaultValue = "true"
     )
     private boolean statusCode;
 
@@ -93,7 +93,7 @@ public class AuditConfig {
             externalizedKeyName = RESPONSE_TIME,
             description = "Output response time.",
             externalized = true,
-            defaultValue = true
+            defaultValue = "true"
     )
     private boolean responseTime;
 
@@ -170,7 +170,7 @@ public class AuditConfig {
             description = "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\n" +
                     "request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
             externalized = true,
-            defaultValue = 4096
+            defaultValue = "4096"
     )
     private int requestBodyMaxSize;
 
@@ -180,7 +180,7 @@ public class AuditConfig {
             description = "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\n" +
                     "response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
             externalized = true,
-            defaultValue = 4096
+            defaultValue = "4096"
     )
     private int responseBodyMaxSize;
 
@@ -251,11 +251,11 @@ public class AuditConfig {
     }
 
     public boolean hasHeaderList() {
-        return getHeaderList() != null && getHeaderList().size() > 0;
+        return getHeaderList() != null && !getHeaderList().isEmpty();
     }
 
     public boolean hasAuditList() {
-        return getAuditList() != null && getAuditList().size() > 0;
+        return getAuditList() != null && !getAuditList().isEmpty();
     }
 
     public String getTimestampFormat() {

@@ -52,7 +52,7 @@ public class MetricsConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "If metrics handler is enabled or not. Default is true as long as one of the handlers is in the\n" +
                     "request/response chain."
     )
@@ -99,7 +99,7 @@ public class MetricsConfig {
             configFieldName = SERVER_PORT,
             externalizedKeyName = SERVER_PORT,
             externalized = true,
-            defaultValue = 8086,
+            defaultValue = "8086",
             description = "Time series database or metrics server port number."
     )
     int serverPort;
@@ -135,7 +135,7 @@ public class MetricsConfig {
             configFieldName = REPORT_IN_MINUTES,
             externalizedKeyName = REPORT_IN_MINUTES,
             externalized = true,
-            defaultValue = 1,
+            defaultValue = "1",
             description = "report and reset metrics in minutes."
     )
     int reportInMinutes;

@@ -1,0 +1,38 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "errorOnLimit", "duplicateLimit", "tokenPathTemplates", "legacyClient", "expireKey" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "indicate if the handler is enabled or not. By default, it is enabled"
+    },
+    "errorOnLimit" : {
+      "type" : "boolean",
+      "description" : "return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,\na warning message should be logged. Also, this handler can be disabled on production for performance."
+    },
+    "duplicateLimit" : {
+      "type" : "integer",
+      "description" : "The max number of duplicated token requests. Once this number is passed, the limit is triggered. This\nnumber is set based on the number of client instances as each instance might get its token if there\nis no distributed cache. The duplicated tokens are calculated based on the local in memory cache per\nlight-gateway or oauth-kafka instance. Note: cache.yml needs to be configured."
+    },
+    "tokenPathTemplates" : {
+      "type" : "array",
+      "description" : "Different OAuth 2.0 providers have different token request path. To make sure that this handler only\napplied to the token endpoint, we define a list of path templates here to ensure request path is matched.\nThe following is an example with two different OAuth 2.0 providers in values.yml file.\ntoken-limit.tokenPathTemplates:\n  - /oauth2/(?<instanceId>[^/]+)/v1/token\n  - /oauth2/(?<instanceId>[^/]+)/token",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "legacyClient" : {
+      "type" : "array",
+      "description" : "List of ClientID that should be treated as Legacy and thus excluded from the token limit rules.\nThis should only be used by approved legacy clients. The client ID is case insensitive.\ntoken-limit.legacyClient:\n  - 5oa66u56irXiekTUF1d6\n  - 6oa66u56irXiekABC1d4",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "expireKey" : {
+      "type" : "string",
+      "description" : "Expire key field name for the token limit cache feature. This is used to parse the response from\nthe Auth Server, extract the expire time of the token and update to account for the time drift.\nThe default value is \"expires_in\" and unit is seconds. If there's no such field in the response,\nset this property as empty (\"\") so the handler will skip the parsing and return the unmodified\nresponse payload as it was cached.",
+      "default" : "expires_in"
+    }
+  }
+}

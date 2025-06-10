@@ -65,7 +65,7 @@ public class OAuthTokenKeyConfig {
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = "tokenKeyEnableHttp2",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )

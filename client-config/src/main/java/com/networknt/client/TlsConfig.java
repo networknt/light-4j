@@ -16,7 +16,7 @@ public class TlsConfig {
             configFieldName = ClientConfig.VERIFY_HOSTNAME,
             externalizedKeyName = ClientConfig.VERIFY_HOSTNAME,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "if the server is using self-signed certificate, this need to be false. " +
                     "If true, you have to use CA signed certificate or load\n" +
                     "truststore that contains the self-signed certificate."
@@ -28,7 +28,7 @@ public class TlsConfig {
             configFieldName = ClientConfig.LOAD_DEFAULT_TRUST_STORE,
             externalizedKeyName = ClientConfig.LOAD_DEFAULT_TRUST_STORE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate of system load default cert."
     )
     @JsonProperty(ClientConfig.LOAD_DEFAULT_TRUST_STORE)
@@ -38,7 +38,7 @@ public class TlsConfig {
             configFieldName = ClientConfig.LOAD_TRUST_STORE,
             externalizedKeyName = ClientConfig.LOAD_TRUST_STORE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "trust store contains certificates that server needs. Enable if tls is used."
     )
     @JsonProperty(ClientConfig.LOAD_TRUST_STORE)

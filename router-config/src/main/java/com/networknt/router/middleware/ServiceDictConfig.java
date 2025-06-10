@@ -38,7 +38,7 @@ public class ServiceDictConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if ServiceDictHandler is enabled or not"
     )
     private boolean enabled;

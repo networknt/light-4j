@@ -48,7 +48,7 @@ public class BasicAuthConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = false,
+            defaultValue = "false",
             description = "Enable Basic Authentication Handler, default is true."
     )
     boolean enabled;
@@ -57,7 +57,7 @@ public class BasicAuthConfig {
             configFieldName = ENABLE_AD,
             externalizedKeyName = ENABLE_AD,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable Ldap Authentication, default is true."
     )
     boolean enableAD;

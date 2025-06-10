@@ -17,7 +17,7 @@ public @interface MapField {
     /**
      * The default json map value of the field.
      */
-    String defaultValue() default "";
+    String defaultValue() default ConfigSchema.DEFAULT_STRING;
 
     /**
      * The description of the field.

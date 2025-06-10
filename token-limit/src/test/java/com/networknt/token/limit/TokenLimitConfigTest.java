@@ -17,7 +17,7 @@ public class TokenLimitConfigTest {
     public void testConfigData() {
         Assert.assertTrue(config.isEnabled());
         Assert.assertTrue(config.isErrorOnLimit());
-        Assert.assertEquals(2, config.getDuplicateLimit());
+        Assert.assertEquals(2, config.getDuplicateLimit().intValue());
         Assert.assertEquals("expires_in", config.getExpireKey());
         Assert.assertTrue(config.getTokenPathTemplates().contains("/oauth2/(?<instanceId>[^/]+)/v1/token"));
     }

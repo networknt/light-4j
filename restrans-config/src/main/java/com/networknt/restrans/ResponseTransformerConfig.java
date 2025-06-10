@@ -28,7 +28,7 @@ public class ResponseTransformerConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if this interceptor is enabled or not."
     )
     private boolean enabled;
@@ -37,7 +37,7 @@ public class ResponseTransformerConfig {
             configFieldName = REQUIRED_CONTENT,
             externalizedKeyName = REQUIRED_CONTENT,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if the transform interceptor needs to change the request body"
     )
     private boolean requiredContent;
