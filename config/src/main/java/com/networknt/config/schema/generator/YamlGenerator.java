@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -133,7 +134,7 @@ public class YamlGenerator extends Generator {
                     return;
 
                 } catch (Exception le) {
-                    // do nothing
+                    builder.append(defaultValue);
                 }
             }
         }

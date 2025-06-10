@@ -22,7 +22,7 @@ public class OAuthTokenConfig  {
             configFieldName = ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED,
             externalizedKeyName = ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED,
             externalized = true,
-            defaultValue = 60000,
+            defaultValue = "60000",
             description = "The scope token will be renewed automatically 1 minute before expiry"
     )
     @JsonProperty(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)
@@ -32,7 +32,7 @@ public class OAuthTokenConfig  {
             configFieldName = ClientConfig.EXPIRED_REFRESH_RETRY_DELAY,
             externalizedKeyName = ClientConfig.EXPIRED_REFRESH_RETRY_DELAY,
             externalized = true,
-            defaultValue = 2000,
+            defaultValue = "2000",
             description = "if scope token is expired, we need short delay so that we can retry faster."
     )
     @JsonProperty(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY)
@@ -42,7 +42,7 @@ public class OAuthTokenConfig  {
             configFieldName = ClientConfig.EARLY_REFRESH_RETRY_DELAY,
             externalizedKeyName = ClientConfig.EARLY_REFRESH_RETRY_DELAY,
             externalized = true,
-            defaultValue = 4000,
+            defaultValue = "4000",
             description = "if scope token is not expired but in renew window, we need slow retry delay."
     )
     @JsonProperty(ClientConfig.EARLY_REFRESH_RETRY_DELAY)
@@ -97,7 +97,7 @@ public class OAuthTokenConfig  {
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = "tokenEnableHttp2",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )

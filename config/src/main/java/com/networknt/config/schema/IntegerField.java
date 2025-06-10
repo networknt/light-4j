@@ -15,7 +15,7 @@ public @interface IntegerField {
     /**
      * The default integer value of the field.
      */
-    int defaultValue() default ConfigSchema.DEFAULT_INT;
+    String defaultValue() default ConfigSchema.DEFAULT_STRING;
 
     /**
      * The description of the field.

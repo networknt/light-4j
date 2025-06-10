@@ -37,7 +37,7 @@ public class LoggerConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "Indicate if the logging info is enabled or not."
     )
@@ -46,7 +46,7 @@ public class LoggerConfig {
     @IntegerField(
             configFieldName = LOG_START,
             externalizedKeyName = LOG_START,
-            defaultValue = 600000,
+            defaultValue = "600000",
             externalized = true,
             description = "Indicate the default time period backward in millisecond for log content retrieve.\n" +
                           "Default is an hour which indicate system will retrieve one hour log by default"

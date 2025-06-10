@@ -8,7 +8,7 @@ import com.networknt.config.schema.ObjectField;
 import com.networknt.config.schema.StringField;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OauthSignConfig {
+public class OAuthSignConfig {
 
     @StringField(
             configFieldName = ClientConfig.SERVER_URL,
@@ -71,7 +71,7 @@ public class OauthSignConfig {
             configFieldName = ClientConfig.TIMEOUT,
             externalizedKeyName = "signTimeout",
             externalized = true,
-            defaultValue = 2000,
+            defaultValue = "2000",
             description = "timeout in milliseconds"
     )
     @JsonProperty(ClientConfig.TIMEOUT)
@@ -80,7 +80,7 @@ public class OauthSignConfig {
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = "signEnableHttp2",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )

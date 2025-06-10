@@ -75,7 +75,7 @@ public class JwtConfig {
     @IntegerField(
             configFieldName = EXPIRED_IN_MINUTES,
             externalizedKeyName = EXPIRED_IN_MINUTES,
-            defaultValue = 10,
+            defaultValue = "10",
             externalized = true,
             description = "expired in 10 minutes by default for issued JWT tokens"
     )

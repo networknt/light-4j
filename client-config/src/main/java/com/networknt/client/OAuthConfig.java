@@ -32,11 +32,11 @@ public class OAuthConfig {
     @ObjectField(
             configFieldName = ClientConfig.SIGN,
             useSubObjectDefault = true,
-            ref = OAuthSignKeyConfig.class,
+            ref = OAuthSignConfig.class,
             description = "Sign endpoint configuration"
     )
     @JsonProperty(ClientConfig.SIGN)
-    private OauthSignConfig sign = null;
+    private OAuthSignConfig sign = null;
 
     @ObjectField(
             configFieldName = ClientConfig.DEREF,
@@ -60,7 +60,7 @@ public class OAuthConfig {
         return deref;
     }
 
-    public OauthSignConfig getSign() {
+    public OAuthSignConfig getSign() {
         return sign;
     }
 }

@@ -62,7 +62,7 @@ public class RouterConfig {
             configFieldName = HTTP2_ENABLED,
             externalizedKeyName = HTTP2_ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "As this router is built to support discovery and security for light-4j services,\n" +
                     "the outbound connection is always HTTP 2.0 with TLS enabled.\n" +
                     "If HTTP 2.0 protocol will be accepted from incoming request."
@@ -73,7 +73,7 @@ public class RouterConfig {
             configFieldName = HTTPS_ENABLED,
             externalizedKeyName = HTTPS_ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "If TLS is enabled when accepting incoming request. Should be true on test and prod."
     )
     boolean httpsEnabled;
@@ -82,7 +82,7 @@ public class RouterConfig {
             configFieldName = MAX_REQUEST_TIME,
             externalizedKeyName = MAX_REQUEST_TIME,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "Max request time in milliseconds before timeout to the server. This is the global setting shared\n" +
                     "by all backend services if they don't have service specific timeout."
     )
@@ -112,7 +112,7 @@ public class RouterConfig {
             configFieldName = CONNECTION_PER_THREAD,
             externalizedKeyName = CONNECTION_PER_THREAD,
             externalized = true,
-            defaultValue = 10,
+            defaultValue = "10",
             description = "Connections per thread."
     )
     int connectionsPerThread;
@@ -121,7 +121,7 @@ public class RouterConfig {
             configFieldName = MAX_QUEUE_SIZE,
             externalizedKeyName = MAX_QUEUE_SIZE,
             externalized = true,
-            defaultValue = 0,
+            defaultValue = "0",
             description = "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\n" +
                     "The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\n" +
                     "need to use the request queue to increase the memory usage. It should only be used when you see 503 errors\n" +
@@ -133,7 +133,7 @@ public class RouterConfig {
             configFieldName = SOFT_MAX_CONNECTIONS_PER_THREAD,
             externalizedKeyName = SOFT_MAX_CONNECTIONS_PER_THREAD,
             externalized = true,
-            defaultValue = 5,
+            defaultValue = "5",
             description = "Soft max connections per thread."
     )
     int softMaxConnectionsPerThread;
@@ -142,7 +142,7 @@ public class RouterConfig {
             configFieldName = REWRITE_HOST_HEADER,
             externalizedKeyName = REWRITE_HOST_HEADER,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host"
     )
     boolean rewriteHostHeader;
@@ -159,7 +159,7 @@ public class RouterConfig {
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
             externalized = true,
-            defaultValue = 3,
+            defaultValue = "3",
             description = "Max Connection Retries"
     )
     int maxConnectionRetries;

@@ -55,7 +55,7 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Indicate if the handler middleware is enabled or not."
     )
     private boolean enabled;

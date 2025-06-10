@@ -35,7 +35,7 @@ public class PathServiceConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if PathServiceHandler is enabled or not"
     )
     private boolean enabled;

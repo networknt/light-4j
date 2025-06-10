@@ -24,7 +24,7 @@ public class RequestInjectionConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicator of enabled"
     )
     private boolean enabled;
@@ -53,7 +53,7 @@ public class RequestInjectionConfig {
             configFieldName = MAX_BUFFERS,
             externalizedKeyName = MAX_BUFFERS,
             externalized = true,
-            defaultValue = 1024,
+            defaultValue = "1024",
             description = "Max number of buffers for the interceptor. The default value is 1024. If the number of buffers exceeds this value, the large\n" +
                     "request body will be truncated. The buffer size is 16K, so the max size of the body can be intercepted is 16M. If you want to\n" +
                     "upload large file to the server with ExternalServiceHandler, you might need to increase the number of buffers to a larger value.\n" +

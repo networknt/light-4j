@@ -49,7 +49,7 @@ public class BodyConfig {
             externalizedKeyName = ENABLED,
             description = "Enable body parse flag",
             externalized = true,
-            defaultValue = true
+            defaultValue = "true"
     )
     boolean enabled;
 

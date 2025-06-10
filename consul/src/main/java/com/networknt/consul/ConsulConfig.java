@@ -70,7 +70,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = MAX_REQ_PER_CONN,
             externalizedKeyName = MAX_REQ_PER_CONN,
-            defaultValue = 1000000,
+            defaultValue = "1000000",
             externalized = true,
             description = "number of requests before reset the shared connection."
     )
@@ -163,7 +163,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = CONNECTION_TIMEOUT,
             externalizedKeyName = CONNECTION_TIMEOUT,
-            defaultValue = 5,
+            defaultValue = "5",
             externalized = true,
             description = "Consul connection establishment timeout in seconds"
     )
@@ -172,7 +172,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = REQUEST_TIMEOUT,
             externalizedKeyName = REQUEST_TIMEOUT,
-            defaultValue = 5,
+            defaultValue = "5",
             externalized = true,
             description = "Consul request completion timeout in seconds\n" +
                     "This does NOT apply to Consul service discovery lookups (see the 'wait' and 'timeoutBuffer' properties for that)"
@@ -182,7 +182,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = RECONNECT_INTERVAL,
             externalizedKeyName = RECONNECT_INTERVAL,
-            defaultValue = 2,
+            defaultValue = "2",
             externalized = true,
             description = "Time to wait in seconds between reconnect attempts when Consul connection fails"
     )
@@ -191,7 +191,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = RECONNECT_JITTER,
             externalizedKeyName = RECONNECT_JITTER,
-            defaultValue = 2,
+            defaultValue = "2",
             externalized = true,
             description = "A random number of seconds in between 0 and reconnectJitter added to reconnectInterval (to avoid too many reconnect\n" +
                     "requests at one time)"
@@ -201,7 +201,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = LOOKUP_INTERVAL,
             externalizedKeyName = LOOKUP_INTERVAL,
-            defaultValue = 30,
+            defaultValue = "30",
             externalized = true,
             description = "Time in seconds between blocking queries with Consul. Consul blocking queries time should be set via the\n" +
                     "'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml"
@@ -211,7 +211,7 @@ public class ConsulConfig {
     @IntegerField(
             configFieldName = MAX_ATTEMPTS_BEFORE_SHUTDOWN,
             externalizedKeyName = MAX_ATTEMPTS_BEFORE_SHUTDOWN,
-            defaultValue = -1,
+            defaultValue = "-1",
             externalized = true,
             description = "Max number of failed Consul connection or request attempts before self-termination\n" +
                     "-1 means an infinite # of attempts are allowed"
