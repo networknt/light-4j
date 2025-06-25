@@ -29,7 +29,7 @@ public class RuleLoaderConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "A flag to enable the rule loader to get rules for the service from portal"
     )
     boolean enabled;

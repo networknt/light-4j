@@ -47,7 +47,7 @@ public class CorrelationConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "If enabled is true, the handler will be injected into the request and response chain."
     )
@@ -56,7 +56,7 @@ public class CorrelationConfig {
     @BooleanField(
             configFieldName = AUTOGEN_CORRELATION_ID,
             externalizedKeyName = AUTOGEN_CORRELATION_ID,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "If set to true, it will auto-generate the correlationID if it is not provided in the request"
     )

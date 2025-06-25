@@ -22,6 +22,6 @@ public class SingleAuthServerTest {
      */
     @Test
     public void multipleAuthServerTrue() {
-        assertFalse(config.isMultipleAuthServers());
+        assertFalse(config.getOAuth().isMultipleAuthServers());
     }
 }

@@ -56,7 +56,7 @@ public class DbProviderConfig {
     @IntegerField(
             configFieldName = MAXIMUM_POOL_SIZE,
             externalizedKeyName = MAXIMUM_POOL_SIZE,
-            defaultValue = 3,
+            defaultValue = "3",
             externalized = true,
             description = "Maximum number of connections in the pool"
     )

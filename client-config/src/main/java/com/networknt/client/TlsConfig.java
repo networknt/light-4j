@@ -1,5 +1,6 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
@@ -9,135 +10,138 @@ import java.util.Map;
 
 public class TlsConfig {
 
-    public static final String VERIFY_HOSTNAME = "verifyHostname";
-    public static final String LOAD_DEFAULT_TRUST_STORE = "loadDefaultTrustStore";
-    public static final String LOAD_TRUST_STORE = "loadTrustStore";
-    public static final String TRUST_STORE = "trustStore";
-    public static final String TRUST_STORE_PASS = "trustStorePass";
-    public static final String LOAD_KEY_STORE = "loadKeyStore";
-    public static final String KEY_STORE = "keyStore";
-    public static final String KEY_STORE_PASS = "keyStorePass";
-    public static final String KEY_PASS = "keyPass";
-    public static final String DEFAULT_CERT_PASSWORD = "defaultCertPassword";
-    public static final String TLS_VERSION = "tlsVersion";
+
 
     @BooleanField(
-            configFieldName = VERIFY_HOSTNAME,
-            externalizedKeyName = VERIFY_HOSTNAME,
+            configFieldName = ClientConfig.VERIFY_HOSTNAME,
+            externalizedKeyName = ClientConfig.VERIFY_HOSTNAME,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "if the server is using self-signed certificate, this need to be false. " +
                     "If true, you have to use CA signed certificate or load\n" +
                     "truststore that contains the self-signed certificate."
     )
-    private boolean verifyHostname;
+    @JsonProperty(ClientConfig.VERIFY_HOSTNAME)
+    private Boolean verifyHostname = true;
 
     @BooleanField(
-            configFieldName = LOAD_DEFAULT_TRUST_STORE,
-            externalizedKeyName = LOAD_DEFAULT_TRUST_STORE,
+            configFieldName = ClientConfig.LOAD_DEFAULT_TRUST_STORE,
+            externalizedKeyName = ClientConfig.LOAD_DEFAULT_TRUST_STORE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate of system load default cert."
     )
-    private boolean loadDefaultTrustStore;
+    @JsonProperty(ClientConfig.LOAD_DEFAULT_TRUST_STORE)
+    private Boolean loadDefaultTrustStore = true;
 
     @BooleanField(
-            configFieldName = LOAD_TRUST_STORE,
-            externalizedKeyName = LOAD_TRUST_STORE,
+            configFieldName = ClientConfig.LOAD_TRUST_STORE,
+            externalizedKeyName = ClientConfig.LOAD_TRUST_STORE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "trust store contains certificates that server needs. Enable if tls is used."
     )
-    private boolean loadTrustStore;
+    @JsonProperty(ClientConfig.LOAD_TRUST_STORE)
+    private Boolean loadTrustStore = true;
 
     @StringField(
-            configFieldName = TRUST_STORE,
-            externalizedKeyName = TRUST_STORE,
+            configFieldName = ClientConfig.TRUST_STORE,
+            externalizedKeyName = ClientConfig.TRUST_STORE,
             externalized = true,
             defaultValue = "client.truststore",
             description = "trust store location can be specified here or system properties " +
                     "javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword"
     )
-    private String trustStore;
+    @JsonProperty(ClientConfig.TRUST_STORE)
+    private String trustStore = "client.truststore";
 
     @StringField(
-            configFieldName = TRUST_STORE_PASS,
-            externalizedKeyName = TRUST_STORE_PASS,
+            configFieldName = ClientConfig.TRUST_STORE_PASS,
+            externalizedKeyName = ClientConfig.TRUST_STORE_PASS,
             externalized = true,
             defaultValue = "password",
             description = "trust store password"
     )
-    private char[] trustStorePass;
+    @JsonProperty(ClientConfig.TRUST_STORE_PASS)
+    private char[] trustStorePass = "password".toCharArray();
 
     @BooleanField(
-            configFieldName = LOAD_KEY_STORE,
-            externalizedKeyName = LOAD_KEY_STORE,
+            configFieldName = ClientConfig.LOAD_KEY_STORE,
+            externalizedKeyName = ClientConfig.LOAD_KEY_STORE,
             externalized = true,
             description = "key store contains client key and it should be loaded if two-way ssl is used."
     )
-    private boolean loadKeyStore;
+    @JsonProperty(ClientConfig.LOAD_KEY_STORE)
+    private Boolean loadKeyStore;
 
     @StringField(
-            configFieldName = KEY_STORE,
-            externalizedKeyName = KEY_STORE,
+            configFieldName = ClientConfig.KEY_STORE,
+            externalizedKeyName = ClientConfig.KEY_STORE,
             externalized = true,
             defaultValue = "client.keystore",
             description = "key store location"
     )
-    private String keyStore;
+    @JsonProperty(ClientConfig.KEY_STORE)
+    private String keyStore = "client.keystore";
 
     @StringField(
-            configFieldName = KEY_STORE_PASS,
-            externalizedKeyName = KEY_STORE_PASS,
+            configFieldName = ClientConfig.KEY_STORE_PASS,
+            externalizedKeyName = ClientConfig.KEY_STORE_PASS,
             externalized = true,
             defaultValue = "password",
             description = "key store password"
     )
-    private char[] keyStorePass;
+    @JsonProperty(ClientConfig.KEY_STORE_PASS)
+    private char[] keyStorePass = "password".toCharArray();
 
     @StringField(
-            configFieldName = KEY_PASS,
-            externalizedKeyName = KEY_PASS,
+            configFieldName = ClientConfig.KEY_PASS,
+            externalizedKeyName = ClientConfig.KEY_PASS,
             externalized = true,
             defaultValue = "password",
             description = "private key password"
     )
-    private char[] keyPass;
+    @JsonProperty(ClientConfig.KEY_PASS)
+    private char[] keyPass = "password".toCharArray();
 
     @StringField(
-            configFieldName = DEFAULT_CERT_PASSWORD,
-            externalizedKeyName = DEFAULT_CERT_PASSWORD,
+            configFieldName = ClientConfig.DEFAULT_CERT_PASSWORD,
+            externalizedKeyName = ClientConfig.DEFAULT_CERT_PASSWORD,
             externalized = true,
             defaultValue = "changeit",
             description = "public issued CA cert password"
     )
-    private char[] defaultCertPassword;
+    @JsonProperty(ClientConfig.DEFAULT_CERT_PASSWORD)
+    private char[] defaultCertPassword = "changeit".toCharArray();
 
     @StringField(
-            configFieldName = TLS_VERSION,
-            externalizedKeyName = TLS_VERSION,
+            configFieldName = ClientConfig.TLS_VERSION,
+            externalizedKeyName = ClientConfig.TLS_VERSION,
             externalized = true,
             defaultValue = "TLSv1.3",
             description = "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support " +
                     "some internal old servers that support only TLSv1.1\n" +
                     "and 1.2 (deprecated and risky)."
     )
-    String tlsVersion;
+    @JsonProperty(ClientConfig.TLS_VERSION)
+    private String tlsVersion = "TLSv1.3";
 
     @StringField(
-            configFieldName = "defaultGroupKey",
-            externalizedKeyName = "defaultGroupKey",
+            configFieldName = ClientConfig.DEFAULT_GROUP_KEY,
+            externalizedKeyName = ClientConfig.DEFAULT_GROUP_KEY,
             externalized = true
     )
-    String defaultGroupKey;
+    @JsonProperty(ClientConfig.DEFAULT_GROUP_KEY)
+    private String defaultGroupKey = null;
 
     @MapField(
-            configFieldName = "trustedNames",
-            externalizedKeyName = "trustedNames",
+            configFieldName = ClientConfig.TRUSTED_NAMES,
+            externalizedKeyName = ClientConfig.TRUSTED_NAMES,
             externalized = true,
             valueType = String.class
     )
-    Map<String, String> trustedNames;
+    @JsonProperty(ClientConfig.TRUSTED_NAMES)
+    private Map<String, String> trustedNames = null;
 
     public boolean isVerifyHostname() {
         return verifyHostname;

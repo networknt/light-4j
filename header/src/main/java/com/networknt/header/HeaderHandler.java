@@ -133,13 +133,13 @@ public class HeaderHandler implements MiddlewareHandler {
                         }
                     }
 
-                    // Add response header manipulation after the response is ready to send back.
-                    exchange.addResponseWrapper(new ConduitWrapper<>() {
-                        final HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
-                        @Override
-                        public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange responseExchange) {
-                            if (responseHeaderMap != null) {
+                    if (pathPrefixConfig.getResponse() != null) {
 
+                        // Add response header manipulation after the response is ready to send back.
+                        exchange.addResponseWrapper(new ConduitWrapper<>() {
+                            final HeaderResponseConfig responseHeaderMap = pathPrefixConfig.getResponse();
+                            @Override
+                            public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange responseExchange) {
                                 List<String> responseHeaderRemoveList = responseHeaderMap.getRemove();
                                 if (responseHeaderRemoveList != null) {
                                     responseHeaderRemoveList.forEach(s -> {
@@ -155,11 +155,13 @@ public class HeaderHandler implements MiddlewareHandler {
                                         logger.trace("update response header {} with value {}", k, v);
                                     });
                                 }
+                                return factory.create();
                             }
+                        });
 
-                            return factory.create();
-                        }
-                    });
+                    }
+
+
                 }
             }
         }

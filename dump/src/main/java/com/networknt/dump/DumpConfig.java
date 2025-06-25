@@ -61,7 +61,7 @@ public class DumpConfig {
     @IntegerField(
             configFieldName = "indentSize",
             externalizedKeyName = "indentSize",
-            defaultValue = 4,
+            defaultValue = "4",
             externalized = true,
             description = "The indent size for the dump middleware."
     )

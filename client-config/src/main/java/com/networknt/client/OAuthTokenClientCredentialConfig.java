@@ -1,5 +1,7 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
@@ -7,44 +9,41 @@ import com.networknt.config.schema.StringField;
 import java.util.List;
 import java.util.Map;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuthTokenClientCredentialConfig {
 
-
-    public static final String URI = "uri";
-    public static final String CLIENT_ID = "client_id";
-    public static final String CLIENT_SECRET = "client_secret";
-    public static final String SCOPE = "scope";
-    public static final String SERVICE_ID_AUTH_SERVERS = "serviceIdAuthServers";
-
     @StringField(
-            configFieldName = URI,
+            configFieldName = ClientConfig.URI,
             externalizedKeyName = "tokenCcUri",
             externalized = true,
             defaultValue = "/oauth2/token",
             description = "token endpoint for client credentials grant"
     )
-    private String uri;
+    @JsonProperty(ClientConfig.URI)
+    private String uri = "/oauth2/token";
 
     @StringField(
-            configFieldName = CLIENT_ID,
+            configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "tokenCcClientId",
             externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id for client credentials grant flow."
     )
-    private char[] client_id;
+    @JsonProperty(ClientConfig.CLIENT_ID)
+    private char[] clientId = "f7d42348-c647-4efb-a52d-4c5787421e72".toCharArray();
 
     @StringField(
-            configFieldName = CLIENT_SECRET,
+            configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "tokenCcClientSecret",
             externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for client credentials grant flow."
     )
-    private char[] client_secret;
+    @JsonProperty(ClientConfig.CLIENT_SECRET)
+    private char[] clientSecret = "f6h1FTI8Q3-7UScPZDzfXA".toCharArray();
 
     @ArrayField(
-            configFieldName = SCOPE,
+            configFieldName = ClientConfig.SCOPE,
             externalizedKeyName = "tokenCcScope",
             externalized = true,
             items = String.class,
@@ -54,10 +53,11 @@ public class OAuthTokenClientCredentialConfig {
                     "- petstore.r\n" +
                     "- petstore.w\n"
     )
-    private List<String> scope;
+    @JsonProperty(ClientConfig.SCOPE)
+    private List<String> scope = null;
 
     @MapField(
-            configFieldName = SERVICE_ID_AUTH_SERVERS,
+            configFieldName = ClientConfig.SERVICE_ID_AUTH_SERVERS,
             externalizedKeyName = "tokenCcServiceIdAuthServers",
             valueType = AuthServerConfig.class,
             externalized = true,
@@ -65,18 +65,19 @@ public class OAuthTokenClientCredentialConfig {
                     "Used only when multipleOAuthServer is\n" +
                     "set as true. For detailed config options, please see the values.yml in the client module test."
     )
-    private Map<String, AuthServerConfig> serviceIdAuthServers;
+    @JsonProperty(ClientConfig.SERVICE_ID_AUTH_SERVERS)
+    private Map<String, AuthServerConfig> serviceIdAuthServers = null;
 
     public String getUri() {
         return uri;
     }
 
-    public char[] getClient_id() {
-        return client_id;
+    public char[] getClientId() {
+        return clientId;
     }
 
-    public char[] getClient_secret() {
-        return client_secret;
+    public char[] getClientSecret() {
+        return clientSecret;
     }
 
     public List<String> getScope() {

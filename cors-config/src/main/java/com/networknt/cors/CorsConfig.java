@@ -45,7 +45,7 @@ public class CorsConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "Indicate if the CORS middleware is enabled or not."
     )

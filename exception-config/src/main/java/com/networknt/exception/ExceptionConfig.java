@@ -33,7 +33,7 @@ public class ExceptionConfig {
     @BooleanField(
             configFieldName = "enabled",
             externalizedKeyName = "enabled",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "Enable or disable the exception module."
     )

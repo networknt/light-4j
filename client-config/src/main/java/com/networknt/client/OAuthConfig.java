@@ -1,18 +1,16 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ObjectField;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuthConfig {
 
-    public static final String TOKEN = "token";
-    public static final String MULTIPLE_AUTH_SERVERS = "multipleAuthServers";
-    public static final String DEREF = "deref";
-    public static final String SIGN = "sign";
-
     @BooleanField(
-            configFieldName = MULTIPLE_AUTH_SERVERS,
-            externalizedKeyName = MULTIPLE_AUTH_SERVERS,
+            configFieldName = ClientConfig.MULTIPLE_AUTH_SERVERS,
+            externalizedKeyName = ClientConfig.MULTIPLE_AUTH_SERVERS,
             externalized = true,
             description = "OAuth 2.0 token endpoint configuration\n" +
                     "If there are multiple oauth providers per serviceId, then we need to update this flag to true. " +
@@ -20,31 +18,35 @@ public class OAuthConfig {
                     "path prefix, we need to set up the pathPrefixServices " +
                     "below if there is no duplicated paths between services."
     )
-    private boolean multipleAuthServers;
+    @JsonProperty(ClientConfig.MULTIPLE_AUTH_SERVERS)
+    private Boolean multipleAuthServers = false;
 
     @ObjectField(
-            configFieldName = TOKEN,
+            configFieldName = ClientConfig.TOKEN,
             useSubObjectDefault = true,
             ref = OAuthTokenConfig.class
     )
-    private OAuthTokenConfig token;
+    @JsonProperty(ClientConfig.TOKEN)
+    private OAuthTokenConfig token = null;
 
     @ObjectField(
-            configFieldName = SIGN,
+            configFieldName = ClientConfig.SIGN,
             useSubObjectDefault = true,
-            ref = OAuthSignKeyConfig.class,
+            ref = OAuthSignConfig.class,
             description = "Sign endpoint configuration"
     )
-    private OauthSignConfig sign;
+    @JsonProperty(ClientConfig.SIGN)
+    private OAuthSignConfig sign = null;
 
     @ObjectField(
-            configFieldName = DEREF,
+            configFieldName = ClientConfig.DEREF,
             useSubObjectDefault = true,
             ref = OAuthDerefConfig.class,
             description = "de-ref by reference token to JWT token. " +
                     "It is separate service as it might be the external OAuth 2.0 provider."
     )
-    private OAuthDerefConfig deref;
+    @JsonProperty(ClientConfig.DEREF)
+    private OAuthDerefConfig deref = null;
 
     public boolean isMultipleAuthServers() {
         return multipleAuthServers;
@@ -58,7 +60,7 @@ public class OAuthConfig {
         return deref;
     }
 
-    public OauthSignConfig getSign() {
+    public OAuthSignConfig getSign() {
         return sign;
     }
 }

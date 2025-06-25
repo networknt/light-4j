@@ -35,7 +35,7 @@ public class RequestTransformerConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if this interceptor is enabled or not."
     )
     private boolean enabled;
@@ -44,7 +44,7 @@ public class RequestTransformerConfig {
             configFieldName = REQUIRED_CONTENT,
             externalizedKeyName = REQUIRED_CONTENT,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = ""
     )
     private boolean requiredContent;

@@ -1,206 +1,207 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestConfig {
 
-    public static final String ERROR_THRESHOLD = "errorThreshold";
-    public static final String TIMEOUT = "timeout";
-    public static final String RESET_TIMEOUT = "resetTimeout";
-    public static final String INJECT_OPEN_TRACING = "injectOpenTracing";
-    public static final String INJECT_CALLER_ID = "injectCallerId";
-    public static final String ENABLE_HTTP_2 = "enableHttp2";
-    public static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
-    public static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
-    public static final String MAX_REQ_PER_CONN = "maxReqPerConn";
-    public static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
-    public static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
-    public static final String MAX_REQUEST_RETRY = "maxRequestRetry";
-    public static final String REQUEST_RETRY_DELAY = "requestRetryDelay";
-
     @IntegerField(
-            configFieldName = ERROR_THRESHOLD,
-            externalizedKeyName = ERROR_THRESHOLD,
+            configFieldName = ClientConfig.ERROR_THRESHOLD,
+            externalizedKeyName = ClientConfig.ERROR_THRESHOLD,
             externalized = true,
-            defaultValue = 2,
+            defaultValue = "2",
             description = "number of timeouts/errors to break the circuit"
     )
-    private int errorThreshold;
+    @JsonProperty(ClientConfig.ERROR_THRESHOLD)
+    private Integer errorThreshold = 2;
 
     @IntegerField(
-            configFieldName = TIMEOUT,
-            externalizedKeyName = TIMEOUT,
+            configFieldName = ClientConfig.TIMEOUT,
+            externalizedKeyName = ClientConfig.TIMEOUT,
             externalized = true,
-            defaultValue = 3000,
+            defaultValue = "3000",
             description = "timeout in millisecond to indicate a client error. " +
                     "If light-4j Http2Client is used, it is the timeout to get the\n" +
                     "connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
     )
-    private int timeout;
+    @JsonProperty(ClientConfig.TIMEOUT)
+    private Integer timeout = 3000;
 
     @IntegerField(
-            configFieldName = RESET_TIMEOUT,
-            externalizedKeyName = RESET_TIMEOUT,
+            configFieldName = ClientConfig.RESET_TIMEOUT,
+            externalizedKeyName = ClientConfig.RESET_TIMEOUT,
             externalized = true,
-            defaultValue = 7000,
+            defaultValue = "7000",
             description = "reset the circuit after this timeout in millisecond"
     )
-    private int resetTimeout;
+    @JsonProperty(ClientConfig.RESET_TIMEOUT)
+    private Integer resetTimeout = 7000;
 
     @BooleanField(
-            configFieldName = INJECT_OPEN_TRACING,
-            externalizedKeyName = INJECT_OPEN_TRACING,
+            configFieldName = ClientConfig.INJECT_OPEN_TRACING,
+            externalizedKeyName = ClientConfig.INJECT_OPEN_TRACING,
             externalized = true,
             description = "if open tracing is enabled. traceability, " +
                     "correlation and metrics should not be in the chain if opentracing is used."
     )
-    private boolean injectOpenTracing;
+    @JsonProperty(ClientConfig.INJECT_OPEN_TRACING)
+    private Boolean injectOpenTracing = false;
 
     @BooleanField(
-            configFieldName = INJECT_CALLER_ID,
-            externalizedKeyName = INJECT_CALLER_ID,
+            configFieldName = ClientConfig.INJECT_CALLER_ID,
+            externalizedKeyName = ClientConfig.INJECT_CALLER_ID,
             externalized = true,
             description = "inject serviceId as callerId into the http header for metrics to collect the caller. " +
                     "The serviceId is from server.yml"
     )
-    private boolean injectCallerId;
+    @JsonProperty(ClientConfig.INJECT_CALLER_ID)
+    private Boolean injectCallerId = false;
 
     @BooleanField(
-            configFieldName = ENABLE_HTTP_2,
-            externalizedKeyName = ENABLE_HTTP_2,
+            configFieldName = ClientConfig.ENABLE_HTTP_2,
+            externalizedKeyName = ClientConfig.ENABLE_HTTP_2,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "the flag to indicate whether http/2 is enabled when calling client.callService()"
     )
-    private boolean enableHttp2;
+    @JsonProperty(ClientConfig.ENABLE_HTTP2)
+    private Boolean enableHttp2 = true;
 
     @IntegerField(
-            configFieldName = CONNECTION_POOL_SIZE,
-            externalizedKeyName = CONNECTION_POOL_SIZE,
+            configFieldName = ClientConfig.CONNECTION_POOL_SIZE,
+            externalizedKeyName = ClientConfig.CONNECTION_POOL_SIZE,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "the maximum host capacity of connection pool"
     )
-    private int connectionPoolSize;
+    @JsonProperty(ClientConfig.CONNECTION_POOL_SIZE)
+    private Integer connectionPoolSize = 1000;
 
     @IntegerField(
-            configFieldName = CONNECTION_EXPIRE_TIME,
-            externalizedKeyName = CONNECTION_EXPIRE_TIME,
+            configFieldName = ClientConfig.CONNECTION_EXPIRE_TIME,
+            externalizedKeyName = ClientConfig.CONNECTION_EXPIRE_TIME,
             externalized = true,
-            defaultValue = 1800000,
+            defaultValue = "1800000",
             description = "Connection expire time when connection pool is used. " +
                     "By default, the cached connection will be closed after 30 minutes.\n" +
                     "This is one way to force the connection to be closed so that " +
                     "the client-side discovery can be balanced."
     )
-    private int connectionExpireTime;
+    @JsonProperty(ClientConfig.CONNECTION_EXPIRE_TIME)
+    private Integer connectionExpireTime = 1800000; // 30 minutes in milliseconds
 
     @IntegerField(
-            configFieldName = MAX_REQ_PER_CONN,
-            externalizedKeyName = MAX_REQ_PER_CONN,
+            configFieldName = ClientConfig.MAX_REQ_PER_CONN,
+            externalizedKeyName = ClientConfig.MAX_REQ_PER_CONN,
             externalized = true,
-            defaultValue = 1000000,
+            defaultValue = "1000000",
             description = "The maximum request limitation for each connection in the connection pool. " +
                     "By default, a connection will be closed after\n" +
                     "sending 1 million requests. " +
                     "This is one way to force the client-side discovery to re-balance the connections."
     )
-    private int maxReqPerConn;
+    @JsonProperty(ClientConfig.MAX_REQ_PER_CONN)
+    private Integer maxReqPerConn = 1000000;
 
     @IntegerField(
-            configFieldName = MAX_CONNECTION_NUM_PER_HOST,
-            externalizedKeyName = MAX_CONNECTION_NUM_PER_HOST,
+            configFieldName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
+            externalizedKeyName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "maximum quantity of connection in connection pool for each host"
     )
-    private int maxConnectionNumPerHost;
+    @JsonProperty(ClientConfig.MAX_CONNECTION_NUM_PER_HOST)
+    private Integer maxConnectionNumPerHost = 1000;
 
     @IntegerField(
-            configFieldName = MIN_CONNECTION_NUM_PER_HOST,
-            externalizedKeyName = MIN_CONNECTION_NUM_PER_HOST,
+            configFieldName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
+            externalizedKeyName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
             externalized = true,
-            defaultValue = 250,
+            defaultValue = "250",
             description = "minimum quantity of connection in connection pool for each host. " +
                     "The corresponding connection number will shrink to minConnectionNumPerHost\n" +
                     "by remove least recently used connections when the connection number " +
                     "of a host reach 0.75 * maxConnectionNumPerHost."
     )
-    private int minConnectionNumPerHost;
+    @JsonProperty(ClientConfig.MIN_CONNECTION_NUM_PER_HOST)
+    private Integer minConnectionNumPerHost = 250;
 
     @IntegerField(
-            configFieldName = MAX_REQUEST_RETRY,
-            externalizedKeyName = MAX_REQUEST_RETRY,
+            configFieldName = ClientConfig.MAX_REQUEST_RETRY,
+            externalizedKeyName = ClientConfig.MAX_REQUEST_RETRY,
             externalized = true,
-            defaultValue = 3,
+            defaultValue = "3",
             description = "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
     )
-    private int maxRequestRetry;
+    @JsonProperty(ClientConfig.MAX_REQUEST_RETRY)
+    private Integer maxRequestRetry = 3;
 
     @IntegerField(
-            configFieldName = REQUEST_RETRY_DELAY,
-            externalizedKeyName = REQUEST_RETRY_DELAY,
+            configFieldName = ClientConfig.REQUEST_RETRY_DELAY,
+            externalizedKeyName = ClientConfig.REQUEST_RETRY_DELAY,
             externalized = true,
-            defaultValue = 1000,
+            defaultValue = "1000",
             description = "The delay time in milliseconds for each request retry. The default value is 1000."
     )
-    private int requestRetryDelay;
+    @JsonProperty(ClientConfig.REQUEST_RETRY_DELAY)
+    private Integer requestRetryDelay = 1000;
 
-    public int getErrorThreshold() {
+    public Integer getErrorThreshold() {
         return errorThreshold;
     }
 
-    public int getTimeout() {
+    public Integer getTimeout() {
         return timeout;
     }
 
-    public int getResetTimeout() {
+    public Integer getResetTimeout() {
         return resetTimeout;
     }
 
-    public boolean isInjectOpenTracing() {
+    public Boolean isInjectOpenTracing() {
         return injectOpenTracing;
     }
 
-    public boolean isInjectCallerId() {
+    public Boolean isInjectCallerId() {
         return injectCallerId;
     }
 
-    public boolean isEnableHttp2() {
+    public Boolean isEnableHttp2() {
         return enableHttp2;
     }
 
-
-    public void setIsEnableHttp2(boolean enableHttp2) {
+    public void setIsEnableHttp2(Boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
 
-    public int getConnectionPoolSize() {
+    public Integer getConnectionPoolSize() {
         return connectionPoolSize;
     }
 
-    public int getConnectionExpireTime() {
+    public Integer getConnectionExpireTime() {
         return connectionExpireTime;
     }
 
-    public int getMaxReqPerConn() {
+    public Integer getMaxReqPerConn() {
         return maxReqPerConn;
     }
 
-    public int getMaxConnectionNumPerHost() {
+    public Integer getMaxConnectionNumPerHost() {
         return maxConnectionNumPerHost;
     }
 
-    public int getMinConnectionNumPerHost() {
+    public Integer getMinConnectionNumPerHost() {
         return minConnectionNumPerHost;
     }
 
-    public int getMaxRequestRetry() {
+    public Integer getMaxRequestRetry() {
         return maxRequestRetry;
     }
 
-    public int getRequestRetryDelay() {
+    public Integer getRequestRetryDelay() {
         return requestRetryDelay;
     }
 }
