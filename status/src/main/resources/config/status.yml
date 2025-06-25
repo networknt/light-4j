@@ -775,6 +775,12 @@ ERR11202:
   message: REQUEST_CMD_EMPTY
   description: Hybrid request cmd parameter is empty for get method.
 
+ERR11203:
+  statusCode: 400
+  code: ERR11203
+  message: INVALID_REQUEST_PARAMETER
+  description: Invalid request parameter with key %s.
+
 # 11300-11349 light-proxy
 
 ERR11300:
