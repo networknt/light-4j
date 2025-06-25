@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.3.0](https://github.com/networknt/light-4j/tree/2.3.0) (2025-06-25)
+
+
+**Merged pull requests:**
+
+
+- Bump org.postgresql:postgresql from 42.7.5 to 42.7.7 [\#2515](https://github.com/networknt/light-4j/pull/2515) ([dependabot](https://github.com/apps/dependabot))
+- 2513 update token limit config with schema generation [\#2514](https://github.com/networknt/light-4j/pull/2514) ([KalevGonvick](https://github.com/KalevGonvick))
+- TokenHandler + ClientConfig Fix [\#2512](https://github.com/networknt/light-4j/pull/2512) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.2.2](https://github.com/networknt/light-4j/tree/2.2.2) (2025-06-05)
 
 
