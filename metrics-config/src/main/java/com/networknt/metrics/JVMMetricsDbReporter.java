@@ -18,8 +18,7 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
 	private final MetricRegistry registry;
 	private final Map<String, String> tags;
 
-	public JVMMetricsDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
-                                TimeUnit durationUnit, Map<String, String> tags) {
+	public JVMMetricsDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit, TimeUnit durationUnit, Map<String, String> tags) {
 		super(registry, name, filter, rateUnit, durationUnit);
 		this.influxDb = influxDb;
 		this.registry = registry;
