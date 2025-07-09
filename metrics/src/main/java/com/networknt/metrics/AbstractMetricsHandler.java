@@ -316,7 +316,6 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
                         AbstractMetricsHandler.setOrUnknownTag(auditInfo, tags, Constants.CALLER_ID_STRING, CALLER_ID_TAG);
                     }
 
-                    // Should we be sending issuer like in APM?
                     if (config.isSendIssuer()) {
                         AbstractMetricsHandler.addIssuerRegex(tags, auditInfo);
                     }
