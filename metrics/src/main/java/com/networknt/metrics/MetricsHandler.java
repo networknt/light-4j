@@ -39,15 +39,13 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     protected void createMetricsReporter(TimeSeriesDbSender sender) {
-        try (InfluxDbReporter reporter = InfluxDbReporter
+        InfluxDbReporter reporter = InfluxDbReporter
                 .forRegistry(registry)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
-                .build(sender)) {
-            reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
-        }
-
+                .build(sender);
+        reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
         if (config.enableJVMMonitor) {
             createJVMMetricsReporter(sender);
         }
@@ -57,8 +55,8 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        logger.debug("MetricsHandler.handleRequest starts.");
         if (firstTime.compareAndSet(true, false)) {
+            logger.debug("First request received, initializing MetricsHandler.");
             AbstractMetricsHandler.addCommonTags(commonTags);
             try {
                 TimeSeriesDbSender sender = new InfluxDbHttpSender(
@@ -78,8 +76,6 @@ public class MetricsHandler extends AbstractMetricsHandler {
         long startTime = Clock.defaultClock().getTick();
         final var exchangeCompletionListener = new MetricsExchangeCompletionListener(commonTags, startTime);
         exchange.addExchangeCompleteListener(exchangeCompletionListener);
-
-        if (logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
