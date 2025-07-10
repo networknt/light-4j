@@ -3,6 +3,7 @@ package com.networknt.metrics;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.handler.MiddlewareHandler;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
@@ -10,25 +11,30 @@ import io.dropwizard.metrics.broadcom.EPAgentMetric;
 import io.dropwizard.metrics.broadcom.EPAgentMetricRequest;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import io.undertow.Handlers;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-class APMAgentReporterTest {
+public class APMAgentReporterTest {
 
+    private static final int REPORTING_INTERVAL_MS = 5;
 
     private static class MockTimeSeriesDbSender implements TimeSeriesDbSender {
 
         private final InfluxDbWriteObject writeObject = new InfluxDbWriteObject(TimeUnit.MILLISECONDS);
         private final String serviceId;
         private final String productName;
-        private final List<String> report = new ArrayList<>();
+        private AtomicBoolean failed = new AtomicBoolean(false);
 
         public MockTimeSeriesDbSender(String serviceId, String productName) {
-
             this.serviceId = serviceId;
             this.productName = productName;
             System.out.println("MockTimeSeriesDbSender initialized with serviceId: " + serviceId + " and productName: " + productName);
@@ -54,7 +60,9 @@ class APMAgentReporterTest {
         @Override
         public int writeData() throws ClientException {
             final String body = convertInfluxDBWriteObjectToJSON(writeObject);
-            this.report.add(body);
+            if (body.contains("\"value\":\"-")) {
+                failed.set(true);
+            }
             return 200;
         }
 
@@ -65,8 +73,8 @@ class APMAgentReporterTest {
             }
         }
 
-        public List<String> getReport() {
-            return report;
+        public boolean hasFailed() {
+            return this.failed.get();
         }
 
         private String convertInfluxDBWriteObjectToJSON(InfluxDbWriteObject influxDbWriteObject) throws ClientException {
@@ -106,30 +114,77 @@ class APMAgentReporterTest {
                 }
             }
 
-            return metricNameJoiner.toString() + ":" + point.getMeasurement();
+            return metricNameJoiner + ":" + point.getMeasurement();
+        }
+    }
+
+    private static class MockMetricsHandler implements MiddlewareHandler {
+
+        final AtomicBoolean firstTime = new AtomicBoolean(true);
+        public static final MetricRegistry registry = new MetricRegistry();
+        volatile HttpHandler next;
+        public MockTimeSeriesDbSender sender;
+
+        @Override
+        public HttpHandler getNext() {
+            return this.next;
+        }
+
+        @Override
+        public MiddlewareHandler setNext(HttpHandler next) {
+            Handlers.handlerNotNull(next);
+            this.next = next;
+            return this;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void register() {
+            // nothing
+        }
+
+        @Override
+        public void handleRequest(HttpServerExchange exchange) throws Exception {
+            if (this.firstTime.compareAndSet(true, false)) {
+                try {
+                    MockTimeSeriesDbSender innerSender = new MockTimeSeriesDbSender("testService", "testProduct");
+                    APMAgentReporter reporter = APMAgentReporter
+                            .forRegistry(registry)
+                            .convertRatesTo(TimeUnit.SECONDS)
+                            .convertDurationsTo(TimeUnit.MILLISECONDS)
+                            .filter(MetricFilter.ALL)
+                            .build(innerSender);
+                    reporter.start(REPORTING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+                    this.sender = innerSender;
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to initialize MockMetricsHandler", e);
+                }
+            }
+
+            MetricName metricName = new MetricName("testCounter");
+            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        }
+
+        public boolean hasFailed() {
+            return this.sender.hasFailed();
         }
     }
 
     @Test
-    void metricsCounterTest() {
-        final var registry = new MetricRegistry();
-        final var numThreads = 10;
-        final var barrier = new CyclicBarrier(numThreads);
+    public void raceConditionCounterTest() throws InterruptedException {
 
-        // Create a mock TimeSeriesDbSender to capture the reports
-        final var sender = new MockTimeSeriesDbSender("testService", "testProduct");
-        final var reporter = APMAgentReporter
-                .forRegistry(registry)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .build(sender);
-        reporter.start(5, TimeUnit.MILLISECONDS);
+        final var numUsers = 20;
+        final var barrier = new CyclicBarrier(numUsers);
+        final var handler = new MockMetricsHandler();
 
         // Create and start multiple threads to simulate concurrent metric updates
         final var threads = new ArrayList<Thread>();
-        for (int x = 0; x < numThreads; x++) {
-            threads.add(createMockReporterThread(barrier, registry));
+        for (int x = 0; x < numUsers; x++) {
+            threads.add(new Thread(new MockMetricsHandlerRunnable(barrier, handler)));
         }
 
         // Start all threads
@@ -146,36 +201,37 @@ class APMAgentReporterTest {
             }
         }
 
-        // Stop the reporter to flush the metrics
-        reporter.stop();
-
-        // Verify that the reports do not contain negative values
-        final var reports = sender.getReport();
-        for (String report : reports) {
-            Assertions.assertFalse(report.contains("\"value\":\"-"));
-        }
+        // Wait for a couple of reporting intervals to ensure metrics are reported
+        Thread.sleep(REPORTING_INTERVAL_MS * 2);
+        Assert.assertFalse(handler.hasFailed());
     }
 
-    private static Thread createMockReporterThread(final CyclicBarrier barrier, final MetricRegistry registry) {
-        return new Thread(() -> {
-            try {
-                // wait for all threads to be ready
-                barrier.await();
+    private record MockMetricsHandlerRunnable(CyclicBarrier barrier, MockMetricsHandler handler) implements Runnable {
 
-
-                Random rand = new Random();
-                for (int i = 0; i < 50; i++) {
-                    // simulate some work
-                    Thread.sleep(rand.nextInt(4));
-
-                    // increment metric on 'work' completion (exchange completion callback)
-                    MetricName metricName = new MetricName("testCounter");
-                    registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+            @Override
+            public void run() {
+                try {
+                    barrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
 
+                for (int i = 0; i < 50; i++) {
+                    HttpServerExchange exchange = new HttpServerExchange(null);
+                    try {
+                        handler.handleRequest(exchange);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    Random random = new Random();
+                    try {
+                        final var sleep = random.nextInt(10);
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
 }
