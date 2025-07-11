@@ -38,25 +38,25 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         }
         serverConfig = ServerConfig.getInstance();
         ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
-        if (logger.isDebugEnabled()) logger.debug("APMMetricsHandler is constructed!");
+        logger.debug("APMMetricsHandler is constructed!");
     }
 
     @Override
     protected void createMetricsReporter(TimeSeriesDbSender sender) {
-        try (APMAgentReporter reporter = APMAgentReporter
+        APMAgentReporter reporter = APMAgentReporter
                 .forRegistry(registry)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
-                .build(sender)) {
-            reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
-        }
+                .build(sender);
+        reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
         logger.info("apmmetrics is enabled and reporter is started");
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (this.firstTime.compareAndSet(true, false)) {
+            logger.debug("First request received, initializing APMMetricsHandler.");
             AbstractMetricsHandler.addCommonTags(commonTags);
             try {
                 TimeSeriesDbSender sender = new APMEPAgentSender(
