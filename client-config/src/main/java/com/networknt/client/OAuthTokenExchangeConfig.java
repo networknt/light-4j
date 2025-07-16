@@ -70,7 +70,7 @@ public class OAuthTokenExchangeConfig {
             configFieldName = ClientConfig.SUBJECT_TOKEN_TYPE,
             externalizedKeyName = "subjectTokenType",
             externalized = true,
-            description = "subject token type the type of the subject token"
+            description = "subject token type the type of the subject token. The default value 'urn:ietf:params:oauth:token-type:jwt' is chosen because it represents a JWT token type as defined in the OAuth 2.0 specification."
     )
     @JsonProperty(ClientConfig.SUBJECT_TOKEN_TYPE)
     private String subjectTokenType = "urn:ietf:params:oauth:token-type:jwt";
