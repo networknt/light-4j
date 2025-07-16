@@ -131,6 +131,14 @@ public class OAuthTokenConfig  {
     private OAuthTokenRefreshTokenConfig refreshToken = null;
 
     @ObjectField(
+            configFieldName = ClientConfig.TOKEN_EXCHANGE,
+            useSubObjectDefault = true,
+            ref = OAuthTokenExchangeConfig.class
+    )
+    @JsonProperty(ClientConfig.TOKEN_EXCHANGE)
+    private OAuthTokenExchangeConfig tokenExchange = null;
+
+    @ObjectField(
             configFieldName = ClientConfig.KEY,
             useSubObjectDefault = true,
             ref = OAuthTokenKeyConfig.class,
@@ -186,6 +194,8 @@ public class OAuthTokenConfig  {
     public OAuthTokenRefreshTokenConfig getRefresh_token() {
         return refreshToken;
     }
+
+    public OAuthTokenExchangeConfig getToken_exchange() { return tokenExchange; }
 
     public OAuthTokenKeyConfig getKey() {
         return key;

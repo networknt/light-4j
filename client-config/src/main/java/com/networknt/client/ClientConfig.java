@@ -38,6 +38,8 @@ public final class ClientConfig {
     public static final String AUTHORIZATION_CODE = "authorization_code";
     public static final String CLIENT_CREDENTIALS = "client_credentials";
     public static final String REFRESH_TOKEN = "refresh_token";
+    public static final String TOKEN_EXCHANGE = "token_exchange";
+
     public static final String KEY = "key";
     public static final String CONFIG_NAME = "client";
     public static final String REQUEST = "request";
@@ -85,6 +87,8 @@ public final class ClientConfig {
     public static final String TLS_VERSION = "tlsVersion";
     public static final String DEFAULT_GROUP_KEY = "defaultGroupKey";
     public static final String TRUSTED_NAMES = "trustedNames";
+    public static final String SUBJECT_TOKEN = "subjectToken";
+    public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
     private final Config config;
     private Map<String, Object> mappedConfig;
