@@ -13,7 +13,7 @@ tls:
   # trust store password
   trustStorePass: ${client.trustStorePass:password}
   # key store contains client key and it should be loaded if two-way ssl is used.
-  loadKeyStore: ${client.loadKeyStore:false}
+  loadKeyStore: ${client.loadKeyStore:}
   # key store location
   keyStore: ${client.keyStore:client.keystore}
   # key store password
@@ -32,7 +32,7 @@ oauth:
   # OAuth 2.0 token endpoint configuration
   # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
   # path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
-  multipleAuthServers: ${client.multipleAuthServers:false}
+  multipleAuthServers: ${client.multipleAuthServers:}
   token:
     cache:
       # Capacity of caching tokens in the client for downstream API calls. The default value is 200.
@@ -106,6 +106,23 @@ oauth:
       # - petstore.r
       # - petstore.w
       scope: ${client.tokenRtScope:}
+    token_exchange:
+      # token endpoint for token exchange grant type
+      uri: ${client.tokenExUri:/oauth2/token}
+      # client_id for token exchange grant flow.
+      client_id: ${client.tokenExClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+      # client_secret for token exchange grant flow
+      client_secret: ${client.tokenExClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
+      scope: ${client.tokenExScope:}
+      # subject token the identity of the party on behalf of whom the request is being made
+      subjectToken: ${client.subjectToken:}
+      # subject token type the type of the subject token
+      subjectTokenType: ${client.subjectTokenType:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
@@ -207,9 +224,9 @@ request:
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
   # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
-  injectOpenTracing: ${client.injectOpenTracing:false}
+  injectOpenTracing: ${client.injectOpenTracing:}
   # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
-  injectCallerId: ${client.injectCallerId:false}
+  injectCallerId: ${client.injectCallerId:}
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
   # the maximum host capacity of connection pool
