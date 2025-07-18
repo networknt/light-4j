@@ -131,6 +131,8 @@ public class TokenLimitConfig {
     public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
+        setTokenPathTemplatesList();
+        setLegacyClientList();
     }
 
     public Boolean isEnabled() {
