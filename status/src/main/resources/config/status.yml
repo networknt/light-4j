@@ -1233,25 +1233,21 @@ ERR12030:
   code: ERR12030
   message: INVALID_KEY_ID
   description: Invalid key id %s.
-
 ERR12031:
   statusCode: 400
   code: ERR12031
   message: USER_ID_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
   description: UserId is required for client_authenticated_user grant type.
-
 ERR12032:
   statusCode: 400
   code: ERR12032
   message: USER_TYPE_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
   description: UserType is required for client_authenticated_user grant type.
-
 ERR12033:
   statusCode: 400
   code: ERR12033
   message: INVALID_CODE_CHALLENGE_METHOD
   description: Invalid PKCE code challenge method %s.
-
 ERR12034:
   statusCode: 400
   code: ERR12034
@@ -1292,13 +1288,11 @@ ERR12041:
   code: ERR12041
   message: CODE_VERIFIER_FAILED
   description: PKCE verification failed
-
 ERR12042:
   statusCode: 404
   code: ERR12042
   message: SERVICE_ENDPOINT_NOT_FOUND
   description: Service endpoint not found for serviceId %s
-
 ERR12043:
   statusCode: 400
   code: ERR12043
@@ -1354,12 +1348,26 @@ ERR12053:
   code: ERR12053
   message: MISMATCH_PROVIDER_ID
   description: provider_id %s does not match previous provider_id %s in token request.
-
 ERR12054:
   statusCode: 400
   code: ERR12054
   message: KEY_GENERATION_ERROR
   description: Key generation error %s.
+ERR12055:
+  statusCode: 400
+  code: ERR12055
+  message: SUBJECT_TOKEN_MISSING
+  description: Subject token is missing in token exchange grant type.
+ERR12056:
+  statusCode: 400
+  code: ERR12056
+  message: SUBJECT_TOKEN_TYPE_MISSING
+  description: Subject token type is missing in token exchange grant type.
+ERR12057:
+  statusCode: 400
+  code: ERR12057
+  message: SUBJECT_TOKEN_TYPE_NOT_SUPPORTED
+  description: Subject token type %s is not supported in token exchange.
 
 # Tokenization service
 ERR12100:
