@@ -350,6 +350,7 @@ public class SecurityConfig {
         setPassThroughClaims();
     }
 
+    public SecurityJwtConfig getJwt() { return jwt; }
     public Map<String, Object> getCertificate() {
         return jwt.getCertificate();
     }
