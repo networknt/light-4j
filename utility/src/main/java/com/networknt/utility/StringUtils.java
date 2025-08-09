@@ -16,9 +16,7 @@
  */
 package com.networknt.utility;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -1533,5 +1531,12 @@ public class StringUtils {
         }
 
         return input.substring(spaceIndex + 1);
+    }
+
+    public static String getStackTraceAsString(Throwable throwable) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        throwable.printStackTrace(pw);
+        return sw.toString();
     }
 }
