@@ -555,9 +555,18 @@ public class Server {
         String address = System.getenv(STATUS_HOST_IP);
         logger.info("Registry IP from STATUS_HOST_IP is " + address);
         if (address == null) {
-            InetAddress inetAddress = NetUtils.getLocalAddress();
-            address = inetAddress.getHostAddress();
-            logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
+            address = System.getProperty(STATUS_HOST_IP);
+            if (address != null) {
+                logger.info("Found IP from system property STATUS_HOST_IP: " + address);
+            } else {
+                if (address == null) {
+                    InetAddress inetAddress = NetUtils.getLocalAddress();
+                    address = inetAddress.getHostAddress();
+                    logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
+                } else {
+                    logger.info("Using preferred network interface IP: " + address);
+                }
+            }
         }
         return address;
     }
