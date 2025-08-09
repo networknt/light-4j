@@ -295,7 +295,7 @@ public class Server {
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
-            System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
+            System.out.println("HOST IP: " + getAddress());
         } catch (Exception e) {
             if (!serverConfig.dynamicPort || usedPorts.size() >= (serverConfig.maxPort - serverConfig.minPort)) {
                 String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to " + (serverConfig.maxPort) : port + "";
@@ -328,18 +328,18 @@ public class Server {
         }
 
         if (serverConfig.enableHttp) {
-            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
+            System.out.println("Http Server started on ip: " + serverConfig.getIp() + " with HTTP Port: " + currentHttpPort);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
+                logger.info("Http Server started on ip: " + serverConfig.getIp() + " with HTTP Port: " + currentHttpPort);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
         if (serverConfig.enableHttps) {
-            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
+            System.out.println("Https Server started on ip: " + serverConfig.getIp() + " with HTTPS Port: " + currentHttpsPort);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
+                logger.info("Https Server started on ip: " + serverConfig.getIp() + " with HTTPS Port: " + currentHttpsPort);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
@@ -555,9 +555,18 @@ public class Server {
         String address = System.getenv(STATUS_HOST_IP);
         logger.info("Registry IP from STATUS_HOST_IP is " + address);
         if (address == null) {
-            InetAddress inetAddress = NetUtils.getLocalAddress();
-            address = inetAddress.getHostAddress();
-            logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
+            address = System.getProperty(STATUS_HOST_IP);
+            if (address != null) {
+                logger.info("Found IP from system property STATUS_HOST_IP: " + address);
+            } else {
+                if (address == null) {
+                    InetAddress inetAddress = NetUtils.getLocalAddress();
+                    address = inetAddress.getHostAddress();
+                    logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
+                } else {
+                    logger.info("Using preferred network interface IP: " + address);
+                }
+            }
         }
         return address;
     }

@@ -356,7 +356,9 @@ public class ConsulRegistry extends AbstractRegistry {
     private void updateServiceCache(String key, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
         if (serviceUrls != null && !serviceUrls.isEmpty()) {
             List<URL> cachedUrls = serviceCache.get(key);
-            List<URL> newUrls = serviceUrls.get(key);
+            // Extract serviceName from key (remove environment tag if present)
+            String serviceName = key.contains("|") ? key.substring(0, key.indexOf("|")) : key;
+            List<URL> newUrls = serviceUrls.get(serviceName);
             try {
                 if(logger.isTraceEnabled()) logger.trace("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
             } catch(Exception e) {
@@ -433,7 +435,7 @@ public class ConsulRegistry extends AbstractRegistry {
                         if(logger.isDebugEnabled()) logger.debug("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})",
                                 serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
 
-                    updateServiceCache(serviceName, serviceUrls, true);
+                    updateServiceCache(serviceKey(serviceName, tag), serviceUrls, true);
 
                 } catch (Throwable e) {
                     logger.error("ServiceLookupThread fail!", e);
