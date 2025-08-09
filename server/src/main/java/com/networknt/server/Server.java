@@ -295,7 +295,7 @@ public class Server {
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
-            System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
+            System.out.println("HOST IP: " + getAddress());
         } catch (Exception e) {
             if (!serverConfig.dynamicPort || usedPorts.size() >= (serverConfig.maxPort - serverConfig.minPort)) {
                 String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to " + (serverConfig.maxPort) : port + "";
@@ -328,18 +328,18 @@ public class Server {
         }
 
         if (serverConfig.enableHttp) {
-            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
+            System.out.println("Http Server started on ip: " + serverConfig.getIp() + " with HTTP Port: " + currentHttpPort);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
+                logger.info("Http Server started on ip: " + serverConfig.getIp() + " with HTTP Port: " + currentHttpPort);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
         if (serverConfig.enableHttps) {
-            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
+            System.out.println("Https Server started on ip: " + serverConfig.getIp() + " with HTTPS Port: " + currentHttpsPort);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
+                logger.info("Https Server started on ip: " + serverConfig.getIp() + " with HTTPS Port: " + currentHttpsPort);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
