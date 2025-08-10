@@ -24,6 +24,7 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
 import com.networknt.utility.UuidUtil;
+import com.networknt.server.ServerConfig;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -53,6 +54,8 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    private final static String SERVICE_ID = "sId";
+
     public CorrelationHandler() {
         config = CorrelationConfig.load();
         logger.info("CorrelationHandler is loaded.");
@@ -60,7 +63,36 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        // Make sure the current thread is in the worker thread, otherwise the MDC variables set after this point will not be lost due to thread switching.
+        if(exchange.isInIoThread()) {
+            exchange.dispatch(this);
+        }
+
         logger.debug("CorrelationHandler.handleRequest starts.");
+
+        // Add serviceId into MDC so that all log statement will have serviceId as part of it.
+        // compensate for the previous approach of configuring sId in logback.xml with values.xml, which has a defect that the sId is not available in the current thread when correlationId is created in the filter chain.
+        ServerConfig serverConfig = ServerConfig.getInstance();
+        if (serverConfig != null && serverConfig.getServiceId() != null) {
+            String serviceId = serverConfig.getServiceId();
+            String environment = serverConfig.getEnvironment();
+            String serviceKey = environment == null ? serviceId : serviceId + "|" + environment;
+            MDC.put(SERVICE_ID, serviceKey);
+        } else {
+            MDC.put(SERVICE_ID, "UNDEFINED");
+        }
+
+        // Remove MDC variables when the exchange is completed, otherwise the thread variables may be reused, translated to other requests.
+        exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+            try {
+                MDC.remove(SERVICE_ID);
+                MDC.remove(config.getCorrelationMdcField());
+                MDC.remove(config.getTraceabilityMdcField());
+                logger.debug("CorrelationHandler.handleRequest cleaned up thread MDC variables [{}, {}, {}].", SERVICE_ID, config.getCorrelationMdcField(), config.getTraceabilityMdcField());
+            } finally {
+                nextListener.proceed();
+            }
+        });
 
         var tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
 
