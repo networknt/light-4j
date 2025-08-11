@@ -63,7 +63,7 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        // Make sure the current thread is in the worker thread, otherwise the MDC variables set after this point will not be lost due to thread switching.
+        // Ensure the current thread is a worker thread, otherwise the MDC variables set after this point will be lost due to thread switching.
         if(exchange.isInIoThread()) {
             exchange.dispatch(this);
         }
