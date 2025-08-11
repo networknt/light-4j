@@ -105,6 +105,23 @@ oauth:
       scope: ${client.tokenRtScope:}
       # - petstore.r
       # - petstore.w
+    token_exchange:
+      # token endpoint for token exchange grant type
+      uri: ${client.tokenExUri:/oauth2/token}
+      # client_id for token exchange grant flow.
+      client_id: ${client.tokenExClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+      # client_secret for token exchange grant flow
+      client_secret: ${client.tokenExClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
+      scope: ${client.tokenExScope:}
+      # subject token the identity of the party on behalf of whom the request is being made
+      subjectToken: ${client.subjectToken:}
+      # subject token type the type of the subject token
+      subjectTokenType: ${client.subjectTokenType:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.

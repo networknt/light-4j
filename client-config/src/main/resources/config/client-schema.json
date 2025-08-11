@@ -9,13 +9,11 @@
       "properties" : {
         "verifyHostname" : {
           "type" : "boolean",
-          "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate.",
-          "default" : true
+          "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate."
         },
         "loadTrustStore" : {
           "type" : "boolean",
-          "description" : "trust store contains certificates that server needs. Enable if tls is used.",
-          "default" : true
+          "description" : "trust store contains certificates that server needs. Enable if tls is used."
         },
         "tlsVersion" : {
           "type" : "string",
@@ -47,8 +45,7 @@
         },
         "loadDefaultTrustStore" : {
           "type" : "boolean",
-          "description" : "indicate of system load default cert.",
-          "default" : true
+          "description" : "indicate of system load default cert."
         },
         "keyPass" : {
           "type" : "string",
@@ -86,21 +83,13 @@
           "properties" : {
             "proxyPort" : {
               "type" : "integer",
-              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
-              "minimum" : 0,
-              "maximum" : 65535
-            },
-            "clientId" : {
-              "type" : "string",
-              "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
-              "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection."
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2",
-              "default" : true
+              "description" : "set to true if the oauth2 provider supports HTTP/2"
             },
-            "clientSecret" : {
+            "client_secret" : {
               "type" : "string",
               "description" : "client_secret for deref",
               "default" : "f6h1FTI8Q3-7UScPZDzfXA"
@@ -122,6 +111,11 @@
               "type" : "string",
               "description" : "the path for the key distribution endpoint",
               "default" : "/oauth2/deref"
+            },
+            "client_id" : {
+              "type" : "string",
+              "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+              "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
             }
           }
         },
@@ -129,38 +123,85 @@
           "type" : "object",
           "description" : "Sign endpoint configuration",
           "properties" : {
-            "audience" : {
-              "type" : "string",
-              "description" : "audience for the token validation. It is optional and if it is not configured, no audience validation will be executed."
+            "proxyPort" : {
+              "type" : "integer",
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "minimum" : 0,
+              "maximum" : 65535
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2",
-              "default" : true
+              "description" : "set to true if the oauth2 provider supports HTTP/2"
             },
             "client_secret" : {
               "type" : "string",
-              "description" : "client secret used to access the key distribution service.",
+              "description" : "client secret for client authentication and it can be encrypted here.",
               "default" : "f6h1FTI8Q3-7UScPZDzfXA"
             },
             "server_url" : {
               "type" : "string",
-              "description" : "key distribution server url. It will be used to establish connection if it exists.\nif it is not set, then a service lookup against serviceId will be taken to discover an instance."
+              "description" : "token server url. The default port number for token service is 6882. If this url exists, it will be used.\nif it is not set, then a service lookup against serviceId will be taken to discover an instance."
             },
             "serviceId" : {
               "type" : "string",
-              "description" : "the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.",
-              "default" : "com.networknt.oauth2-key-1.0.0"
+              "description" : "token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.",
+              "default" : "com.networknt.oauth2-token-1.0.0"
+            },
+            "proxyHost" : {
+              "type" : "string",
+              "description" : "For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud\nand has an internal proxy server to access code, token and key services of OAuth 2.0, set up the\nproxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId\nbelow should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used."
             },
             "uri" : {
               "type" : "string",
-              "description" : "the path for the key distribution endpoint",
-              "default" : "/oauth2/key"
+              "description" : "signing endpoint for the sign request",
+              "default" : "/oauth2/token"
+            },
+            "timeout" : {
+              "type" : "integer",
+              "description" : "timeout in milliseconds"
             },
             "client_id" : {
               "type" : "string",
-              "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+              "description" : "client_id for client authentication",
               "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+            },
+            "key" : {
+              "type" : "object",
+              "description" : "the key distribution sever config for sign. It can be different then token key distribution server.",
+              "properties" : {
+                "audience" : {
+                  "type" : "string",
+                  "description" : "audience for the token validation. It is optional and if it is not configured, no audience validation will be executed."
+                },
+                "enableHttp2" : {
+                  "type" : "boolean",
+                  "description" : "set to true if the oauth2 provider supports HTTP/2"
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client secret used to access the key distribution service.",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "server_url" : {
+                  "type" : "string",
+                  "description" : "key distribution server url. It will be used to establish connection if it exists.\nif it is not set, then a service lookup against serviceId will be taken to discover an instance."
+                },
+                "serviceId" : {
+                  "type" : "string",
+                  "description" : "the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.",
+                  "default" : "com.networknt.oauth2-key-1.0.0"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "the path for the key distribution endpoint",
+                  "default" : "/oauth2/key"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id used to access key distribution service. It can be the same client_id with token service or not.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
             }
           }
         },
@@ -172,8 +213,7 @@
               "properties" : {
                 "capacity" : {
                   "type" : "integer",
-                  "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200.",
-                  "default" : 200
+                  "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200."
                 }
               }
             },
@@ -248,8 +288,7 @@
             },
             "tokenRenewBeforeExpired" : {
               "type" : "integer",
-              "description" : "The scope token will be renewed automatically 1 minute before expiry",
-              "default" : 60000
+              "description" : "The scope token will be renewed automatically 1 minute before expiry"
             },
             "proxyHost" : {
               "type" : "string",
@@ -290,8 +329,7 @@
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2",
-              "default" : true
+              "description" : "set to true if the oauth2 provider supports HTTP/2"
             },
             "authorization_code" : {
               "type" : "object",
@@ -328,8 +366,7 @@
             },
             "earlyRefreshRetryDelay" : {
               "type" : "integer",
-              "description" : "if scope token is not expired but in renew window, we need slow retry delay.",
-              "default" : 4000
+              "description" : "if scope token is not expired but in renew window, we need slow retry delay."
             },
             "server_url" : {
               "type" : "string",
@@ -342,8 +379,42 @@
             },
             "expiredRefreshRetryDelay" : {
               "type" : "integer",
-              "description" : "if scope token is expired, we need short delay so that we can retry faster.",
-              "default" : 2000
+              "description" : "if scope token is expired, we need short delay so that we can retry faster."
+            },
+            "token_exchange" : {
+              "type" : "object",
+              "properties" : {
+                "subjectTokenType" : {
+                  "type" : "string",
+                  "description" : "subject token type the type of the subject token"
+                },
+                "subjectToken" : {
+                  "type" : "string",
+                  "description" : "subject token the identity of the party on behalf of whom the request is being made"
+                },
+                "scope" : {
+                  "type" : "array",
+                  "description" : "optional scope, default scope in the client registration will be used if not defined.\nIf there are scopes specified here, they will be verified against the registered scopes.\nIn values.yml, you define a list of strings for the scope(s).\n- petstore.r\n- petstore.w\n",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "client_secret" : {
+                  "type" : "string",
+                  "description" : "client_secret for token exchange grant flow",
+                  "default" : "f6h1FTI8Q3-7UScPZDzfXA"
+                },
+                "uri" : {
+                  "type" : "string",
+                  "description" : "token endpoint for token exchange grant type",
+                  "default" : "/oauth2/token"
+                },
+                "client_id" : {
+                  "type" : "string",
+                  "description" : "client_id for token exchange grant flow.",
+                  "default" : "f7d42348-c647-4efb-a52d-4c5787421e72"
+                }
+              }
             },
             "key" : {
               "type" : "object",
@@ -396,8 +467,7 @@
                 },
                 "enableHttp2" : {
                   "type" : "boolean",
-                  "description" : "set to true if the oauth2 provider supports HTTP/2",
-                  "default" : true
+                  "description" : "set to true if the oauth2 provider supports HTTP/2"
                 },
                 "client_secret" : {
                   "type" : "string",
@@ -442,28 +512,23 @@
       "properties" : {
         "maxRequestRetry" : {
           "type" : "integer",
-          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.",
-          "default" : 3
+          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
         },
         "errorThreshold" : {
           "type" : "integer",
-          "description" : "number of timeouts/errors to break the circuit",
-          "default" : 2
+          "description" : "number of timeouts/errors to break the circuit"
         },
         "maxReqPerConn" : {
           "type" : "integer",
-          "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.",
-          "default" : 1000000
+          "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections."
         },
         "connectionPoolSize" : {
           "type" : "integer",
-          "description" : "the maximum host capacity of connection pool",
-          "default" : 1000
+          "description" : "the maximum host capacity of connection pool"
         },
         "connectionExpireTime" : {
           "type" : "integer",
-          "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced.",
-          "default" : 1800000
+          "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced."
         },
         "injectOpenTracing" : {
           "type" : "boolean",
@@ -471,33 +536,27 @@
         },
         "minConnectionNumPerHost" : {
           "type" : "integer",
-          "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.",
-          "default" : 250
+          "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost."
         },
         "timeout" : {
           "type" : "integer",
-          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000.",
-          "default" : 3000
+          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
         },
         "requestRetryDelay" : {
           "type" : "integer",
-          "description" : "The delay time in milliseconds for each request retry. The default value is 1000.",
-          "default" : 1000
+          "description" : "The delay time in milliseconds for each request retry. The default value is 1000."
         },
         "maxConnectionNumPerHost" : {
           "type" : "integer",
-          "description" : "maximum quantity of connection in connection pool for each host",
-          "default" : 1000
+          "description" : "maximum quantity of connection in connection pool for each host"
         },
         "resetTimeout" : {
           "type" : "integer",
-          "description" : "reset the circuit after this timeout in millisecond",
-          "default" : 7000
+          "description" : "reset the circuit after this timeout in millisecond"
         },
         "enableHttp2" : {
           "type" : "boolean",
-          "description" : "the flag to indicate whether http/2 is enabled when calling client.callService()",
-          "default" : true
+          "description" : "the flag to indicate whether http/2 is enabled when calling client.callService()"
         },
         "injectCallerId" : {
           "type" : "boolean",

@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>encode-decode</artifactId>
     <packaging>jar</packaging>
+    <name>unified-config</name>
     <description>Request decode and response encode for data compression.</description>
 
     <dependencies>

@@ -21,3 +21,9 @@ tokenPathTemplates: ${token-limit.tokenPathTemplates:}
 #   - 5oa66u56irXiekTUF1d6
 #   - 6oa66u56irXiekABC1d4
 legacyClient: ${token-limit.legacyClient:}
+# Expire key field name for the token limit cache feature. This is used to parse the response from
+# the Auth Server, extract the expire time of the token and update to account for the time drift.
+# The default value is "expires_in" and unit is seconds. If there's no such field in the response,
+# set this property as empty ("") so the handler will skip the parsing and return the unmodified
+# response payload as it was cached.
+expireKey: ${token-limit.expireKey:expires_in}

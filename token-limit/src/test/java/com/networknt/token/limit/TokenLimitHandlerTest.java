@@ -347,7 +347,7 @@ public class TokenLimitHandlerTest {
             logger.info("future = " + s);
             JsonNode jwtNode = mapper.readTree(s);
             String token = jwtNode.get("access_token").asText();
-            String expireIn = jwtNode.get("expire_in").asText();
+            String expireIn = jwtNode.get("expires_in").asText();
             resultListToken.add(token);
             resultListExpire.add(expireIn);
 

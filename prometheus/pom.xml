@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>prometheus</artifactId>
     <packaging>jar</packaging>
+    <name>prometheus</name>
     <description>A prometheus metrics handler to log statistic info on the server</description>
 
     <dependencies>

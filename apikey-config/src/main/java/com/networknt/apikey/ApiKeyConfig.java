@@ -38,7 +38,7 @@ public class ApiKeyConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable ApiKey Authentication Handler, default is false."
     )
     boolean enabled;

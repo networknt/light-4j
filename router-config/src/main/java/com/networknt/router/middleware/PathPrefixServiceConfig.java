@@ -37,7 +37,7 @@ public class PathPrefixServiceConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if PathPrefixServiceHandler is enabled or not"
     )
     private boolean enabled;

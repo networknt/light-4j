@@ -5,13 +5,15 @@
     <parent>
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sidecar-config</artifactId>
-
+    <packaging>jar</packaging>
+    <name>sidecar-config</name>
     <description>This is the config module for sidecar to support east-west traffic.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>

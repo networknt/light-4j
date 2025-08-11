@@ -13,7 +13,7 @@ tls:
   # trust store password
   trustStorePass: ${client.trustStorePass:password}
   # key store contains client key and it should be loaded if two-way ssl is used.
-  loadKeyStore: ${client.loadKeyStore:false}
+  loadKeyStore: ${client.loadKeyStore:}
   # key store location
   keyStore: ${client.keyStore:client.keystore}
   # key store password
@@ -32,10 +32,11 @@ oauth:
   # OAuth 2.0 token endpoint configuration
   # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
   # path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
-  multipleAuthServers: ${client.multipleAuthServers:false}
+  multipleAuthServers: ${client.multipleAuthServers:}
   token:
     cache:
-      capacity: 200
+      # Capacity of caching tokens in the client for downstream API calls. The default value is 200.
+      capacity: ${client.tokenCacheCapacity:200}
     # The scope token will be renewed automatically 1 minute before expiry
     tokenRenewBeforeExpired: ${client.tokenRenewBeforeExpired:60000}
     # if scope token is expired, we need short delay so that we can retry faster.
@@ -56,7 +57,7 @@ oauth:
     # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
     # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
     # the default value 443 is going to be used for the HTTP connection.
-    proxyPort: ${client.tokenProxyPort:0}
+    proxyPort: ${client.tokenProxyPort:}
     # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: ${client.tokenEnableHttp2:true}
     # the following section defines uri and parameters for authorization code grant type
@@ -105,6 +106,23 @@ oauth:
       # - petstore.r
       # - petstore.w
       scope: ${client.tokenRtScope:}
+    token_exchange:
+      # token endpoint for token exchange grant type
+      uri: ${client.tokenExUri:/oauth2/token}
+      # client_id for token exchange grant flow.
+      client_id: ${client.tokenExClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+      # client_secret for token exchange grant flow
+      client_secret: ${client.tokenExClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+      # optional scope, default scope in the client registration will be used if not defined.
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # In values.yml, you define a list of strings for the scope(s).
+      # - petstore.r
+      # - petstore.w
+      scope: ${client.tokenExScope:}
+      # subject token the identity of the party on behalf of whom the request is being made
+      subjectToken: ${client.subjectToken:}
+      # subject token type the type of the subject token
+      subjectTokenType: ${client.subjectTokenType:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
@@ -127,21 +145,47 @@ oauth:
       audience: ${client.tokenKeyAudience:}
   # Sign endpoint configuration
   sign:
-    # key distribution server url. It will be used to establish connection if it exists.
+    # token server url. The default port number for token service is 6882. If this url exists, it will be used.
     # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
-    server_url: ${client.signKeyServerUrl:}
-    # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
-    serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
-    # the path for the key distribution endpoint
-    uri: ${client.signKeyUri:/oauth2/key}
-    # client_id used to access key distribution service. It can be the same client_id with token service or not.
-    client_id: ${client.signKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-    # client secret used to access the key distribution service.
-    client_secret: ${client.signKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+    server_url: ${client.signServerUrl:}
+    # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+    # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+    # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+    proxyHost: ${client.signProxyHost:}
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
+    proxyPort: ${client.signProxyPort:}
+    # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
+    serviceId: ${client.signServiceId:com.networknt.oauth2-token-1.0.0}
+    # signing endpoint for the sign request
+    uri: ${client.signUri:/oauth2/token}
+    # timeout in milliseconds
+    timeout: ${client.signTimeout:2000}
     # set to true if the oauth2 provider supports HTTP/2
-    enableHttp2: ${client.signKeyEnableHttp2:true}
-    # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
-    audience: ${client.signKeyAudience:}
+    enableHttp2: ${client.signEnableHttp2:true}
+    # client_id for client authentication
+    client_id: ${client.signClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+    # client secret for client authentication and it can be encrypted here.
+    client_secret: ${client.signClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+    # the key distribution sever config for sign. It can be different then token key distribution server.
+    key:
+      # key distribution server url. It will be used to establish connection if it exists.
+      # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
+      server_url: ${client.signKeyServerUrl:}
+      # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
+      serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
+      # the path for the key distribution endpoint
+      uri: ${client.signKeyUri:/oauth2/key}
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: ${client.signKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+      # client secret used to access the key distribution service.
+      client_secret: ${client.signKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: ${client.signKeyEnableHttp2:true}
+      # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
+      audience: ${client.signKeyAudience:}
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url.
@@ -155,7 +199,7 @@ oauth:
     # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
     # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
     # the default value 443 is going to be used for the HTTP connection.
-    proxyPort: ${client.derefProxyPort:0}
+    proxyPort: ${client.derefProxyPort:}
     # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: ${client.derefServiceId:com.networknt.oauth2-token-1.0.0}
     # set to true if the oauth2 provider supports HTTP/2
@@ -163,9 +207,9 @@ oauth:
     # the path for the key distribution endpoint
     uri: ${client.derefUri:/oauth2/deref}
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
-    clientId: ${client.derefClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
+    client_id: ${client.derefClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
     # client_secret for deref
-    clientSecret: ${client.derefClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
+    client_secret: ${client.derefClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
 # If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server
 # to get the token or JWK. If two or more services have the same path, you must use serviceId in
 # the request header to use the serviceId to find the OAuth 2.0 provider configuration.
@@ -180,9 +224,9 @@ request:
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
   # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
-  injectOpenTracing: ${client.injectOpenTracing:false}
+  injectOpenTracing: ${client.injectOpenTracing:}
   # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
-  injectCallerId: ${client.injectCallerId:false}
+  injectCallerId: ${client.injectCallerId:}
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
   # the maximum host capacity of connection pool

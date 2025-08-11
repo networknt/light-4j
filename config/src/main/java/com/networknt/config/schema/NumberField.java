@@ -14,7 +14,7 @@ public @interface NumberField {
     /**
      * The default number value of the field.
      */
-    double defaultValue() default ConfigSchema.DEFAULT_NUMBER;
+    String defaultValue() default ConfigSchema.DEFAULT_STRING;
 
     /**
      * The description of the field.

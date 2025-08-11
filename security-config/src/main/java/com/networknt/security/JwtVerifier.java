@@ -213,6 +213,22 @@ public class JwtVerifier extends TokenVerifier {
     }
 
     /**
+     * Parse the JWT token without verification.
+     */
+    public JwtContext parseJwt(String jwt) throws InvalidJwtException {
+        JwtConsumerBuilder pKeyBuilder = new JwtConsumerBuilder()
+                .setSkipAllValidators()
+                .setDisableRequireSignature()
+                .setSkipSignatureVerification();
+
+        if (this.enableRelaxedKeyValidation) {
+            pKeyBuilder.setRelaxVerificationKeyValidation();
+        }
+        JwtConsumer consumer = pKeyBuilder.build();
+        return consumer.process(jwt);
+    }
+
+    /**
      * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
      * verify the expiry before signature verification.
      * <p>
@@ -254,20 +270,7 @@ public class JwtVerifier extends TokenVerifier {
             }
         }
 
-
-        JwtConsumer consumer;
-        JwtConsumerBuilder pKeyBuilder = new JwtConsumerBuilder()
-                .setSkipAllValidators()
-                .setDisableRequireSignature()
-                .setSkipSignatureVerification();
-
-        if (this.enableRelaxedKeyValidation) {
-            pKeyBuilder.setRelaxVerificationKeyValidation();
-        }
-
-        consumer = pKeyBuilder.build();
-
-        JwtContext jwtContext = consumer.process(jwt);
+        JwtContext jwtContext = parseJwt(jwt);
         claims = jwtContext.getJwtClaims();
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         // need this kid to load public key certificate for signature verification
@@ -290,7 +293,7 @@ public class JwtVerifier extends TokenVerifier {
             jwtBuilder.setRelaxVerificationKeyValidation();
         }
 
-        consumer = jwtBuilder.build();
+        JwtConsumer consumer = jwtBuilder.build();
 
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);

@@ -14,7 +14,7 @@ public @interface BooleanField {
     /**
      * The default boolean value of the field.
      */
-    boolean defaultValue() default ConfigSchema.DEFAULT_BOOLEAN;
+    String defaultValue() default ConfigSchema.DEFAULT_STRING;
 
     /**
      * The description of the field.
