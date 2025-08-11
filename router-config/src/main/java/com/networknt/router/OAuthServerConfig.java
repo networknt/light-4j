@@ -29,7 +29,7 @@ public class OAuthServerConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicate if the handler is enabled or not in the handler chain."
     )
     private boolean enabled;

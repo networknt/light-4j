@@ -47,7 +47,7 @@ public class PortalRegistryConfig {
             configFieldName = "maxReqPerConn",
             externalizedKeyName = "maxReqPerConn",
             externalized = true,
-            defaultValue = 1000000,
+            defaultValue = "1000000",
             description = "number of requests before resetting the shared connection to work around HTTP/2 limitation"
     )
     int maxReqPerConn;
@@ -56,7 +56,7 @@ public class PortalRegistryConfig {
             configFieldName = "deregisterAfter",
             externalizedKeyName = "deregisterAfter",
             externalized = true,
-            defaultValue = 120000,
+            defaultValue = "120000",
             description = "De-register the service after the amount of time with health check failed. Once a health check is failed, the\n" +
                     "service will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\n" +
                     "the value is an integer in milliseconds. 1000 means 1 second and default to 2 minutes"
@@ -67,7 +67,7 @@ public class PortalRegistryConfig {
             configFieldName = "checkInterval",
             externalizedKeyName = "checkInterval",
             externalized = true,
-            defaultValue = 10000,
+            defaultValue = "10000",
             description = "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\n" +
                     "request will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\n" +
                     "after 10 seconds, then mark the service is critical. The value is an integer in milliseconds"
@@ -89,7 +89,7 @@ public class PortalRegistryConfig {
             configFieldName = "ttlCheck",
             externalizedKeyName = "ttlCheck",
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;\n" +
                     "however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/\n" +
                     "Note that we need to provide the leading and trailing slash in the path definition."

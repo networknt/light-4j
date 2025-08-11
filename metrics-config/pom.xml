@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>metrics-config</artifactId>
     <packaging>jar</packaging>
+    <name>metrics-config</name>
     <description>A metrics config module to be shared with light-aws-lambda</description>
 
     <dependencies>
@@ -84,6 +85,11 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>handler</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

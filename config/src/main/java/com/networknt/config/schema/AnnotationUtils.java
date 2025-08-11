@@ -156,6 +156,6 @@ public class AnnotationUtils {
         if (type.isInstance(value))
             return type.cast(value);
 
-        else throw new IllegalArgumentException("Value is not of type " + type + ": " + value);
+        else return null;
     }
 }

@@ -14,3 +14,4 @@ tokenPathTemplates:
   - /oauth2/(?<instanceId>[^/]+)/v1/token
 legacyClient:
   - legacyClient
+expireKey: ${token-limit.expireKey:expires_in}

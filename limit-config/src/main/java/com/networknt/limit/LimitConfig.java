@@ -65,7 +65,7 @@ public class LimitConfig {
             configFieldName = CONCURRENT_REQUEST,
             externalizedKeyName = CONCURRENT_REQUEST,
             externalized = true,
-            defaultValue = 2,
+            defaultValue = "2",
             description = "Maximum concurrent requests allowed per second on the entire server. This is property is\n" +
                     "here to keep backward compatible. New users should use the rateLimit property for config\n" +
                     "with different keys and different time unit."
@@ -76,7 +76,7 @@ public class LimitConfig {
             configFieldName = QUEUE_SIZE,
             externalizedKeyName = QUEUE_SIZE,
             externalized = true,
-            defaultValue = -1,
+            defaultValue = "-1",
             description = "This property is kept to ensure backward compatibility. Please don't use it anymore. All\n" +
                     "requests will return the rate limit headers with error messages after the limit is reached."
     )
@@ -86,7 +86,7 @@ public class LimitConfig {
             configFieldName = ERROR_CODE,
             externalizedKeyName = ERROR_CODE,
             externalized = true,
-            defaultValue = 429,
+            defaultValue = "429",
             description = "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\n" +
                     "error code to trick the DDoS client/tool to stop the attacks as it considers the server\n" +
                     "is down. However, if the rate limit is used internally to throttle the client requests to\n" +

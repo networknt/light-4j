@@ -35,7 +35,7 @@ public class UnifiedSecurityConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\n" +
                           "request/response chain in the handler.yml configuration."

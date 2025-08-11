@@ -1,30 +1,25 @@
 package com.networknt.client;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.StringField;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuthDerefConfig {
 
-    public static final String SERVER_URL = "server_url";
-    public static final String PROXY_HOST = "proxyHost";
-    public static final String PROXY_PORT = "proxyPort";
-    public static final String SERVICE_ID = "serviceId";
-    public static final String ENABLE_HTTP2 = "enableHttp2";
-    public static final String URI = "uri";
-    public static final String CLIENT_ID = "clientId";
-    public static final String CLIENT_SECRET = "clientSecret";
-
     @StringField(
-            configFieldName = SERVER_URL,
+            configFieldName = ClientConfig.SERVER_URL,
             externalizedKeyName = "derefServerUrl",
             externalized = true,
             description = "Token service server url, this might be different than the above token server url.\n" +
                     "The static url will be used if it is configured."
     )
-    private String server_url;
+    @JsonProperty(ClientConfig.SERVER_URL)
+    private String serverUrl = null;
 
     @StringField(
-            configFieldName = PROXY_HOST,
+            configFieldName = ClientConfig.PROXY_HOST,
             externalizedKeyName = "derefProxyHost",
             externalized = true,
             description = "For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal\n" +
@@ -32,13 +27,12 @@ public class OAuthDerefConfig {
                     "here for the HTTPS traffic. This option is only working with server_url and serviceId\n" +
                     "below should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used."
     )
-    private String proxyHost;
+    @JsonProperty(ClientConfig.PROXY_HOST)
+    private String proxyHost = null;
 
     @IntegerField(
-            configFieldName = PROXY_PORT,
+            configFieldName = ClientConfig.PROXY_PORT,
             externalizedKeyName = "derefProxyPort",
-            min = 0,
-            max = 65535,
             externalized = true,
             description = "We only support HTTPS traffic for the proxy and the default port is 443. " +
                     "If your proxy server has\n" +
@@ -46,64 +40,70 @@ public class OAuthDerefConfig {
                     "If proxyHost is available and proxyPort is missing, then\n" +
                     "the default value 443 is going to be used for the HTTP connection."
     )
-    private int proxyPort;
+    @JsonProperty(ClientConfig.PROXY_PORT)
+    private Integer proxyPort = null;
 
     @StringField(
-            configFieldName = SERVICE_ID,
+            configFieldName = ClientConfig.SERVICE_ID,
             externalizedKeyName = "derefServiceId",
             externalized = true,
             defaultValue = "com.networknt.oauth2-token-1.0.0",
             description = "token service unique id for OAuth 2.0 provider. " +
                     "Need for service lookup/discovery. It will be used if above server_url is not configured."
     )
-    private String serviceId;
+    @JsonProperty(ClientConfig.SERVICE_ID)
+    private String serviceId = "com.networknt.oauth2-token-1.0.0";
 
     @BooleanField(
-            configFieldName = ENABLE_HTTP2,
+            configFieldName = ClientConfig.ENABLE_HTTP2,
             externalizedKeyName = "derefEnableHttp2",
-            defaultValue = true,
+            defaultValue = "true",
             externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )
-    private boolean enableHttp2;
+    @JsonProperty(ClientConfig.ENABLE_HTTP2)
+    private Boolean enableHttp2 = true;
 
     @StringField(
-            configFieldName = URI,
+            configFieldName = ClientConfig.URI,
             externalizedKeyName = "derefUri",
             externalized = true,
             defaultValue = "/oauth2/deref",
             description = "the path for the key distribution endpoint"
     )
-    private String uri;
+    @JsonProperty(ClientConfig.URI)
+    private String uri = "/oauth2/deref";
 
     @StringField(
-            configFieldName = CLIENT_ID,
+            configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "derefClientId",
             externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id used to access key distribution service. " +
                     "It can be the same client_id with token service or not."
     )
-    private char[] client_id;
+    @JsonProperty(ClientConfig.CLIENT_ID)
+    private char[] clientId = "f7d42348-c647-4efb-a52d-4c5787421e72".toCharArray();
 
     @StringField(
-            configFieldName = CLIENT_SECRET,
+            configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "derefClientSecret",
             externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for deref"
     )
-    private char[] client_secret;
+    @JsonProperty(ClientConfig.CLIENT_SECRET)
+    private char[] clientSecret = "f6h1FTI8Q3-7UScPZDzfXA".toCharArray();
 
-    public String getServer_url() {
-        return server_url;
+    public String getServerUrl() {
+        return serverUrl;
     }
 
     public String getProxyHost() {
         return proxyHost;
     }
 
-    public int getProxyPort() {
+    public Integer getProxyPort() {
         return proxyPort;
     }
 
@@ -111,7 +111,7 @@ public class OAuthDerefConfig {
         return serviceId;
     }
 
-    public boolean isEnableHttp2() {
+    public Boolean isEnableHttp2() {
         return enableHttp2;
     }
 
@@ -119,11 +119,11 @@ public class OAuthDerefConfig {
         return uri;
     }
 
-    public char[] getClient_id() {
-        return client_id;
+    public char[] getClientId() {
+        return clientId;
     }
 
     public char[] getClient_secret() {
-        return client_secret;
+        return clientSecret;
     }
 }

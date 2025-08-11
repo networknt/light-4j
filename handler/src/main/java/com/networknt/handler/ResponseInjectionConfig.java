@@ -30,7 +30,7 @@ public class ResponseInjectionConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "indicator of enabled"
     )
     private boolean enabled;

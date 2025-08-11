@@ -57,7 +57,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_VERIFY_JWT,
             externalizedKeyName = ENABLE_VERIFY_JWT,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification\n" +
                     "if this flag is false. It should only be set to false on the dev environment for testing\n" +
                     "purposes. If you have some endpoints that want to skip the JWT verification, you can put the\n" +
@@ -69,7 +69,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_VERIFY_SWT,
             externalizedKeyName = ENABLE_VERIFY_SWT,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification\n" +
                     "if this flag is false. It should only be set to false on the dev environment for testing\n" +
                     "purposes. If you have some endpoints that want to skip the SWT verification, you can put the\n" +
@@ -101,7 +101,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_EXTRACT_SCOPE_TOKEN,
             externalizedKeyName = ENABLE_EXTRACT_SCOPE_TOKEN,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Extract JWT scope token from the X-Scope-Token header and validate the JWT token"
     )
     private boolean enableExtractScopeToken;
@@ -110,7 +110,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_VERIFY_SCOPE,
             externalizedKeyName = ENABLE_VERIFY_SCOPE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the\n" +
                     "light gateway as a centralized gateway without backend API specifications, you can still enable\n" +
                     "this flag to allow the admin endpoints to have scopes verified. And all backend APIs without\n" +
@@ -148,7 +148,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_H2C,
             externalizedKeyName = ENABLE_H2C,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\n" +
                     "By default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls."
     )
@@ -166,7 +166,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_RELAXED_KEY_CONSTRAINTS,
             externalizedKeyName = ENABLE_RELAXED_KEY_CONSTRAINTS,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = ""
     )
     private boolean enableRelaxedKeyValidation;
@@ -205,7 +205,7 @@ public class SecurityConfig {
             configFieldName = LOG_JWT_TOKEN,
             externalizedKeyName = LOG_JWT_TOKEN,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable or disable JWT token logging for audit. This is to log the entire token\n" +
                     "or choose the next option that only logs client_id, user_id and scope."
     )
@@ -215,7 +215,7 @@ public class SecurityConfig {
             configFieldName = LOG_CLIENT_USER_SCOPE,
             externalizedKeyName = LOG_CLIENT_USER_SCOPE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable or disable client_id, user_id and scope logging if you don't want to log\n" +
                     "the entire token. Choose this option or the option above."
     )
@@ -225,7 +225,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_JWT_CACHE,
             externalizedKeyName = ENABLE_JWT_CACHE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Enable JWT token cache to speed up verification. This will only verify expired time\n" +
                     "and skip the signature verification as it takes more CPU power and a long time. If\n" +
                     "each request has a different jwt token, like authorization code flow, this indicator\n" +
@@ -251,7 +251,7 @@ public class SecurityConfig {
             configFieldName = BOOTSTRAP_FROM_KEY_SERVICE,
             externalizedKeyName = BOOTSTRAP_FROM_KEY_SERVICE,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "If you are using light-oauth2, then you don't need to have oauth subfolder for public\n" +
                     "key certificate to verify JWT token, the key will be retrieved from key endpoint once\n" +
                     "the first token is arrived. Default to false for dev environment without oauth2 server\n" +
@@ -350,6 +350,7 @@ public class SecurityConfig {
         setPassThroughClaims();
     }
 
+    public SecurityJwtConfig getJwt() { return jwt; }
     public Map<String, Object> getCertificate() {
         return jwt.getCertificate();
     }

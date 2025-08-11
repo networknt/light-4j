@@ -5,7 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
-import com.networknt.http.ResponseEntity;
+import com.networknt.http.CachedResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
 import com.networknt.utility.ModuleRegistry;
@@ -98,9 +98,9 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
                 if(cacheTask != null) {
                     // the attachment exists, perform the caching.
                     String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-                    ResponseEntity responseEntity = new ResponseEntity(responseBody, exchange.getResponseHeaders(), exchange.getStatusCode());
+                    CachedResponseEntity cachedResponseEntity = new CachedResponseEntity(responseBody, exchange.getResponseHeaders(), exchange.getStatusCode(), System.currentTimeMillis());
                     if (logger.isTraceEnabled())
-                        logger.trace("original response body = {} headers = {} status {}", responseBody, exchange.getResponseHeaders(), exchange.getStatusCode());
+                        logger.trace("original response body = {} headers = {} status {} timestamp {}", responseBody, exchange.getResponseHeaders(), exchange.getStatusCode(), cachedResponseEntity.timestamp);
                     String name = cacheTask.getName();
                     String key = cacheTask.getKey();
                     synchronized (this) {
@@ -113,7 +113,7 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
                                 logger.error("Cache {} is not configured in cache.yml", name);
                             } else {
                                 if(logger.isTraceEnabled()) logger.trace("put key {} into cache {}", key, name);
-                                cacheManager.put(name, key, responseEntity);
+                                cacheManager.put(name, key, cachedResponseEntity);
                             }
                         }
                     }

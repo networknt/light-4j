@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>request-transformer</artifactId>
     <packaging>jar</packaging>
+    <name>request-transformer</name>
     <description>A rule-engine based request transformer to update the request in the handler chain.</description>
 
     <dependencies>

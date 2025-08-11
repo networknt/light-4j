@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>db-provider</artifactId>
     <packaging>jar</packaging>
+    <name>db-provider</name>
     <description>A provider interface to help developers to start an API that connection to one database.</description>
 
     <dependencies>

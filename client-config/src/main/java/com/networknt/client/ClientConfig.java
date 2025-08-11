@@ -1,5 +1,7 @@
 package com.networknt.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
@@ -17,72 +19,118 @@ import java.util.Map;
         configDescription = "This is the configuration file for light-4j Http2Client and jdk 11 http-client.",
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
 )
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ClientConfig {
     private static final Logger logger = LoggerFactory.getLogger(ClientConfig.class);
-    public static final String CONFIG_NAME = "client";
-    public static final String REQUEST = "request";
+    public static final String TOKEN = "token";
+    public static final String MULTIPLE_AUTH_SERVERS = "multipleAuthServers";
+    public static final String DEREF = "deref";
+    public static final String SIGN = "sign";
+    public static final String CACHE = "cache";
+    public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
+    public static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
+    public static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final String SERVER_URL = "server_url";
+    public static final String SERVICE_ID = "serviceId";
     public static final String PROXY_HOST = "proxyHost";
     public static final String PROXY_PORT = "proxyPort";
-    public static final String SERVICE_ID = "serviceId";
+    public static final String ENABLE_HTTP_2 = "enableHttp2";
+    public static final String AUTHORIZATION_CODE = "authorization_code";
+    public static final String CLIENT_CREDENTIALS = "client_credentials";
+    public static final String REFRESH_TOKEN = "refresh_token";
+    public static final String TOKEN_EXCHANGE = "token_exchange";
+
+    public static final String KEY = "key";
+    public static final String CONFIG_NAME = "client";
+    public static final String REQUEST = "request";
     public static final String URI = "uri";
     public static final String TLS = "tls";
     public static final String CLIENT_ID = "client_id";
     public static final String SCOPE = "scope";
     public static final String AUDIENCE = "audience";
-    public static final String CLIENT_CREDENTIALS = "client_credentials";
-    public static final String AUTHORIZATION_CODE = "authorization_code";
+    public static final String CSRF = "csrf";
+    public static final String REDIRECT_URI = "redirect_uri";
+    public static final String SAML_BEARER = "saml_bearer";
+    public static final String CLIENT_AUTHENTICATED_USER = "client_authenticated_user";
+    public static final String CAPACITY = "capacity";
     public static final String OAUTH = "oauth";
     public static final String PATH_PREFIX_SERVICES = "pathPrefixServices";
     public static final String SERVICE_ID_AUTH_SERVERS = "serviceIdAuthServers";
-    public static final String KEY = "key";
     public static final String CLIENT_SECRET = "client_secret";
     public static final String ENABLE_HTTP2 = "enableHttp2";
-    public static final String TOKEN = "token";
+    public static final String TIMEOUT = "timeout";
+    public static final String MAX_REQUEST_RETRY = "maxRequestRetry";
+    public static final String REQUEST_RETRY_DELAY = "requestRetryDelay";
     public static final int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
-    public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
-    public static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
-    public static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final String ERROR_THRESHOLD = "errorThreshold";
+    public static final String RESET_TIMEOUT = "resetTimeout";
+    public static final String INJECT_OPEN_TRACING = "injectOpenTracing";
+    public static final String INJECT_CALLER_ID = "injectCallerId";
+    public static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
+    public static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
+    public static final String MAX_REQ_PER_CONN = "maxReqPerConn";
+    public static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
+    public static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
+    public static final String VERIFY_HOSTNAME = "verifyHostname";
+    public static final String LOAD_DEFAULT_TRUST_STORE = "loadDefaultTrustStore";
+    public static final String LOAD_TRUST_STORE = "loadTrustStore";
+    public static final String TRUST_STORE = "trustStore";
+    public static final String TRUST_STORE_PASS = "trustStorePass";
+    public static final String LOAD_KEY_STORE = "loadKeyStore";
+    public static final String KEY_STORE = "keyStore";
+    public static final String KEY_STORE_PASS = "keyStorePass";
+    public static final String KEY_PASS = "keyPass";
+    public static final String DEFAULT_CERT_PASSWORD = "defaultCertPassword";
+    public static final String TLS_VERSION = "tlsVersion";
+    public static final String DEFAULT_GROUP_KEY = "defaultGroupKey";
+    public static final String TRUSTED_NAMES = "trustedNames";
+    public static final String SUBJECT_TOKEN = "subjectToken";
+    public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
     private final Config config;
     private Map<String, Object> mappedConfig;
 
     @ObjectField(
-            configFieldName = "tls",
+            configFieldName = ClientConfig.TLS,
             useSubObjectDefault = true,
             ref = TlsConfig.class,
             description = "Settings for TLS"
     )
-    private TlsConfig tls;
+    @JsonProperty(ClientConfig.TLS)
+    private TlsConfig tls = null;
 
     @ObjectField(
-            configFieldName = "oauth",
+            configFieldName = ClientConfig.OAUTH,
             useSubObjectDefault = true,
             ref = OAuthConfig.class,
             description = "Settings for OAuth2 server communication."
     )
-    private OAuthConfig oauthConfig;
+    @JsonProperty(ClientConfig.OAUTH)
+    private OAuthConfig oauthConfig = null;
 
     @MapField(
-            configFieldName = "pathPrefixServices",
-            externalizedKeyName = "pathPrefixServices",
+            configFieldName = ClientConfig.PATH_PREFIX_SERVICES,
+            externalizedKeyName = ClientConfig.PATH_PREFIX_SERVICES,
             valueType = String.class,
             externalized = true,
             description = "If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server\n" +
                     "to get the token or JWK. If two or more services have the same path, you must use serviceId in\n" +
                     "the request header to use the serviceId to find the OAuth 2.0 provider configuration."
     )
-    private Map<String, String> pathPrefixServices;
+    @JsonProperty(ClientConfig.PATH_PREFIX_SERVICES)
+    private Map<String, String> pathPrefixServices = null;
 
     @ObjectField(
-            configFieldName = "request",
+            configFieldName = ClientConfig.REQUEST,
             useSubObjectDefault = true,
             ref = RequestConfig.class,
             description = "Circuit breaker configuration for the client"
     )
-    private RequestConfig request;
+    @JsonProperty(ClientConfig.REQUEST)
+    private RequestConfig request = null;
 
     private static volatile ClientConfig instance;
 

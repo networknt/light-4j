@@ -64,7 +64,7 @@ public class SanitizerConfig {
             configFieldName = BODY_ENABLED,
             externalizedKeyName = BODY_ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "if it is enabled, the body needs to be sanitized"
     )
     private boolean bodyEnabled;
@@ -107,7 +107,7 @@ public class SanitizerConfig {
             configFieldName = HEADER_ENABLED,
             externalizedKeyName = HEADER_ENABLED,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "if it is enabled, the header needs to be sanitized"
     )
     private boolean headerEnabled;
@@ -116,7 +116,7 @@ public class SanitizerConfig {
             configFieldName = HEADER_ENCODER,
             externalizedKeyName =  HEADER_ENCODER,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source\n" +
                     "There are other encoders that you can choose depending on your requirement. Please refer to site\n" +
                     "https://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java"

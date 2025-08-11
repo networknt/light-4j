@@ -21,12 +21,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>2.2.2-SNAPSHOT</version>
+        <version>2.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>status</artifactId>
     <packaging>jar</packaging>
+    <name>Status</name>
     <description>A http status response that is sent to the consumer if an error occurs.</description>
 
     <dependencies>

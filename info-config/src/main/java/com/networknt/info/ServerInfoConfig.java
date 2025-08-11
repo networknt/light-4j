@@ -44,7 +44,7 @@ public class ServerInfoConfig {
             configFieldName = ENABLE_SERVER_INFO,
             externalizedKeyName = ENABLE_SERVER_INFO,
             externalized = true,
-            defaultValue = true,
+            defaultValue = "true",
             description = "Indicate if the server info is enabled or not."
     )
     boolean enableServerInfo;

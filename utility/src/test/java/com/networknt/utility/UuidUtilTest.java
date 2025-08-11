@@ -24,6 +24,31 @@ public class UuidUtilTest {
     private static final Pattern BASE64_EVENT_KEY_PATTERN = Pattern.compile("\"([A-Za-z0-9_-]{22})\"");
 
     @Test
+    public void testGet10UUID() {
+        String id0 = UuidUtil.getUUID().toString();
+        String id1 = UuidUtil.getUUID().toString();
+        String id2 = UuidUtil.getUUID().toString();
+        String id3 = UuidUtil.getUUID().toString();
+        String id4 = UuidUtil.getUUID().toString();
+        String id5 = UuidUtil.getUUID().toString();
+        String id6 = UuidUtil.getUUID().toString();
+        String id7 = UuidUtil.getUUID().toString();
+        String id8 = UuidUtil.getUUID().toString();
+        String id9 = UuidUtil.getUUID().toString();
+        System.out.println("uuid = " + id0);
+        System.out.println("uuid = " + id1);
+        System.out.println("uuid = " + id2);
+        System.out.println("uuid = " + id3);
+        System.out.println("uuid = " + id4);
+        System.out.println("uuid = " + id5);
+        System.out.println("uuid = " + id6);
+        System.out.println("uuid = " + id7);
+        System.out.println("uuid = " + id8);
+        System.out.println("uuid = " + id9);
+        Assert.assertNotEquals(id1, id2);
+    }
+
+    @Test
     public void testGetUUID() {
         UUID uuid = UuidUtil.getUUID();
         System.out.println(uuid);

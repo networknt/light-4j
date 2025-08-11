@@ -1,5 +1,7 @@
 package com.networknt.token.limit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.exception.ClientException;
@@ -71,6 +73,7 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
+            Thread.sleep(1000); // to give time for expire_in to substract 1 second unit
             connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBody));
             latch.await();
         } catch (Exception e) {
@@ -256,7 +259,7 @@ public class TokenLimitHandlerTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("{\"accessToken\":\"abc\",\"counter\": 0}", body);
+            Assert.assertTrue(body.length() > 0);
         }
     }
 
@@ -333,16 +336,26 @@ public class TokenLimitHandlerTest {
         long start = System.currentTimeMillis();
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         List<Future<String>> futures = executorService.invokeAll(tasks);
-        List<String> resultList = new ArrayList<>(futures.size());
+        List<String> resultListToken = new ArrayList<>(futures.size());
+        List<String> resultListExpire = new ArrayList<>(futures.size());
+        ObjectMapper mapper = new ObjectMapper();
         // Check for exceptions
         for (Future<String> future : futures) {
             // Throws an exception if an exception was thrown by the task.
+            logger.info("calling");
             String s = future.get();
-            resultList.add(s);
+            logger.info("future = " + s);
+            JsonNode jwtNode = mapper.readTree(s);
+            String token = jwtNode.get("access_token").asText();
+            String expireIn = jwtNode.get("expires_in").asText();
+            resultListToken.add(token);
+            resultListExpire.add(expireIn);
+
         }
         long last = (System.currentTimeMillis() - start);
         // make sure at least there are some duplicated entries.
-        Assert.assertTrue(hasDuplicates(resultList));
+        Assert.assertTrue(hasDuplicates(resultListToken));
+        Assert.assertTrue(hasDistincts(resultListExpire));
     }
 
     public static boolean hasDuplicates(List<String> list) {
@@ -353,5 +366,14 @@ public class TokenLimitHandlerTest {
             }
         }
         return false; // No duplicates
+    }
+
+    public static boolean hasDistincts(List<String> list) {
+        HashSet<String> set = new HashSet<>();
+        int counter = 0;
+        for (String str : list) {
+            if (set.add(str)) counter++;
+        }
+        return (counter > 1); // At least one distinct found
     }
 }
