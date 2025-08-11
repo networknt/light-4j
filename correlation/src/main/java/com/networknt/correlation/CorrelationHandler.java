@@ -71,7 +71,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         logger.debug("CorrelationHandler.handleRequest starts.");
 
         // Add serviceId into MDC so that all log statement will have serviceId as part of it.
-        // compensate for the previous approach of configuring sId in logback.xml with values.xml, which has a defect that the sId is not available in the current thread when correlationId is created in the filter chain.
+        // Compensates for the previous approach of configuring sId in logback.xml with values.xml, which had the defect that sId was not available in the current thread when correlationId was created in the filter chain.
         ServerConfig serverConfig = ServerConfig.getInstance();
         if (serverConfig != null && serverConfig.getServiceId() != null) {
             String serviceId = serverConfig.getServiceId();
