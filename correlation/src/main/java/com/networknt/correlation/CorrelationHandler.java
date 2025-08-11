@@ -82,7 +82,7 @@ public class CorrelationHandler implements MiddlewareHandler {
             MDC.put(SERVICE_ID, "UNDEFINED");
         }
 
-        // Remove MDC variables when the exchange is completed, otherwise the thread variables may be reused, translated to other requests.
+        // Remove MDC variables when the exchange is completed, otherwise the thread variables may be reused and carry over to other requests.
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             try {
                 MDC.remove(SERVICE_ID);
