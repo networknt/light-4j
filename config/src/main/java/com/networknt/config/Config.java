@@ -449,14 +449,16 @@ public abstract class Config {
             Map<String, Object> config = null;
             String ymlFilename = configName + fileExtension;
             try (InputStream inStream = getConfigStream(ymlFilename, path)) {
-                if (inStream != null) {
-                    config = getYaml().load(inStream);
+                if (inStream != null && inStream.available() > 0) {
+                    synchronized (getYaml()) {
+                        config = getYaml().load(inStream);
+                    }
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         CentralizedManagement.mergeMap(isDecrypt(), config); // mutates the config map in place.
                     }
                 }
             } catch (Exception e) {
-                logger.error("Exception on loading " + ymlFilename, e);
+                logger.error("Exception on loading {}", ymlFilename, e);
                 throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;

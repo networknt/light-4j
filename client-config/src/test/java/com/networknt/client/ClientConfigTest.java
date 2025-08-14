@@ -1,17 +1,16 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.networknt.client.ClientConfig.CONFIG_NAME;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -85,6 +84,57 @@ public class ClientConfigTest {
             Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(object);
             assertEquals(2, serviceIdAuthServers.size());
         }
+    }
+
+    private static class LoadConfigTask implements Runnable {
+
+        private final CyclicBarrier barrier;
+        private final AtomicBoolean loadingIssue;
+
+        public LoadConfigTask(CyclicBarrier barrier, AtomicBoolean failedState) {
+            this.barrier = barrier;
+            this.loadingIssue = failedState;
+        }
+
+        @Override
+        public void run() {
+            try {
+                barrier.await();
+                var config = Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME);
+                assert config != null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.loadingIssue.compareAndSet(false, true);
+            }
+        }
+    }
+
+    /**
+     * This test is to simulate multiple threads accessing the config at the same time. This is possible in a server
+     * environment when there are multiple requests coming in and each request will create a new client to call
+     * another service. If there is any issue with multiple thread access, it will be captured by the failedState.
+     * Before the fix, this test would fail intermittently. This test should ALWAYS pass.
+     */
+    @Test
+    public void testMultipleThreadAccess() {
+        final var threadCount = 100;
+        final var failedState = new AtomicBoolean(false);
+        final var barrier = new CyclicBarrier(threadCount);
+        final var threads = new ArrayList<Thread>(threadCount);
+        for (int i = 0; i < threadCount; i++) {
+            threads.add(new Thread(new LoadConfigTask(barrier, failedState)));
+        }
+        for (var thread : threads) {
+            thread.start();
+        }
+        for (var thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+        }
+        assertFalse(failedState.get());
     }
 
 }

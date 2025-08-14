@@ -229,13 +229,10 @@ public class JsonSchemaGenerator extends Generator {
         } else if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY)) {
             objectProperties = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
 
-        // TODO - handle anyOf, oneOf, allOf, not etc.
-        } else {
-            throw new IllegalArgumentException("Object field must contain a reference or additional properties.");
-        }
+        } else return; // No properties to parse, return early.
+
 
         /* special handling for json default value */
-        // TODO - handle useSubObjectDefault for object
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
             try {
