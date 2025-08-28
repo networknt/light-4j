@@ -264,7 +264,14 @@ public final class APMAgentReporter extends ScheduledReporter {
         Long previous = previousValues.get(name);
         if (previous == null) {
             logger.debug("First measurement for metric {}: returning count {} as delta", name, count);
-            return count;
+            if (count < 0) {
+
+                // Counter overflow detected due to high traffic volume over extended reporting intervals.
+                // Return maximum value to handle potential overflow condition.
+                return Long.MAX_VALUE;
+            } else {
+                return count;
+            }
         }
         if (count < previous) {
             logger.warn("Saw a non-monotonically increasing value for metric '{}'", name);
