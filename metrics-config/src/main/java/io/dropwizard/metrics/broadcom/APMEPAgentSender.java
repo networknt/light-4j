@@ -90,11 +90,19 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
         	EPAgentMetric epAgentMetric = new EPAgentMetric();
 			epAgentMetric.setName(convertName(point));
 
-			// Need to convert the value from milliseconds with a decimal to milliseconds as a whole number
-			double milliseconds = Double.parseDouble(point.getValue());
-			int roundedMilliseconds = (int) Math.round(milliseconds);
+			String pointValue = point.getValue();
 
-			epAgentMetric.setValue(Integer.toString(roundedMilliseconds));
+            // Value contains a decimal, we need to round to the nearest whole number.
+            if (pointValue.contains(".")) {
+                double milliseconds = Double.parseDouble(point.getValue());
+                int roundedMilliseconds = (int) Math.round(milliseconds);
+                epAgentMetric.setValue(Integer.toString(roundedMilliseconds));
+
+            // Value contains no decimal place, no need for conversion
+            } else {
+                epAgentMetric.setValue(pointValue);
+            }
+
 			epAgentMetric.setType("PerIntervalCounter");
 			epAgentMetricList.add(epAgentMetric);
 		}
