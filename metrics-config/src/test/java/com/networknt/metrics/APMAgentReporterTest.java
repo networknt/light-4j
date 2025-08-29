@@ -370,7 +370,7 @@ public class APMAgentReporterTest {
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
-                .skipIdleMetrics(false)
+                .skipIdleMetrics(true)
                 .build(sender);
 
         // Create histogram and add some values
