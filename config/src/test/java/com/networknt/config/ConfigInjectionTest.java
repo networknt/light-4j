@@ -63,6 +63,11 @@ public class ConfigInjectionTest {
         Assert.assertEquals("SERVER_ENVIRONMENT", testInput);
     }
 
+    @Test
+    public void testConvertEnvVarsKafkaPassword() {
+        String testInput = ConfigInjection.convertEnvVars("kafka-consumer.password");
+        Assert.assertEquals("KAFKA_CONSUMER_PASSWORD", testInput);
+    }
 
     @Test
     public void testConvertEnvVarsUsingNullValue() {
