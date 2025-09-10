@@ -265,20 +265,21 @@ public class ConsulRegistry extends AbstractRegistry {
                 if(logger.isDebugEnabled()) logger.debug("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
 
                 // - Update has occurred: Ensure that the serviceUrls Map has at least one (possibly empty List)
-                //   entry for the serviceName key.
+                //   entry for the service key (serviceName + tag).
                 //   This will ensure that updateServiceCache() will do an update.
+                String serviceKey = serviceKey(serviceName, tag);
                 if(services.size() == 0)
-                    serviceUrls.put(serviceName, new ArrayList<>());
+                    serviceUrls.put(serviceKey, new ArrayList<>());
 
                 for (ConsulService service : services) {
                     try {
 
                         URL url = ConsulUtils.buildUrl(protocol, service);
-                        List<URL> urlList = serviceUrls.get(serviceName);
+                        List<URL> urlList = serviceUrls.get(serviceKey);
 
                         if (urlList == null) {
                             urlList = new ArrayList<>();
-                            serviceUrls.put(serviceName, urlList);
+                            serviceUrls.put(serviceKey, urlList);
                         }
 
                         if(logger.isTraceEnabled()) logger.trace("Consul lookupServiceUpdate url = " + url);
@@ -427,13 +428,15 @@ public class ConsulRegistry extends AbstractRegistry {
                         consulRecovery.exitRecoveryMode();
                     }
 
+                    String serviceKey = serviceKey(serviceName, tag);
+
                     if(serviceUrls.size() == 0)
                         if(logger.isDebugEnabled()) logger.debug("No service URL updates from Consul lookupServiceUpdate for service {}", serviceName);
                     else
                         if(logger.isDebugEnabled()) logger.debug("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})",
-                                serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
+                            serviceUrls.getOrDefault(serviceKey, Collections.emptyList()).size(), serviceName, protocol);
 
-                    updateServiceCache(serviceName, serviceUrls, true);
+                    updateServiceCache(serviceKey, serviceUrls, true);
 
                 } catch (Throwable e) {
                     logger.error("ServiceLookupThread fail!", e);
