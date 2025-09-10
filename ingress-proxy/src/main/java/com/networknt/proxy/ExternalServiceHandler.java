@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
 import java.util.regex.Matcher;
 
 /**
@@ -250,11 +251,25 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private boolean createJavaHttpClient() {
 
         try {
+            // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
+            var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            final var props = System.getProperties();
+            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
+            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection"); // this essentially overwrites the above JVM arg value "Host"
 
             var clientBuilder = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                    .sslContext(Http2Client.createSSLContext());
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
+
+            if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                // setting jdk.internal.httpclient.disableHostnameVerification=true set it globally for the JVM,
+                // however it is overwritten by the sslContext defined in the HttpClient builder.
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            else {
+                clientBuilder
+                        .sslContext(Http2Client.createSSLContext());
+            }
 
             if (config.getProxyHost() != null && !config.getProxyHost().isEmpty())
                 clientBuilder.proxy(ProxySelector.of(
@@ -268,15 +283,6 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                 clientBuilder.version(HttpClient.Version.HTTP_2);
 
             else clientBuilder.version(HttpClient.Version.HTTP_1_1);
-
-            // this a workaround to bypass the hostname verification in jdk11 http client.
-            var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-            final var props = System.getProperties();
-            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
-            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection");
-
-            if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))
-                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
 
             this.client = clientBuilder.build();
 
