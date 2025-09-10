@@ -453,6 +453,7 @@ public class Handler {
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
                  InvocationTargetException e) {
             LOG.error("Could not instantiate handler class " + namedClass.second, e);
+            e.printStackTrace();
             throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
         }
 
