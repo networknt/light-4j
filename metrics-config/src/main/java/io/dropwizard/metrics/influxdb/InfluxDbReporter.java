@@ -152,11 +152,9 @@ public final class InfluxDbReporter extends ScheduledReporter {
             if (influxDb.hasSeriesData()) {
                 influxDb.writeData();
             }
-            // reset counters
-            for (Map.Entry<MetricName, Counter> entry : counters.entrySet()) {
-                Counter counter = entry.getValue();
-                long count = counter.getCount();
-                counter.dec(count);
+
+            if (logger.isTraceEnabled()) {
+                logger.trace("InfluxDbReporter.report() completed successfully at {}", System.currentTimeMillis());
             }
         } catch (Exception e) {
             logger.error("Unable to report to InfluxDB. Discarding data.", e);
@@ -164,20 +162,20 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     private void reportTimer(MetricName name, Timer timer, long now) {
-        if (canSkipMetric(name, timer)) {
-            return;
-        }
         final Snapshot snapshot = timer.getSnapshot();
+        if (logger.isTraceEnabled()) {
+            logger.trace("Reporting timer {}: snapshot min={}, max={}, mean={}",
+                    name, snapshot.getMin(), snapshot.getMax(), snapshot.getMean());
+        }
 
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
-        Map<String, String> clientTags = new HashMap<>(name.getTags());
-        String clientId = clientTags.remove("clientId");
-
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(convertDuration(snapshot.getMin()))));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(convertDuration(snapshot.getMax()))));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(convertDuration(snapshot.getMean()))));
 
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
         if(clientId != null) {
             influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(convertDuration(snapshot.getMin()))));
             influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(convertDuration(snapshot.getMax()))));
@@ -186,22 +184,31 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     private void reportHistogram(MetricName name, Histogram histogram, long now) {
-        if (canSkipMetric(name, histogram)) {
+        long delta = calculateDelta(name, histogram.getCount());
+        this.previousValues.put(name, histogram.getCount());
+
+        if (this.skipIdleMetrics && delta == 0) {
+            logger.trace("Skipping histogram {} - zero delta (no activity)", name);
             return;
         }
         final Snapshot snapshot = histogram.getSnapshot();
+        if (logger.isTraceEnabled()) {
+            logger.trace("Reporting histogram {}: current count={}, delta={}, snapshot min={}, max={}, mean={}",
+                    name, histogram.getCount(), delta, snapshot.getMin(), snapshot.getMax(), snapshot.getMean());
+        }
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(histogram.getCount())));
+        final var formattedDelta = format(delta);
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, formattedDelta));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(snapshot.getMin())));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(snapshot.getMax())));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(snapshot.getMean())));
 
         if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(histogram.getCount())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, formattedDelta));
             influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(snapshot.getMin())));
             influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(snapshot.getMax())));
             influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", clientTags, now, format(snapshot.getMean())));
@@ -209,59 +216,81 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     private void reportCounter(MetricName name, Counter counter, long now) {
+        long delta = calculateDelta(name, counter.getCount());
+        this.previousValues.put(name, counter.getCount());
+
+        if (this.skipIdleMetrics && delta == 0) {
+            logger.trace("Skipping counter {} - zero delta (no activity)", name);
+            return;
+        }
+
+        if (logger.isTraceEnabled()) {
+            logger.trace("Reporting counter {}: current count={}, delta={}", name, counter.getCount(), delta);
+        }
+
+        final var formattedDelta = format(delta);
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, formattedDelta));
+
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
-
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(counter.getCount())));
         if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(counter.getCount())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, formattedDelta));
         }
     }
 
     private void reportGauge(MetricName name, Gauge<?> gauge, long now) {
         final String value = format(gauge.getValue());
-        if(value != null) {
-            Map<String, String> apiTags = new HashMap<>(name.getTags());
-            String apiName = apiTags.remove("api");
-            Map<String, String> clientTags = new HashMap<>(name.getTags());
-            String clientId = clientTags.remove("clientId");
+        if (value == null) {
+            logger.trace("Skipping gauge {} - zero delta (no activity)", name);
+            return;
+        }
 
-            influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey(), apiTags, now, value));
-            if(clientId != null) {
-                influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey(), clientTags, now, value));
-            }
+        logger.trace("Reporting gauge {}: value={}", name, value);
+
+        Map<String, String> apiTags = new HashMap<>(name.getTags());
+        String apiName = apiTags.remove("api");
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey(), apiTags, now, value));
+
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
+        if(clientId != null) {
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey(), clientTags, now, value));
         }
     }
 
     private void reportMeter(MetricName name, Metered meter, long now) {
-        if (canSkipMetric(name, meter)) {
+        long delta = calculateDelta(name, meter.getCount());
+        this.previousValues.put(name, meter.getCount());
+
+        if (this.skipIdleMetrics && delta == 0) {
+            logger.trace("Skipping meter {} - zero delta (no activity)", name);
             return;
         }
+
+        if (logger.isTraceEnabled()) {
+            logger.trace("Reporting meter {}: current count={}, delta={}", name, meter.getCount(), delta);
+        }
+
+        final var formattedDelta = format(delta);
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, formattedDelta));
+
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
-
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(meter.getCount())));
         if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(meter.getCount())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, formattedDelta));
         }
     }
 
-    private boolean canSkipMetric(MetricName name, Counting counting) {
-        boolean isIdle = (calculateDelta(name, counting.getCount()) == 0);
-        if (skipIdleMetrics && !isIdle) {
-            previousValues.put(name, counting.getCount());
-        }
-        return skipIdleMetrics && isIdle;
-    }
 
     private long calculateDelta(MetricName name, long count) {
         Long previous = previousValues.get(name);
         if (previous == null) {
-            return -1;
+            logger.debug("First measurement for metric {}: returning count {} as delta", name, count);
+            return count;
         }
         if (count < previous) {
             logger.warn("Saw a non-monotonically increasing value for metric '{}'", name);
