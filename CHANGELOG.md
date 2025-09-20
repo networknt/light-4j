@@ -1,5 +1,21 @@
 # Change Log
 
+## [2.3.1](https://github.com/networknt/light-4j/tree/2.3.1) (2025-09-19)
+
+
+**Merged pull requests:**
+
+
+- Sync [\#2545](https://github.com/networknt/light-4j/pull/2545) ([stevehu](https://github.com/stevehu))
+- Negative Metrics Fix [\#2542](https://github.com/networknt/light-4j/pull/2542) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes fix cache key [\#2536](https://github.com/networknt/light-4j/pull/2536) ([atmoshaman](https://github.com/atmoshaman))
+- Fix For Multi Threaded Config Load Race Condition [\#2540](https://github.com/networknt/light-4j/pull/2540) ([KalevGonvick](https://github.com/KalevGonvick))
+- [pre-commit.ci] pre-commit autoupdate [\#2539](https://github.com/networknt/light-4j/pull/2539) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+- Find IP from system property STATUS_HOST_IP [\#2534](https://github.com/networknt/light-4j/pull/2534) ([atmoshaman](https://github.com/atmoshaman))
+- fixes \#2523 add token_exchange section to client.yml in client-config [\#2524](https://github.com/networknt/light-4j/pull/2524) ([stevehu](https://github.com/stevehu))
+- 2521 metrics handler reporting negative numbers [\#2522](https://github.com/networknt/light-4j/pull/2522) ([KalevGonvick](https://github.com/KalevGonvick))
+- Metrics Handler Cleanup [\#2520](https://github.com/networknt/light-4j/pull/2520) ([KalevGonvick](https://github.com/KalevGonvick))
+- optimize audit handler performance and improve code readability [\#2518](https://github.com/networknt/light-4j/pull/2518) ([KalevGonvick](https://github.com/KalevGonvick))
 ## [2.3.0](https://github.com/networknt/light-4j/tree/2.3.0) (2025-06-25)
 
 
