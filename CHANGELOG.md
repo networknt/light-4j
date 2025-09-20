@@ -16,6 +16,8 @@
 - 2521 metrics handler reporting negative numbers [\#2522](https://github.com/networknt/light-4j/pull/2522) ([KalevGonvick](https://github.com/KalevGonvick))
 - Metrics Handler Cleanup [\#2520](https://github.com/networknt/light-4j/pull/2520) ([KalevGonvick](https://github.com/KalevGonvick))
 - optimize audit handler performance and improve code readability [\#2518](https://github.com/networknt/light-4j/pull/2518) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.3.0](https://github.com/networknt/light-4j/tree/2.3.0) (2025-06-25)
 
 
