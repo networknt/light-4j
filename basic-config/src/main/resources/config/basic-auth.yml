@@ -1,5 +1,4 @@
 # Basic Authentication Security Configuration for light-4j
----
 # Enable Basic Authentication Handler, default is true.
 enabled: ${basic.enabled:false}
 # Enable Ldap Authentication, default is true.
