@@ -9,6 +9,7 @@
     },
     "encoders" : {
       "type" : "array",
+      "description" : "A list of encoders.\n  -gzip\n  -deflate\n\ngzip,deflate",
       "default" : [ "gzip", "deflate" ],
       "items" : {
         "type" : "string"

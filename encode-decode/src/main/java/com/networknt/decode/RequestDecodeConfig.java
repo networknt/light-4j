@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "request-decode", configName = "request-decode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "decode", configName = "request-decode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class RequestDecodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(RequestDecodeConfig.class);
     public static final String CONFIG_NAME = "request-decode";
@@ -44,7 +44,8 @@ public class RequestDecodeConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = "request decode handler for gzip and deflate"
+            description = "request decode handler for gzip and deflate",
+            defaultValue = "false"
     )
     boolean enabled;
 
@@ -53,7 +54,8 @@ public class RequestDecodeConfig {
             externalizedKeyName = DECODERS,
             externalized = true,
             defaultValue = "[\"gzip\", \"deflate\"]",
-            items = String.class
+            items = String.class,
+            description = "A list of decoders.\n  -gzip\n  -deflate\ngzip,deflate"
     )
     List<String> decoders;
 

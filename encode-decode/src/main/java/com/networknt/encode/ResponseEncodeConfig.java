@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "response-encode", configName = "response-encode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "encode", configName = "response-encode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class ResponseEncodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseEncodeConfig.class);
 
@@ -46,7 +46,8 @@ public class ResponseEncodeConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = "response encode handler for gzip and deflate"
+            description = "response encode handler for gzip and deflate",
+            defaultValue = "false"
     )
     boolean enabled;
 
@@ -55,7 +56,8 @@ public class ResponseEncodeConfig {
             externalizedKeyName = ENCODERS,
             externalized = true,
             defaultValue = "[\"gzip\", \"deflate\"]",
-            items = String.class
+            items = String.class,
+            description = "A list of encoders.\n  -gzip\n  -deflate\n\ngzip,deflate"
     )
     List<String> encoders;
 

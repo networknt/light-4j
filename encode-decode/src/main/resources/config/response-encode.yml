@@ -1,7 +1,8 @@
----
 # response encode handler for gzip and deflate
 enabled: ${encode.enabled:false}
-encoders: ${encode.encoders:gzip,deflate}
-#   - gzip
-#   - deflate
-# ["gzip","deflate"]
+# A list of encoders.
+#   -gzip
+#   -deflate
+# 
+# gzip,deflate
+encoders: ${encode.encoders:["gzip", "deflate"]}
