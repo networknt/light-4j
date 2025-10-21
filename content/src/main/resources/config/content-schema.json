@@ -10,6 +10,7 @@
     "contentType" : {
       "type" : "string",
       "description" : "The content type to be used in the response.",
+      "default" : "application/json",
       "pattern" : ".*/.*"
     }
   }

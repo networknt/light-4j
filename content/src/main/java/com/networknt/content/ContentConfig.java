@@ -27,7 +27,12 @@ import java.util.Map;
 /**
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
-@ConfigSchema(configKey = "content", configName = "content", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "content",
+        configName = "content",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Content middleware configuration."
+)
 public class ContentConfig {
   public static final String CONFIG_NAME = "content";
   private static final String ENABLED = "enabled";
@@ -40,7 +45,8 @@ public class ContentConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = "Indicate if the content middleware is enabled or not."
+            description = "Indicate if the content middleware is enabled or not.",
+            defaultValue = "true"
   )
   boolean enabled;
 
@@ -49,7 +55,8 @@ public class ContentConfig {
             externalizedKeyName = CONTENT_TYPE,
             pattern = ".*/.*",
             externalized = true,
-            description = "The content type to be used in the response."
+            description = "The content type to be used in the response.",
+            defaultValue = "application/json"
   )
   String contentType;
 
