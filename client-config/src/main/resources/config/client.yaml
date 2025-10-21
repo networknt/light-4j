@@ -13,7 +13,7 @@ tls:
   # trust store password
   trustStorePass: ${client.trustStorePass:password}
   # key store contains client key and it should be loaded if two-way ssl is used.
-  loadKeyStore: ${client.loadKeyStore:}
+  loadKeyStore: ${client.loadKeyStore:false}
   # key store location
   keyStore: ${client.keyStore:client.keystore}
   # key store password
@@ -25,14 +25,12 @@ tls:
   # TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
   # and 1.2 (deprecated and risky).
   tlsVersion: ${client.tlsVersion:TLSv1.3}
-  defaultGroupKey: ${client.defaultGroupKey:}
-  trustedNames: ${client.trustedNames:}
 # Settings for OAuth2 server communication.
 oauth:
   # OAuth 2.0 token endpoint configuration
   # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
   # path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
-  multipleAuthServers: ${client.multipleAuthServers:}
+  multipleAuthServers: ${client.multipleAuthServers:false}
   token:
     cache:
       # Capacity of caching tokens in the client for downstream API calls. The default value is 200.
@@ -121,12 +119,13 @@ oauth:
       scope: ${client.tokenExScope:}
       # subject token the identity of the party on behalf of whom the request is being made
       subjectToken: ${client.subjectToken:}
-      # subject token type the type of the subject token
+      # Subject token type the type of the subject token. The default value 'urn:ietf:params:oauth:token-type:jwt'
+      # is chosen because it represents a JWT token type as defined in the OAuth 2.0 specification.
       subjectTokenType: ${client.subjectTokenType:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
-      # If it is not set, a service lookup will be taken with serviceId to find an instance
+      # If it is not set, a service lookup will be taken with serviceId to find an instance.
       server_url: ${client.tokenKeyServerUrl:}
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: ${client.tokenKeyServiceId:com.networknt.oauth2-key-1.0.0}
@@ -224,9 +223,9 @@ request:
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
   # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
-  injectOpenTracing: ${client.injectOpenTracing:}
+  injectOpenTracing: ${client.injectOpenTracing:false}
   # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
-  injectCallerId: ${client.injectCallerId:}
+  injectCallerId: ${client.injectCallerId:false}
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
   # the maximum host capacity of connection pool

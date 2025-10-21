@@ -16,7 +16,8 @@ public class OAuthConfig {
                     "If there are multiple oauth providers per serviceId, then we need to update this flag to true. " +
                     "In order to derive the serviceId from the\n" +
                     "path prefix, we need to set up the pathPrefixServices " +
-                    "below if there is no duplicated paths between services."
+                    "below if there is no duplicated paths between services.",
+            defaultValue = "false"
     )
     @JsonProperty(ClientConfig.MULTIPLE_AUTH_SERVERS)
     private Boolean multipleAuthServers = false;

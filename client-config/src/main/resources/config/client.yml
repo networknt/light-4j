@@ -1,5 +1,4 @@
-# This is the configuration file for Http2Client.
----
+# This is the configuration file for light-4j Http2Client and jdk 11 http-client.
 # Settings for TLS
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load
@@ -21,12 +20,12 @@ tls:
   keyStorePass: ${client.keyStorePass:password}
   # private key password
   keyPass: ${client.keyPass:password}
-  # public issued CA cert  password
+  # public issued CA cert password
   defaultCertPassword: ${client.defaultCertPassword:changeit}
   # TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1
   # and 1.2 (deprecated and risky).
   tlsVersion: ${client.tlsVersion:TLSv1.3}
-# settings for OAuth2 server communication
+# Settings for OAuth2 server communication.
 oauth:
   # OAuth 2.0 token endpoint configuration
   # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
@@ -34,7 +33,7 @@ oauth:
   multipleAuthServers: ${client.multipleAuthServers:false}
   token:
     cache:
-      #capacity of caching tokens in the client for downstream API calls. The default value is 200.
+      # Capacity of caching tokens in the client for downstream API calls. The default value is 200.
       capacity: ${client.tokenCacheCapacity:200}
     # The scope token will be renewed automatically 1 minute before expiry
     tokenRenewBeforeExpired: ${client.tokenRenewBeforeExpired:60000}
@@ -72,9 +71,9 @@ oauth:
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
-      scope: ${client.tokenAcScope:}
       # - petstore.r
       # - petstore.w
+      scope: ${client.tokenAcScope:}
     # the following section defines uri and parameters for client credentials grant type
     client_credentials:
       # token endpoint for client credentials grant
@@ -86,9 +85,9 @@ oauth:
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
-      scope: ${client.tokenCcScope:}
       # - petstore.r
       # - petstore.w
+      scope: ${client.tokenCcScope:}
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
       # set as true. For detailed config options, please see the values.yml in the client module test.
       serviceIdAuthServers: ${client.tokenCcServiceIdAuthServers:}
@@ -102,9 +101,9 @@ oauth:
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
-      scope: ${client.tokenRtScope:}
       # - petstore.r
       # - petstore.w
+      scope: ${client.tokenRtScope:}
     token_exchange:
       # token endpoint for token exchange grant type
       uri: ${client.tokenExUri:/oauth2/token}
@@ -120,7 +119,8 @@ oauth:
       scope: ${client.tokenExScope:}
       # subject token the identity of the party on behalf of whom the request is being made
       subjectToken: ${client.subjectToken:}
-      # subject token type the type of the subject token
+      # Subject token type the type of the subject token. The default value 'urn:ietf:params:oauth:token-type:jwt'
+      # is chosen because it represents a JWT token type as defined in the OAuth 2.0 specification.
       subjectTokenType: ${client.subjectTokenType:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
@@ -142,7 +142,7 @@ oauth:
       serviceIdAuthServers: ${client.tokenKeyServiceIdAuthServers:}
       # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
       audience: ${client.tokenKeyAudience:}
-  # sign endpoint configuration
+  # Sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
     # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
@@ -187,7 +187,8 @@ oauth:
       audience: ${client.signKeyAudience:}
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
-    # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
+    # Token service server url, this might be different than the above token server url.
+    # The static url will be used if it is configured.
     server_url: ${client.derefServerUrl:}
     # For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal
     # proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost
@@ -212,7 +213,7 @@ oauth:
 # to get the token or JWK. If two or more services have the same path, you must use serviceId in
 # the request header to use the serviceId to find the OAuth 2.0 provider configuration.
 pathPrefixServices: ${client.pathPrefixServices:}
-# circuit breaker configuration for the client
+# Circuit breaker configuration for the client
 request:
   # number of timeouts/errors to break the circuit
   errorThreshold: ${client.errorThreshold:2}

@@ -45,7 +45,8 @@ public class RequestConfig {
             externalizedKeyName = ClientConfig.INJECT_OPEN_TRACING,
             externalized = true,
             description = "if open tracing is enabled. traceability, " +
-                    "correlation and metrics should not be in the chain if opentracing is used."
+                    "correlation and metrics should not be in the chain if opentracing is used.",
+            defaultValue = "false"
     )
     @JsonProperty(ClientConfig.INJECT_OPEN_TRACING)
     private Boolean injectOpenTracing = false;
@@ -55,7 +56,8 @@ public class RequestConfig {
             externalizedKeyName = ClientConfig.INJECT_CALLER_ID,
             externalized = true,
             description = "inject serviceId as callerId into the http header for metrics to collect the caller. " +
-                    "The serviceId is from server.yml"
+                    "The serviceId is from server.yml",
+            defaultValue = "false"
     )
     @JsonProperty(ClientConfig.INJECT_CALLER_ID)
     private Boolean injectCallerId = false;

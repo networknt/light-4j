@@ -11,34 +11,6 @@
           "type" : "boolean",
           "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate."
         },
-        "loadTrustStore" : {
-          "type" : "boolean",
-          "description" : "trust store contains certificates that server needs. Enable if tls is used."
-        },
-        "tlsVersion" : {
-          "type" : "string",
-          "description" : "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1\nand 1.2 (deprecated and risky).",
-          "default" : "TLSv1.3"
-        },
-        "defaultGroupKey" : {
-          "type" : "string"
-        },
-        "keyStorePass" : {
-          "type" : "string",
-          "description" : "key store password",
-          "default" : "password"
-        },
-        "trustStorePass" : {
-          "type" : "string",
-          "description" : "trust store password",
-          "default" : "password"
-        },
-        "trustedNames" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "type" : "string"
-          }
-        },
         "loadKeyStore" : {
           "type" : "boolean",
           "description" : "key store contains client key and it should be loaded if two-way ssl is used."
@@ -52,20 +24,39 @@
           "description" : "private key password",
           "default" : "password"
         },
+        "loadTrustStore" : {
+          "type" : "boolean",
+          "description" : "trust store contains certificates that server needs. Enable if tls is used."
+        },
         "keyStore" : {
           "type" : "string",
           "description" : "key store location",
           "default" : "client.keystore"
+        },
+        "tlsVersion" : {
+          "type" : "string",
+          "description" : "TLS version. Default is TSLv1.3, and you can downgrade to TLSv1.2 to support some internal old servers that support only TLSv1.1\nand 1.2 (deprecated and risky).",
+          "default" : "TLSv1.3"
         },
         "trustStore" : {
           "type" : "string",
           "description" : "trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword",
           "default" : "client.truststore"
         },
+        "keyStorePass" : {
+          "type" : "string",
+          "description" : "key store password",
+          "default" : "password"
+        },
         "defaultCertPassword" : {
           "type" : "string",
           "description" : "public issued CA cert password",
           "default" : "changeit"
+        },
+        "trustStorePass" : {
+          "type" : "string",
+          "description" : "trust store password",
+          "default" : "password"
         }
       }
     },
@@ -386,7 +377,7 @@
               "properties" : {
                 "subjectTokenType" : {
                   "type" : "string",
-                  "description" : "subject token type the type of the subject token"
+                  "description" : "Subject token type the type of the subject token. The default value 'urn:ietf:params:oauth:token-type:jwt'\nis chosen because it represents a JWT token type as defined in the OAuth 2.0 specification."
                 },
                 "subjectToken" : {
                   "type" : "string",
@@ -476,7 +467,7 @@
                 },
                 "server_url" : {
                   "type" : "string",
-                  "description" : "key distribution server url for token verification. It will be used if it is configured.\nIf it is not set, a service lookup will be taken with serviceId to find an instance"
+                  "description" : "key distribution server url for token verification. It will be used if it is configured.\nIf it is not set, a service lookup will be taken with serviceId to find an instance."
                 },
                 "serviceId" : {
                   "type" : "string",

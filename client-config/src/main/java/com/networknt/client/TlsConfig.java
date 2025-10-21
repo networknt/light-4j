@@ -69,7 +69,8 @@ public class TlsConfig {
             configFieldName = ClientConfig.LOAD_KEY_STORE,
             externalizedKeyName = ClientConfig.LOAD_KEY_STORE,
             externalized = true,
-            description = "key store contains client key and it should be loaded if two-way ssl is used."
+            description = "key store contains client key and it should be loaded if two-way ssl is used.",
+            defaultValue = "false"
     )
     @JsonProperty(ClientConfig.LOAD_KEY_STORE)
     private Boolean loadKeyStore;
@@ -126,23 +127,6 @@ public class TlsConfig {
     @JsonProperty(ClientConfig.TLS_VERSION)
     private String tlsVersion = "TLSv1.3";
 
-    @StringField(
-            configFieldName = ClientConfig.DEFAULT_GROUP_KEY,
-            externalizedKeyName = ClientConfig.DEFAULT_GROUP_KEY,
-            externalized = true
-    )
-    @JsonProperty(ClientConfig.DEFAULT_GROUP_KEY)
-    private String defaultGroupKey = null;
-
-    @MapField(
-            configFieldName = ClientConfig.TRUSTED_NAMES,
-            externalizedKeyName = ClientConfig.TRUSTED_NAMES,
-            externalized = true,
-            valueType = String.class
-    )
-    @JsonProperty(ClientConfig.TRUSTED_NAMES)
-    private Map<String, String> trustedNames = null;
-
     public boolean isVerifyHostname() {
         return verifyHostname;
     }
@@ -185,13 +169,5 @@ public class TlsConfig {
 
     public String getTlsVersion() {
         return tlsVersion;
-    }
-
-    public String getDefaultGroupKey() {
-        return defaultGroupKey;
-    }
-
-    public Map<String, String> getTrustedNames() {
-        return trustedNames;
     }
 }

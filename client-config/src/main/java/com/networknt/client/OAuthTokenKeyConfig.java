@@ -15,7 +15,7 @@ public class OAuthTokenKeyConfig {
             externalizedKeyName = "tokenKeyServerUrl",
             externalized = true,
             description = "key distribution server url for token verification. It will be used if it is configured.\n" +
-                    "If it is not set, a service lookup will be taken with serviceId to find an instance"
+                    "If it is not set, a service lookup will be taken with serviceId to find an instance."
     )
     @JsonProperty(ClientConfig.SERVER_URL)
     private String serverUrl = null;

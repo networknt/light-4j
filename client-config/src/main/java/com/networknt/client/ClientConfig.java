@@ -85,8 +85,6 @@ public final class ClientConfig {
     public static final String KEY_PASS = "keyPass";
     public static final String DEFAULT_CERT_PASSWORD = "defaultCertPassword";
     public static final String TLS_VERSION = "tlsVersion";
-    public static final String DEFAULT_GROUP_KEY = "defaultGroupKey";
-    public static final String TRUSTED_NAMES = "trustedNames";
     public static final String SUBJECT_TOKEN = "subjectToken";
     public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
