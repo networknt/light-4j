@@ -26,7 +26,12 @@ import com.networknt.config.schema.OutputFormat;
  *
  * @author  Steve Hu
  */
-@ConfigSchema(configName = "exception", configKey = "exception", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "exception",
+        configKey = "exception",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Exception handler for runtime exception and ApiException if it is not handled by other handlers in the chain."
+        )
 public class ExceptionConfig {
     public static final String CONFIG_NAME = "exception";
 
