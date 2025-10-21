@@ -25,7 +25,12 @@ import com.networknt.config.schema.StringField;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "email", configName = "email", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "email",
+        configName = "email",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Email Sender Configuration"
+)
 public class EmailConfig {
     public static final String CONFIG_NAME = "email";
 
@@ -51,7 +56,8 @@ public class EmailConfig {
             configFieldName = "user",
             externalizedKeyName = "user",
             externalized = true,
-            description = "Email server user name"
+            description = "Email user or sender address.",
+            defaultValue = "noreply@lightapi.net"
     )
     String user;
 
@@ -59,7 +65,10 @@ public class EmailConfig {
             configFieldName = "pass",
             externalizedKeyName = "pass",
             externalized = true,
-            description = "Email server password"
+            description = "Email password. If you want to put the email.pass in values.yml, you must encrypt it.\n" +
+                    "If you don't want to put the password in the config file, you can use the following environment variable.\n" +
+                    "EMAIL_PASS=password\n",
+            defaultValue = "password"
     )
     String pass;
 
@@ -68,7 +77,7 @@ public class EmailConfig {
             externalizedKeyName = "debug",
             externalized = true,
             defaultValue = "true",
-            description = "Email debug mode"
+            description = "Email debug mode. Default to true"
     )
     String debug;
 
@@ -77,7 +86,7 @@ public class EmailConfig {
             externalizedKeyName = "auth",
             externalized = true,
             defaultValue = "true",
-            description = "Email authentication"
+            description = "Email authentication. Default to true"
     )
     String auth;
 

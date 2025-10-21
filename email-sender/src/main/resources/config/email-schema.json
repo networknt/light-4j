@@ -15,20 +15,22 @@
     },
     "user" : {
       "type" : "string",
-      "description" : "Email server user name"
+      "description" : "Email user or sender address.",
+      "default" : "noreply@lightapi.net"
     },
     "pass" : {
       "type" : "string",
-      "description" : "Email server password"
+      "description" : "Email password. If you want to put the email.pass in values.yml, you must encrypt it.\nIf you don't want to put the password in the config file, you can use the following environment variable.\nEMAIL_PASS=password\n",
+      "default" : "password"
     },
     "debug" : {
       "type" : "string",
-      "description" : "Email debug mode",
+      "description" : "Email debug mode. Default to true",
       "default" : "true"
     },
     "auth" : {
       "type" : "string",
-      "description" : "Email authentication",
+      "description" : "Email authentication. Default to true",
       "default" : "true"
     }
   }

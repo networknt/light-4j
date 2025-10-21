@@ -1,5 +1,4 @@
 # Email Sender Configuration
----
 # Email server host name or IP address
 host: ${email.host:mail.lightapi.net}
 # Email SMTP port number. Please don't use port 25 as it is not safe
@@ -10,7 +9,7 @@ user: ${email.user:noreply@lightapi.net}
 # If you don't want to put the password in the config file, you can use the following environment variable.
 # EMAIL_PASS=password
 pass: ${email.pass:password}
-# Enable debug. Default to false.
+# Email debug mode. Default to true
 debug: ${email.debug:true}
-# Enable Authentication. Default to true.
+# Email authentication. Default to true
 auth: ${email.auth:true}
