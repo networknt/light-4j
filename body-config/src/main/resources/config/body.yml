@@ -1,3 +1,4 @@
+# The config for the body handler.
 # Enable body parse flag
 enabled: ${body.enabled:true}
 # cache request body as a string along with JSON object. The string formatted request body will be used for audit log.
