@@ -14,6 +14,8 @@ responseTime: ${audit.responseTime:true}
 #  - it will log on every request
 # log level is controlled by logLevel
 auditOnError: ${audit.auditOnError:false}
+# log level is error; by default the logging level is set to info. If you want to change it to error, set to true.
+logLevelIsError: ${audit.logLevelIsError:false}
 # the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.
 # for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.
 timestampFormat: ${audit.timestampFormat:}

@@ -109,9 +109,19 @@ public class AuditConfig {
                     "when auditOnError is false:\n" +
                     " - it will log on every request\n" +
                     "log level is controlled by logLevel",
-            externalized = true
+            externalized = true,
+            defaultValue = "false"
     )
     private boolean auditOnError;
+
+    @BooleanField(
+            configFieldName = LOG_LEVEL_IS_ERROR,
+            externalizedKeyName = LOG_LEVEL_IS_ERROR,
+            description = "log level is error; by default the logging level is set to info. If you want to change it to error, set to true.",
+            externalized = true,
+            defaultValue = "false"
+    )
+    private boolean logLevelIsError;
 
     @StringField(
             configFieldName = TIMESTAMP_FORMAT,
@@ -230,6 +240,8 @@ public class AuditConfig {
         return auditOnError;
     }
 
+    public boolean isLogLevelIsError() { return logLevelIsError; }
+
     public boolean isMask() {
         return mask;
     }
@@ -330,6 +342,8 @@ public class AuditConfig {
         if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
         object = getMappedConfig().get(AUDIT_ON_ERROR);
         if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
+        object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
+        if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
         object = getMappedConfig().get(MASK);
         if (object != null) mask = Config.loadBooleanValue(MASK, object);
         object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);

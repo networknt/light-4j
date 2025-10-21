@@ -1,31 +1,31 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "mask", "statusCode", "responseTime", "auditOnError", "timestampFormat", "headers", "audit", "requestBodyMaxSize", "responseBodyMaxSize" ],
+  "required" : [ "enabled", "mask", "statusCode", "responseTime", "auditOnError", "logLevelIsError", "timestampFormat", "headers", "audit", "requestBodyMaxSize", "responseBodyMaxSize" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable Audit Logging",
-      "default" : true
+      "description" : "Enable Audit Logging"
     },
     "mask" : {
       "type" : "boolean",
-      "description" : "Enable mask in the audit log",
-      "default" : true
+      "description" : "Enable mask in the audit log"
     },
     "statusCode" : {
       "type" : "boolean",
-      "description" : "Output response status code.",
-      "default" : true
+      "description" : "Output response status code."
     },
     "responseTime" : {
       "type" : "boolean",
-      "description" : "Output response time.",
-      "default" : true
+      "description" : "Output response time."
     },
     "auditOnError" : {
       "type" : "boolean",
       "description" : "when auditOnError is true:\n - it will only log when status code >= 400\nwhen auditOnError is false:\n - it will log on every request\nlog level is controlled by logLevel"
+    },
+    "logLevelIsError" : {
+      "type" : "boolean",
+      "description" : "log level is error; by default the logging level is set to info. If you want to change it to error, set to true."
     },
     "timestampFormat" : {
       "type" : "string",
@@ -49,13 +49,11 @@
     },
     "requestBodyMaxSize" : {
       "type" : "integer",
-      "description" : "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\nrequest body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-      "default" : 4096
+      "description" : "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\nrequest body is bigger than the max size, it will be truncated to the max size. The default value is 4096."
     },
     "responseBodyMaxSize" : {
       "type" : "integer",
-      "description" : "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-      "default" : 4096
+      "description" : "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096."
     }
   }
 }
