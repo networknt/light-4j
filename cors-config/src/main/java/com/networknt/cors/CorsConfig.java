@@ -58,7 +58,7 @@ public class CorsConfig {
             description = "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\n" +
                     "configuration for all paths. If you want to have different configuration for different paths, you\n" +
                     "can use pathPrefixAllowed. The value is a list of strings.\n" +
-                    "Wildcard is not supported for security reasons.",
+                    "Wildcard is not supported for security reasons.\n - http://localhost",
             items = String.class
     )
     List<String> allowedOrigins;
@@ -69,7 +69,7 @@ public class CorsConfig {
             externalized = true,
             description = "Allowed methods list. The value is a list of strings. The possible value is GET, POST, PUT, DELETE, PATCH\n" +
                     "This is the global configuration for all paths. If you want to have different configuration for different\n" +
-                    "paths, you can use pathPrefixAllowed.",
+                    "paths, you can use pathPrefixAllowed.\n - GET\n - POST",
             items = String.class
     )
     List<String> allowedMethods;
@@ -86,8 +86,7 @@ public class CorsConfig {
                     "\n" +
                     "Use the above global configuration if you are dealing with a single API in the case of http-sidecar,\n" +
                     "proxy server or build the API with light-4j frameworks. If you are using light-gateway with multiple\n" +
-                    "downstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different\n" +
-                    "APIs.\n" +
+                    "downstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different APIs.\n" +
                     "\n" +
                     "\n" +
                     "Here is an example in values.yml\n" +
