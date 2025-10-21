@@ -25,7 +25,7 @@ import com.networknt.config.schema.OutputFormat;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "dereg", configName = "deref", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "deref", configName = "deref", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DerefConfig {
     public static final String CONFIG_NAME = "deref";
 
@@ -33,7 +33,8 @@ public class DerefConfig {
         configFieldName = "enabled",
         externalizedKeyName = "enabled",
         externalized = true,
-        description = "indicate if the deref handler is enabled or not."
+        description = "indicate if the deref handler is enabled or not.",
+        defaultValue = "false"
     )
     boolean enabled;
 
