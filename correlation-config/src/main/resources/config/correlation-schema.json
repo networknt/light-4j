@@ -5,13 +5,11 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "If enabled is true, the handler will be injected into the request and response chain.",
-      "default" : true
+      "description" : "If enabled is true, the handler will be injected into the request and response chain."
     },
     "autogenCorrelationID" : {
       "type" : "boolean",
-      "description" : "If set to true, it will auto-generate the correlationID if it is not provided in the request",
-      "default" : true
+      "description" : "If set to true, it will auto-generate the correlationID if it is not provided in the request"
     },
     "correlationMdcField" : {
       "type" : "string",
