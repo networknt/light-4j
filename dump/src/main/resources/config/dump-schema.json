@@ -5,7 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware is enabled or not."
+      "description" : "Indicate if the dump middleware is enabled or not. It should only be enabled in test environment."
     },
     "mask" : {
       "type" : "boolean",
@@ -13,18 +13,17 @@
     },
     "logLevel" : {
       "type" : "string",
-      "description" : "The log level for the dump middleware.",
+      "description" : "The log level for the dump middleware. ERROR | WARN | INFO | DEBUG | TRACE",
       "default" : "INFO",
       "pattern" : "^(TRACE|DEBUG|INFO|WARN|ERROR)$"
     },
     "indentSize" : {
       "type" : "integer",
-      "description" : "The indent size for the dump middleware.",
-      "default" : 4
+      "description" : "The indent size for the dump middleware."
     },
     "useJson" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware should use JSON format."
+      "description" : "Indicate if the dump middleware should use JSON format. If use json, indentSize option will be ignored."
     },
     "requestEnabled" : {
       "type" : "boolean",
@@ -32,7 +31,7 @@
     },
     "request" : {
       "type" : "object",
-      "description" : "The request settings for the dump middleware.",
+      "description" : "The request settings for the dump middleware.\nrequest:\n  url: true\n  headers: true\n  #filter for headers\n  filteredHeaders:\n  - Postman-Token\n  - X-Correlation-Id\n  - cookie\n  cookies: true\n  #filter for cookies\n  filteredCookies:\n  - Cookie_Gmail\n  queryParameters: true\n  #filter for queryParameters\n  filteredQueryParameters:\n  - itemId\n  - a\n  body: true\n",
       "properties" : {
         "headers" : {
           "type" : "boolean",
@@ -83,7 +82,7 @@
     },
     "response" : {
       "type" : "object",
-      "description" : "The response settings for the dump middleware.",
+      "description" : "The response settings for the dump middleware.\nresponse:\n  headers: true\n  cookies: true\n  body: true\n  statusCode: true\n",
       "properties" : {
         "headers" : {
           "type" : "boolean",

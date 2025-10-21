@@ -28,7 +28,10 @@ import java.util.Map;
 /**
  * this class is to load dump.yml config file, and map settings to properties of this class.
  */
-@ConfigSchema(configKey = "dump", configName = "dump", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "dump",
+        configName = "dump",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Dump middleware configuration.")
 public class DumpConfig {
     public static final String CONFIG_NAME = "dump";
 
@@ -36,7 +39,8 @@ public class DumpConfig {
             configFieldName = "enabled",
             externalizedKeyName = "enabled",
             externalized = true,
-            description = "Indicate if the dump middleware is enabled or not."
+            description = "Indicate if the dump middleware is enabled or not. It should only be enabled in test environment.",
+            defaultValue = "false"
     )
     private boolean enabled = false;
 
@@ -44,7 +48,8 @@ public class DumpConfig {
             configFieldName = "mask",
             externalizedKeyName = "mask",
             externalized = true,
-            description = "Indicate if the dump middleware should mask sensitive data."
+            description = "Indicate if the dump middleware should mask sensitive data.",
+            defaultValue = "false"
     )
     private boolean mask = false;
 
@@ -54,7 +59,7 @@ public class DumpConfig {
             defaultValue = "INFO",
             pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
             externalized = true,
-            description = "The log level for the dump middleware."
+            description = "The log level for the dump middleware. ERROR | WARN | INFO | DEBUG | TRACE"
     )
     private String logLevel = "INFO";
 
@@ -71,7 +76,8 @@ public class DumpConfig {
             configFieldName = "useJson",
             externalizedKeyName = "useJson",
             externalized = true,
-            description = "Indicate if the dump middleware should use JSON format."
+            description = "Indicate if the dump middleware should use JSON format. If use json, indentSize option will be ignored.",
+            defaultValue = "false"
     )
     private boolean useJson;
 
@@ -79,7 +85,8 @@ public class DumpConfig {
             configFieldName = "requestEnabled",
             externalizedKeyName = "requestEnabled",
             externalized = true,
-            description = "Indicate if the dump middleware should dump request."
+            description = "Indicate if the dump middleware should dump request.",
+            defaultValue = "false"
     )
     private boolean requestEnabled;
 
@@ -87,7 +94,25 @@ public class DumpConfig {
             configFieldName = "request",
             externalizedKeyName = "request",
             externalized = true,
-            description = "The request settings for the dump middleware.",
+            description = "The request settings for the dump middleware.\n" +
+                    "request:\n" +
+                    "  url: true\n" +
+                    "  headers: true\n" +
+                    "  #filter for headers\n" +
+                    "  filteredHeaders:\n" +
+                    "  - Postman-Token\n" +
+                    "  - X-Correlation-Id\n" +
+                    "  - cookie\n" +
+                    "  cookies: true\n" +
+                    "  #filter for cookies\n" +
+                    "  filteredCookies:\n" +
+                    "  - Cookie_Gmail\n" +
+                    "  queryParameters: true\n" +
+                    "  #filter for queryParameters\n" +
+                    "  filteredQueryParameters:\n" +
+                    "  - itemId\n" +
+                    "  - a\n" +
+                    "  body: true\n",
             ref = DumpRequestConfig.class
     )
     private DumpRequestConfig request;
@@ -96,7 +121,8 @@ public class DumpConfig {
             configFieldName = "responseEnabled",
             externalizedKeyName = "responseEnabled",
             externalized = true,
-            description = "Indicate if the dump middleware should dump response."
+            description = "Indicate if the dump middleware should dump response.",
+            defaultValue = "false"
     )
     private boolean responseEnabled;
 
@@ -104,7 +130,12 @@ public class DumpConfig {
             configFieldName = "response",
             externalizedKeyName = "response",
             externalized = true,
-            description = "The response settings for the dump middleware.",
+            description = "The response settings for the dump middleware.\n" +
+                    "response:\n" +
+                    "  headers: true\n" +
+                    "  cookies: true\n" +
+                    "  body: true\n" +
+                    "  statusCode: true\n",
             ref = DumpResponseConfig.class
     )
     private DumpResponseConfig response;
