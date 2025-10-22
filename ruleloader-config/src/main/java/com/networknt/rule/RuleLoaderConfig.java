@@ -9,7 +9,12 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configName = "rule-loader", configKey = "rule-loader", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "rule-loader",
+        configKey = "rule-loader",
+        configDescription = "Rule loader configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class RuleLoaderConfig {
     private static final Logger logger = LoggerFactory.getLogger(RuleLoaderConfig.class);
 

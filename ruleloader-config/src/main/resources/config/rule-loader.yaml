@@ -1,3 +1,4 @@
+# Rule loader configuration
 # A flag to enable the rule loader to get rules for the service from portal
 enabled: ${rule-loader.enabled:true}
 # The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal

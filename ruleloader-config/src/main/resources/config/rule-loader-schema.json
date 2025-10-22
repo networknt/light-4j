@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "A flag to enable the rule loader to get rules for the service from portal",
-      "default" : true
+      "description" : "A flag to enable the rule loader to get rules for the service from portal"
     },
     "portalHost" : {
       "type" : "string",
@@ -26,10 +25,7 @@
       "type" : "object",
       "description" : "When ruleSource is config-folder, then we can load the endpoint to rules mapping here instead of portal\nservice details. Each endpoint will have a list of rules and the type of the rules.",
       "additionalProperties" : {
-        "type" : "array",
-        "items" : {
-          "type" : "string"
-        }
+        "type" : "object"
       }
     }
   }
