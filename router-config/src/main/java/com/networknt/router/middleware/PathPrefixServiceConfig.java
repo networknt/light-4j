@@ -21,7 +21,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "pathPrefixService", configName = "pathPrefixService", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "pathPrefixService",
+        configName = "pathPrefixService",
+        configDescription = "Path prefix service configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class PathPrefixServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(PathPrefixServiceConfig.class);
     public static final String CONFIG_NAME = "pathPrefixService";
@@ -46,7 +51,11 @@ public class PathPrefixServiceConfig {
             configFieldName = MAPPING,
             externalizedKeyName = MAPPING,
             externalized = true,
-            description = "mapping from request path prefixes to serviceIds",
+            description = "mapping from request path prefixes to serviceIds.\n" +
+                    "The following are examples in the values.yml\n" +
+                    "  /v1/address: party.address-1.0.0\n" +
+                    "  /v2/address: party.address-2.0.0\n" +
+                    "  /v1/contact: party.contact-1.0.0",
             valueType = String.class
     )
     private Map<String, String> mapping;

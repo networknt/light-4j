@@ -9,7 +9,7 @@
     },
     "mapping" : {
       "type" : "object",
-      "description" : "mapping from request path prefixes to serviceIds",
+      "description" : "mapping from request path prefixes to serviceIds.\nThe following are examples in the values.yml\n  /v1/address: party.address-1.0.0\n  /v2/address: party.address-2.0.0\n  /v1/contact: party.contact-1.0.0",
       "additionalProperties" : {
         "type" : "string"
       }
