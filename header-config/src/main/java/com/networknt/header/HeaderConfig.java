@@ -27,7 +27,8 @@ public class HeaderConfig {
             externalizedKeyName = ENABLED,
             externalized = true,
             description = "Enable header handler or not. The default to false and it can be enabled in the externalized\n" +
-                    "values.yml file. It is mostly used in the http-sidecar, light-proxy or light-router."
+                    "values.yml file. It is mostly used in the http-sidecar, light-proxy or light-router.",
+            defaultValue = "false"
     )
     boolean enabled;
 

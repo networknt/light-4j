@@ -13,14 +13,14 @@
       "properties" : {
         "update" : {
           "type" : "object",
-          "description" : "List of key value pairs to update headers.",
+          "description" : "Add or update the header with key/value pairs. The value is a map of key and value pairs.\nAlthough HTTP header supports multiple values per key, it is not supported here.",
           "additionalProperties" : {
             "type" : "string"
           }
         },
         "remove" : {
           "type" : "array",
-          "description" : "Remove all the request headers listed here. The value is a list of keys",
+          "description" : "Remove all the request headers listed here. The value is a list of keys.",
           "items" : {
             "type" : "string"
           }
