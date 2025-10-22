@@ -1,7 +1,7 @@
-# request-transformer.yml
+# Request transformer configuration.
 # indicate if this interceptor is enabled or not.
 enabled: ${request-transformer.enabled:true}
-# indicate if the transform interceptor needs to change the request body
+# indicate if the transform interceptor needs to change the request body.
 requiredContent: ${request-transformer.requiredContent:true}
 # default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1.
 defaultBodyEncoding: ${request-transformer.defaultBodyEncoding:UTF-8}

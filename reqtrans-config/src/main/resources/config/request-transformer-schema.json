@@ -5,12 +5,11 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if this interceptor is enabled or not.",
-      "default" : true
+      "description" : "indicate if this interceptor is enabled or not."
     },
     "requiredContent" : {
       "type" : "boolean",
-      "default" : true
+      "description" : "indicate if the transform interceptor needs to change the request body."
     },
     "defaultBodyEncoding" : {
       "type" : "string",

@@ -17,7 +17,11 @@ import java.util.*;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "request-transformer", configName = "request-transformer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "request-transformer",
+        configName = "request-transformer",
+        configDescription = "Request transformer configuration.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class RequestTransformerConfig {
     public static final String CONFIG_NAME = "request-transformer";
     private static final Logger logger = LoggerFactory.getLogger(RequestTransformerConfig.class);
@@ -45,7 +49,7 @@ public class RequestTransformerConfig {
             externalizedKeyName = REQUIRED_CONTENT,
             externalized = true,
             defaultValue = "true",
-            description = ""
+            description = "indicate if the transform interceptor needs to change the request body."
     )
     private boolean requiredContent;
 
