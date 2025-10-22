@@ -1,0 +1,31 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "uri", "domain", "principal", "credential", "searchFilter", "searchBase" ],
+  "properties" : {
+    "uri" : {
+      "type" : "string",
+      "description" : "The LDAP server uri."
+    },
+    "domain" : {
+      "type" : "string",
+      "description" : "The LDAP domain name."
+    },
+    "principal" : {
+      "type" : "string",
+      "description" : "The user principal for binding (authentication)."
+    },
+    "credential" : {
+      "type" : "string",
+      "description" : "The user credential (password) for binding."
+    },
+    "searchFilter" : {
+      "type" : "string",
+      "description" : "The search filter (e.g., (&(objectClass=user)(sAMAccountName={0})))."
+    },
+    "searchBase" : {
+      "type" : "string",
+      "description" : "The search base DN (Distinguished Name)."
+    }
+  }
+}
