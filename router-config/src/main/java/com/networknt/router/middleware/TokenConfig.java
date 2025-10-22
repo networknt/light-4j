@@ -12,7 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-@ConfigSchema(configKey = "token", configName = "token", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "token",
+        configName = "token",
+        configDescription = "This is the configuration file for the TokenHandler that is responsible for getting\n" +
+                "a client credentials token in http-sidecar and light-gateway when calling others.\n" +
+                "The configuration for one or multiple OAuth 2.0 providers is in the client.yml file.\n",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class TokenConfig {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfig.class);
     public static final String CONFIG_NAME = "token";
@@ -23,7 +30,8 @@ public class TokenConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = ""
+            defaultValue = "false",
+            description = "Indicate if the handler is enabled."
     )
     boolean enabled;
 

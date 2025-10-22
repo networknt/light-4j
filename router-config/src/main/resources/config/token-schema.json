@@ -4,7 +4,8 @@
   "required" : [ "enabled", "appliedPathPrefixes" ],
   "properties" : {
     "enabled" : {
-      "type" : "boolean"
+      "type" : "boolean",
+      "description" : "Indicate if the handler is enabled."
     },
     "appliedPathPrefixes" : {
       "type" : "array",

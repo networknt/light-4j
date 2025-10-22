@@ -1,4 +1,9 @@
-enabled: ${token.enabled:}
+# This is the configuration file for the TokenHandler that is responsible for getting
+# a client credentials token in http-sidecar and light-gateway when calling others.
+# The configuration for one or multiple OAuth 2.0 providers is in the client.yml file.
+# 
+# Indicate if the handler is enabled.
+enabled: ${token.enabled:false}
 # applied path prefixes for the token handler. Only the path prefixes listed here will
 # get the token based on the configuration in the client.yml section. This will allow
 # the share gateway to define only one default chain with some endpoints get the token
