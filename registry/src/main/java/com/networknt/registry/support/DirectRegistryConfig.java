@@ -13,7 +13,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@ConfigSchema(configKey = "direct-registry", configName = "direct-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "direct-registry",
+        configName = "direct-registry",
+        configDescription = "Direct registry configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
 public class DirectRegistryConfig {
     private static final Logger logger = LoggerFactory.getLogger(DirectRegistryConfig.class);
 
@@ -29,7 +33,20 @@ public class DirectRegistryConfig {
                     "the parameters. This configuration will only be used if parameters in the service.yml for DirectRegistry is null.\n" +
                     "\n" +
                     "directUrls is the mapping between the serviceId to the hosts separated by comma. If environment tag is used, you\n" +
-                    "can add it to the serviceId separated with a vertical bar |",
+                    "can add it to the serviceId separated with a vertical bar |\n" +
+                    "The following is in YAML format.\n" +
+                    "  code: http://192.168.1.100:6881,http://192.168.1.101:6881\n" +
+                    "  token: http://192.168.1.100:6882\n" +
+                    "  com.networknt.test-1.0.0: http://localhost,https://localhost\n" +
+                    "  command|0000: https://192.168.1.142:8440\n" +
+                    "  command|0001: https://192.168.1.142:8441\n" +
+                    "  command|0002: https://192.168.1.142:8442\n" +
+                    "\n" +
+                    "The following is in JSON string format.\n" +
+                    "directUrls: {\"code\":\"http://192.168.1.100:6881,http://192.168.1.101:6881\",\"token\":\"http://192.168.1.100:6882\",\"com.networknt.test-1.0.0\":\"http://localhost,https://localhost\",\"command|0000\":\"https://192.168.1.142:8440\",\"command|0001\":\"https://192.168.1.142:8441\",\"command|0002\":\"https://192.168.1.142:8442\"}\n" +
+                    "\n" +
+                    "The following is in string map format.\n" +
+                    "directUrls: code=http://192.168.1.100:6881,http://192.168.1.101:6881&token=http://192.168.1.100:6882&com.networknt.test-1.0.0=http://localhost,https://localhost&command|0000=https://192.168.1.142:8440&command|0001=https://192.168.1.142:8441&command|0002=https://192.168.1.142:8442",
             valueType = List.class
     )
     Map<String, List<URL>> directUrls;
