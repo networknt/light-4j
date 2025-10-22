@@ -1,0 +1,50 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "proxyHost", "proxyPort", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "metricsInjection", "metricsName" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if the handler is enabled or not"
+    },
+    "proxyHost" : {
+      "type" : "string",
+      "description" : "Proxy Host if calling within the corp network with a gateway like Mcafee gateway."
+    },
+    "proxyPort" : {
+      "type" : "integer",
+      "description" : "Proxy Port if proxy host is used. default value will be 443 which means HTTPS."
+    },
+    "enableHttp2" : {
+      "type" : "boolean",
+      "description" : "If HTTP2 is used to connect to the external service."
+    },
+    "maxConnectionRetries" : {
+      "type" : "integer",
+      "description" : "Max Connection Retries"
+    },
+    "pathHostMappings" : {
+      "type" : "array",
+      "description" : "A list of request path to the service host mappings. Other requests will skip this handler. The value is\na string with two parts. The first part is the path and the second is the target host the request is\nfinally routed to.\n",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "urlRewriteRules" : {
+      "type" : "array",
+      "description" : "URL rewrite rules, each line will have two parts: the regex patten and replace string separated\nwith a space. For details, please refer to the light-router router.yml configuration.\nTest your rules at https://www.freeformatter.com/java-regex-tester.html\n",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "metricsInjection" : {
+      "type" : "boolean",
+      "description" : "When ExternalServiceHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for\nthe total response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.\n"
+    },
+    "metricsName" : {
+      "type" : "string",
+      "description" : "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\nmetrics info can be categorized in a tree structure under the name. By default, it is external-response, and\nusers can change it.\n",
+      "default" : "external-response"
+    }
+  }
+}

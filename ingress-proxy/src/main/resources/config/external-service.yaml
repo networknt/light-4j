@@ -1,0 +1,29 @@
+# Configuration for external service handler to access third party services through proxy/gateway.
+# Indicate if the handler is enabled or not
+enabled: ${externalService.enabled:false}
+# Proxy Host if calling within the corp network with a gateway like Mcafee gateway.
+proxyHost: ${externalService.proxyHost:}
+# Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
+proxyPort: ${externalService.proxyPort:}
+# If HTTP2 is used to connect to the external service.
+enableHttp2: ${externalService.enableHttp2:false}
+# Max Connection Retries
+maxConnectionRetries: ${externalService.maxConnectionRetries:3}
+# A list of request path to the service host mappings. Other requests will skip this handler. The value is
+# a string with two parts. The first part is the path and the second is the target host the request is
+# finally routed to.
+pathHostMappings: ${externalService.pathHostMappings:}
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. For details, please refer to the light-router router.yml configuration.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${externalService.urlRewriteRules:}
+# When ExternalServiceHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for
+# the total response time of the downstream API. With this value injected, users can quickly determine how much
+# time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including
+# the network latency. By default, it is false, and metrics will not be collected and injected into the metrics
+# handler configured in the request/response chain.
+metricsInjection: ${externalService.metricsInjection:false}
+# When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the
+# metrics info can be categorized in a tree structure under the name. By default, it is external-response, and
+# users can change it.
+metricsName: ${externalService.metricsName:external-response}
