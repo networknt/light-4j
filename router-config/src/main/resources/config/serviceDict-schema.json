@@ -9,7 +9,7 @@
     },
     "mapping" : {
       "type" : "object",
-      "description" : "mapping from 'pathPrefix@requestMethod' to serviceIds",
+      "description" : "mapping from 'pathPrefix@requestMethod' to serviceIds\nThe following are examples in values.yml\n  /v1/address@get: party.address-1.0.0\n  /v2/address@get: party.address-2.0.0\n  /v1/contact@post: party.contact-1.0.0",
       "additionalProperties" : {
         "type" : "string"
       }

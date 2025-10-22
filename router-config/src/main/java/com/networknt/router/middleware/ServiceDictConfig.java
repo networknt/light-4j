@@ -22,7 +22,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "serviceDict", configName = "serviceDict", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "serviceDict",
+        configName = "serviceDict",
+        configDescription = "Service dict configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class ServiceDictConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServiceDictConfig.class);
     public static final String CONFIG_NAME = "serviceDict";
@@ -47,7 +52,11 @@ public class ServiceDictConfig {
             configFieldName = MAPPING,
             externalizedKeyName = MAPPING,
             externalized = true,
-            description = "mapping from 'pathPrefix@requestMethod' to serviceIds",
+            description = "mapping from 'pathPrefix@requestMethod' to serviceIds\n" +
+            "The following are examples in values.yml\n" +
+            "  /v1/address@get: party.address-1.0.0\n" +
+            "  /v2/address@get: party.address-2.0.0\n" +
+            "  /v1/contact@post: party.contact-1.0.0",
             valueType = String.class
     )
     private Map<String, String> mapping;
