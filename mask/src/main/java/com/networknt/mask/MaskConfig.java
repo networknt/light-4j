@@ -6,7 +6,15 @@ import com.networknt.config.schema.OutputFormat;
 
 import java.util.Map;
 
-@ConfigSchema(configName = "mask", configKey = "mask", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "mask",
+        configKey = "mask",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "This is the default mask config file that is used to mask password in\n" +
+                "uri before logging it. If you want to overwrite this config file, please\n" +
+                "make sure that this entry is not removed. The metrics module is using it."
+
+)
 public class MaskConfig {
 
     public static final String STRING = "string";
@@ -16,6 +24,7 @@ public class MaskConfig {
     @MapField(
             configFieldName = STRING,
             externalizedKeyName = STRING,
+            externalized = true,
             defaultValue = "{\"uri\":{\"password=[^&]*\": \"password=******\"}}",
             valueType = Map.class
     )
