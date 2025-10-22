@@ -5,13 +5,11 @@
   "properties" : {
     "enableVerifyJwt" : {
       "type" : "boolean",
-      "description" : "Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification\nif this flag is false. It should only be set to false on the dev environment for testing\npurposes. If you have some endpoints that want to skip the JWT verification, you can put the\nrequest path prefix in skipPathPrefixes.",
-      "default" : true
+      "description" : "Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification\nif this flag is false. It should only be set to false on the dev environment for testing\npurposes. If you have some endpoints that want to skip the JWT verification, you can put the\nrequest path prefix in skipPathPrefixes."
     },
     "enableVerifySwt" : {
       "type" : "boolean",
-      "description" : "Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification\nif this flag is false. It should only be set to false on the dev environment for testing\npurposes. If you have some endpoints that want to skip the SWT verification, you can put the\nrequest path prefix in skipPathPrefixes.",
-      "default" : true
+      "description" : "Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification\nif this flag is false. It should only be set to false on the dev environment for testing\npurposes. If you have some endpoints that want to skip the SWT verification, you can put the\nrequest path prefix in skipPathPrefixes."
     },
     "swtClientIdHeader" : {
       "type" : "string",
@@ -21,17 +19,15 @@
     "swtClientSecretHeader" : {
       "type" : "string",
       "description" : "swt clientSecret header name. When light-gateway is used and the consumer app does not want to save\nthe client secret in the configuration file, it can be passed in the header.",
-      "default" : "swt_secret"
+      "default" : "swt-secret"
     },
     "enableExtractScopeToken" : {
       "type" : "boolean",
-      "description" : "Extract JWT scope token from the X-Scope-Token header and validate the JWT token",
-      "default" : true
+      "description" : "Extract JWT scope token from the X-Scope-Token header and validate the JWT token"
     },
     "enableVerifyScope" : {
       "type" : "boolean",
-      "description" : "Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the\nlight gateway as a centralized gateway without backend API specifications, you can still enable\nthis flag to allow the admin endpoints to have scopes verified. And all backend APIs without\nspecifications skip the scope verification if the spec does not exist with the skipVerifyScopeWithoutSpec\nflag to true. Also, you need to have the openapi.yml specification file in the config folder to\nenable it, as the scope verification compares the scope from the JWT token and the scope in the\nendpoint specification.",
-      "default" : true
+      "description" : "Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the\nlight gateway as a centralized gateway without backend API specifications, you can still enable\nthis flag to allow the admin endpoints to have scopes verified. And all backend APIs without\nspecifications skip the scope verification if the spec does not exist with the skipVerifyScopeWithoutSpec\nflag to true. Also, you need to have the openapi.yml specification file in the config folder to\nenable it, as the scope verification compares the scope from the JWT token and the scope in the\nendpoint specification."
     },
     "skipVerifyScopeWithoutSpec" : {
       "type" : "boolean",
@@ -43,8 +39,7 @@
     },
     "enableH2c" : {
       "type" : "boolean",
-      "description" : "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\nBy default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls.",
-      "default" : true
+      "description" : "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\nBy default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls."
     },
     "enableMockJwt" : {
       "type" : "boolean",
@@ -52,7 +47,7 @@
     },
     "enableRelaxedKeyValidation" : {
       "type" : "boolean",
-      "default" : true
+      "description" : "Enables relaxed verification for jwt. e.g. Disables key length requirements.\nShould be used in test environments only.\n"
     },
     "jwt" : {
       "type" : "object",
@@ -63,30 +58,29 @@
         },
         "certificate" : {
           "type" : "object",
+          "description" : " '100': primary.crt\n '101': secondary.crt\n",
           "additionalProperties" : {
             "type" : "string"
           }
         },
         "keyResolver" : {
           "type" : "string",
-          "description" : "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2"
+          "description" : "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2",
+          "default" : "JsonWebKeySet"
         }
       }
     },
     "logJwtToken" : {
       "type" : "boolean",
-      "description" : "Enable or disable JWT token logging for audit. This is to log the entire token\nor choose the next option that only logs client_id, user_id and scope.",
-      "default" : true
+      "description" : "Enable or disable JWT token logging for audit. This is to log the entire token\nor choose the next option that only logs client_id, user_id and scope."
     },
     "logClientUserScope" : {
       "type" : "boolean",
-      "description" : "Enable or disable client_id, user_id and scope logging if you don't want to log\nthe entire token. Choose this option or the option above.",
-      "default" : true
+      "description" : "Enable or disable client_id, user_id and scope logging if you don't want to log\nthe entire token. Choose this option or the option above."
     },
     "enableJwtCache" : {
       "type" : "boolean",
-      "description" : "Enable JWT token cache to speed up verification. This will only verify expired time\nand skip the signature verification as it takes more CPU power and a long time. If\neach request has a different jwt token, like authorization code flow, this indicator\nshould be turned off. Otherwise, the cached jwt will only be removed after 15 minutes\nand the cache can grow bigger if the number of requests is very high. This will cause\nmemory kill in a Kubernetes pod if the memory setting is limited.",
-      "default" : true
+      "description" : "Enable JWT token cache to speed up verification. This will only verify expired time\nand skip the signature verification as it takes more CPU power and a long time. If\neach request has a different jwt token, like authorization code flow, this indicator\nshould be turned off. Otherwise, the cached jwt will only be removed after 15 minutes\nand the cache can grow bigger if the number of requests is very high. This will cause\nmemory kill in a Kubernetes pod if the memory setting is limited."
     },
     "jwtCacheFullSize" : {
       "type" : "integer",
@@ -94,8 +88,7 @@
     },
     "bootstrapFromKeyService" : {
       "type" : "boolean",
-      "description" : "If you are using light-oauth2, then you don't need to have oauth subfolder for public\nkey certificate to verify JWT token, the key will be retrieved from key endpoint once\nthe first token is arrived. Default to false for dev environment without oauth2 server\nor official environment that use other OAuth 2.0 providers.",
-      "default" : true
+      "description" : "If you are using light-oauth2, then you don't need to have oauth subfolder for public\nkey certificate to verify JWT token, the key will be retrieved from key endpoint once\nthe first token is arrived. Default to false for dev environment without oauth2 server\nor official environment that use other OAuth 2.0 providers."
     },
     "providerId" : {
       "type" : "string",

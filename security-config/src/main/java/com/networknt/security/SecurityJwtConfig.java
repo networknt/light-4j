@@ -23,13 +23,6 @@ public class SecurityJwtConfig {
     private static final String KEY_RESOLVER = "keyResolver";
     private static final String CERTIFICATE = "certificate";
 
-    @IntegerField(
-            configFieldName = CLOCK_SKEW_IN_SECONDS,
-            externalizedKeyName = CLOCK_SKEW_IN_SECONDS,
-            externalized = true
-    )
-    private int clockSkewInSeconds;
-
     // NOTE: This field can be deserialized as a string or a map.
     // This is to keep backwards compatibility
     @MapField(
@@ -37,15 +30,27 @@ public class SecurityJwtConfig {
             externalizedKeyName = CERTIFICATE,
             externalized = true,
             defaultValue = "100=primary.crt&101=secondary.crt",
+            description =
+                    " '100': primary.crt\n" +
+                    " '101': secondary.crt\n",
             valueType = String.class
     )
     @JsonDeserialize(using = CertificateDeserializer.class)
     private Map<String, Object> certificate;
 
+    @IntegerField(
+            configFieldName = CLOCK_SKEW_IN_SECONDS,
+            externalizedKeyName = CLOCK_SKEW_IN_SECONDS,
+            defaultValue = "60",
+            externalized = true
+    )
+    private int clockSkewInSeconds;
+
     @StringField(
             configFieldName = KEY_RESOLVER,
             externalizedKeyName = KEY_RESOLVER,
             externalized = true,
+            defaultValue = "JsonWebKeySet",
             description = "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2"
     )
     private String keyResolver;

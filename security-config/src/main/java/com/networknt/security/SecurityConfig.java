@@ -19,7 +19,17 @@ import java.util.*;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configName = "security", configKey = "security", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "security",
+        configKey = "security",
+        configDescription = "Security configuration for security module in light-4j. For each individual framework,\n" +
+                "it has a framework specific security config file to control if security and scopes\n" +
+                "verification are enabled or not.\n" +
+                "This configuration file is only for JwtHelper class most of the cases. However, if there\n" +
+                "is no framework specific security configuration available. The fallback security config\n" +
+                "is read from this file. Hence, we leave the enableVerifyJwt and enableVerifyScope to true.\n",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class SecurityConfig {
     public static final String CONFIG_NAME = "security";
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
@@ -91,7 +101,7 @@ public class SecurityConfig {
             configFieldName = SWT_CLIENT_SECRET_HEADER,
             externalizedKeyName = SWT_CLIENT_SECRET_HEADER,
             externalized = true,
-            defaultValue = "swt_secret",
+            defaultValue = "swt-secret",
             description = "swt clientSecret header name. When light-gateway is used and the consumer app does not want to save\n" +
                     "the client secret in the configuration file, it can be passed in the header."
     )
@@ -125,6 +135,7 @@ public class SecurityConfig {
             configFieldName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
             externalizedKeyName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
             externalized = true,
+            defaultValue = "false",
             description = "Users should only use this flag in a shared light gateway if the backend API specifications are\n" +
                     "unavailable in the gateway config folder. If this flag is true and the enableVerifyScope is true,\n" +
                     "the security handler will invoke the scope verification for all endpoints. However, if the endpoint\n" +
@@ -136,6 +147,7 @@ public class SecurityConfig {
             configFieldName = IGNORE_JWT_EXPIRY,
             externalizedKeyName = IGNORE_JWT_EXPIRY,
             externalized = true,
+            defaultValue = "false",
             description = "If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless\n" +
                     "you have a strong reason, please use it only on the dev environment if your OAuth 2 provider\n" +
                     "doesn't support long-lived token for dev environment or test automation."
@@ -148,7 +160,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_H2C,
             externalizedKeyName = ENABLE_H2C,
             externalized = true,
-            defaultValue = "true",
+            defaultValue = "false",
             description = "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\n" +
                     "By default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls."
     )
@@ -158,6 +170,7 @@ public class SecurityConfig {
             configFieldName = ENABLE_MOCK_JWT,
             externalizedKeyName = ENABLE_MOCK_JWT,
             externalized = true,
+            defaultValue = "false",
             description = "User for test only. should be always be false on official environment."
     )
     private boolean enableMockJwt;
@@ -166,32 +179,11 @@ public class SecurityConfig {
             configFieldName = ENABLE_RELAXED_KEY_CONSTRAINTS,
             externalizedKeyName = ENABLE_RELAXED_KEY_CONSTRAINTS,
             externalized = true,
-            defaultValue = "true",
-            description = ""
+            defaultValue = "false",
+            description = "Enables relaxed verification for jwt. e.g. Disables key length requirements.\n" +
+                    "Should be used in test environments only.\n"
     )
     private boolean enableRelaxedKeyValidation;
-
-    // JWT
-
-//    @IntegerField(
-//            configFieldName = CLOCK_SKEW_IN_SECONDS,
-//            externalizedKeyName = CLOCK_SKEW_IN_SECONDS,
-//            externalized = true
-//    )
-//    private int clockSkewInSeconds;
-//
-//
-//    private Map<String, Object> certificate;
-//
-//    @StringField(
-//            configFieldName = KEY_RESOLVER,
-//            externalizedKeyName = KEY_RESOLVER,
-//            externalized = true,
-//            description = "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2"
-//    )
-//    private String keyResolver;
-
-    // ~JWT
 
     @ObjectField(
             configFieldName = JWT,
@@ -215,7 +207,7 @@ public class SecurityConfig {
             configFieldName = LOG_CLIENT_USER_SCOPE,
             externalizedKeyName = LOG_CLIENT_USER_SCOPE,
             externalized = true,
-            defaultValue = "true",
+            defaultValue = "false",
             description = "Enable or disable client_id, user_id and scope logging if you don't want to log\n" +
                     "the entire token. Choose this option or the option above."
     )
@@ -239,6 +231,7 @@ public class SecurityConfig {
             configFieldName = JWT_CACHE_FULL_SIZE,
             externalizedKeyName = JWT_CACHE_FULL_SIZE,
             externalized = true,
+            defaultValue = "100",
             description = "If enableJwtCache is true, then an error message will be shown up in the log if the\n" +
                     "cache size is bigger than the jwtCacheFullSize. This helps the developers to detect\n" +
                     "cache problem if many distinct tokens flood the cache in a short period of time. If\n" +
@@ -251,7 +244,7 @@ public class SecurityConfig {
             configFieldName = BOOTSTRAP_FROM_KEY_SERVICE,
             externalizedKeyName = BOOTSTRAP_FROM_KEY_SERVICE,
             externalized = true,
-            defaultValue = "true",
+            defaultValue = "false",
             description = "If you are using light-oauth2, then you don't need to have oauth subfolder for public\n" +
                     "key certificate to verify JWT token, the key will be retrieved from key endpoint once\n" +
                     "the first token is arrived. Default to false for dev environment without oauth2 server\n" +

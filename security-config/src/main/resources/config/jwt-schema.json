@@ -5,8 +5,7 @@
   "properties" : {
     "expiredInMinutes" : {
       "type" : "integer",
-      "description" : "expired in 10 minutes by default for issued JWT tokens",
-      "default" : 10
+      "description" : "expired in 10 minutes by default for issued JWT tokens"
     },
     "issuer" : {
       "type" : "string",
