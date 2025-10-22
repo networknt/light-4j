@@ -1,3 +1,4 @@
+# Metrics handler configuration that is shared by all the push metrics handlers.
 # If metrics handler is enabled or not. Default is true as long as one of the handlers is in the
 # request/response chain.
 enabled: ${metrics.enabled:true}

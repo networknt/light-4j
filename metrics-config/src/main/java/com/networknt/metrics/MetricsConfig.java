@@ -29,7 +29,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configName = "metrics", configKey = "metrics", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "metrics",
+        configKey = "metrics",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Metrics handler configuration that is shared by all the push metrics handlers."
+)
 public class MetricsConfig {
     public static final String CONFIG_NAME = "metrics";
     private static final String ENABLED = "enabled";
@@ -62,6 +67,7 @@ public class MetricsConfig {
             configFieldName = ENABLED_JVM_MONITOR,
             externalizedKeyName = ENABLED_JVM_MONITOR,
             externalized = true,
+            defaultValue = "false",
             description = "If metrics handler is enabled for JVM MBean or not. If enabled, the CPU and Memory usage will be\n" +
                     "collected and send to the time series database."
     )
@@ -157,6 +163,7 @@ public class MetricsConfig {
             configFieldName = SEND_SCOPE_CLIENT_ID,
             externalizedKeyName = SEND_SCOPE_CLIENT_ID,
             externalized = true,
+            defaultValue = "false",
             description = "A flag to indicate if the scope client id will be sent as a common tag. If it is true, try to retrieve\n" +
                     "it from the audit info and send it if it is not null. If it does not exist, \"unknown\" will be sent.\n" +
                     "By default, this tag is not sent regardless if it is in the audit info. You only enable this if your\n" +
@@ -170,6 +177,7 @@ public class MetricsConfig {
             configFieldName = SEND_CALLER_ID,
             externalizedKeyName = SEND_CALLER_ID,
             externalized = true,
+            defaultValue = "false",
             description = "A flag to indicate if the caller id will be sent as a common tag. If it is true, try to retrieve it\n" +
                     "from the audit info and send it if it is not null. If it doesn't exist, \"unknown\" will be sent.\n" +
                     "By default, this tag is not sent regardless if it is in the audit info. The purpose of this tag is\n" +
@@ -184,6 +192,7 @@ public class MetricsConfig {
             configFieldName = SEND_ISSUER,
             externalizedKeyName = SEND_ISSUER,
             externalized = true,
+            defaultValue = "false",
             description = "A flag to indicate if the issuer will be sent as a common tag. If it is true, try to retrieve it\n" +
                     "from the audit info and send it if it is not null. If it doesn't exist, \"unknown\" will be sent.\n" +
                     "By default, this tag is not sent regardless if it is in the audit info. This tag should only be\n" +

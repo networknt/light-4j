@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "If metrics handler is enabled or not. Default is true as long as one of the handlers is in the\nrequest/response chain.",
-      "default" : true
+      "description" : "If metrics handler is enabled or not. Default is true as long as one of the handlers is in the\nrequest/response chain."
     },
     "enableJVMMonitor" : {
       "type" : "boolean",
@@ -29,8 +28,7 @@
     },
     "serverPort" : {
       "type" : "integer",
-      "description" : "Time series database or metrics server port number.",
-      "default" : 8086
+      "description" : "Time series database or metrics server port number."
     },
     "serverName" : {
       "type" : "string",
@@ -49,8 +47,7 @@
     },
     "reportInMinutes" : {
       "type" : "integer",
-      "description" : "report and reset metrics in minutes.",
-      "default" : 1
+      "description" : "report and reset metrics in minutes."
     },
     "productName" : {
       "type" : "string",
