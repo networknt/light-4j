@@ -27,7 +27,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "health", configName = "health", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "health",
+        configName = "health",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Server health endpoint that can output OK to indicate the server is alive."
+)
 public class HealthConfig {
     public static final String CONFIG_NAME = "health";
     private static final String ENABLED = "enabled";
@@ -54,7 +59,8 @@ public class HealthConfig {
             externalizedKeyName = USE_JSON,
             externalized = true,
             description = "true to return Json format message. By default, it is false. It will only be changed to true if the monitor\n" +
-                          "tool only support JSON response body."
+                          "tool only support JSON response body.",
+            defaultValue = "false"
     )
     boolean useJson;
 
@@ -76,7 +82,8 @@ public class HealthConfig {
             externalized = true,
             description = "For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down\n" +
                     "stream API before return the health status to the invoker. By default, it is not enabled.\n" +
-                    "if the health check needs to invoke down streams API. It is false by default."
+                    "if the health check needs to invoke down streams API. It is false by default.",
+            defaultValue = "false"
     )
     boolean downstreamEnabled;
 

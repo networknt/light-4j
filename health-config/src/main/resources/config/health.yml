@@ -1,5 +1,4 @@
-# Server health endpoint that can output OK to indicate the server is alive
-
+# Server health endpoint that can output OK to indicate the server is alive.
 # true to enable this middleware handler. By default, the health check is enabled.
 enabled: ${health.enabled:true}
 # true to return Json format message. By default, it is false. It will only be changed to true if the monitor
@@ -10,10 +9,8 @@ useJson: ${health.useJson:false}
 # As the health check is used by the control plane for service discovery, by default, one request
 # per ten seconds. The quick response time is very important to not block the control plane.
 timeout: ${health.timeout:2000}
-
 # For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down
 # stream API before return the health status to the invoker. By default, it is not enabled.
-
 # if the health check needs to invoke down streams API. It is false by default.
 downstreamEnabled: ${health.downstreamEnabled:false}
 # down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar.

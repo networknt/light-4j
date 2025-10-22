@@ -1,3 +1,4 @@
+# Server health endpoint that can output OK to indicate the server is alive.
 # true to enable this middleware handler. By default, the health check is enabled.
 enabled: ${health.enabled:true}
 # true to return Json format message. By default, it is false. It will only be changed to true if the monitor
