@@ -1,4 +1,4 @@
-# oauthServer.yml
+# OAuth server configuration
 # indicate if the handler is enabled or not in the handler chain.
 enabled: ${oauthServer.enabled:true}
 # If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as

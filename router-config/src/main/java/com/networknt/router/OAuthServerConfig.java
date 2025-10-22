@@ -12,7 +12,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "oauthServer", configName = "oauthServer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "oauthServer",
+        configName = "oauthServer",
+        configDescription = "OAuth server configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class OAuthServerConfig {
     private static final Logger logger = LoggerFactory.getLogger(OAuthServerConfig.class);
     public static final String CONFIG_NAME = "oauthServer";
@@ -38,6 +43,7 @@ public class OAuthServerConfig {
             configFieldName = GET_METHOD_ENABLED,
             externalizedKeyName = GET_METHOD_ENABLED,
             externalized = true,
+            defaultValue = "false",
             description = "If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as\n" +
                     "a temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL."
     )
@@ -56,6 +62,7 @@ public class OAuthServerConfig {
             configFieldName = PASS_THROUGH,
             externalizedKeyName = PASS_THROUGH,
             externalized = true,
+            defaultValue = "false",
             description = "An indicator to for path through to an OAuth 2.0 server to get a real token."
     )
     private boolean passThrough;
