@@ -1,3 +1,4 @@
+# Prometheus Metrics handler configuration.
 # If metrics handler is enabled or not
 enabled: ${prometheus.enabled:false}
 # If the Prometheus hotspot is enabled or not.

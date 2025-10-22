@@ -27,7 +27,12 @@ import com.networknt.config.schema.OutputFormat;
  *
  * @author Gavin Chen
  */
-@ConfigSchema(configName = "prometheus", configKey = "prometheus", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "prometheus",
+        configKey = "prometheus",
+        configDescription = "Prometheus Metrics handler configuration.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class PrometheusConfig {
     public static final String CONFIG_NAME = "prometheus";
 
