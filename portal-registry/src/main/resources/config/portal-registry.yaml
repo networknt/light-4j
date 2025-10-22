@@ -5,7 +5,7 @@ portalUrl: ${portalRegistry.portalUrl:https://lightapi.net}
 # provider during the deployment. And then pass the token to the container with an environment variable. The other
 # option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In
 # that case, you can use portalRegistry.portalToken as the key instead of the environment variable.
-portalToken: ${portalRegistry.authorization:}
+portalToken: ${portalRegistry.portalToken:}
 # number of requests before resetting the shared connection to work around HTTP/2 limitation
 maxReqPerConn: ${portalRegistry.maxReqPerConn:1000000}
 # De-register the service after the amount of time with health check failed. Once a health check is failed, the
@@ -21,9 +21,12 @@ checkInterval: ${portalRegistry.checkInterval:10000}
 # implement a customized health check handler that checks dependencies. i.e. if DB is down, return status 400. This
 # is the recommended configuration that allows the light-portal controller to poll the health info from each service.
 httpCheck: ${portalRegistry.httpCheck:false}
-# The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;
-# however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/
-# Note that we need to provide the leading and trailing slash in the path definition.
+# enable health check TTL. When this is enabled, The light-portal controller won't actively check your service to
+# ensure it is healthy, but your service will call check endpoint with a heartbeat to indicate it is alive. This
+# requires that the service is built on top of light-4j, and the HTTP check is not available. For example, your service
+# is behind NAT. If you are running the service within your internal network and using the SaaS lightapi.net portal,
+# this is the only option as our portal controller cannot access your internal service to perform a health check.
+# We recommend deploying light-portal internally if you are running services within an internal network for efficiency.
 ttlCheck: ${portalRegistry.ttlCheck:true}
 # The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;
 # however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/

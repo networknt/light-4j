@@ -34,7 +34,7 @@ public class PortalRegistryConfig {
 
     @StringField(
             configFieldName = "portalToken",
-            externalizedKeyName = "authorization",
+            externalizedKeyName = "portalToken",
             externalized = true,
             description = "Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0\n" +
                     "provider during the deployment. And then pass the token to the container with an environment variable. The other\n" +
@@ -78,6 +78,7 @@ public class PortalRegistryConfig {
             configFieldName = "httpCheck",
             externalizedKeyName = "httpCheck",
             externalized = true,
+            defaultValue = "false",
             description = "enable health check HTTP. An HTTP get request will be sent to the service to ensure that 200 response status is\n" +
                     "coming back. This is suitable for service that depending on the database or other infrastructure services. You should\n" +
                     "implement a customized health check handler that checks dependencies. i.e. if DB is down, return status 400. This\n" +
@@ -90,9 +91,12 @@ public class PortalRegistryConfig {
             externalizedKeyName = "ttlCheck",
             externalized = true,
             defaultValue = "true",
-            description = "The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;\n" +
-                    "however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/\n" +
-                    "Note that we need to provide the leading and trailing slash in the path definition."
+            description = "enable health check TTL. When this is enabled, The light-portal controller won't actively check your service to\n" +
+                    "ensure it is healthy, but your service will call check endpoint with a heartbeat to indicate it is alive. This\n" +
+                    "requires that the service is built on top of light-4j, and the HTTP check is not available. For example, your service\n" +
+                    "is behind NAT. If you are running the service within your internal network and using the SaaS lightapi.net portal,\n" +
+                    "this is the only option as our portal controller cannot access your internal service to perform a health check.\n" +
+                    "We recommend deploying light-portal internally if you are running services within an internal network for efficiency.\n"
     )
     boolean ttlCheck;
 
