@@ -1,9 +1,6 @@
----
-# Sanitize request for cross-site scripting during runtime
-
+# Sanitizer handler configuration
 # indicate if sanitizer is enabled or not
 enabled: ${sanitizer.enabled:false}
-
 # if it is enabled, the body needs to be sanitized
 bodyEnabled: ${sanitizer.bodyEnabled:true}
 # the encoder for the body. javascript, javascript-attribute, javascript-block or javascript-source
@@ -19,7 +16,6 @@ bodyAttributesToEncode: ${sanitizer.bodyAttributesToEncode:}
 # several values with a list of the keys. When this option is selected, you can not use the
 # bodyAttributesToEncode list.
 bodyAttributesToIgnore: ${sanitizer.bodyAttributesToIgnore:}
-
 # if it is enabled, the header needs to be sanitized
 headerEnabled: ${sanitizer.headerEnabled:true}
 # the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source

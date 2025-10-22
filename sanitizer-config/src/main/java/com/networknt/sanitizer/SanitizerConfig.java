@@ -34,7 +34,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "sanitizer", configName = "sanitizer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "sanitizer",
+        configName = "sanitizer",
+        configDescription = "Sanitizer handler configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class SanitizerConfig {
     public static final String ENABLED = "enabled";
     public static final String BODY_ENABLED = "bodyEnabled";
@@ -56,6 +61,7 @@ public class SanitizerConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
+            defaultValue = "false",
             description = "indicate if sanitizer is enabled or not"
     )
     private boolean enabled;
@@ -112,11 +118,11 @@ public class SanitizerConfig {
     )
     private boolean headerEnabled;
 
-    @BooleanField(
+    @StringField(
             configFieldName = HEADER_ENCODER,
             externalizedKeyName =  HEADER_ENCODER,
             externalized = true,
-            defaultValue = "true",
+            defaultValue = "javascript-source",
             description = "the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source\n" +
                     "There are other encoders that you can choose depending on your requirement. Please refer to site\n" +
                     "https://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java"
