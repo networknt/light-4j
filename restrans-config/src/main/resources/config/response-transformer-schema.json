@@ -5,17 +5,15 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if this interceptor is enabled or not.",
-      "default" : true
+      "description" : "indicate if the interceptor is enabled or not."
     },
     "requiredContent" : {
       "type" : "boolean",
-      "description" : "indicate if the transform interceptor needs to change the request body",
-      "default" : true
+      "description" : "indicate if the transformer needs to modify the response body in the transform rules."
     },
     "defaultBodyEncoding" : {
       "type" : "string",
-      "description" : "default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1.",
+      "description" : "default body encoding for the response body. The default value is UTF-8. Other options are ISO-8859-1 and US-ASCII.",
       "default" : "UTF-8"
     },
     "appliedPathPrefixes" : {

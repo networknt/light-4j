@@ -10,7 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-@ConfigSchema(configKey = "response-transformer", configName = "response-transformer", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "response-transformer",
+        configName = "response-transformer",
+        configDescription = "Response transformer configuration.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class ResponseTransformerConfig {
     public static final String CONFIG_NAME = "response-transformer";
     private static final Logger logger = LoggerFactory.getLogger(ResponseTransformerConfig.class);
@@ -29,7 +34,7 @@ public class ResponseTransformerConfig {
             externalizedKeyName = ENABLED,
             externalized = true,
             defaultValue = "true",
-            description = "indicate if this interceptor is enabled or not."
+            description = "indicate if the interceptor is enabled or not."
     )
     private boolean enabled;
 
@@ -38,7 +43,7 @@ public class ResponseTransformerConfig {
             externalizedKeyName = REQUIRED_CONTENT,
             externalized = true,
             defaultValue = "true",
-            description = "indicate if the transform interceptor needs to change the request body"
+            description = "indicate if the transformer needs to modify the response body in the transform rules."
     )
     private boolean requiredContent;
 
@@ -47,7 +52,7 @@ public class ResponseTransformerConfig {
             externalizedKeyName = DEFAULT_BODY_ENCODING,
             externalized = true,
             defaultValue = "UTF-8",
-            description = "default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1."
+            description = "default body encoding for the response body. The default value is UTF-8. Other options are ISO-8859-1 and US-ASCII."
     )
     private String defaultBodyEncoding;
 

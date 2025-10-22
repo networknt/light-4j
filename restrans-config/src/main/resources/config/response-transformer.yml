@@ -1,5 +1,4 @@
-# response-transformer.yml
-
+# Response transformer configuration.
 # indicate if the interceptor is enabled or not.
 enabled: ${response-transformer.enabled:true}
 # indicate if the transformer needs to modify the response body in the transform rules.
