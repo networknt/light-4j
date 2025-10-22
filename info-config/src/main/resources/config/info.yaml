@@ -1,3 +1,4 @@
+# Server info endpoint that can output environment and component along with configuration.
 # Indicate if the server info is enabled or not.
 enableServerInfo: ${info.enableServerInfo:true}
 # String list keys that should not be sorted in the normalized info output. If you have a list of string values

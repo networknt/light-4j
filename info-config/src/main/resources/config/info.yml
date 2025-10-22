@@ -1,15 +1,12 @@
-# Server info endpoint that can output environment and component along with configuration
-
+# Server info endpoint that can output environment and component along with configuration.
 # Indicate if the server info is enabled or not.
 enableServerInfo: ${info.enableServerInfo:true}
 # String list keys that should not be sorted in the normalized info output. If you have a list of string values
 # define in one of your config files and the sequence of the values is important, you can add the key to this list.
 # If you want to add your own keys, please make sure that you include the following default keys in your values.yml
-keysToNotSort: ${info.keysToNotSort:admin,default,defaultHandlers,request,response}
-
+keysToNotSort: ${info.keysToNotSort:["admin", "default", "defaultHandlers", "request", "response"]}
 # For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down
 # stream API before return the server info to the invoker. By default, it is not enabled.
-
 # if the server info needs to invoke down streams API. It is false by default.
 downstreamEnabled: ${info.downstreamEnabled:false}
 # down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar.

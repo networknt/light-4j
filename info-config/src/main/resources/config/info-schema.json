@@ -5,8 +5,7 @@
   "properties" : {
     "enableServerInfo" : {
       "type" : "boolean",
-      "description" : "Indicate if the server info is enabled or not.",
-      "default" : true
+      "description" : "Indicate if the server info is enabled or not."
     },
     "keysToNotSort" : {
       "type" : "array",

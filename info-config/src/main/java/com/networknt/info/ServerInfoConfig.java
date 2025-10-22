@@ -27,7 +27,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configName = "info", configKey = "info", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configName = "info",
+        configKey = "info",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Server info endpoint that can output environment and component along with configuration."
+)
 public class ServerInfoConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServerInfoConfig.class);
 
@@ -67,7 +72,8 @@ public class ServerInfoConfig {
             externalized = true,
             description = "For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down\n" +
             "stream API before return the server info to the invoker. By default, it is not enabled.\n" +
-            "if the server info needs to invoke down streams API. It is false by default."
+            "if the server info needs to invoke down streams API. It is false by default.",
+            defaultValue = "false"
     )
     boolean downstreamEnabled;
 
