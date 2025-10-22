@@ -1,17 +1,13 @@
----
-# Light Router Configuration
+# Light router configuration
 # As this router is built to support discovery and security for light-4j services,
 # the outbound connection is always HTTP 2.0 with TLS enabled.
 # If HTTP 2.0 protocol will be accepted from incoming request.
 http2Enabled: ${router.http2Enabled:true}
-
 # If TLS is enabled when accepting incoming request. Should be true on test and prod.
 httpsEnabled: ${router.httpsEnabled:true}
-
 # Max request time in milliseconds before timeout to the server. This is the global setting shared
 # by all backend services if they don't have service specific timeout.
 maxRequestTime: ${router.maxRequestTime:1000}
-
 # If a particular downstream service has different timeout than the above global definition, you can
 # add the path prefix and give it another timeout in millisecond. For downstream APIs not defined here,
 # they will use the global timeout defined in router.maxRequestTime. The value is a map with key is the
@@ -25,41 +21,31 @@ maxRequestTime: ${router.maxRequestTime:1000}
 #   /v3/address: 30000
 #   /v1/pets/{petId}: 5000
 pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
-
 # Connections per thread.
 connectionsPerThread: ${router.connectionsPerThread:10}
-
 # The max queue size for the requests if there is no connection to the downstream API in the connection pool.
 # The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no
 # need to use the request queue to increase the memory usage. It should only be used when you see 503 errors
 # in the log after maxConnectionRetries to accommodate slow backend API.
 maxQueueSize: ${router.maxQueueSize:0}
-
 # Soft max connections per thread.
 softMaxConnectionsPerThread: ${router.softMaxConnectionsPerThread:5}
-
 # Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
 rewriteHostHeader: ${router.rewriteHostHeader:true}
-
 # Reuse XForwarded for the target XForwarded header
 reuseXForwarded: ${router.reuseXForwarded:false}
-
 # Max Connection Retries
 maxConnectionRetries: ${router.maxConnectionRetries:3}
-
 # Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be
 # only used when the downstream FQDN is a load balancer for multiple real API servers.
 preResolveFQDN2IP: ${router.preResolveFQDN2IP:false}
-
 # allowed host list. Use Regex to do wildcard match
 hostWhitelist: ${router.hostWhitelist:}
-
 # support serviceId in the query parameter for routing to overwrite serviceId in header routing.
 # by default, it is false and should not be used unless you are dealing with a legacy client that
 # does not support header manipulation. Once this flag is true, we are going to overwrite the header
 # service_id derived with other handlers from prefix, path, endpoint etc.
 serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
-
 # URL rewrite rules, each line will have two parts: the regex patten and replace string separated
 # with a space. The light-router has service discovery for host routing, so whe working on the
 # url rewrite rules, we only need to create about the path in the URL.
@@ -67,16 +53,15 @@ serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
 # Here are some examples in values.yml
 # YAML format:
 # router.urlRewriteRules:
-  # /listings/123 to /listing.html?listing=123
-  # - /listings/(.*)$ /listing.html?listing=$1
-  # /ph/uat/de-asia-ekyc-service/v1 to /uat-de-asia-ekyc-service/v1
-  # - /ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1
-  # /tutorial/linux/wordpress/file1 to /tutorial/linux/cms/file1.php
-  # - (/tutorial/.*)/wordpress/(\w+)\.?.*$ $1/cms/$2.php
+#  /listings/123 to /listing.html?listing=123
+#  - /listings/(.*)$ /listing.html?listing=$1
+#  /ph/uat/de-asia-ekyc-service/v1 to /uat-de-asia-ekyc-service/v1
+#  - /ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1
+#  /tutorial/linux/wordpress/file1 to /tutorial/linux/cms/file1.php
+#  - (/tutorial/.*)/wordpress/(\w+)\.?.*$ $1/cms/$2.php
 # JSON format:
 # router.urlRewriteRules: ["/listings/(.*)$ /listing.html?listing=$1","/ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1","(/tutorial/.*)/wordpress/(\\w+)\\.?.*$ $1/cms/$2.php"]
 urlRewriteRules: ${router.urlRewriteRules:}
-
 # Method rewrite rules for legacy clients that do not support DELETE, PUT, and PATCH HTTP methods to
 # send a request with GET and POST instead. The gateway will rewrite the method from GET to DELETE or
 # from POST to PUT or PATCH. This will be set up at the endpoint level to limit the application.
@@ -84,17 +69,16 @@ urlRewriteRules: ${router.urlRewriteRules:}
 # values.yml for examples. The endpoint-pattern is a pattern in OpenAPI specification. Examples:
 # YAML format:
 # router.methodRewriteRules:
-  # rewrite POST to PUT for path /v2/address
-  # - /v2/address POST PUT
-  # rewrite POST to PATCH for path /v1/address
-  # - /v1/address POST PATCH
-  # rewrite GET to DELETE for path /v1/address
-  # - /v1/pets/{petId}/address GET DELETE
+#  rewrite POST to PUT for path /v2/address
+#  - /v2/address POST PUT
+#  rewrite POST to PATCH for path /v1/address
+#  - /v1/address POST PATCH
+#  rewrite GET to DELETE for path /v1/address
+#  - /v1/pets/{petId}/address GET DELETE
 # JSON format:
 # router.methodRewriteRules: ["/v2/address POST PUT","/v1/address POST PATCH","/v1/address GET DELETE","/v1/pets/{petId} GET DELETE"]
 # Note: you cannot rewrite a method with a body to a method without a body or vice versa.
 methodRewriteRules: ${router.methodRewriteRules:}
-
 # Query parameter rewrite rules for client applications that send different query parameter keys or values
 # than the target server expecting. When overwriting a value, the key must be specified in order to
 # identify the right query parameter. If only the oldK and newK are specified, the router will rewrite the
@@ -103,18 +87,17 @@ methodRewriteRules: ${router.methodRewriteRules:}
 # examples. You can define a list of rules under the same path. Here are some examples in values.yml
 # YAML format:
 # router.queryParamRewriteRules:
-  # /v1/address
-  # - oldK: oldV
-  #   newK: newV
-  # /v1/pets/{petId}
-  # - oldK: oldV
-  #   newK: newV
-  # - oldK: oldV2
-  #   newK: newV2
+#  /v1/address
+#  - oldK: oldV
+#    newK: newV
+#  /v1/pets/{petId}
+#  - oldK: oldV
+#    newK: newV
+#  - oldK: oldV2
+#    newK: newV2
 # JSON format:
 # router.queryParamRewriteRules: {"/v1/address":[{"oldK":"oldV","newK":"newV"}],"/v1/pets/{petId}":[{"oldK":"oldV","newK":"newV"},{"oldK":"oldV2","newK":"newV2"}]}
 queryParamRewriteRules: ${router.queryParamRewriteRules:}
-
 # Header rewrite rules for client applications that send different header keys or values than the target
 # server expecting. When overwriting a value, the key must be specified in order to identify the right
 # header. If only the oldK and newK are specified, the router will rewrite the header key oldK with different
@@ -123,18 +106,17 @@ queryParamRewriteRules: ${router.queryParamRewriteRules:}
 # examples. You can define a list of rules under the same path. Here are some examples in values.yml
 # YAML format:
 # router.headerRewriteRules:
-  # /v1/address:
-  # - oldK: oldV
-  #   newK: newV
-  # /v1/pets/{petId}:
-  # - oldK: oldV
-  #   newK: newV
-  # - oldK: oldV2
-  #   newK: newV2
+#  /v1/address:
+#  - oldK: oldV
+#    newK: newV
+#  /v1/pets/{petId}:
+#  - oldK: oldV
+#    newK: newV
+#  - oldK: oldV2
+#    newK: newV2
 # JSON format:
 # router.headerRewriteRules: {"/v1/address":[{"oldK":"oldV","newK":"newV"}],"/v1/pets/{petId}":[{"oldK":"oldV","newK":"newV"},{"oldK":"oldV2","newK":"newV2"}]}
 headerRewriteRules: ${router.headerRewriteRules:}
-
 # When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the
 # total response time of the downstream API. With this value injected, users can quickly determine how much
 # time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including

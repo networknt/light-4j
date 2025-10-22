@@ -1,22 +1,19 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "http2Enabled", "httpsEnabled", "maxRequestTime", "pathPrefixMaxRequestTime", "connectionsPerThread", "maxQueueSize", "softMaxConnectionsPerThread", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "preResolveFQDN2IP", "hostWhiteList", "serviceIdQueryParameter", "urlRewriteRules", "methodRewriteRules", "queryParamRewriteRules", "headerRewriteRules", "metricsInjection", "metricsName" ],
+  "required" : [ "http2Enabled", "httpsEnabled", "maxRequestTime", "pathPrefixMaxRequestTime", "connectionsPerThread", "maxQueueSize", "softMaxConnectionsPerThread", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "preResolveFQDN2IP", "hostWhitelist", "serviceIdQueryParameter", "urlRewriteRules", "methodRewriteRules", "queryParamRewriteRules", "headerRewriteRules", "metricsInjection", "metricsName" ],
   "properties" : {
     "http2Enabled" : {
       "type" : "boolean",
-      "description" : "As this router is built to support discovery and security for light-4j services,\nthe outbound connection is always HTTP 2.0 with TLS enabled.\nIf HTTP 2.0 protocol will be accepted from incoming request.",
-      "default" : true
+      "description" : "As this router is built to support discovery and security for light-4j services,\nthe outbound connection is always HTTP 2.0 with TLS enabled.\nIf HTTP 2.0 protocol will be accepted from incoming request."
     },
     "httpsEnabled" : {
       "type" : "boolean",
-      "description" : "If TLS is enabled when accepting incoming request. Should be true on test and prod.",
-      "default" : true
+      "description" : "If TLS is enabled when accepting incoming request. Should be true on test and prod."
     },
     "maxRequestTime" : {
       "type" : "integer",
-      "description" : "Max request time in milliseconds before timeout to the server. This is the global setting shared\nby all backend services if they don't have service specific timeout.",
-      "default" : 1000
+      "description" : "Max request time in milliseconds before timeout to the server. This is the global setting shared\nby all backend services if they don't have service specific timeout."
     },
     "pathPrefixMaxRequestTime" : {
       "type" : "object",
@@ -27,8 +24,7 @@
     },
     "connectionsPerThread" : {
       "type" : "integer",
-      "description" : "Connections per thread.",
-      "default" : 10
+      "description" : "Connections per thread."
     },
     "maxQueueSize" : {
       "type" : "integer",
@@ -36,13 +32,11 @@
     },
     "softMaxConnectionsPerThread" : {
       "type" : "integer",
-      "description" : "Soft max connections per thread.",
-      "default" : 5
+      "description" : "Soft max connections per thread."
     },
     "rewriteHostHeader" : {
       "type" : "boolean",
-      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host",
-      "default" : true
+      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host"
     },
     "reuseXForwarded" : {
       "type" : "boolean",
@@ -50,14 +44,13 @@
     },
     "maxConnectionRetries" : {
       "type" : "integer",
-      "description" : "Max Connection Retries",
-      "default" : 3
+      "description" : "Max Connection Retries"
     },
     "preResolveFQDN2IP" : {
       "type" : "boolean",
       "description" : "Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be\nonly used when the downstream FQDN is a load balancer for multiple real API servers."
     },
-    "hostWhiteList" : {
+    "hostWhitelist" : {
       "type" : "array",
       "description" : "allowed host list. Use Regex to do wildcard match",
       "items" : {
@@ -86,20 +79,14 @@
       "type" : "array",
       "description" : "Query parameter rewrite rules for client applications that send different query parameter keys or values\nthan the target server expecting. When overwriting a value, the key must be specified in order to\nidentify the right query parameter. If only the oldK and newK are specified, the router will rewrite the\nquery parameter key oldK with different key newK and keep the value.\nThe format of the rules will be a map with the path as the key. Please refer to test values.yml for\nexamples. You can define a list of rules under the same path. Here are some examples in values.yml\nYAML format:\nrouter.queryParamRewriteRules:\n /v1/address\n - oldK: oldV\n   newK: newV\n /v1/pets/{petId}\n - oldK: oldV\n   newK: newV\n - oldK: oldV2\n   newK: newV2\nJSON format:\nrouter.queryParamRewriteRules: {\"/v1/address\":[{\"oldK\":\"oldV\",\"newK\":\"newV\"}],\"/v1/pets/{petId}\":[{\"oldK\":\"oldV\",\"newK\":\"newV\"},{\"oldK\":\"oldV2\",\"newK\":\"newV2\"}]}",
       "items" : {
-        "type" : "array",
-        "items" : {
-          "type" : "string"
-        }
+        "type" : "object"
       }
     },
     "headerRewriteRules" : {
       "type" : "array",
       "description" : "Header rewrite rules for client applications that send different header keys or values than the target\nserver expecting. When overwriting a value, the key must be specified in order to identify the right\nheader. If only the oldK and newK are specified, the router will rewrite the header key oldK with different\nkey newK and keep the value.\nThe format of the rule will be a map with the path as the key. Please refer to test values.yml for\nexamples. You can define a list of rules under the same path. Here are some examples in values.yml\nYAML format:\nrouter.headerRewriteRules:\n /v1/address:\n - oldK: oldV\n   newK: newV\n /v1/pets/{petId}:\n - oldK: oldV\n   newK: newV\n - oldK: oldV2\n   newK: newV2\nJSON format:\nrouter.headerRewriteRules: {\"/v1/address\":[{\"oldK\":\"oldV\",\"newK\":\"newV\"}],\"/v1/pets/{petId}\":[{\"oldK\":\"oldV\",\"newK\":\"newV\"},{\"oldK\":\"oldV2\",\"newK\":\"newV2\"}]}",
       "items" : {
-        "type" : "array",
-        "items" : {
-          "type" : "string"
-        }
+        "type" : "object"
       }
     },
     "metricsInjection" : {

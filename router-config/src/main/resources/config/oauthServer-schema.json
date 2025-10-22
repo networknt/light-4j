@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the handler is enabled or not in the handler chain.",
-      "default" : true
+      "description" : "indicate if the handler is enabled or not in the handler chain."
     },
     "getMethodEnabled" : {
       "type" : "boolean",

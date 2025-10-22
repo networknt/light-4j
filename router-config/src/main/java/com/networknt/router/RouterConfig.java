@@ -34,7 +34,12 @@ import java.util.*;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "router", configName = "router", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "router",
+        configName = "router",
+        configDescription = "Light router configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class RouterConfig {
     private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);
     public static final String CONFIG_NAME = "router";
@@ -51,7 +56,7 @@ public class RouterConfig {
     private static final String PRE_RESOLVE_FQDN_2_IP = "preResolveFQDN2IP";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
-    public static final String HOST_WHITE_LIST = "hostWhiteList";
+    public static final String HOST_WHITE_LIST = "hostWhitelist";
     public static final String HEADER_REWRITE_RULES = "headerRewriteRules";
     public static final String QUERY_PARAM_REWRITE_RULES = "queryParamRewriteRules";
     public static final String METHOD_REWRITE_RULES = "methodRewriteRules";
@@ -151,6 +156,7 @@ public class RouterConfig {
             configFieldName = REUSE_X_FORWARDED,
             externalizedKeyName = REUSE_X_FORWARDED,
             externalized = true,
+            defaultValue = "false",
             description = "Reuse XForwarded for the target XForwarded header"
     )
     boolean reuseXForwarded;
@@ -169,6 +175,7 @@ public class RouterConfig {
             configFieldName = PRE_RESOLVE_FQDN_2_IP,
             externalizedKeyName = PRE_RESOLVE_FQDN_2_IP,
             externalized = true,
+            defaultValue = "false",
             description = "Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be\n" +
                     "only used when the downstream FQDN is a load balancer for multiple real API servers."
     )
@@ -187,6 +194,7 @@ public class RouterConfig {
             configFieldName = SERVICE_ID_QUERY_PARAMETER,
             externalizedKeyName = SERVICE_ID_QUERY_PARAMETER,
             externalized = true,
+            defaultValue = "false",
             description = "support serviceId in the query parameter for routing to overwrite serviceId in header routing.\n" +
                     "by default, it is false and should not be used unless you are dealing with a legacy client that\n" +
                     "does not support header manipulation. Once this flag is true, we are going to overwrite the header\n" +
@@ -297,6 +305,7 @@ public class RouterConfig {
             configFieldName = METRICS_INJECTION,
             externalizedKeyName = METRICS_INJECTION,
             externalized = true,
+            defaultValue = "false",
             description = "When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\n" +
                     "total response time of the downstream API. With this value injected, users can quickly determine how much\n" +
                     "time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\n" +

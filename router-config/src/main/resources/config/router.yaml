@@ -1,3 +1,4 @@
+# Light router configuration
 # As this router is built to support discovery and security for light-4j services,
 # the outbound connection is always HTTP 2.0 with TLS enabled.
 # If HTTP 2.0 protocol will be accepted from incoming request.
@@ -39,7 +40,7 @@ maxConnectionRetries: ${router.maxConnectionRetries:3}
 # only used when the downstream FQDN is a load balancer for multiple real API servers.
 preResolveFQDN2IP: ${router.preResolveFQDN2IP:false}
 # allowed host list. Use Regex to do wildcard match
-hostWhiteList: ${router.hostWhiteList:}
+hostWhitelist: ${router.hostWhitelist:}
 # support serviceId in the query parameter for routing to overwrite serviceId in header routing.
 # by default, it is false and should not be used unless you are dealing with a legacy client that
 # does not support header manipulation. Once this flag is true, we are going to overwrite the header
