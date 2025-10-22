@@ -1,3 +1,4 @@
+# Logging endpoint that can output the logger with logging levels.
 # Indicate if the logging info is enabled or not.
 enabled: ${logging.enabled:true}
 # Indicate the default time period backward in millisecond for log content retrieve.

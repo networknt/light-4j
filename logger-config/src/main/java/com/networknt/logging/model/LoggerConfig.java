@@ -25,7 +25,12 @@ import java.util.Map;
 /**
  * Config class for Logger handlers
  */
-@ConfigSchema(configKey = "logging", configName = "logging", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "logging",
+        configName = "logging",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        configDescription = "Logging endpoint that can output the logger with logging levels."
+)
 public class LoggerConfig {
     public static final String CONFIG_NAME = "logging";
     private static final String ENABLED = "enabled";
@@ -57,7 +62,8 @@ public class LoggerConfig {
             configFieldName = DOWNSTREAM_ENABLED,
             externalizedKeyName = DOWNSTREAM_ENABLED,
             externalized = true,
-            description = "if the logger access needs to invoke down streams API. It is false by default."
+            description = "if the logger access needs to invoke down streams API. It is false by default.",
+            defaultValue = "false"
     )
     boolean downstreamEnabled;
 

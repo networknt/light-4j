@@ -1,12 +1,9 @@
----
 # Logging endpoint that can output the logger with logging levels.
-
 # Indicate if the logging info is enabled or not.
 enabled: ${logging.enabled:true}
 # Indicate the default time period backward in millisecond for log content retrieve.
 # Default is an hour which indicate system will retrieve one hour log by default
 logStart: ${logging.logStart:600000}
-
 # if the logger access needs to invoke down streams API. It is false by default.
 downstreamEnabled: ${logging.downstreamEnabled:false}
 # down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar.
