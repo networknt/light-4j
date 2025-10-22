@@ -19,7 +19,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "pathService", configName = "pathService", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "pathService",
+        configName = "pathService",
+        configDescription = "Path service configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class PathServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(PathServiceConfig.class);
     public static final String CONFIG_NAME = "pathService";
@@ -44,7 +49,11 @@ public class PathServiceConfig {
         configFieldName = MAPPING,
         externalizedKeyName = MAPPING,
         externalized = true,
-        description = "mapping from request endpoints to serviceIds",
+        description = "mapping from request endpoints to serviceIds.\n" +
+                "The following are examples in the values.yml\n" +
+                "  /v1/address/{id}@get: party.address-1.0.0\n" +
+                "  /v2/address@get: party.address-2.0.0\n" +
+                "  /v1/contact@post: party.contact-1.0.0",
         valueType = String.class
     )
     private Map<String, String> mapping;
