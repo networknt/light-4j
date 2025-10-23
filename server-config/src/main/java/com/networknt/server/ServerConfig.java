@@ -29,7 +29,12 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "server", configName = "server", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "server",
+        configName = "server",
+        configDescription = "Server configuration.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class  ServerConfig {
     public static Logger logger = LoggerFactory.getLogger(ServerConfig.class);
 
@@ -73,6 +78,7 @@ public class  ServerConfig {
             configFieldName = IP,
             externalizedKeyName = IP,
             externalized = true,
+            defaultValue = "0.0.0.0",
             description = "This is the default binding address if the service is dockerized."
     )
     String ip;
@@ -81,6 +87,7 @@ public class  ServerConfig {
             configFieldName = HTTP_PORT,
             externalizedKeyName = HTTP_PORT,
             externalized = true,
+            defaultValue = "8080",
             description = "Http port if enableHttp is true. It will be ignored if dynamicPort is true."
     )
     int httpPort;
@@ -89,6 +96,7 @@ public class  ServerConfig {
             configFieldName = ENABLE_HTTP,
             externalizedKeyName = ENABLE_HTTP,
             externalized = true,
+            defaultValue = "false",
             description = "Enable HTTP should be false by default. It should be only used for testing with clients or tools\n" +
                     "that don't support https or very hard to import the certificate. Otherwise, https should be used.\n" +
                     "When enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is\n" +
@@ -101,6 +109,7 @@ public class  ServerConfig {
             configFieldName = HTTPS_PORT,
             externalizedKeyName = HTTPS_PORT,
             externalized = true,
+            defaultValue = "8443",
             description = "Https port if enableHttps is true. It will be ignored if dynamicPort is true."
     )
     int httpsPort;
@@ -109,14 +118,16 @@ public class  ServerConfig {
             configFieldName = ENABLE_HTTPS,
             externalizedKeyName = ENABLE_HTTPS,
             externalized = true,
+            defaultValue = "true",
             description = "Enable HTTPS should be true on official environment and most dev environments."
     )
     boolean enableHttps;
 
     @BooleanField(
-            configFieldName = ENABLE_HTTPS,
+            configFieldName = ENABLE_HTTP2,
             externalizedKeyName = ENABLE_HTTP2,
             externalized = true,
+            defaultValue = "true",
             description = "Http/2 is enabled by default for better performance and it works with the client module\n" +
                     "Please note that HTTP/2 only works with HTTPS."
     )
@@ -126,6 +137,7 @@ public class  ServerConfig {
             configFieldName = KEYSTORE_NAME,
             externalizedKeyName = KEYSTORE_NAME,
             externalized = true,
+            defaultValue = "server.keystore",
             description = "Keystore file name in config folder."
     )
     String keystoreName;
@@ -134,6 +146,7 @@ public class  ServerConfig {
             configFieldName = KEYSTORE_PASS,
             externalizedKeyName = KEYSTORE_PASS,
             externalized = true,
+            defaultValue = "password",
             description = "Keystore password"
     )
     String keystorePass;
@@ -142,6 +155,7 @@ public class  ServerConfig {
             configFieldName = KEY_PASS,
             externalizedKeyName = KEY_PASS,
             externalized = true,
+            defaultValue = "password",
             description = "Private key password"
     )
     String keyPass;
@@ -150,6 +164,7 @@ public class  ServerConfig {
             configFieldName = ENABLE_TWO_WAY_TLS,
             externalizedKeyName = ENABLE_TWO_WAY_TLS,
             externalized = true,
+            defaultValue = "false",
             description = "Flag that indicate if two way TLS is enabled. Not recommended in docker container."
     )
     boolean enableTwoWayTls;
@@ -158,6 +173,7 @@ public class  ServerConfig {
             configFieldName = TRUSTSTORE_NAME,
             externalizedKeyName = TRUSTSTORE_NAME,
             externalized = true,
+            defaultValue = "server.truststore",
             description = "Truststore file name in config folder."
     )
     String truststoreName;
@@ -166,14 +182,16 @@ public class  ServerConfig {
             configFieldName = TRUSTSTORE_PASS,
             externalizedKeyName = TRUSTSTORE_PASS,
             externalized = true,
+            defaultValue = "password",
             description = "Truststore password"
     )
     String truststorePass;
 
     @StringField(
             configFieldName = BOOTSTRAP_STORE_NAME,
-            externalizedKeyName = IP,
+            externalizedKeyName = BOOTSTRAP_STORE_NAME,
             externalized = true,
+            defaultValue = "bootstrap.truststore",
             description = "Bootstrap truststore name used to connect to the light-config-server if it is used."
     )
     String bootstrapStoreName;
@@ -182,6 +200,7 @@ public class  ServerConfig {
             configFieldName = BOOTSTRAP_STORE_PASS,
             externalizedKeyName = BOOTSTRAP_STORE_PASS,
             externalized = true,
+            defaultValue = "password",
             description = "Bootstrap truststore password"
     )
     String bootstrapStorePass;
@@ -190,6 +209,7 @@ public class  ServerConfig {
             configFieldName = SERVICE_ID,
             externalizedKeyName = SERVICE_ID,
             externalized = true,
+            defaultValue = "com.networknt.petstore-1.0.0",
             description = "Unique service identifier. Used in service registration and discovery etc."
     )
     String serviceId;
@@ -198,8 +218,9 @@ public class  ServerConfig {
             configFieldName = ENABLE_REGISTRY,
             externalizedKeyName = ENABLE_REGISTRY,
             externalized = true,
+            defaultValue = "false",
             description = "Flag to enable self service registration. This should be turned on on official test and production. And\n" +
-                    "dyanmicPort should be enabled if any orchestration tool is used like Kubernetes."
+                    "dynamicPort should be enabled if any orchestration tool is used like Kubernetes."
     )
     boolean enableRegistry;
 
@@ -207,6 +228,7 @@ public class  ServerConfig {
             configFieldName = START_ON_REGISTRY_FAILURE,
             externalizedKeyName = START_ON_REGISTRY_FAILURE,
             externalized = true,
+            defaultValue = "false",
             description = "When enableRegistry is true and the registry/discovery service is not reachable. Stop the server or continue\n" +
                     "starting the server. When your global registry is not setup as high availability and only for monitoring, you\n" +
                     "can set it true. If you are using it for global service discovery, leave it with false."
@@ -218,6 +240,7 @@ public class  ServerConfig {
             configFieldName = DYNAMIC_PORT,
             externalizedKeyName = DYNAMIC_PORT,
             externalized = true,
+            defaultValue = "false",
             description = "Dynamic port is used in situation that multiple services will be deployed on the same host and normally\n" +
                     "you will have enableRegistry set to true so that other services can find the dynamic port service. When\n" +
                     "deployed to Kubernetes cluster, the Pod must be annotated as hostNetwork: true"
@@ -228,6 +251,7 @@ public class  ServerConfig {
             configFieldName = MIN_PORT,
             externalizedKeyName = MIN_PORT,
             externalized = true,
+            defaultValue = "2400",
             description = "Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup\n" +
                     "firewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be\n" +
                     "enough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods"
@@ -237,6 +261,7 @@ public class  ServerConfig {
     @IntegerField(
             configFieldName = MAX_PORT,
             externalizedKeyName = MAX_PORT,
+            defaultValue = "2500",
             externalized = true,
             description = "Maximum port rang. The range can be customized to adopt your network security policy and can be increased or\n" +
                     "reduced to ease firewall rules."
@@ -257,6 +282,7 @@ public class  ServerConfig {
             configFieldName = BUILD_NUMBER,
             externalizedKeyName = BUILD_NUMBER,
             externalized = true,
+            defaultValue = "latest",
             description = "Build Number, to be set by teams for auditing or tracing purposes.\n" +
                     "Allows teams to audit the value and set it according to their release management process"
     )
@@ -266,6 +292,7 @@ public class  ServerConfig {
             configFieldName = SHUTDOWN_GRACEFUL_PERIOD,
             externalizedKeyName = SHUTDOWN_GRACEFUL_PERIOD,
             externalized = true,
+            defaultValue = "2000",
             description = "Shutdown gracefully wait period in milliseconds\n" +
                     "In this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set\n" +
                     "based on the slowest request possible."
@@ -277,7 +304,9 @@ public class  ServerConfig {
             configFieldName = SERVICE_NAME,
             externalizedKeyName = SERVICE_NAME,
             externalized = true,
-            description = "The following parameters are for advanced users to fine tune the service in a container environment. Please leave\n" +
+            defaultValue = "petstore",
+            description = "-----------------------------------------------------------------------------------------------------------\n" +
+                    "The following parameters are for advanced users to fine tune the service in a container environment. Please leave\n" +
                     "these values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/\n" +
                     "\n" +
                     "Unique service name. Used in microservice to associate a given name to a service with configuration\n" +
@@ -289,6 +318,7 @@ public class  ServerConfig {
             configFieldName = BUFFER_SIZE,
             externalizedKeyName = BUFFER_SIZE,
             externalized = true,
+            defaultValue = "16384",
             description = "Buffer size of undertow server. Default to 16K"
     )
     int bufferSize;
@@ -298,6 +328,7 @@ public class  ServerConfig {
             configFieldName = IO_THREADS,
             externalizedKeyName = IO_THREADS,
             externalized = true,
+            defaultValue = "4",
             description = "Number of IO thread. Default to number of processor * 2"
     )
     int ioThreads;
@@ -306,6 +337,7 @@ public class  ServerConfig {
             configFieldName = WORKER_THREADS,
             externalizedKeyName = WORKER_THREADS,
             externalized = true,
+            defaultValue = "200",
             description = "Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu"
     )
     int workerThreads;
@@ -314,6 +346,7 @@ public class  ServerConfig {
             configFieldName = BACKLOG,
             externalizedKeyName = BACKLOG,
             externalized = true,
+            defaultValue = "10000",
             description = "Backlog size. Default to 10000"
     )
     int backlog;
@@ -322,6 +355,7 @@ public class  ServerConfig {
             configFieldName = ALWAYS_SET_DATE,
             externalizedKeyName = ALWAYS_SET_DATE,
             externalized = true,
+            defaultValue = "false",
             description = "Flag to set UndertowOptions.ALWAYS_SET_DATE"
     )
     boolean alwaysSetDate;
@@ -330,6 +364,7 @@ public class  ServerConfig {
             configFieldName = SERVER_STRING,
             externalizedKeyName = SERVER_STRING,
             externalized = true,
+            defaultValue = "L",
             description = "Server string used to mark the server. Default to L for light-4j."
     )
     String serverString;
@@ -339,7 +374,8 @@ public class  ServerConfig {
             configFieldName = SHUTDOWN_TIMEOUT,
             externalizedKeyName = SHUTDOWN_TIMEOUT,
             externalized = true,
-            description = ""
+            description = "The server shutdown timeout in milliseconds after which the executor will be forcefully shut down\n" +
+                    "interrupting tasks which are still executing."
     )
     int shutdownTimeout;
 
@@ -347,6 +383,7 @@ public class  ServerConfig {
             configFieldName = ALLOW_UNESCAPED_CHARACTERS_IN_URL,
             externalizedKeyName = ALLOW_UNESCAPED_CHARACTERS_IN_URL,
             externalized = true,
+            defaultValue = "false",
             description = "Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.\n" +
                     "Please note that this option widens the attack surface and attacker can potentially access your filesystem.\n" +
                     "This should only be used on an internal server and never be used on a server accessed from the Internet."
@@ -357,6 +394,7 @@ public class  ServerConfig {
             configFieldName = MAX_TRANSFER_FILE_SIZE,
             externalizedKeyName = MAX_TRANSFER_FILE_SIZE,
             externalized = true,
+            defaultValue = "1000000",
             description = "Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.",
             format = Format.u64
     )
@@ -366,6 +404,7 @@ public class  ServerConfig {
             configFieldName = MASK_CONFIG_PROPERTIES,
             externalizedKeyName = MASK_CONFIG_PROPERTIES,
             externalized = true,
+            defaultValue = "true",
             description = "Indicate if the mask for the module registry should be applied or not. Default to true. If all the sensitive\n" +
                     "properties are encrypted, then this flag can be set to false. This allows the encrypted sensitive properties\n" +
                     "to show up in the server info response. When config server is used, this flag should be set to false so that\n" +

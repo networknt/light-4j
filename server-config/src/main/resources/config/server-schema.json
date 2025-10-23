@@ -1,11 +1,12 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "ip", "httpPort", "enableHttp", "httpsPort", "enableHttps", "keystoreName", "keystorePass", "keyPass", "enableTwoWayTls", "truststoreName", "truststorePass", "bootstrapStoreName", "bootstrapStorePass", "serviceId", "enableRegistry", "startOnRegistryFailure", "dynamicPort", "minPort", "maxPort", "environment", "buildNumber", "shutdownGracefulPeriod", "serviceName", "bufferSize", "ioThreads", "workerThreads", "backlog", "alwaysSetDate", "serverString", "shutdownTimeout", "allowUnescapedCharactersInUrl", "maxTransferFileSize", "maskConfigProperties" ],
+  "required" : [ "ip", "httpPort", "enableHttp", "httpsPort", "enableHttps", "enableHttp2", "keystoreName", "keystorePass", "keyPass", "enableTwoWayTls", "truststoreName", "truststorePass", "bootstrapStoreName", "bootstrapStorePass", "serviceId", "enableRegistry", "startOnRegistryFailure", "dynamicPort", "minPort", "maxPort", "environment", "buildNumber", "shutdownGracefulPeriod", "serviceName", "bufferSize", "ioThreads", "workerThreads", "backlog", "alwaysSetDate", "serverString", "shutdownTimeout", "allowUnescapedCharactersInUrl", "maxTransferFileSize", "maskConfigProperties" ],
   "properties" : {
     "ip" : {
       "type" : "string",
-      "description" : "This is the default binding address if the service is dockerized."
+      "description" : "This is the default binding address if the service is dockerized.",
+      "default" : "0.0.0.0"
     },
     "httpPort" : {
       "type" : "integer",
@@ -21,19 +22,26 @@
     },
     "enableHttps" : {
       "type" : "boolean",
+      "description" : "Enable HTTPS should be true on official environment and most dev environments."
+    },
+    "enableHttp2" : {
+      "type" : "boolean",
       "description" : "Http/2 is enabled by default for better performance and it works with the client module\nPlease note that HTTP/2 only works with HTTPS."
     },
     "keystoreName" : {
       "type" : "string",
-      "description" : "Keystore file name in config folder."
+      "description" : "Keystore file name in config folder.",
+      "default" : "server.keystore"
     },
     "keystorePass" : {
       "type" : "string",
-      "description" : "Keystore password"
+      "description" : "Keystore password",
+      "default" : "password"
     },
     "keyPass" : {
       "type" : "string",
-      "description" : "Private key password"
+      "description" : "Private key password",
+      "default" : "password"
     },
     "enableTwoWayTls" : {
       "type" : "boolean",
@@ -41,27 +49,32 @@
     },
     "truststoreName" : {
       "type" : "string",
-      "description" : "Truststore file name in config folder."
+      "description" : "Truststore file name in config folder.",
+      "default" : "server.truststore"
     },
     "truststorePass" : {
       "type" : "string",
-      "description" : "Truststore password"
+      "description" : "Truststore password",
+      "default" : "password"
     },
     "bootstrapStoreName" : {
       "type" : "string",
-      "description" : "Bootstrap truststore name used to connect to the light-config-server if it is used."
+      "description" : "Bootstrap truststore name used to connect to the light-config-server if it is used.",
+      "default" : "bootstrap.truststore"
     },
     "bootstrapStorePass" : {
       "type" : "string",
-      "description" : "Bootstrap truststore password"
+      "description" : "Bootstrap truststore password",
+      "default" : "password"
     },
     "serviceId" : {
       "type" : "string",
-      "description" : "Unique service identifier. Used in service registration and discovery etc."
+      "description" : "Unique service identifier. Used in service registration and discovery etc.",
+      "default" : "com.networknt.petstore-1.0.0"
     },
     "enableRegistry" : {
       "type" : "boolean",
-      "description" : "Flag to enable self service registration. This should be turned on on official test and production. And\ndyanmicPort should be enabled if any orchestration tool is used like Kubernetes."
+      "description" : "Flag to enable self service registration. This should be turned on on official test and production. And\ndynamicPort should be enabled if any orchestration tool is used like Kubernetes."
     },
     "startOnRegistryFailure" : {
       "type" : "boolean",
@@ -85,7 +98,8 @@
     },
     "buildNumber" : {
       "type" : "string",
-      "description" : "Build Number, to be set by teams for auditing or tracing purposes.\nAllows teams to audit the value and set it according to their release management process"
+      "description" : "Build Number, to be set by teams for auditing or tracing purposes.\nAllows teams to audit the value and set it according to their release management process",
+      "default" : "latest"
     },
     "shutdownGracefulPeriod" : {
       "type" : "integer",
@@ -93,7 +107,8 @@
     },
     "serviceName" : {
       "type" : "string",
-      "description" : "The following parameters are for advanced users to fine tune the service in a container environment. Please leave\nthese values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/\n\nUnique service name. Used in microservice to associate a given name to a service with configuration\nor as a key within the configuration of a particular domain"
+      "description" : "-----------------------------------------------------------------------------------------------------------\nThe following parameters are for advanced users to fine tune the service in a container environment. Please leave\nthese values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/\n\nUnique service name. Used in microservice to associate a given name to a service with configuration\nor as a key within the configuration of a particular domain",
+      "default" : "petstore"
     },
     "bufferSize" : {
       "type" : "integer",
@@ -117,10 +132,12 @@
     },
     "serverString" : {
       "type" : "string",
-      "description" : "Server string used to mark the server. Default to L for light-4j."
+      "description" : "Server string used to mark the server. Default to L for light-4j.",
+      "default" : "L"
     },
     "shutdownTimeout" : {
-      "type" : "integer"
+      "type" : "integer",
+      "description" : "The server shutdown timeout in milliseconds after which the executor will be forcefully shut down\ninterrupting tasks which are still executing."
     },
     "allowUnescapedCharactersInUrl" : {
       "type" : "boolean",
