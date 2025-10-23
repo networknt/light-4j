@@ -172,7 +172,7 @@ oauth:
     key:
       # key distribution server url. It will be used to establish connection if it exists.
       # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
-      # server_url: ${client.signKeyServerUrl:https://localhost:6886}
+      server_url: ${client.signKeyServerUrl:}
       # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
       serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
