@@ -82,7 +82,8 @@ backlog: ${server.backlog:10000}
 alwaysSetDate: ${server.alwaysSetDate:false}
 # Server string used to mark the server. Default to L for light-4j.
 serverString: ${server.serverString:L}
-# The server shutdown timeout in milliseconds after which the executor will be forcefully shut down interrupting tasks which are still executing.
+# The server shutdown timeout in milliseconds after which the executor will be forcefully shut down
+# interrupting tasks which are still executing.
 shutdownTimeout: ${server.shutdownTimeout:}
 # Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.
 # Please note that this option widens the attack surface and attacker can potentially access your filesystem.
