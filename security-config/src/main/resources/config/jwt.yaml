@@ -1,9 +1,17 @@
-# expired in 10 minutes by default for issued JWT tokens
-expiredInMinutes: ${jwt.expiredInMinutes:10}
+# This is the default JWT configuration and some of the properties need to be overwritten when used to issue JWT tokens.
+# It is a component that used to issue JWT token. Normally, it should be used by light-oauth2 or oauth-kafka only.
+# Signature private key that used to sign JWT tokens. It is here to ensure backward compatibility only.
+#   kid: '100'                               # kid that used to sign the JWT tokens. It will be shown up in the token header.
+#   filename: "primary.jks"                  # private key that is used to sign JWT tokens.
+#   keyName: selfsigned                      # key name that is used to identify the right key in keystore.
+#   password: password                       # private key store password and private key password is the same
+key: ${jwt.key:{"kid":"100","filename":"primary.jks","keyName":"selfsigned","password":"password"}}
 # issuer of the JWT token
 issuer: ${jwt.issuer:urn:com:networknt:oauth2:v1}
 # audience of the JWT token
 audience: ${jwt.audience:urn:com.networknt}
+# expired in 10 minutes by default for issued JWT tokens
+expiredInMinutes: ${jwt.expiredInMinutes:10}
 # JWT token version
 version: ${jwt.version:1.0}
 # If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this

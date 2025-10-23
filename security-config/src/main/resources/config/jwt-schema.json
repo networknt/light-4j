@@ -1,11 +1,31 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "expiredInMinutes", "issuer", "audience", "version", "providerId" ],
+  "required" : [ "key", "issuer", "audience", "expiredInMinutes", "version", "providerId" ],
   "properties" : {
-    "expiredInMinutes" : {
-      "type" : "integer",
-      "description" : "expired in 10 minutes by default for issued JWT tokens"
+    "key" : {
+      "type" : "object",
+      "description" : "This is the default JWT configuration and some of the properties need to be overwritten when used to issue JWT tokens.\nIt is a component that used to issue JWT token. Normally, it should be used by light-oauth2 or oauth-kafka only.\nSignature private key that used to sign JWT tokens. It is here to ensure backward compatibility only.\n  kid: '100'                               # kid that used to sign the JWT tokens. It will be shown up in the token header.\n  filename: \"primary.jks\"                  # private key that is used to sign JWT tokens.\n  keyName: selfsigned                      # key name that is used to identify the right key in keystore.\n  password: password                       # private key store password and private key password is the same\n",
+      "default" : {
+        "kid" : "100",
+        "filename" : "primary.jks",
+        "keyName" : "selfsigned",
+        "password" : "password"
+      },
+      "properties" : {
+        "password" : {
+          "type" : "string"
+        },
+        "filename" : {
+          "type" : "string"
+        },
+        "kid" : {
+          "type" : "string"
+        },
+        "keyName" : {
+          "type" : "string"
+        }
+      }
     },
     "issuer" : {
       "type" : "string",
@@ -16,6 +36,10 @@
       "type" : "string",
       "description" : "audience of the JWT token",
       "default" : "urn:com.networknt"
+    },
+    "expiredInMinutes" : {
+      "type" : "integer",
+      "description" : "expired in 10 minutes by default for issued JWT tokens"
     },
     "version" : {
       "type" : "string",

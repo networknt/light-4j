@@ -44,11 +44,17 @@ public class JwtConfig {
     private final Config config;
 
     @ObjectField(
-            configFieldName = EXPIRED_IN_MINUTES,
+            configFieldName = KEY,
+            externalizedKeyName = KEY,
             defaultValue = "{\"kid\":\"100\",\"filename\":\"primary.jks\",\"keyName\":\"selfsigned\",\"password\":\"password\"}",
             description = "This is the default JWT configuration and some of the properties need to be overwritten when used to issue JWT tokens.\n" +
                     "It is a component that used to issue JWT token. Normally, it should be used by light-oauth2 or oauth-kafka only.\n" +
-                    "Signature private key that used to sign JWT tokens. It is here to ensure backward compatibility only.",
+                    "Signature private key that used to sign JWT tokens. It is here to ensure backward compatibility only.\n" +
+                    "  kid: '100'                               # kid that used to sign the JWT tokens. It will be shown up in the token header.\n" +
+                    "  filename: \"primary.jks\"                  # private key that is used to sign JWT tokens.\n" +
+                    "  keyName: selfsigned                      # key name that is used to identify the right key in keystore.\n" +
+                    "  password: password                       # private key store password and private key password is the same\n",
+            externalized =true,
             ref = Key.class
     )
     Key key;
