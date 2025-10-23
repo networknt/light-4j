@@ -26,7 +26,7 @@ ttlCheck: ${consul.ttlCheck:true}
 # This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
 # respectively).
 wait: ${consul.wait:600s}
-# Additional buffer of time to allow Consul to terminate the blocking query connection
+# Additional buffer of time to allow Consul to terminate the blocking query connection.
 timeoutBuffer: ${consul.timeoutBuffer:5s}
 # enable HTTP/2
 # must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS

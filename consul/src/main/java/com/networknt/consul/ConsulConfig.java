@@ -54,6 +54,7 @@ public class ConsulConfig {
             configFieldName = CONSUL_URL,
             externalizedKeyName = CONSUL_URL,
             externalized = true,
+            defaultValue = "http://localhost:8500",
             description = "Consul URL for accessing APIs"
     )
     String consulUrl;
@@ -102,6 +103,7 @@ public class ConsulConfig {
             configFieldName = TCP_CHECK,
             externalizedKeyName = TCP_CHECK,
             externalized = true,
+            defaultValue = "false",
             description = "One of the following health check approach will be selected. Two passive (TCP and HTTP) and one active (TTL)\n" +
                     "enable health check TCP. Ping the IP/port to ensure that the service is up. This should be used for most of\n" +
                     "the services with simple dependencies. If the port is open on the address, it indicates that the service is up."
@@ -112,6 +114,7 @@ public class ConsulConfig {
             configFieldName = HTTP_CHECK,
             externalizedKeyName = HTTP_CHECK,
             externalized = true,
+            defaultValue = "false",
             description = "enable health check HTTP. A http get request will be sent to the service to ensure that 200 response status is\n" +
                     "coming back. This is suitable for service that depending on database or other infrastructure services. You should\n" +
                     "implement a customized health check handler that checks dependencies. i.e. if db is down, return status 400."
@@ -122,21 +125,12 @@ public class ConsulConfig {
             configFieldName = TTL_CHECK,
             externalizedKeyName = TTL_CHECK,
             externalized = true,
+            defaultValue = "true",
             description = "enable health check TTL. When this is enabled, Consul won't actively check your service to ensure it is healthy,\n" +
                     "but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service\n" +
                     "is built on top of light-4j and the above options are not available. For example, your service is behind NAT."
     )
     boolean ttlCheck;
-
-    @BooleanField(
-            configFieldName = ENABLE_HTTP2,
-            externalizedKeyName = ENABLE_HTTP2,
-            externalized = true,
-            description = "enable HTTP/2\n" +
-                    "must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS\n" +
-                    "optional to enable when using HTTPS with Consul, it will have better performance"
-    )
-    boolean enableHttp2;
 
     @StringField(
             configFieldName = WAIT,
@@ -159,6 +153,17 @@ public class ConsulConfig {
             description = "Additional buffer of time to allow Consul to terminate the blocking query connection."
     )
     String timeoutBuffer = "5s";
+
+    @BooleanField(
+            configFieldName = ENABLE_HTTP2,
+            externalizedKeyName = ENABLE_HTTP2,
+            externalized = true,
+            defaultValue = "false",
+            description = "enable HTTP/2\n" +
+                    "must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS\n" +
+                    "optional to enable when using HTTPS with Consul, it will have better performance"
+    )
+    boolean enableHttp2;
 
     @IntegerField(
             configFieldName = CONNECTION_TIMEOUT,
@@ -223,6 +228,7 @@ public class ConsulConfig {
             configFieldName = SHUTDOWN_IF_THREAD_FROZEN,
             externalizedKeyName = SHUTDOWN_IF_THREAD_FROZEN,
             externalized = true,
+            defaultValue = "false",
             description = "Shuts down host application if any Consul lookup thread stops reporting a heartbeat for\n" +
                     "2 * ( lookupInterval + wait (in seconds) + timeoutBuffer (in seconds) ) seconds"
     )
