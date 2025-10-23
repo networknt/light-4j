@@ -15,7 +15,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "unified-security", configName = "unified-security", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(
+        configKey = "unified-security",
+        configName = "unified-security",
+        configDescription = "Unified security configuration.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class UnifiedSecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(UnifiedSecurityConfig.class);
     public static final String CONFIG_NAME = "unified-security";
@@ -58,7 +63,38 @@ public class UnifiedSecurityConfig {
             externalizedKeyName = PATH_PREFIX_AUTHS,
             items = UnifiedPathPrefixAuth.class,
             externalized = true,
-            description = "path prefix security configuration."
+            description =
+                    "String format with comma separator\n" +
+                    "/v1/pets,/v1/cats,/v1/dogs\n" +
+                    "JSON format as a string\n" +
+                    "[\"/v1/pets\", \"/v1/dogs\", \"/v1/cats\"]\n" +
+                    "YAML format\n" +
+                    "  - /v1/pets\n" +
+                    "  - /v1/dogs\n" +
+                    "  - /v1/cats\n" +
+                    "format as a string for config server.\n" +
+                    "[{\"prefix\":\"/salesforce\",\"basic\":true,\"jwt\":true,\"apikey\":true,\"jwkServiceIds\":\"com.networknt.petstore-1.0.0, com.networknt.market-1.0.0\"},{\"prefix\":\"/blackrock\",\"basic\":true,\"jwt\":true,\"jwkServiceIds\":[\"com.networknt.petstore-1.0.0\",\"com.networknt.market-1.0.0\"]}]\n" +
+                    "format with YAML for readability\n" +
+                    "   path prefix security configuration.\n" +
+                    "   - pathPrefix: /salesforce\n" +
+                    "     # indicate if the basic auth is enabled for this path prefix\n" +
+                    "     basic: true\n" +
+                    "     # indicate if the jwt token verification is enabled for this path prefix\n" +
+                    "     jwt: true\n" +
+                    "     # indicate if the simple jwt (jwt token without scopes) is used. The UnifiedSecurityHandler will pre-parse the jwt token if this is true to\n" +
+                    "     # make decision which verifier will be invoked. If this is false, the UnifiedSecurityHandler will invoke the JwtVerifier to verify the jwt token.\n" +
+                    "     sjwt: true\n" +
+                    "     # indicate if the apikey is enabled for this path prefix\n" +
+                    "     apikey: true\n" +
+                    "     # if jwt is true and there are two or more jwk servers for the path prefix, then list all the\n" +
+                    "     # serviceIds for jwk in client.yml for the jwt token\n" +
+                    "     jwkServiceIds: service1,service2\n" +
+                    "     # if sjwt is true and there are two or more jwk servers for the path prefix, then list all the\n" +
+                    "     # serviceIds for jwk in client.yml for the sjwt token\n" +
+                    "     sjwkServiceIds: service1,service2\n" +
+                    "     # if swt is true and there are two or more introspection servers for the path prefix, then list all the\n" +
+                    "     # serviceIds for swt in client.yml for the swt token\n" +
+                    "     swtServiceIds: service1,service2"
     )
     List<UnifiedPathPrefixAuth> pathPrefixAuths;
 

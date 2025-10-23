@@ -1,4 +1,4 @@
-# unified-security.yml
+# Unified security configuration.
 # indicate if this handler is enabled. By default, it will be enabled if it is injected into the
 # request/response chain in the handler.yml configuration.
 enabled: ${unified-security.enabled:true}
@@ -14,27 +14,27 @@ anonymousPrefixes: ${unified-security.anonymousPrefixes:}
 #   - /v1/pets
 #   - /v1/dogs
 #   - /v1/cats
-pathPrefixAuths: ${unified-security.pathPrefixAuths:}
 # format as a string for config server.
 # [{"prefix":"/salesforce","basic":true,"jwt":true,"apikey":true,"jwkServiceIds":"com.networknt.petstore-1.0.0, com.networknt.market-1.0.0"},{"prefix":"/blackrock","basic":true,"jwt":true,"jwkServiceIds":["com.networknt.petstore-1.0.0","com.networknt.market-1.0.0"]}]
 # format with YAML for readability
-    # path prefix security configuration.
-    # - pathPrefix: /salesforce
-        # indicate if the basic auth is enabled for this path prefix
-      # basic: true
-        # indicate if the jwt token verification is enabled for this path prefix
-      # jwt: true
-        # indicate if the simple jwt (jwt token without scopes) is used. The UnifiedSecurityHandler will pre-parse the jwt token if this is true to
-        # make decision which verifier will be invoked. If this is false, the UnifiedSecurityHandler will invoke the JwtVerifier to verify the jwt token.
-      # sjwt: true
-        # indicate if the apikey is enabled for this path prefix
-      # apikey: true
-        # if jwt is true and there are two or more jwk servers for the path prefix, then list all the
-        # serviceIds for jwk in client.yml for the jwt token
-      # jwkServiceIds: service1,service2
-        # if sjwt is true and there are two or more jwk servers for the path prefix, then list all the
-        # serviceIds for jwk in client.yml for the sjwt token
-      # sjwkServiceIds: service1,service2
-        # if swt is true and there are two or more introspection servers for the path prefix, then list all the
-        # serviceIds for swt in client.yml for the swt token
-      # swtServiceIds: service1,service2
+#    path prefix security configuration.
+#    - pathPrefix: /salesforce
+#      # indicate if the basic auth is enabled for this path prefix
+#      basic: true
+#      # indicate if the jwt token verification is enabled for this path prefix
+#      jwt: true
+#      # indicate if the simple jwt (jwt token without scopes) is used. The UnifiedSecurityHandler will pre-parse the jwt token if this is true to
+#      # make decision which verifier will be invoked. If this is false, the UnifiedSecurityHandler will invoke the JwtVerifier to verify the jwt token.
+#      sjwt: true
+#      # indicate if the apikey is enabled for this path prefix
+#      apikey: true
+#      # if jwt is true and there are two or more jwk servers for the path prefix, then list all the
+#      # serviceIds for jwk in client.yml for the jwt token
+#      jwkServiceIds: service1,service2
+#      # if sjwt is true and there are two or more jwk servers for the path prefix, then list all the
+#      # serviceIds for jwk in client.yml for the sjwt token
+#      sjwkServiceIds: service1,service2
+#      # if swt is true and there are two or more introspection servers for the path prefix, then list all the
+#      # serviceIds for swt in client.yml for the swt token
+#      swtServiceIds: service1,service2
+pathPrefixAuths: ${unified-security.pathPrefixAuths:}
