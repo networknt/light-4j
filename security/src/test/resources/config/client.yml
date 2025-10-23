@@ -5,14 +5,6 @@ tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
   # or load truststore that contains the self-signed cretificate.
   verifyHostname: ${client.verifyHostname:true}
-  # The default trustedNames group used to created default SSL context. This is used to create Http2Client.SSL if set.
-  defaultGroupKey: ${client.defaultGroupKey:trustedNames.local}
-  # trusted hostnames, service names, service Ids, and so on.
-  # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
-  trustedNames:
-    local: localhost
-    negativeTest: invalidhost
-    empty:
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: ${client.loadTrustStore:true}
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
