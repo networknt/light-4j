@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable body parse flag",
-      "default" : true
+      "description" : "Enable body parse flag"
     },
     "cacheRequestBody" : {
       "type" : "boolean",
