@@ -1,22 +1,11 @@
-/*
- * Copyright (c) 2016 Network New Technologies Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.networknt.router;
 
 import com.networknt.config.Config;
+import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
+import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
+import com.networknt.config.schema.StringField; // REQUIRED IMPORT
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -24,19 +13,43 @@ import java.util.Map;
  * Config class for gateway.
  *
  */
+@ConfigSchema(
+        configKey = "sidecar",
+        configName = "sidecar",
+        configDescription = "Light http sidecar configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class SidecarConfig {
+    private static final Logger logger = LoggerFactory.getLogger(SidecarConfig.class);
+
     public static final String CONFIG_NAME = "sidecar";
     private static final String EGRESS_INGRESS_INDICATOR = "egressIngressIndicator";
+
     private Map<String, Object> mappedConfig;
     private final Config config;
+
+    // --- Annotated Field ---
+    @StringField(
+            configFieldName = EGRESS_INGRESS_INDICATOR,
+            externalizedKeyName = EGRESS_INGRESS_INDICATOR,
+            description = "Indicator used to determine the condition for router traffic in http-sidecar or light-gateway. Default is 'header'.\n" +
+                    "If the egressIngressIndicator set as header, sidecar will router request based on if the request header has service id/service url or not. This will be default setting\n" +
+                    "If the egressIngressIndicator set protocol, sidecar will router request based on protocol. normally the traffic inside pod will http (from api container to sidecar container), and sidecar will treat http traffic as egress router\n" +
+                    "If the egressIngressIndicator set as other values, currently sidecar will skip router handler and leave the request traffic to proxy\n",
+            externalized = true,
+            defaultValue = "header"
+    )
     String egressIngressIndicator;
+
+    // --- Constructor and Loading Logic ---
+
+    private SidecarConfig() {
+        this(CONFIG_NAME);
+    }
     private SidecarConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
-    }
-    private SidecarConfig() {
-        this(CONFIG_NAME);
     }
 
     public static SidecarConfig load(String configName) {
@@ -79,5 +92,4 @@ public class SidecarConfig {
             if(object != null) egressIngressIndicator = (String)object;
         }
     }
-
 }
