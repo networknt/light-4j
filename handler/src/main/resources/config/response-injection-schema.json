@@ -5,8 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicator of enabled",
-      "default" : true
+      "description" : "indicator of enabled"
     },
     "appliedBodyInjectionPathPrefixes" : {
       "type" : "array",
