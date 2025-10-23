@@ -1,4 +1,4 @@
-# indicate if the handler is enabled or not. By default, it is enabled
+# indicate if the handler is enabled or not. By default, it is enabled.
 enabled: ${token-limit.enabled:true}
 # return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,
 # a warning message should be logged. Also, this handler can be disabled on production for performance.

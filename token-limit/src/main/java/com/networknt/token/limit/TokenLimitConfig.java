@@ -28,7 +28,7 @@ public class TokenLimitConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             externalized = true,
-            description = "indicate if the handler is enabled or not. By default, it is enabled",
+            description = "indicate if the handler is enabled or not. By default, it is enabled.",
             defaultValue = "true"
     )
     @JsonProperty(ENABLED)

@@ -5,7 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the handler is enabled or not. By default, it is enabled"
+      "description" : "indicate if the handler is enabled or not. By default, it is enabled."
     },
     "errorOnLimit" : {
       "type" : "boolean",
