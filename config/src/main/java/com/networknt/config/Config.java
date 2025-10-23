@@ -772,6 +772,36 @@ public abstract class Config {
         }
     }
 
+    /**
+     * Loads a double value from a configuration object, handling conversion from Double, String, Integer, or Long.
+     * @param name The name of the configuration property (used for error messages).
+     * @param object The raw object value retrieved from the configuration map.
+     * @return The loaded Double value.
+     * @throws ConfigException if the object is not a valid double representation.
+     */
+    public static Double loadDoubleValue(String name, Object object) {
+        if (object instanceof Double) {
+            return (Double) object;
+        } else if (object instanceof Float) {
+            return Double.valueOf((Float) object);
+        } else if (object instanceof Integer) {
+            return Double.valueOf((Integer) object);
+        } else if (object instanceof Long) {
+            return Double.valueOf((Long) object);
+        } else if (object instanceof String) {
+            String s = (String)object;
+            s = s.trim();
+            if(s.isEmpty()) return 0.0;
+            try {
+                return Double.valueOf(s);
+            } catch (NumberFormatException e) {
+                throw new ConfigException(name + " must be a double or a string value that can be parsed to a double.");
+            }
+        } else {
+            throw new ConfigException(name + " must be a double, integer, long, or a string value.");
+        }
+    }
+
     static InputStream convertStringToStream(String string) {
         return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
