@@ -6,12 +6,9 @@ import java.util.concurrent.TimeUnit;
 
 public class LimitQuota {
 
+
     int value;
     TimeUnit unit;
-
-    public  LimitQuota() {
-
-    }
 
     public LimitQuota(int value, TimeUnit unit) {
         this.value = value;

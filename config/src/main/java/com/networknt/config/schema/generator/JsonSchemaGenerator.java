@@ -184,7 +184,6 @@ public class JsonSchemaGenerator extends Generator {
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.UNIQUE_ITEMS_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
 
         /* special handling for json default value */
-        // TODO - handle useSubObjectDefault for array
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
             try {

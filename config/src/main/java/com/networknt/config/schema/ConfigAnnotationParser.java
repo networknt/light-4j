@@ -68,7 +68,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         }
 
         if (!profilesDefined) {
-            System.out.println("No profiles defined, skipping schema-generation...");
+            AnnotationUtils.logWarning("No profiles defined, skipping schema-generation..");
             return true;
         }
 
@@ -81,7 +81,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         }
 
         if (!schemaEnabled) {
-            System.out.println(SCHEMA_GENERATION_PROFILE + " profile is disabled, skipping schema generation...");
+            AnnotationUtils.logInfo("%s profile is disabled, skipping schema generation...", SCHEMA_GENERATION_PROFILE);
             return true;
         }
 
@@ -160,9 +160,9 @@ public class ConfigAnnotationParser extends AbstractProcessor {
             try {
 
                 if (file.createNewFile())
-                    System.out.println("File " + file.getName() + " created.");
+                    AnnotationUtils.logInfo("File %s created", file.getName());
 
-                else System.out.println("File " + file.getName() + " already exists, the existing file will have it's contents overwritten.");
+                else AnnotationUtils.logInfo("File %s already exists, replacing file content...");
 
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -190,7 +190,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                     (Element[]) null
             );
         } catch (IOException e) {
-            throw new RuntimeException("Could not create temp resource to find the current module", e);
+            throw new RuntimeException("Could not create a temporary anchor '"+ tempAnchorName +"' under path '" + path + "'.", e);
         }
 
         // return parent folder of the temp file.

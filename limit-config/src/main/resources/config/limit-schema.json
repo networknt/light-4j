@@ -5,37 +5,32 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "If this handler is enabled or not. It is disabled by default as this handle might be in\nmost http-sidecar, light-proxy and light-router instances. However, it should only be used\ninternally to throttle request for a slow backend service or externally for DDoS attacks."
+      "description" : "If this handler is enabled or not. It is disabled by default as this handle might be in\nmost http-sidecar, light-proxy and light-router instances. However, it should only be used\ninternally to throttle request for a slow backend service or externally for DDoS attacks.\n"
     },
     "concurrentRequest" : {
       "type" : "integer",
-      "description" : "Maximum concurrent requests allowed per second on the entire server. This is property is\nhere to keep backward compatible. New users should use the rateLimit property for config\nwith different keys and different time unit.",
-      "default" : 2
+      "description" : "Maximum concurrent requests allowed per second on the entire server. This is property is\nhere to keep backward compatible. New users should use the rateLimit property for config\nwith different keys and different time unit.\n"
     },
     "queueSize" : {
       "type" : "integer",
-      "description" : "This property is kept to ensure backward compatibility. Please don't use it anymore. All\nrequests will return the rate limit headers with error messages after the limit is reached.",
-      "default" : -1
+      "description" : "This property is kept to ensure backward compatibility. Please don't use it anymore. All\nrequests will return the rate limit headers with error messages after the limit is reached.\n"
     },
     "errorCode" : {
       "type" : "integer",
-      "description" : "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\nerror code to trick the DDoS client/tool to stop the attacks as it considers the server\nis down. However, if the rate limit is used internally to throttle the client requests to\nprotect a slow backend API, it will return 429 error code to indicate too many requests\nfor the client to wait a grace period to resent the request. By default, 429 is returned.",
-      "default" : 429
+      "description" : "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\nerror code to trick the DDoS client/tool to stop the attacks as it considers the server\nis down. However, if the rate limit is used internally to throttle the client requests to\nprotect a slow backend API, it will return 429 error code to indicate too many requests\nfor the client to wait a grace period to resent the request. By default, 429 is returned.\n"
     },
     "rateLimit" : {
-      "type" : "array",
-      "description" : "Default request rate limit 10 requests per second and 10000 quota per day. This is the\ndefault for the server shared by all the services. If the key is not server, then the\nquota is not applicable.\n10 requests per second limit and 10000 requests per day quota.",
-      "items" : {
-        "type" : "string"
-      }
+      "type" : "string",
+      "description" : "Default request rate limit 10 requests per second and 10000 quota per day. This is the\ndefault for the server shared by all the services. If the key is not server, then the\nquota is not applicable.\n10 requests per second limit and 10000 requests per day quota.\n",
+      "default" : "10/s 10000/d"
     },
     "headersAlwaysSet" : {
       "type" : "boolean",
-      "description" : "By default, the rate limit headers are not set when limit is not reached. However, you can\noverwrite the behavior with true to write the three rate limit headers for 200 response in\norder for client to manage the flow of the requests."
+      "description" : "By default, the rate limit headers are not set when limit is not reached. However, you can\noverwrite the behavior with true to write the three rate limit headers for 200 response in\norder for client to manage the flow of the requests.\n"
     },
     "key" : {
       "type" : "string",
-      "description" : "Key of the rate limit: server, address, client, user\nserver: The entire server has one rate limit key, and it means all users share the same.\naddress: The IP address is the key and each IP will have its rate limit configuration.\nclient: The client id in the JWT token so that we can give rate limit per client.\nuser: The user id in the JWT token so that we can set rate limit and quota based on user.",
+      "description" : "Key of the rate limit: server, address, client, user\nserver: The entire server has one rate limit key, and it means all users share the same.\naddress: The IP address is the key and each IP will have its rate limit configuration.\nclient: The client id in the JWT token so that we can give rate limit per client.\nuser: The user id in the JWT token so that we can set rate limit and quota based on user.\n",
       "default" : "server",
       "pattern" : "server|address|client|user"
     },
@@ -48,45 +43,36 @@
     },
     "address" : {
       "type" : "object",
-      "description" : "If address is the key, we can set up different rate limit per address and optional per\npath or service for certain addresses. All other un-specified addresses will share the\nlimit defined in rateLimit.",
+      "description" : "If address is the key, we can set up different rate limit per address and optional per\npath or service for certain addresses. All other un-specified addresses will share the\nlimit defined in rateLimit.\n",
       "properties" : {
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
+            "type" : "object"
           }
         }
       }
     },
     "client" : {
       "type" : "object",
-      "description" : "If client is the key, we can set up different rate limit per client and optional per\npath or service for certain clients. All other un-specified clients will share the limit\ndefined in rateLimit. When client is select, the rate-limit handler must be after the\nJwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.",
+      "description" : "If client is the key, we can set up different rate limit per client and optional per\npath or service for certain clients. All other un-specified clients will share the limit\ndefined in rateLimit. When client is select, the rate-limit handler must be after the\nJwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.\n",
       "properties" : {
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
+            "type" : "object"
           }
         }
       }
     },
     "user" : {
       "type" : "object",
-      "description" : "If user is the key, we can set up different rate limit per user and optional per\npath or service for certain users. All other un-specified users will share the limit\ndefined in rateLimit. When user is select, the rate-limit handler must be after the\nJwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.",
+      "description" : "If user is the key, we can set up different rate limit per user and optional per\npath or service for certain users. All other un-specified users will share the limit\ndefined in rateLimit. When user is select, the rate-limit handler must be after the\nJwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.\n",
       "properties" : {
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
+            "type" : "object"
           }
         }
       }

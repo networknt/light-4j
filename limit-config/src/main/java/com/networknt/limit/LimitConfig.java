@@ -30,7 +30,15 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "limit", configName = "limit", outputFormats = { OutputFormat.JSON_SCHEMA, OutputFormat.YAML })
+@ConfigSchema(
+        configKey = "limit",
+        configName = "limit",
+        outputFormats = {
+                OutputFormat.JSON_SCHEMA,
+                OutputFormat.YAML
+        },
+        configDescription = "Rate Limit Handler Configuration\n"
+)
 public class LimitConfig {
     private static final Logger logger = LoggerFactory.getLogger(LimitConfig.class);
     public static final String CONFIG_NAME = "limit";
@@ -55,9 +63,12 @@ public class LimitConfig {
             configFieldName = IS_ENABLED,
             externalizedKeyName = IS_ENABLED,
             externalized = true,
-            description = "If this handler is enabled or not. It is disabled by default as this handle might be in\n" +
-                    "most http-sidecar, light-proxy and light-router instances. However, it should only be used\n" +
-                    "internally to throttle request for a slow backend service or externally for DDoS attacks."
+            defaultValue = "false",
+            description = """
+                    If this handler is enabled or not. It is disabled by default as this handle might be in
+                    most http-sidecar, light-proxy and light-router instances. However, it should only be used
+                    internally to throttle request for a slow backend service or externally for DDoS attacks.
+                    """
     )
     boolean enabled;
 
@@ -66,9 +77,11 @@ public class LimitConfig {
             externalizedKeyName = CONCURRENT_REQUEST,
             externalized = true,
             defaultValue = "2",
-            description = "Maximum concurrent requests allowed per second on the entire server. This is property is\n" +
-                    "here to keep backward compatible. New users should use the rateLimit property for config\n" +
-                    "with different keys and different time unit."
+            description = """
+                    Maximum concurrent requests allowed per second on the entire server. This is property is
+                    here to keep backward compatible. New users should use the rateLimit property for config
+                    with different keys and different time unit.
+                    """
     )
     int concurrentRequest;
 
@@ -77,8 +90,10 @@ public class LimitConfig {
             externalizedKeyName = QUEUE_SIZE,
             externalized = true,
             defaultValue = "-1",
-            description = "This property is kept to ensure backward compatibility. Please don't use it anymore. All\n" +
-                    "requests will return the rate limit headers with error messages after the limit is reached."
+            description = """
+                    This property is kept to ensure backward compatibility. Please don't use it anymore. All
+                    requests will return the rate limit headers with error messages after the limit is reached.
+                    """
     )
     int queueSize;
 
@@ -87,23 +102,28 @@ public class LimitConfig {
             externalizedKeyName = ERROR_CODE,
             externalized = true,
             defaultValue = "429",
-            description = "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\n" +
-                    "error code to trick the DDoS client/tool to stop the attacks as it considers the server\n" +
-                    "is down. However, if the rate limit is used internally to throttle the client requests to\n" +
-                    "protect a slow backend API, it will return 429 error code to indicate too many requests\n" +
-                    "for the client to wait a grace period to resent the request. By default, 429 is returned."
+            description = """
+                    If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503
+                    error code to trick the DDoS client/tool to stop the attacks as it considers the server
+                    is down. However, if the rate limit is used internally to throttle the client requests to
+                    protect a slow backend API, it will return 429 error code to indicate too many requests
+                    for the client to wait a grace period to resent the request. By default, 429 is returned.
+                    """
     )
     int errorCode;
 
-    @ArrayField(
+    // Although the internal data representation is a list, the configuration is field is a string.
+    @StringField(
             configFieldName = RATE_LIMIT,
             externalizedKeyName = RATE_LIMIT,
             externalized = true,
-            description = "Default request rate limit 10 requests per second and 10000 quota per day. This is the\n" +
-                    "default for the server shared by all the services. If the key is not server, then the\n" +
-                    "quota is not applicable.\n" +
-                    "10 requests per second limit and 10000 requests per day quota.",
-            items = String.class
+            defaultValue = "10/s 10000/d",
+            description = """
+                    Default request rate limit 10 requests per second and 10000 quota per day. This is the
+                    default for the server shared by all the services. If the key is not server, then the
+                    quota is not applicable.
+                    10 requests per second limit and 10000 requests per day quota.
+                    """
     )
     List<LimitQuota> rateLimit;
 
@@ -111,22 +131,28 @@ public class LimitConfig {
             configFieldName = HEADERS_ALWAYS_SET,
             externalizedKeyName = HEADERS_ALWAYS_SET,
             externalized = true,
-            description = "By default, the rate limit headers are not set when limit is not reached. However, you can\n" +
-                    "overwrite the behavior with true to write the three rate limit headers for 200 response in\n" +
-                    "order for client to manage the flow of the requests."
+            defaultValue = "false",
+            description = """
+                    By default, the rate limit headers are not set when limit is not reached. However, you can
+                    overwrite the behavior with true to write the three rate limit headers for 200 response in
+                    order for client to manage the flow of the requests.
+                    """
     )
     boolean headersAlwaysSet;
 
     @StringField(
             configFieldName = LIMIT_KEY,
             externalizedKeyName = LIMIT_KEY,
+            externalized = true,
             pattern = "server|address|client|user",
             defaultValue = "server",
-            description = "Key of the rate limit: server, address, client, user\n" +
-                    "server: The entire server has one rate limit key, and it means all users share the same.\n" +
-                    "address: The IP address is the key and each IP will have its rate limit configuration.\n" +
-                    "client: The client id in the JWT token so that we can give rate limit per client.\n" +
-                    "user: The user id in the JWT token so that we can set rate limit and quota based on user."
+            description = """
+                    Key of the rate limit: server, address, client, user
+                    server: The entire server has one rate limit key, and it means all users share the same.
+                    address: The IP address is the key and each IP will have its rate limit configuration.
+                    client: The client id in the JWT token so that we can give rate limit per client.
+                    user: The user id in the JWT token so that we can set rate limit and quota based on user.
+                    """
     )
     LimitKey key;
 
@@ -143,9 +169,11 @@ public class LimitConfig {
             configFieldName = ADDRESS,
             externalizedKeyName = ADDRESS,
             externalized = true,
-            description = "If address is the key, we can set up different rate limit per address and optional per\n" +
-                    "path or service for certain addresses. All other un-specified addresses will share the\n" +
-                    "limit defined in rateLimit.",
+            description = """
+                    If address is the key, we can set up different rate limit per address and optional per
+                    path or service for certain addresses. All other un-specified addresses will share the
+                    limit defined in rateLimit.
+                    """,
             ref = RateLimitSet.class
     )
     RateLimitSet address;
@@ -154,10 +182,12 @@ public class LimitConfig {
             configFieldName = CLIENT,
             externalizedKeyName = CLIENT,
             externalized = true,
-            description = "If client is the key, we can set up different rate limit per client and optional per\n" +
-                    "path or service for certain clients. All other un-specified clients will share the limit\n" +
-                    "defined in rateLimit. When client is select, the rate-limit handler must be after the\n" +
-                    "JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.",
+            description = """
+                    If client is the key, we can set up different rate limit per client and optional per
+                    path or service for certain clients. All other un-specified clients will share the limit
+                    defined in rateLimit. When client is select, the rate-limit handler must be after the
+                    JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.
+                    """,
             ref = RateLimitSet.class
 
     )
@@ -167,10 +197,12 @@ public class LimitConfig {
             configFieldName = USER,
             externalizedKeyName = USER,
             externalized = true,
-            description = "If user is the key, we can set up different rate limit per user and optional per\n" +
-                    "path or service for certain users. All other un-specified users will share the limit\n" +
-                    "defined in rateLimit. When user is select, the rate-limit handler must be after the\n" +
-                    "JwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.",
+            description = """
+                    If user is the key, we can set up different rate limit per user and optional per
+                    path or service for certain users. All other un-specified users will share the limit
+                    defined in rateLimit. When user is select, the rate-limit handler must be after the
+                    JwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.
+                    """,
             ref = RateLimitSet.class
     )
     RateLimitSet user;
@@ -553,32 +585,5 @@ public class LimitConfig {
         return rateLimitSet;
     }
 
-    public static class RateLimitSet {
 
-        @MapField(
-                configFieldName = "directMaps",
-                externalizedKeyName = "directMaps",
-                valueType = List.class
-        )
-        public Map<String, List<LimitQuota>> directMaps;
-
-        public RateLimitSet() {
-
-        }
-
-        public Map<String, List<LimitQuota>> getDirectMaps() {
-            return directMaps;
-        }
-
-        public void setDirectMaps(Map<String, List<LimitQuota>> directMaps) {
-            this.directMaps = directMaps;
-        }
-
-        public void addDirectMap(String key, List<LimitQuota> limitQuotas) {
-            if (this.directMaps == null) {
-                this.directMaps = new HashMap<>();
-            }
-            this.directMaps.put(key, limitQuotas);
-        }
-    }
 }

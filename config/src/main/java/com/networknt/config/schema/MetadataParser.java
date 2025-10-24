@@ -21,8 +21,6 @@ import java.util.function.Function;
  */
 public class MetadataParser {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class);
-
     /* types */
     public static final String INTEGER_TYPE = "integer";
     public static final String NUMBER_TYPE = "number";
@@ -101,9 +99,11 @@ public class MetadataParser {
      * @param rootMetadata The metadata to be populated.
      * @param processingEnvironment The processing environment.
      */
-    private static void gatherObjectSchemaData(final Element currentRoot, final LinkedHashMap<String, Object> rootMetadata, final ProcessingEnvironment processingEnvironment) {
-
-        LOG.trace("Gathering schema data for element: {}", currentRoot.getSimpleName());
+    private static void gatherObjectSchemaData(
+            final Element currentRoot,
+            final LinkedHashMap<String, Object> rootMetadata,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         final var fields = currentRoot.getEnclosedElements();
         final var properties = new LinkedHashMap<String, Object>();
         final var name = currentRoot.getSimpleName().toString().toLowerCase();
@@ -173,18 +173,18 @@ public class MetadataParser {
      * @param processingEnvironment The processing environment to resolve MirrorTypes.
      * @return A LinkedHashMap containing the metadata.
      */
-    private static Optional<LinkedHashMap<String, Object>> getObjectPropertyMetadata(final Element element, final ProcessingEnvironment processingEnvironment) {
-
-        LOG.trace("Gathering object schema data for property: {}", element.getSimpleName());
-
+    private static Optional<LinkedHashMap<String, Object>> getObjectPropertyMetadata(
+            final Element element,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         if (element.getKind() != ElementKind.FIELD)
             return Optional.empty();
 
 
         for (final var entry : FIELD_PARSE_FUNCTIONS.entrySet()) {
+
             final var annotationClass = entry.getKey();
             final var parseFunction = entry.getValue();
-
             if (AnnotationUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).isPresent()) {
                 final var annotation = AnnotationUtils.safeGetAnnotation(element, annotationClass, processingEnvironment).get();
                 return Optional.of(parseFunction.apply(new Tuple<>(annotation, processingEnvironment)));
@@ -202,7 +202,10 @@ public class MetadataParser {
      * @param processingEnvironment The processing environment to resolve subtypes.
      * @return A LinkedHashMap containing the metadata.
      */
-    private static LinkedHashMap<String, Object> parseArrayMetadata(final ArrayField field, final ProcessingEnvironment processingEnvironment) {
+    private static LinkedHashMap<String, Object> parseArrayMetadata(
+            final ArrayField field,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         String canonicalName;
         try {
             canonicalName = field.items().getCanonicalName();
@@ -230,7 +233,10 @@ public class MetadataParser {
         return metadata;
     }
 
-    private static LinkedHashMap<String, Object> parseMapMetadata(final MapField field, final ProcessingEnvironment processingEnvironment) {
+    private static LinkedHashMap<String, Object> parseMapMetadata(
+            final MapField field,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         String canonicalName;
         try {
             canonicalName = field.valueType().getCanonicalName();
@@ -329,7 +335,10 @@ public class MetadataParser {
      * @param processingEnvironment The processing environment to resolve subtypes.
      * @return A LinkedHashMap containing the metadata.
      */
-    private static LinkedHashMap<String, Object> parseObjectMetadata(final ObjectField field, final ProcessingEnvironment processingEnvironment) {
+    private static LinkedHashMap<String, Object> parseObjectMetadata(
+            final ObjectField field,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         String canonicalName;
         try {
             canonicalName = field.ref().getCanonicalName();
