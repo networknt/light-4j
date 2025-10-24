@@ -26,7 +26,11 @@ public class AnnotationUtils {
         }
     }
 
-    public static boolean elementIsClass(final Element element, final Class<?> clazz, final ProcessingEnvironment processingEnvironment) {
+    public static boolean elementIsClass(
+            final Element element,
+            final Class<?> clazz,
+            final ProcessingEnvironment processingEnvironment
+    ) {
         final var elementClass = AnnotationUtils.getClassFromElement(element, processingEnvironment);
         return elementClass.map(aClass -> aClass.equals(clazz)).orElse(false);
     }
@@ -82,7 +86,11 @@ public class AnnotationUtils {
      * @param <A> The type of the annotation.
      * @return The annotation if it exists, otherwise an empty optional.
      */
-    public static <A extends Annotation> Optional<A> safeGetAnnotation(final Element element, final Class<A> annotationClass, final ProcessingEnvironment processingEnvironment) {
+    public static <A extends Annotation> Optional<A> safeGetAnnotation(
+            final Element element,
+            final Class<A> annotationClass,
+            final ProcessingEnvironment processingEnvironment
+    ) {
 
         if (element == null || annotationClass == null)
             return Optional.empty();
@@ -123,7 +131,13 @@ public class AnnotationUtils {
      * @param type         The class type of the value.
      * @param <T>          The type of the value.
      */
-    public static <T> void updateIfNotDefault(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property, final String key, final Object defaultValue, final Class<T> type) {
+    public static <T> void updateIfNotDefault(
+            final LinkedHashMap<String, Object> field,
+            final LinkedHashMap<String, Object> property,
+            final String key,
+            final Object defaultValue,
+            final Class<T> type
+    ) {
         final var value = getAsType(field.get(key), type);
         updateIfNotDefault(property, value, key, defaultValue);
     }
@@ -136,7 +150,12 @@ public class AnnotationUtils {
      * @param defaultValue The default value.
      * @param <T>          The type of the value.
      */
-    public static <T> void updateIfNotDefault(final LinkedHashMap<String, Object> property, final T value, final String key, final Object defaultValue) {
+    public static <T> void updateIfNotDefault(
+            final LinkedHashMap<String, Object> property,
+            final T value,
+            final String key,
+            final Object defaultValue
+    ) {
         if (value != null && !Objects.equals(value, defaultValue))
             property.put(key, value);
     }
@@ -149,7 +168,7 @@ public class AnnotationUtils {
      * @param <T>   The type to cast to.
      * @return The cast value.
      */
-    public static <T> T getAsType(final Object value, Class<T> type) {
+    public static <T> T getAsType(final Object value, final Class<T> type) {
         if (value == null)
             return null;
 
@@ -157,5 +176,32 @@ public class AnnotationUtils {
             return type.cast(value);
 
         else return null;
+    }
+
+    public static void logError(String message, Object... args) {
+        final var errorPrefix = "[ERROR] ";
+        final var formattedMessage = formatMessage(errorPrefix + message, args);
+        System.out.println(formattedMessage);
+    }
+
+    public static void logWarning(String message, Object... args) {
+        final var warningPrefix = "[WARNING] ";
+        final var formattedMessage = formatMessage(warningPrefix + message, args);
+        System.out.println(formattedMessage);
+    }
+
+    public static void logInfo(String message, Object... args) {
+        final var warningPrefix = "[INFO] ";
+        final var formattedMessage = formatMessage(warningPrefix + message, args);
+        System.out.println(formattedMessage);
+    }
+
+
+    private static String formatMessage(String message, Object... args) {
+        if (args == null || args.length == 0) {
+            return message;
+        }
+
+        return String.format(message, args);
     }
 }

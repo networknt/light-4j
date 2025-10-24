@@ -62,20 +62,20 @@ public class LimitConfigTest {
 
     @Test
     public void testAddress() {
-        LimitConfig.RateLimitSet limitAddress =  limitConfig.getAddress();
+        RateLimitSet limitAddress =  limitConfig.getAddress();
         Assert.assertEquals(limitAddress.getDirectMaps().size(), 4);
     }
 
     @Test
     public void testClient() {
-        LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
+        RateLimitSet limitClient =  limitConfig.getClient();
         Assert.assertEquals(limitClient.getDirectMaps().size(), 4);
 
     }
 
     @Test
     public void testUser() {
-        LimitConfig.RateLimitSet limitUser =  limitConfig.getUser();
+        RateLimitSet limitUser =  limitConfig.getUser();
         Assert.assertEquals(limitUser.getDirectMaps().size(), 3);
 
     }
