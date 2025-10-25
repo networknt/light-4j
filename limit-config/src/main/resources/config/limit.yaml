@@ -1,5 +1,5 @@
 # Rate Limit Handler Configuration
-#
+# 
 # If this handler is enabled or not. It is disabled by default as this handle might be in
 # most http-sidecar, light-proxy and light-router instances. However, it should only be used
 # internally to throttle request for a slow backend service or externally for DDoS attacks.
@@ -51,6 +51,6 @@ user: ${limit.user:}
 # Client id Key Resolver.
 clientIdKeyResolver: ${limit.clientIdKeyResolver:com.networknt.limit.key.JwtClientIdKeyResolver}
 # Address Key Resolver.
-addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.IpAddressKeyResolver}
-# User id Key Resolver.
+addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.RemoteAddressKeyResolver}
+# User Id Key Resolver.
 userIdKeyResolver: ${limit.userIdKeyResolver:com.networknt.limit.key.JwtUserIdKeyResolver}

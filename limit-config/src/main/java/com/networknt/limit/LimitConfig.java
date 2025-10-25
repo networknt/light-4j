@@ -220,7 +220,7 @@ public class LimitConfig {
             configFieldName = ADDRESS_KEY,
             externalizedKeyName = ADDRESS_KEY,
             externalized = true,
-            defaultValue = "com.networknt.limit.key.IpAddressKeyResolver",
+            defaultValue = "com.networknt.limit.key.RemoteAddressKeyResolver",
             description = "Address Key Resolver."
     )
     String addressKeyResolver;
@@ -230,7 +230,7 @@ public class LimitConfig {
             externalizedKeyName = USER_ID_KEY,
             externalized = true,
             defaultValue = "com.networknt.limit.key.JwtUserIdKeyResolver",
-            description = "User id Key Resolver."
+            description = "User Id Key Resolver."
     )
     String userIdKeyResolver;
     private Map<String, Object> mappedConfig;

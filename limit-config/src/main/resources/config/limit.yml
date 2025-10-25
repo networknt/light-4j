@@ -1,6 +1,5 @@
----
 # Rate Limit Handler Configuration
-
+# 
 # If this handler is enabled or not. It is disabled by default as this handle might be in
 # most http-sidecar, light-proxy and light-router instances. However, it should only be used
 # internally to throttle request for a slow backend service or externally for DDoS attacks.
@@ -42,7 +41,7 @@ address: ${limit.address:}
 # If client is the key, we can set up different rate limit per client and optional per
 # path or service for certain clients. All other un-specified clients will share the limit
 # defined in rateLimit. When client is select, the rate-limit handler must be after the
-## JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.
+# JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.
 client: ${limit.client:}
 # If user is the key, we can set up different rate limit per user and optional per
 # path or service for certain users. All other un-specified users will share the limit
@@ -51,7 +50,7 @@ client: ${limit.client:}
 user: ${limit.user:}
 # Client id Key Resolver.
 clientIdKeyResolver: ${limit.clientIdKeyResolver:com.networknt.limit.key.JwtClientIdKeyResolver}
-# Ip Address Key Resolver.
+# Address Key Resolver.
 addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.RemoteAddressKeyResolver}
 # User Id Key Resolver.
 userIdKeyResolver: ${limit.userIdKeyResolver:com.networknt.limit.key.JwtUserIdKeyResolver}

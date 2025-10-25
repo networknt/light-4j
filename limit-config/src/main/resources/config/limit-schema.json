@@ -85,11 +85,11 @@
     "addressKeyResolver" : {
       "type" : "string",
       "description" : "Address Key Resolver.",
-      "default" : "com.networknt.limit.key.IpAddressKeyResolver"
+      "default" : "com.networknt.limit.key.RemoteAddressKeyResolver"
     },
     "userIdKeyResolver" : {
       "type" : "string",
-      "description" : "User id Key Resolver.",
+      "description" : "User Id Key Resolver.",
       "default" : "com.networknt.limit.key.JwtUserIdKeyResolver"
     }
   }
