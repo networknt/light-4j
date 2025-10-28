@@ -126,7 +126,7 @@ public class WhitelistConfig {
                        - 127.0.0.2
                        - 10.10.*.*
                        - 127.0.0.48/30
-                    
+
                     The following format is the JSON format suitable for both local values.yml and config server.
                     paths: {"/health/com.networknt.petstore-1.0.0":["127.0.0.1","10.10.*.*","127.0.0.48/30"],"/prometheus":["FE45:00:00:000:0:AAA:FFFF:0045","FE45:00:00:000:0:AAA:FFFF:*","FE45:00:00:000:0:AAA:FFFF:01F4/127"],"/data":["127.0.0.2","10.10.*.*","127.0.0.48/30"]}
                     """,
