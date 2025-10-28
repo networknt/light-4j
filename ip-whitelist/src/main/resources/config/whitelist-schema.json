@@ -1,0 +1,26 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "defaultAllow", "paths" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Indicate if this handler is enabled or not. It is normally used for the third party integration\nso that only approved IPs can connect to the light-gateway or http-sidecar at certain endpoints.\nThe default value is true, and it will take effect as long as this handler is in the chain.\n"
+    },
+    "defaultAllow" : {
+      "type" : "boolean",
+      "description" : "Default allowed or denied if there is no rules defined for the path or the path is not defined.\nIf defaultAllow is true, all IP addresses defined under the matched path will be allowed and IP\naddresses are not in the list will be denied. If the request path prefix is not defined, then all\nrequests will be allowed by default. Basically, only IPs not listed under a path will be denied.\nIf defaultAllow is false, all IP addresses defined under the matched path will be denied and IP\naddresses are not in the list will be allowed. If the request path prefix is not defined, then all\nrequests will be denied by default. Basically, only IPs not listed under a path will be allowed.\n"
+    },
+    "paths" : {
+      "type" : "object",
+      "description" : "List of path prefixes and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and\nSlash format. The path prefix is defined as request path prefix only without differentiate method.\nThe following format is the YAML format suitable for externalized values.yml in local filesystem.\n /health/com.networknt.petstore-1.0.0:\n   - 127.0.0.1\n   - 10.10.*.*\n   - 127.0.0.48/30\n /prometheus:\n   - FE45:00:00:000:0:AAA:FFFF:0045\n   - FE45:00:00:000:0:AAA:FFFF:*\n   - FE45:00:00:000:0:AAA:FFFF:01F4/127\n /data:\n   - 127.0.0.2\n   - 10.10.*.*\n   - 127.0.0.48/30\n\nThe following format is the JSON format suitable for both local values.yml and config server.\npaths: {\"/health/com.networknt.petstore-1.0.0\":[\"127.0.0.1\",\"10.10.*.*\",\"127.0.0.48/30\"],\"/prometheus\":[\"FE45:00:00:000:0:AAA:FFFF:0045\",\"FE45:00:00:000:0:AAA:FFFF:*\",\"FE45:00:00:000:0:AAA:FFFF:01F4/127\"],\"/data\":[\"127.0.0.2\",\"10.10.*.*\",\"127.0.0.48/30\"]}\n",
+      "additionalProperties" : {
+        "oneOf" : [ {
+          "type" : "object"
+        }, {
+          "type" : "string"
+        } ]
+      }
+    }
+  }
+}

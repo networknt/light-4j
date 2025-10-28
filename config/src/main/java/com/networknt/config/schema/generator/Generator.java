@@ -8,8 +8,8 @@ import javax.tools.FileObject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 /**
  * Base generator class for all schema types.
@@ -155,14 +155,25 @@ public abstract class Generator {
     }
 
     /**
-     * Common check to see if the current hashmap contains another hashmap at a specific field.
+     * Common check to see if a hashmap contains a hashmap at the specified key.
      *
      * @param map   The map to check.
      * @param field The field to check.
-     * @return True if the map contains the field and the field is a hashmap.
+     * @return True if the map contains the field and is a hashmap.
      */
     protected static boolean fieldIsSubMap(final LinkedHashMap<String, Object> map, final String field) {
         return map.containsKey(field) && map.get(field) instanceof LinkedHashMap;
+    }
+
+    /**
+     * Common check to see if a hashmap contains an array at the specified key.
+     *
+     * @param map - map to check
+     * @param field - field to check
+     * @return True if the map contains the field and is an array.
+     */
+    protected static boolean fieldIsSubArray(final LinkedHashMap<String, Object> map, final String field) {
+        return map.containsKey(field) && map.get(field) instanceof ArrayList;
     }
 
     /**

@@ -49,5 +49,9 @@ public @interface MapField {
     /**
      * The valueType of the map.
      */
-    Class<?> valueType();
+    Class<?> valueType() default Object.class;
+    Class<?>[] valueTypeAnyOf() default {};
+    Class<?>[] valueTypeOneOf() default {};
+    Class<?>[] valueTypeAllOf() default {};
+
 }
