@@ -46,11 +46,6 @@ public @interface ArrayField {
     boolean useSubObjectDefault() default ConfigSchema.DEFAULT_BOOLEAN;
 
     /**
-     * The reference class of the field.
-     */
-    Class<?> items();
-
-    /**
      * The minimum number of items in this array.
      */
     int minItems() default ConfigSchema.DEFAULT_INT;
@@ -71,6 +66,11 @@ public @interface ArrayField {
      * If set to true, the array must contain at least one item that matches the schema.
      */
     boolean contains() default ConfigSchema.DEFAULT_BOOLEAN;
+
+    /**
+     * The reference class of the field.
+     */
+    Class<?> items() default Object.class;
 
     /**
      * The items flag of the field.

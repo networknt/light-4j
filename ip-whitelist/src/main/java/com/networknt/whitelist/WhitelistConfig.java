@@ -22,6 +22,7 @@ package com.networknt.whitelist;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Bits;
@@ -31,6 +32,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+@ConfigSchema(
+        configKey = "whitelist",
+        configName = "whitelist",
+        configDescription = "IP Whitelist configuration",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class WhitelistConfig {
     public static final Logger logger = LoggerFactory.getLogger(WhitelistConfig.class);
 
@@ -69,8 +76,62 @@ public class WhitelistConfig {
      */
     private static final Pattern IP6_SLASH = Pattern.compile("(?:[a-zA-Z0-9]{1,4}:){7}[a-zA-Z0-9]{1,4}\\/\\d{1,3}");
 
+    @BooleanField(
+            configFieldName = ENABLED,
+            externalizedKeyName = ENABLED,
+            externalized = true,
+            defaultValue = "true",
+            description = """
+                    Indicate if this handler is enabled or not. It is normally used for the third party integration
+                    so that only approved IPs can connect to the light-gateway or http-sidecar at certain endpoints.
+                    The default value is true, and it will take effect as long as this handler is in the chain.
+                    """
+    )
     boolean enabled;
+
+    @BooleanField(
+            configFieldName = DEFAULT_ALLOW,
+            externalizedKeyName = DEFAULT_ALLOW,
+            externalized = true,
+            defaultValue = "true",
+            description = """
+                    Default allowed or denied if there is no rules defined for the path or the path is not defined.
+                    If defaultAllow is true, all IP addresses defined under the matched path will be allowed and IP
+                    addresses are not in the list will be denied. If the request path prefix is not defined, then all
+                    requests will be allowed by default. Basically, only IPs not listed under a path will be denied.
+                    If defaultAllow is false, all IP addresses defined under the matched path will be denied and IP
+                    addresses are not in the list will be allowed. If the request path prefix is not defined, then all
+                    requests will be denied by default. Basically, only IPs not listed under a path will be allowed.
+                    """
+    )
     boolean defaultAllow;
+
+    @MapField(
+            configFieldName = PATHS,
+            externalizedKeyName = PATHS,
+            externalized = true,
+            description = """
+                    List of path prefixes and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and
+                    Slash format. The path prefix is defined as request path prefix only without differentiate method.
+                    The following format is the YAML format suitable for externalized values.yml in local filesystem.
+                     /health/com.networknt.petstore-1.0.0:
+                       - 127.0.0.1
+                       - 10.10.*.*
+                       - 127.0.0.48/30
+                     /prometheus:
+                       - FE45:00:00:000:0:AAA:FFFF:0045
+                       - FE45:00:00:000:0:AAA:FFFF:*
+                       - FE45:00:00:000:0:AAA:FFFF:01F4/127
+                     /data:
+                       - 127.0.0.2
+                       - 10.10.*.*
+                       - 127.0.0.48/30
+
+                    The following format is the JSON format suitable for both local values.yml and config server.
+                    paths: {"/health/com.networknt.petstore-1.0.0":["127.0.0.1","10.10.*.*","127.0.0.48/30"],"/prometheus":["FE45:00:00:000:0:AAA:FFFF:0045","FE45:00:00:000:0:AAA:FFFF:*","FE45:00:00:000:0:AAA:FFFF:01F4/127"],"/data":["127.0.0.2","10.10.*.*","127.0.0.48/30"]}
+                    """,
+            valueTypeOneOf = {List.class, String.class}
+    )
     Map<String, IpAcl> prefixAcl = new HashMap<>();
     private Config config;
     private Map<String, Object> mappedConfig;

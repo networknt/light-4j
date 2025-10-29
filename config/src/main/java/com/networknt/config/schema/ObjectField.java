@@ -48,5 +48,8 @@ public @interface ObjectField {
     /**
      * The reference class of the field.
      */
-    Class<?> ref();
+    Class<?> ref() default Object.class;
+    Class<?>[] refAllOf() default {};
+    Class<?>[] refOneOf() default {};
+    Class<?>[] refAnyOf() default {};
 }

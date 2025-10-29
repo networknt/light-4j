@@ -1,8 +1,6 @@
 package com.networknt.config.schema;
 
 import com.networknt.config.schema.generator.Generator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;

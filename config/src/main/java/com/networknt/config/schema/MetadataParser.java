@@ -1,13 +1,12 @@
 package com.networknt.config.schema;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.util.Tuple;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.MirroredTypesException;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.Function;
@@ -45,13 +44,15 @@ public class MetadataParser {
     public static final String MINIMUM_KEY = "minimum";
     public static final String MAXIMUM_KEY = "maximum";
     public static final String REF_KEY = "ref";
+    public static final String REF_ALL_OF_KEY = "refAllOf";
+    public static final String REF_ANY_OF_KEY = "refAnyOf";
+    public static final String REF_ONE_OF_KEY = "refOneOf";
     public static final String MIN_LENGTH_KEY = "minLength";
     public static final String MAX_LENGTH_KEY = "maxLength";
     public static final String PATTERN_KEY = "pattern";
     public static final String FORMAT_KEY = "format";
     public static final String ITEMS_KEY = "items";
     public static final String EXTERNALIZED_KEY_NAME = "externalizedKeyName";
-    public static final String VALUE_TYPE_KEY = "valueType";
     public static final String CONFIG_FIELD_NAME_KEY = "configFieldName";
     public static final String USE_SUB_OBJECT_DEFAULT_KEY = "useSubObjectDefault";
     public static final String MIN_ITEMS_KEY = "minItems";
@@ -64,11 +65,13 @@ public class MetadataParser {
     public static final String PROPERTIES_KEY = "properties";
 
     private static final LinkedHashMap<String, String> DEFAULT_CONTAINER_PROPS = new LinkedHashMap<>();
+
     static {
         DEFAULT_CONTAINER_PROPS.put(TYPE_KEY, STRING_TYPE);
     }
 
     private final static LinkedHashMap<Class<? extends Annotation>, Function<Tuple<Annotation, ProcessingEnvironment>, LinkedHashMap<String, Object>>> FIELD_PARSE_FUNCTIONS = new LinkedHashMap<>();
+
     static {
         FIELD_PARSE_FUNCTIONS.put(BooleanField.class, (tuple) -> parseBooleanMetadata((BooleanField) tuple._1()));
         FIELD_PARSE_FUNCTIONS.put(IntegerField.class, (tuple) -> parseIntegerMetadata((IntegerField) tuple._1()));
@@ -82,7 +85,8 @@ public class MetadataParser {
 
     /**
      * Parses the element for all config schema metadata.
-     * @param element - the root element to gather metadata on.
+     *
+     * @param element               - the root element to gather metadata on.
      * @param processingEnvironment - the processing env.
      * @return - hashmap containing all data from annotations.
      */
@@ -95,8 +99,9 @@ public class MetadataParser {
 
     /**
      * Gathers schema data for an object element.
-     * @param currentRoot The current root element.
-     * @param rootMetadata The metadata to be populated.
+     *
+     * @param currentRoot           The current root element.
+     * @param rootMetadata          The metadata to be populated.
      * @param processingEnvironment The processing environment.
      */
     private static void gatherObjectSchemaData(
@@ -169,7 +174,8 @@ public class MetadataParser {
     /**
      * Gets the metadata for a field element.
      * Depending on the element type, a different function is invoked to parse the info from the annotation.
-     * @param element The element to get the metadata from.
+     *
+     * @param element               The element to get the metadata from.
      * @param processingEnvironment The processing environment to resolve MirrorTypes.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -198,7 +204,7 @@ public class MetadataParser {
      * Parses the 'ArrayField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the ArrayField interface to view all available fields.
      *
-     * @param field The field of the config to parse.
+     * @param field                 The field of the config to parse.
      * @param processingEnvironment The processing environment to resolve subtypes.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -206,24 +212,83 @@ public class MetadataParser {
             final ArrayField field,
             final ProcessingEnvironment processingEnvironment
     ) {
-        String canonicalName;
+        final var metadata = new LinkedHashMap<String, Object>();
+        /* Since we do not pass in the Element, we throw an exception to access the type mirrors. */
+        /* All of these try catches will always fail during compile time. */
+        boolean parsed = false;
         try {
-            canonicalName = field.items().getCanonicalName();
-        } catch (MirroredTypeException e) {
-            canonicalName = e.getTypeMirrors().get(0).toString();
+            field.itemsOneOf();
+        } catch (MirroredTypesException e) {
+            var mirrors = e.getTypeMirrors();
+            if (!mirrors.isEmpty()) {
+                var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                for (var mirror : mirrors) {
+                    final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                    final var refMetadata = new LinkedHashMap<String, Object>();
+                    gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                    dataList.add(refMetadata);
+                }
+                metadata.put(REF_ONE_OF_KEY, dataList);
+                parsed = true;
+            }
         }
 
-        final var itemElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
-        final var itemMetadata = new LinkedHashMap<String, Object>();
-        gatherObjectSchemaData(itemElement, itemMetadata, processingEnvironment);
-        final var metadata = new LinkedHashMap<String, Object>();
+        if (!parsed) {
+            try {
+                field.itemsAnyOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ANY_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            try {
+                field.itemsAllOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ALL_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            String canonicalName;
+            try {
+                canonicalName = field.items().getCanonicalName();
+            } catch (MirroredTypeException e) {
+                canonicalName = e.getTypeMirrors().get(0).toString();
+            }
+            final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
+            final var refMetadata = new LinkedHashMap<String, Object>();
+            gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+            metadata.put(REF_KEY, refMetadata);
+        }
         metadata.put(TYPE_KEY, ARRAY_TYPE);
         metadata.put(ID_KEY, getUUID());
         metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
-        metadata.put(ITEMS_KEY, itemMetadata);
         metadata.put(MIN_ITEMS_KEY, field.minItems());
         metadata.put(MAX_ITEMS_KEY, field.maxItems());
         metadata.put(UNIQUE_ITEMS_KEY, field.uniqueItems());
@@ -237,23 +302,83 @@ public class MetadataParser {
             final MapField field,
             final ProcessingEnvironment processingEnvironment
     ) {
-        String canonicalName;
-        try {
-            canonicalName = field.valueType().getCanonicalName();
-        } catch (MirroredTypeException e) {
-            canonicalName = e.getTypeMirrors().get(0).toString();
-        }
-        final var valueElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
-        final var valueMetadata = new LinkedHashMap<String, Object>();
-        gatherObjectSchemaData(valueElement, valueMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();
+        /* Since we do not pass in the Element, we throw an exception to access the type mirrors. */
+        /* All of these try catches will always fail during compile time. */
+        boolean parsed = false;
+        try {
+            field.valueTypeOneOf();
+        } catch (MirroredTypesException e) {
+            var mirrors = e.getTypeMirrors();
+            if (!mirrors.isEmpty()) {
+                var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                for (var mirror : mirrors) {
+                    final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                    final var refMetadata = new LinkedHashMap<String, Object>();
+                    gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                    dataList.add(refMetadata);
+                }
+                metadata.put(REF_ONE_OF_KEY, dataList);
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            try {
+                field.valueTypeAnyOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ANY_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            try {
+                field.valueTypeOneOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ALL_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            String canonicalName;
+            try {
+                canonicalName = field.valueType().getCanonicalName();
+            } catch (MirroredTypeException e) {
+                canonicalName = e.getTypeMirrors().get(0).toString();
+            }
+            final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
+            final var refMetadata = new LinkedHashMap<String, Object>();
+            gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+            metadata.put(REF_KEY, refMetadata);
+        }
         metadata.put(TYPE_KEY, MAP_TYPE);
         metadata.put(ID_KEY, getUUID());
         metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
         metadata.put(CONFIG_FIELD_NAME_KEY, field.configFieldName());
         metadata.put(DESCRIPTION_KEY, field.description());
         metadata.put(EXTERNALIZED_KEY, field.externalized());
-        metadata.put(ADDITIONAL_PROPERTIES_KEY, valueMetadata);
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
         return metadata;
     }
@@ -261,6 +386,7 @@ public class MetadataParser {
     /**
      * Parses the 'IntegerField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the IntegerField interface to view all available fields.
+     *
      * @param field The field of the config to parse.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -285,6 +411,7 @@ public class MetadataParser {
     /**
      * Parses the 'NumberField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the NumberField interface to view all available fields.
+     *
      * @param field The field of the config to parse.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -309,6 +436,7 @@ public class MetadataParser {
     /**
      * Parses the 'StringField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the StringField interface to view all available fields.
+     *
      * @param field The field of the config to parse.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -331,7 +459,8 @@ public class MetadataParser {
     /**
      * Parses the 'ObjectField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the ObjectField interface to view all available fields.
-     * @param field The field of the config to parse.
+     *
+     * @param field                 The field of the config to parse.
      * @param processingEnvironment The processing environment to resolve subtypes.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -339,16 +468,78 @@ public class MetadataParser {
             final ObjectField field,
             final ProcessingEnvironment processingEnvironment
     ) {
-        String canonicalName;
-        try {
-            canonicalName = field.ref().getCanonicalName();
-        } catch (MirroredTypeException e) {
-            canonicalName = e.getTypeMirrors().get(0).toString();
-        }
-        final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
-        final var refMetadata = new LinkedHashMap<String, Object>();
-        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
         final var metadata = new LinkedHashMap<String, Object>();
+        /* Since we do not pass in the Element, we throw an exception to access the type mirrors. */
+        /* All of these try catches will always fail during compile time. */
+        boolean parsed = false;
+        try {
+            field.refOneOf();
+        } catch (MirroredTypesException e) {
+            var mirrors = e.getTypeMirrors();
+            if (!mirrors.isEmpty()) {
+                var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                for (var mirror : mirrors) {
+                    final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                    final var refMetadata = new LinkedHashMap<String, Object>();
+                    gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                    dataList.add(refMetadata);
+                }
+                metadata.put(REF_ONE_OF_KEY, dataList);
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            try {
+                field.refAnyOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ANY_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            try {
+                field.refAllOf();
+            } catch (MirroredTypesException e) {
+                var mirrors = e.getTypeMirrors();
+                if (!mirrors.isEmpty()) {
+                    var dataList = new ArrayList<LinkedHashMap<String, Object>>();
+                    for (var mirror : mirrors) {
+                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), processingEnvironment);
+                        final var refMetadata = new LinkedHashMap<String, Object>();
+                        gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+                        dataList.add(refMetadata);
+                    }
+                    metadata.put(REF_ALL_OF_KEY, dataList);
+                    parsed = true;
+                }
+            }
+        }
+
+        if (!parsed) {
+            String canonicalName;
+            try {
+                canonicalName = field.ref().getCanonicalName();
+            } catch (MirroredTypeException e) {
+                canonicalName = e.getTypeMirrors().get(0).toString();
+            }
+            final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
+            final var refMetadata = new LinkedHashMap<String, Object>();
+            gatherObjectSchemaData(refElement, refMetadata, processingEnvironment);
+            metadata.put(REF_KEY, refMetadata);
+        }
+
         metadata.put(TYPE_KEY, OBJECT_TYPE);
         metadata.put(ID_KEY, getUUID());
         metadata.put(EXTERNALIZED_KEY_NAME, field.externalizedKeyName());
@@ -357,13 +548,14 @@ public class MetadataParser {
         metadata.put(EXTERNALIZED_KEY, field.externalized());
         metadata.put(USE_SUB_OBJECT_DEFAULT_KEY, field.useSubObjectDefault());
         metadata.put(DEFAULT_VALUE_KEY, field.defaultValue());
-        metadata.put(REF_KEY, refMetadata);
+
         return metadata;
     }
 
     /**
      * Parses the 'NullField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the NullField interface to view all available fields.
+     *
      * @param field The field of the config to parse.
      * @return A LinkedHashMap containing the metadata.
      */
@@ -382,6 +574,7 @@ public class MetadataParser {
     /**
      * Parses the 'BooleanField' annotation and returns a LinkedHashMap containing the metadata.
      * Review the BooleanField interface to view all available fields.
+     *
      * @param field The field of the config to parse.
      * @return A LinkedHashMap containing the metadata.
      */

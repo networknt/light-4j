@@ -48,7 +48,12 @@
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "object"
+            "oneOf" : [ {
+              "type" : "object",
+              "additionalProperties" : { }
+            }, {
+              "type" : "string"
+            } ]
           }
         }
       }
@@ -60,7 +65,12 @@
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "object"
+            "oneOf" : [ {
+              "type" : "object",
+              "additionalProperties" : { }
+            }, {
+              "type" : "string"
+            } ]
           }
         }
       }
@@ -72,7 +82,12 @@
         "directMaps" : {
           "type" : "object",
           "additionalProperties" : {
-            "type" : "object"
+            "oneOf" : [ {
+              "type" : "object",
+              "additionalProperties" : { }
+            }, {
+              "type" : "string"
+            } ]
           }
         }
       }
