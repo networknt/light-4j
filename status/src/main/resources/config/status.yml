@@ -1083,6 +1083,16 @@ ERR11644:
   code: ERR11644
   message: INVALID_VARIABLE_FORMAT
   description: Invalid variable %s format with value %s.
+ERR11645:
+  statusCode: 400
+  code: ERR11645
+  message: READ_MODEL_OUT_OF_SYNC
+  description: Aggregate version %d in read model is less than %d in write model for aggregate type %s and aggregate id %s.
+ERR11646:
+  statusCode: 400
+  code: ERR11646
+  message: AGGREGATE_VERSION_GREATER_THAN_MAX
+  description: Aggregate version %d from user request is greater than the event store max aggregate version %d for the aggregate type %s and aggregate id %s.
 
 
 # OAuth2 service error 12000-12099
