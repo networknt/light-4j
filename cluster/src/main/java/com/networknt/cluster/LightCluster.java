@@ -145,7 +145,7 @@ public class LightCluster implements Cluster {
         @Override
         public void notify(URL registryUrl, List<URL> urls) {
             logger.debug("registryUrl is: {}", registryUrl);
-            logger.debug("notify service: {} tag: {} with updated urls: {}", serviceId, tag, urls.toString());
+            logger.debug("notify service: {} tag: {} with updated urls: {}", serviceId, tag, urls == null ? "null" : urls.toString());
             if(StringUtils.isNotBlank(serviceId)) {
                 String key = tag == null ? serviceId : serviceId + "|" + tag;
                 serviceMap.put(key, urls == null ? new ArrayList<>() : urls);
