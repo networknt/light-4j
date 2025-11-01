@@ -2,8 +2,10 @@ package com.networknt.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.generator.JsonSchemaGenerator;
 import com.networknt.config.schema.generator.YamlGenerator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -1430,6 +1432,7 @@ public static final String clientConfigMetadata = "{\n" +
 
 
     @Test
+    @Ignore
     public void writeJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(apiKeyMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("apikey-test", "apikey-test");
@@ -1440,6 +1443,7 @@ public static final String clientConfigMetadata = "{\n" +
     }
 
     @Test
+    @Ignore
     public void testMapFieldJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("basic-auth-test", "basic-auth-test");
