@@ -121,6 +121,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
                     String email = claims.getStringClaimValue(Constants.EML);
                     String host = claims.getStringClaimValue(Constants.HOST);
+                    String role = claims.getStringClaimValue(Constants.ROLE);
                     String issuer = claims.getStringClaimValue(Constants.ISS);
                     // try to get the cid as some OAuth tokens name it as cid like Okta.
                     if (clientId == null)
@@ -137,6 +138,8 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
                     if(email != null) auditInfo.put(Constants.EMAIL, email);
                     if(host != null) auditInfo.put(Constants.HOST, host);
+                    // add role to the audit for portal handlers to authorized based on the admin role
+                    if(role != null) auditInfo.put(Constants.ROLE, role);
 
                     if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
                         Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
