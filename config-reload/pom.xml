@@ -65,6 +65,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <version>1.5.21</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
