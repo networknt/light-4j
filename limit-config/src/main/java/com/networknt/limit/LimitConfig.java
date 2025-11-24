@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
         configName = "limit",
         outputFormats = {
                 OutputFormat.JSON_SCHEMA,
-                OutputFormat.YAML
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
         },
         configDescription = "Rate Limit Handler Configuration\n"
 )

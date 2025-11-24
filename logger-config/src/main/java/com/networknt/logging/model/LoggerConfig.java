@@ -28,7 +28,7 @@ import java.util.Map;
 @ConfigSchema(
         configKey = "logging",
         configName = "logging",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Logging endpoint that can output the logger with logging levels."
 )
 public class LoggerConfig {

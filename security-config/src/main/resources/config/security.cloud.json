@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.security.SecurityConfig",
+    "configDesc" : "Security configuration for security module in light-4j. For each individual framework,\nit has a framework specific security config file to control if security and scopes\nverification are enabled or not.\nThis configuration file is only for JwtHelper class most of the cases. However, if there\nis no framework specific security configuration available. The fallback security config\nis read from this file. Hence, we leave the enableVerifyJwt and enableVerifyScope to true.\n",
+    "configName" : "security",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}

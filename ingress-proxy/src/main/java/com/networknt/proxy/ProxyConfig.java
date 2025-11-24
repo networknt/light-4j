@@ -21,7 +21,7 @@ import java.util.Map;
         configKey = "proxy",
         configName = "proxy",
         configDescription = "Reverse Proxy Handler Configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ProxyConfig {
     private static final Logger logger = LoggerFactory.getLogger(ProxyConfig.class);

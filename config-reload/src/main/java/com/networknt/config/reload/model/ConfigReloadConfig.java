@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Config class for Config reload related handlers
  */
-@ConfigSchema(configKey = "configReload", configName = "configReload", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "configReload", configName = "configReload", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ConfigReloadConfig {
     private static final Logger logger = LoggerFactory.getLogger(ConfigReloadConfig.class);
     public static final String CONFIG_NAME = "configReload";

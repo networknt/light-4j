@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "If metrics handler is enabled or not"
+      "description" : "If metrics handler is enabled or not",
+      "default" : false
     },
     "enableHotspot" : {
       "type" : "boolean",
-      "description" : "If the Prometheus hotspot is enabled or not.\nhotspot include thread, memory, classloader,..."
+      "description" : "If the Prometheus hotspot is enabled or not.\nhotspot include thread, memory, classloader,...",
+      "default" : false
     }
   }
 }

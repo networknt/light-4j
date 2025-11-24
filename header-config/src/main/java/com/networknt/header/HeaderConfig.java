@@ -14,7 +14,7 @@ import com.networknt.config.schema.*;
 import java.io.IOException;
 import java.util.*;
 
-@ConfigSchema(configKey = "header", configName = "header", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "header", configName = "header", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class HeaderConfig {
     public static final String CONFIG_NAME = "header";
     public static final String ENABLED = "enabled";

@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware is enabled or not. It should only be enabled in test environment."
+      "description" : "Indicate if the dump middleware is enabled or not. It should only be enabled in test environment.",
+      "default" : false
     },
     "mask" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware should mask sensitive data."
+      "description" : "Indicate if the dump middleware should mask sensitive data.",
+      "default" : false
     },
     "logLevel" : {
       "type" : "string",
@@ -19,20 +21,27 @@
     },
     "indentSize" : {
       "type" : "integer",
-      "description" : "The indent size for the dump middleware."
+      "description" : "The indent size for the dump middleware.",
+      "default" : 4
     },
     "useJson" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware should use JSON format. If use json, indentSize option will be ignored."
+      "description" : "Indicate if the dump middleware should use JSON format. If use json, indentSize option will be ignored.",
+      "default" : false
     },
     "requestEnabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware should dump request."
+      "description" : "Indicate if the dump middleware should dump request.",
+      "default" : false
     },
     "request" : {
       "type" : "object",
       "description" : "The request settings for the dump middleware.\nrequest:\n  url: true\n  headers: true\n  #filter for headers\n  filteredHeaders:\n  - Postman-Token\n  - X-Correlation-Id\n  - cookie\n  cookies: true\n  #filter for cookies\n  filteredCookies:\n  - Cookie_Gmail\n  queryParameters: true\n  #filter for queryParameters\n  filteredQueryParameters:\n  - itemId\n  - a\n  body: true\n",
       "properties" : {
+        "enabled" : {
+          "type" : "boolean",
+          "description" : "Indicate if the dump request middleware is enabled or not."
+        },
         "headers" : {
           "type" : "boolean",
           "description" : "Indicate if the headers should be dumped or not."
@@ -40,6 +49,17 @@
         "filteredHeaders" : {
           "type" : "array",
           "description" : "List of headers that should be filtered out from the dump.",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "cookies" : {
+          "type" : "boolean",
+          "description" : "Indicate if the cookies should be dumped or not."
+        },
+        "filteredCookies" : {
+          "type" : "array",
+          "description" : "List of cookies that should be filtered out from the dump.",
           "items" : {
             "type" : "string"
           }
@@ -58,27 +78,13 @@
         "body" : {
           "type" : "boolean",
           "description" : "Indicate if the body should be dumped or not."
-        },
-        "enabled" : {
-          "type" : "boolean",
-          "description" : "Indicate if the dump request middleware is enabled or not."
-        },
-        "cookies" : {
-          "type" : "boolean",
-          "description" : "Indicate if the cookies should be dumped or not."
-        },
-        "filteredCookies" : {
-          "type" : "array",
-          "description" : "List of cookies that should be filtered out from the dump.",
-          "items" : {
-            "type" : "string"
-          }
         }
       }
     },
     "responseEnabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the dump middleware should dump response."
+      "description" : "Indicate if the dump middleware should dump response.",
+      "default" : false
     },
     "response" : {
       "type" : "object",
@@ -95,10 +101,6 @@
             "type" : "string"
           }
         },
-        "body" : {
-          "type" : "boolean",
-          "description" : "Dump response body"
-        },
         "cookies" : {
           "type" : "boolean",
           "description" : "Dump response cookies"
@@ -109,6 +111,10 @@
           "items" : {
             "type" : "string"
           }
+        },
+        "body" : {
+          "type" : "boolean",
+          "description" : "Dump response body"
         },
         "statusCode" : {
           "type" : "boolean",

@@ -38,7 +38,7 @@ import java.util.function.Consumer;
         configName = "audit",
         configDescription = "AuditHandler will pick some important fields from headers and tokens and logs into an audit appender\n" +
                 "defined in the logback.xml configuration file.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);

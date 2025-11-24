@@ -30,7 +30,7 @@ import java.util.Map;
 @ConfigSchema(
         configKey = "health",
         configName = "health",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Server health endpoint that can output OK to indicate the server is alive."
 )
 public class HealthConfig {

@@ -3,6 +3,6 @@ enabled: ${encode.enabled:false}
 # A list of encoders.
 #   -gzip
 #   -deflate
-#
+# 
 # gzip,deflate
 encoders: ${encode.encoders:["gzip", "deflate"]}

@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the handler is enabled or not in the handler chain."
+      "description" : "indicate if the handler is enabled or not in the handler chain.",
+      "default" : true
     },
     "getMethodEnabled" : {
       "type" : "boolean",
-      "description" : "If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as\na temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL."
+      "description" : "If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as\na temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL.",
+      "default" : false
     },
     "client_credentials" : {
       "type" : "array",
@@ -20,7 +22,8 @@
     },
     "passThrough" : {
       "type" : "boolean",
-      "description" : "An indicator to for path through to an OAuth 2.0 server to get a real token."
+      "description" : "An indicator to for path through to an OAuth 2.0 server to get a real token.",
+      "default" : false
     },
     "tokenServiceId" : {
       "type" : "string",

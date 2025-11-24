@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if PathServiceHandler is enabled or not"
+      "description" : "indicate if PathServiceHandler is enabled or not",
+      "default" : true
     },
     "mapping" : {
       "type" : "object",

@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the handler is enabled or not"
+      "description" : "Indicate if the handler is enabled or not",
+      "default" : false
     },
     "proxyHost" : {
       "type" : "string",
@@ -17,11 +18,13 @@
     },
     "enableHttp2" : {
       "type" : "boolean",
-      "description" : "If HTTP2 is used to connect to the external service."
+      "description" : "If HTTP2 is used to connect to the external service.",
+      "default" : false
     },
     "maxConnectionRetries" : {
       "type" : "integer",
-      "description" : "Max Connection Retries"
+      "description" : "Max Connection Retries",
+      "default" : 3
     },
     "pathHostMappings" : {
       "type" : "array",
@@ -39,7 +42,8 @@
     },
     "metricsInjection" : {
       "type" : "boolean",
-      "description" : "When ExternalServiceHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for\nthe total response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.\n"
+      "description" : "When ExternalServiceHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for\nthe total response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.\n",
+      "default" : false
     },
     "metricsName" : {
       "type" : "string",

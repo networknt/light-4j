@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * The config class for the ResponseInterceptorInjectionHandler middleware handler.
  */
-@ConfigSchema(configName = "response-injection", configKey = "response-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configName = "response-injection", configKey = "response-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ResponseInjectionConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseInjectionConfig.class);
 

@@ -23,7 +23,7 @@ import java.util.Map;
         configKey = "pathService",
         configName = "pathService",
         configDescription = "Path service configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class PathServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(PathServiceConfig.class);

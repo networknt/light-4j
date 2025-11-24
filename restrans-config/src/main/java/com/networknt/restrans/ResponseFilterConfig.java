@@ -22,7 +22,7 @@ import java.util.Map;
         configKey = "response-filter",
         configName = "response-filter",
         configDescription = "Configuration for the Response Filter Handler.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ResponseFilterConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseFilterConfig.class);

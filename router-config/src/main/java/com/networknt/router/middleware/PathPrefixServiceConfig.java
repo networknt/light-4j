@@ -25,7 +25,7 @@ import java.util.Map;
         configKey = "pathPrefixService",
         configName = "pathPrefixService",
         configDescription = "Path prefix service configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class PathPrefixServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(PathPrefixServiceConfig.class);

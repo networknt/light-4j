@@ -5,15 +5,18 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the handler is enabled or not. By default, it is enabled."
+      "description" : "indicate if the handler is enabled or not. By default, it is enabled.",
+      "default" : true
     },
     "errorOnLimit" : {
       "type" : "boolean",
-      "description" : "return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,\na warning message should be logged. Also, this handler can be disabled on production for performance."
+      "description" : "return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,\na warning message should be logged. Also, this handler can be disabled on production for performance.",
+      "default" : true
     },
     "duplicateLimit" : {
       "type" : "integer",
-      "description" : "The max number of duplicated token requests. Once this number is passed, the limit is triggered. This\nnumber is set based on the number of client instances as each instance might get its token if there\nis no distributed cache. The duplicated tokens are calculated based on the local in memory cache per\nlight-gateway or oauth-kafka instance. Note: cache.yml needs to be configured."
+      "description" : "The max number of duplicated token requests. Once this number is passed, the limit is triggered. This\nnumber is set based on the number of client instances as each instance might get its token if there\nis no distributed cache. The duplicated tokens are calculated based on the local in memory cache per\nlight-gateway or oauth-kafka instance. Note: cache.yml needs to be configured.",
+      "default" : 2
     },
     "tokenPathTemplates" : {
       "type" : "array",

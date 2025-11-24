@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the deref handler is enabled or not."
+      "description" : "indicate if the deref handler is enabled or not.",
+      "default" : false
     }
   }
 }

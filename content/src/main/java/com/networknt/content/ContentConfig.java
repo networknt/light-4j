@@ -30,7 +30,7 @@ import java.util.Map;
 @ConfigSchema(
         configKey = "content",
         configName = "content",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Content middleware configuration."
 )
 public class ContentConfig {

@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "request-injection", configName = "request-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "request-injection", configName = "request-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class RequestInjectionConfig {
     private static final Logger LOG = LoggerFactory.getLogger(RequestInjectionConfig.class);
     public static final String CONFIG_NAME = "request-injection";

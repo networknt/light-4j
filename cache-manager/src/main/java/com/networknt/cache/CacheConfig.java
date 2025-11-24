@@ -5,18 +5,16 @@ import com.networknt.config.ConfigException;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
-import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.networknt.config.Config;
 
-@ConfigSchema(configName = "cache", configKey = "cache", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configName = "cache", configKey = "cache", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class CacheConfig {
     private static final Logger logger = LoggerFactory.getLogger(CacheConfig.class);
     public static final String CONFIG_NAME = "cache";

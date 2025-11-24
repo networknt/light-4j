@@ -20,7 +20,8 @@ import java.util.Map;
         configDescription = "ApiKey Authentication Security Configuration for light-4j",
         outputFormats = {
                 OutputFormat.JSON_SCHEMA,
-                OutputFormat.YAML
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
         }
 )
 public class ApiKeyConfig {
@@ -47,6 +48,7 @@ public class ApiKeyConfig {
             configFieldName = HASH_ENABLED,
             externalizedKeyName = HASH_ENABLED,
             externalized = true,
+            defaultValue = "false",
             description = "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\n" +
                           "stored in the config file. It is more secure than put the encrypted key into the config file.\n" +
                           "The default value is false. If you want to enable it, you need to use the following repo\n" +

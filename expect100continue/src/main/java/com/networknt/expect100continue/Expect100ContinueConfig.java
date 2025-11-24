@@ -17,7 +17,8 @@ import java.util.Map;
         configDescription = "Configuration for the 'Expect100Continue' handler.",
         outputFormats = {
                 OutputFormat.JSON_SCHEMA,
-                OutputFormat.YAML
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
         })
 public class Expect100ContinueConfig {
     public static final String CONFIG_NAME = "expect-100-continue";

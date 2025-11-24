@@ -16,6 +16,11 @@ public enum OutputFormat {
     YAML(".yaml"),
 
     /**
+     * Cloud Event stub output.
+     */
+    CLOUD(".cloud.json"),
+
+    /**
      * Config generator debug output (just dumps the annotation processing results)
      */
     DEBUG(".debug.json");

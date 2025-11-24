@@ -9,15 +9,18 @@
       "properties" : {
         "verifyHostname" : {
           "type" : "boolean",
-          "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate."
+          "description" : "if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate or load\ntruststore that contains the self-signed certificate.",
+          "default" : true
         },
         "loadDefaultTrustStore" : {
           "type" : "boolean",
-          "description" : "indicate of system load default cert."
+          "description" : "indicate of system load default cert.",
+          "default" : true
         },
         "loadTrustStore" : {
           "type" : "boolean",
-          "description" : "trust store contains certificates that server needs. Enable if tls is used."
+          "description" : "trust store contains certificates that server needs. Enable if tls is used.",
+          "default" : true
         },
         "trustStore" : {
           "type" : "string",
@@ -31,7 +34,8 @@
         },
         "loadKeyStore" : {
           "type" : "boolean",
-          "description" : "key store contains client key and it should be loaded if two-way ssl is used."
+          "description" : "key store contains client key and it should be loaded if two-way ssl is used.",
+          "default" : false
         },
         "keyStore" : {
           "type" : "string",
@@ -66,7 +70,8 @@
       "properties" : {
         "multipleAuthServers" : {
           "type" : "boolean",
-          "description" : "OAuth 2.0 token endpoint configuration\nIf there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the\npath prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services."
+          "description" : "OAuth 2.0 token endpoint configuration\nIf there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the\npath prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.",
+          "default" : false
         },
         "token" : {
           "type" : "object",
@@ -76,21 +81,25 @@
               "properties" : {
                 "capacity" : {
                   "type" : "integer",
-                  "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200."
+                  "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200.",
+                  "default" : 200
                 }
               }
             },
             "tokenRenewBeforeExpired" : {
               "type" : "integer",
-              "description" : "The scope token will be renewed automatically 1 minute before expiry"
+              "description" : "The scope token will be renewed automatically 1 minute before expiry",
+              "default" : 60000
             },
             "expiredRefreshRetryDelay" : {
               "type" : "integer",
-              "description" : "if scope token is expired, we need short delay so that we can retry faster."
+              "description" : "if scope token is expired, we need short delay so that we can retry faster.",
+              "default" : 2000
             },
             "earlyRefreshRetryDelay" : {
               "type" : "integer",
-              "description" : "if scope token is not expired but in renew window, we need slow retry delay."
+              "description" : "if scope token is not expired but in renew window, we need slow retry delay.",
+              "default" : 4000
             },
             "server_url" : {
               "type" : "string",
@@ -113,7 +122,8 @@
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2"
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
             },
             "authorization_code" : {
               "type" : "object",
@@ -309,7 +319,8 @@
                 },
                 "enableHttp2" : {
                   "type" : "boolean",
-                  "description" : "set to true if the oauth2 provider supports HTTP/2"
+                  "description" : "set to true if the oauth2 provider supports HTTP/2",
+                  "default" : true
                 },
                 "serviceIdAuthServers" : {
                   "type" : "object",
@@ -390,11 +401,13 @@
             },
             "timeout" : {
               "type" : "integer",
-              "description" : "timeout in milliseconds"
+              "description" : "timeout in milliseconds",
+              "default" : 2000
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2"
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
             },
             "client_id" : {
               "type" : "string",
@@ -436,7 +449,8 @@
                 },
                 "enableHttp2" : {
                   "type" : "boolean",
-                  "description" : "set to true if the oauth2 provider supports HTTP/2"
+                  "description" : "set to true if the oauth2 provider supports HTTP/2",
+                  "default" : true
                 },
                 "audience" : {
                   "type" : "string",
@@ -469,7 +483,8 @@
             },
             "enableHttp2" : {
               "type" : "boolean",
-              "description" : "set to true if the oauth2 provider supports HTTP/2"
+              "description" : "set to true if the oauth2 provider supports HTTP/2",
+              "default" : true
             },
             "uri" : {
               "type" : "string",
@@ -503,55 +518,68 @@
       "properties" : {
         "errorThreshold" : {
           "type" : "integer",
-          "description" : "number of timeouts/errors to break the circuit"
+          "description" : "number of timeouts/errors to break the circuit",
+          "default" : 2
         },
         "timeout" : {
           "type" : "integer",
-          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
+          "description" : "timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the\nconnection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000.",
+          "default" : 3000
         },
         "resetTimeout" : {
           "type" : "integer",
-          "description" : "reset the circuit after this timeout in millisecond"
+          "description" : "reset the circuit after this timeout in millisecond",
+          "default" : 7000
         },
         "injectOpenTracing" : {
           "type" : "boolean",
-          "description" : "if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used."
+          "description" : "if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.",
+          "default" : false
         },
         "injectCallerId" : {
           "type" : "boolean",
-          "description" : "inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml"
+          "description" : "inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml",
+          "default" : false
         },
         "enableHttp2" : {
           "type" : "boolean",
-          "description" : "the flag to indicate whether http/2 is enabled when calling client.callService()"
+          "description" : "the flag to indicate whether http/2 is enabled when calling client.callService()",
+          "default" : true
         },
         "connectionPoolSize" : {
           "type" : "integer",
-          "description" : "the maximum host capacity of connection pool"
+          "description" : "the maximum host capacity of connection pool",
+          "default" : 1000
         },
         "connectionExpireTime" : {
           "type" : "integer",
-          "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced."
+          "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced.",
+          "default" : 1800000
         },
         "maxReqPerConn" : {
           "type" : "integer",
-          "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections."
+          "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.",
+          "default" : 1000000
         },
         "maxConnectionNumPerHost" : {
           "type" : "integer",
-          "description" : "maximum quantity of connection in connection pool for each host"
+          "description" : "maximum quantity of connection in connection pool for each host",
+          "default" : 1000
         },
         "minConnectionNumPerHost" : {
           "type" : "integer",
-          "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost."
+          "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.",
+          "default" : 250
         },
         "maxRequestRetry" : {
           "type" : "integer",
-          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
+          "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.",
+          "default" : 3
         },
         "requestRetryDelay" : {
           "type" : "integer",
-          "description" : "The delay time in milliseconds for each request retry. The default value is 1000."
+          "description" : "The delay time in milliseconds for each request retry. The default value is 1000.",
+          "default" : 1000
         }
       }
     }

@@ -5,7 +5,8 @@
   "properties" : {
     "enableServerInfo" : {
       "type" : "boolean",
-      "description" : "Indicate if the server info is enabled or not."
+      "description" : "Indicate if the server info is enabled or not.",
+      "default" : true
     },
     "keysToNotSort" : {
       "type" : "array",
@@ -17,7 +18,8 @@
     },
     "downstreamEnabled" : {
       "type" : "boolean",
-      "description" : "For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down\nstream API before return the server info to the invoker. By default, it is not enabled.\nif the server info needs to invoke down streams API. It is false by default."
+      "description" : "For some of the services like light-gateway, http-sidecar and kafka-sidecar, we might need to check the down\nstream API before return the server info to the invoker. By default, it is not enabled.\nif the server info needs to invoke down streams API. It is false by default.",
+      "default" : false
     },
     "downstreamHost" : {
       "type" : "string",

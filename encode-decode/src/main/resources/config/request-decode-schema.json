@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "request decode handler for gzip and deflate"
+      "description" : "request decode handler for gzip and deflate",
+      "default" : false
     },
     "decoders" : {
       "type" : "array",

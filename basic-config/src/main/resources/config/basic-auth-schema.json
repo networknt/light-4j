@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable Basic Authentication Handler, default is true."
+      "description" : "Enable Basic Authentication Handler, default is true.",
+      "default" : false
     },
     "enableAD" : {
       "type" : "boolean",
@@ -14,11 +15,13 @@
     },
     "allowAnonymous" : {
       "type" : "boolean",
-      "description" : "Do we allow the anonymous to pass the authentication and limit it with some paths\nto access? Default is false, and it should only be true in client-proxy."
+      "description" : "Do we allow the anonymous to pass the authentication and limit it with some paths\nto access? Default is false, and it should only be true in client-proxy.",
+      "default" : false
     },
     "allowBearerToken" : {
       "type" : "boolean",
-      "description" : "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\nauthorization defined under username bearer. This feature is used in proxy-client\nthat support multiple clients with different authorizations.\n"
+      "description" : "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\nauthorization defined under username bearer. This feature is used in proxy-client\nthat support multiple clients with different authorizations.\n",
+      "default" : false
     },
     "users" : {
       "type" : "object",
@@ -26,6 +29,10 @@
       "additionalProperties" : {
         "type" : "object",
         "properties" : {
+          "username" : {
+            "type" : "string",
+            "description" : "UserAuth username"
+          },
           "password" : {
             "type" : "string",
             "description" : "UserAuth password"
@@ -36,10 +43,6 @@
             "items" : {
               "type" : "string"
             }
-          },
-          "username" : {
-            "type" : "string",
-            "description" : "UserAuth username"
           }
         }
       }

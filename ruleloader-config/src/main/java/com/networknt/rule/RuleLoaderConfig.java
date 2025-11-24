@@ -13,7 +13,7 @@ import java.util.Map;
         configName = "rule-loader",
         configKey = "rule-loader",
         configDescription = "Rule loader configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class RuleLoaderConfig {
     private static final Logger logger = LoggerFactory.getLogger(RuleLoaderConfig.class);

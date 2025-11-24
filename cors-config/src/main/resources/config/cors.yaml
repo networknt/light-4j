@@ -16,12 +16,12 @@ allowedMethods: ${cors.allowedMethods:}
 # or you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.
 # The value is a map with the key as the path prefix and the value is another map with allowedOrigins and
 # allowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.
-#
+# 
 # Use the above global configuration if you are dealing with a single API in the case of http-sidecar,
 # proxy server or build the API with light-4j frameworks. If you are using light-gateway with multiple
 # downstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different APIs.
-#
-#
+# 
+# 
 # Here is an example in values.yml
 # cors.pathPrefixAllowed:
 #   /v1/pets:

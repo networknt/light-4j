@@ -28,7 +28,7 @@ import com.networknt.config.schema.StringField;
 @ConfigSchema(
         configKey = "email",
         configName = "email",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Email Sender Configuration"
 )
 public class EmailConfig {

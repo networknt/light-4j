@@ -32,7 +32,7 @@ import java.util.Map;
         configKey = "body",
         configName = "body",
         configDescription = "The config for the body handler.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class BodyConfig {
     private static final Logger logger = LoggerFactory.getLogger(BodyConfig.class);

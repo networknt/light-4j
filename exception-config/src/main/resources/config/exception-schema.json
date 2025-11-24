@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable or disable the exception module."
+      "description" : "Enable or disable the exception module.",
+      "default" : true
     }
   }
 }

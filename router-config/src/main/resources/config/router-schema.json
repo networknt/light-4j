@@ -5,15 +5,18 @@
   "properties" : {
     "http2Enabled" : {
       "type" : "boolean",
-      "description" : "As this router is built to support discovery and security for light-4j services,\nthe outbound connection is always HTTP 2.0 with TLS enabled.\nIf HTTP 2.0 protocol will be accepted from incoming request."
+      "description" : "As this router is built to support discovery and security for light-4j services,\nthe outbound connection is always HTTP 2.0 with TLS enabled.\nIf HTTP 2.0 protocol will be accepted from incoming request.",
+      "default" : true
     },
     "httpsEnabled" : {
       "type" : "boolean",
-      "description" : "If TLS is enabled when accepting incoming request. Should be true on test and prod."
+      "description" : "If TLS is enabled when accepting incoming request. Should be true on test and prod.",
+      "default" : true
     },
     "maxRequestTime" : {
       "type" : "integer",
-      "description" : "Max request time in milliseconds before timeout to the server. This is the global setting shared\nby all backend services if they don't have service specific timeout."
+      "description" : "Max request time in milliseconds before timeout to the server. This is the global setting shared\nby all backend services if they don't have service specific timeout.",
+      "default" : 1000
     },
     "pathPrefixMaxRequestTime" : {
       "type" : "object",
@@ -24,31 +27,38 @@
     },
     "connectionsPerThread" : {
       "type" : "integer",
-      "description" : "Connections per thread."
+      "description" : "Connections per thread.",
+      "default" : 10
     },
     "maxQueueSize" : {
       "type" : "integer",
-      "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API."
+      "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API.",
+      "default" : 0
     },
     "softMaxConnectionsPerThread" : {
       "type" : "integer",
-      "description" : "Soft max connections per thread."
+      "description" : "Soft max connections per thread.",
+      "default" : 5
     },
     "rewriteHostHeader" : {
       "type" : "boolean",
-      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host"
+      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host",
+      "default" : true
     },
     "reuseXForwarded" : {
       "type" : "boolean",
-      "description" : "Reuse XForwarded for the target XForwarded header"
+      "description" : "Reuse XForwarded for the target XForwarded header",
+      "default" : false
     },
     "maxConnectionRetries" : {
       "type" : "integer",
-      "description" : "Max Connection Retries"
+      "description" : "Max Connection Retries",
+      "default" : 3
     },
     "preResolveFQDN2IP" : {
       "type" : "boolean",
-      "description" : "Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be\nonly used when the downstream FQDN is a load balancer for multiple real API servers."
+      "description" : "Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be\nonly used when the downstream FQDN is a load balancer for multiple real API servers.",
+      "default" : false
     },
     "hostWhitelist" : {
       "type" : "array",
@@ -59,7 +69,8 @@
     },
     "serviceIdQueryParameter" : {
       "type" : "boolean",
-      "description" : "support serviceId in the query parameter for routing to overwrite serviceId in header routing.\nby default, it is false and should not be used unless you are dealing with a legacy client that\ndoes not support header manipulation. Once this flag is true, we are going to overwrite the header\nservice_id derived with other handlers from prefix, path, endpoint etc."
+      "description" : "support serviceId in the query parameter for routing to overwrite serviceId in header routing.\nby default, it is false and should not be used unless you are dealing with a legacy client that\ndoes not support header manipulation. Once this flag is true, we are going to overwrite the header\nservice_id derived with other handlers from prefix, path, endpoint etc.",
+      "default" : false
     },
     "urlRewriteRules" : {
       "type" : "array",
@@ -91,7 +102,8 @@
     },
     "metricsInjection" : {
       "type" : "boolean",
-      "description" : "When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\ntotal response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain."
+      "description" : "When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\ntotal response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.",
+      "default" : false
     },
     "metricsName" : {
       "type" : "string",

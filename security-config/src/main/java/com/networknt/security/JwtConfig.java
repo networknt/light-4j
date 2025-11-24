@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "jwt", configName = "jwt", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "jwt", configName = "jwt", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class JwtConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
     public static final String CONFIG_NAME = "jwt";

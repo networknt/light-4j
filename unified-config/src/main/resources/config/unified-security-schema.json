@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\nrequest/response chain in the handler.yml configuration."
+      "description" : "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\nrequest/response chain in the handler.yml configuration.",
+      "default" : true
     },
     "anonymousPrefixes" : {
       "type" : "array",
@@ -20,6 +21,15 @@
       "items" : {
         "type" : "object",
         "properties" : {
+          "prefix" : {
+            "type" : "string"
+          },
+          "basic" : {
+            "type" : "boolean"
+          },
+          "jwt" : {
+            "type" : "boolean"
+          },
           "sjwt" : {
             "type" : "boolean"
           },
@@ -29,21 +39,6 @@
           "apikey" : {
             "type" : "boolean"
           },
-          "prefix" : {
-            "type" : "string"
-          },
-          "jwt" : {
-            "type" : "boolean"
-          },
-          "swtServiceIds" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "basic" : {
-            "type" : "boolean"
-          },
           "jwkServiceIds" : {
             "type" : "array",
             "items" : {
@@ -51,6 +46,12 @@
             }
           },
           "sjwkServiceIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "swtServiceIds" : {
             "type" : "array",
             "items" : {
               "type" : "string"

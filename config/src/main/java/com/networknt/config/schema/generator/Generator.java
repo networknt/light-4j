@@ -147,6 +147,8 @@ public abstract class Generator {
                 return new JsonSchemaGenerator(configKey, configName);
             case YAML:
                 return new YamlGenerator(configKey, configName);
+            case CLOUD:
+                return new CloudEventGenerator(configKey, configName);
             case DEBUG:
                 return new DebugGenerator(configKey, configName);
             default:

@@ -1,5 +1,5 @@
 # Rate Limit Handler Configuration
-#
+# 
 # If this handler is enabled or not. It is disabled by default as this handle might be in
 # most http-sidecar, light-proxy and light-router instances. However, it should only be used
 # internally to throttle request for a slow backend service or externally for DDoS attacks.

@@ -25,7 +25,7 @@ import com.networknt.config.schema.OutputFormat;
  *
  * @author Steve Hu
  */
-@ConfigSchema(configKey = "deref", configName = "deref", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "deref", configName = "deref", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class DerefConfig {
     public static final String CONFIG_NAME = "deref";
 

@@ -9,7 +9,7 @@ import java.util.Map;
 @ConfigSchema(
         configName = "mask",
         configKey = "mask",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "This is the default mask config file that is used to mask password in\n" +
                 "uri before logging it. If you want to overwrite this config file, please\n" +
                 "make sure that this entry is not removed. The metrics module is using it."

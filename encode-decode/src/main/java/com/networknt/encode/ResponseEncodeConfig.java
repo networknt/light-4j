@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "encode", configName = "response-encode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "encode", configName = "response-encode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ResponseEncodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseEncodeConfig.class);
 
