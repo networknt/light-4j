@@ -21,7 +21,7 @@ import java.util.*;
         configKey = "request-transformer",
         configName = "request-transformer",
         configDescription = "Request transformer configuration.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class RequestTransformerConfig {
     public static final String CONFIG_NAME = "request-transformer";
     private static final Logger logger = LoggerFactory.getLogger(RequestTransformerConfig.class);

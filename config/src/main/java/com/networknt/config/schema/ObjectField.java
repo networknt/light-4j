@@ -49,7 +49,19 @@ public @interface ObjectField {
      * The reference class of the field.
      */
     Class<?> ref() default Object.class;
+
+    /**
+     * Array containing classes bound with an 'allOf' constraint.
+     */
     Class<?>[] refAllOf() default {};
+
+    /**
+     * Array containing classes bound with an 'onOf' constraint.
+     */
     Class<?>[] refOneOf() default {};
+
+    /**
+     * Array containing classes bound with an 'anyOf' constraint.
+     */
     Class<?>[] refAnyOf() default {};
 }

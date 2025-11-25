@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if sanitizer is enabled or not"
+      "description" : "indicate if sanitizer is enabled or not",
+      "default" : false
     },
     "bodyEnabled" : {
       "type" : "boolean",
-      "description" : "if it is enabled, the body needs to be sanitized"
+      "description" : "if it is enabled, the body needs to be sanitized",
+      "default" : true
     },
     "bodyEncoder" : {
       "type" : "string",
@@ -32,7 +34,8 @@
     },
     "headerEnabled" : {
       "type" : "boolean",
-      "description" : "if it is enabled, the header needs to be sanitized"
+      "description" : "if it is enabled, the header needs to be sanitized",
+      "default" : true
     },
     "headerEncoder" : {
       "type" : "string",

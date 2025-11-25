@@ -1,13 +1,14 @@
-enabled: false
+# Indicate if the handler middleware is enabled or not.
+enabled: 'true'
 # Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
 # set the Status Object in the AUDIT_INFO, for auditing purposes
 # default, if not set:false
-auditOnError: ${handler.auditOnError:false}
+auditOnError: ${handler.auditOnError:}
 # set the StackTrace in the AUDIT_INFO, for auditing purposes
 # default, if not set:false
-auditStackTrace: ${handler.auditStackTrace:false}
+auditStackTrace: ${handler.auditStackTrace:}
 # Indicate if the handler middleware should report handler duration.
-reportHandlerDuration: ${handler.reportHandlerDuration:false}
+reportHandlerDuration: ${handler.reportHandlerDuration:}
 # The log level for the handler metrics.
 handlerMetricsLogLevel: ${handler.handlerMetricsLogLevel:DEBUG}
 # Base Path of the API endpoints

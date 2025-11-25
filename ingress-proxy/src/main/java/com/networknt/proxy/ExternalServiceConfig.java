@@ -22,7 +22,7 @@ import java.util.Map;
         configKey = "externalService",
         configName = "external-service",
         configDescription = "Configuration for external service handler to access third party services through proxy/gateway.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ExternalServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceConfig.class);

@@ -17,7 +17,7 @@ import java.util.Map;
         configKey = "ldap",
         configName = "ldap",
         configDescription = "LDAP server connection and search settings.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class LdapConfig {
     public static final Logger logger = LoggerFactory.getLogger(LdapConfig.class);

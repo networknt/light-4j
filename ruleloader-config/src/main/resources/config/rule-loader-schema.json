@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "A flag to enable the rule loader to get rules for the service from portal"
+      "description" : "A flag to enable the rule loader to get rules for the service from portal",
+      "default" : true
     },
     "portalHost" : {
       "type" : "string",

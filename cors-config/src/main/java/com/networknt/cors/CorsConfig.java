@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * Created by Steve Hu on 2017-01-21.
  */
-@ConfigSchema(configKey = "cors", configName = "cors", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "cors", configName = "cors", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class CorsConfig {
     private static final Logger logger = LoggerFactory.getLogger(CorsConfig.class);
 

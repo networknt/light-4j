@@ -8,7 +8,7 @@ import com.networknt.config.schema.StringField;
 
 import java.util.Map;
 
-@ConfigSchema(configKey = "db-provider", configName = "db-provider", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "db-provider", configName = "db-provider", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class DbProviderConfig {
     public static final String CONFIG_NAME = "db-provider";
     public static final String DRIVER_CLASS_NAME = "driverClassName";

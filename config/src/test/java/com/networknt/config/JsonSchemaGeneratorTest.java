@@ -3,6 +3,7 @@ package com.networknt.config;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.IntegerField;
+import com.networknt.config.schema.generator.DebugGenerator;
 import com.networknt.config.schema.generator.JsonSchemaGenerator;
 import com.networknt.config.schema.generator.YamlGenerator;
 import org.junit.Ignore;
@@ -1281,41 +1282,47 @@ public static final String clientConfigMetadata = "{\n" +
             "  \"properties\" : {\n" +
             "    \"enabled\" : {\n" +
             "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"e1a2e703-5592-443f-bd57-b504442e72c8\",\n" +
+            "      \"externalizedKeyName\" : \"enabled\",\n" +
             "      \"configFieldName\" : \"enabled\",\n" +
-            "      \"description\" : \"Enable or disable the basic auth filter.\",\n" +
+            "      \"description\" : \"Enable Basic Authentication Handler, default is true.\",\n" +
             "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : false\n" +
+            "      \"defaultValue\" : \"false\"\n" +
             "    },\n" +
             "    \"enableAD\" : {\n" +
             "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"2734be98-4a5d-4b03-868b-c7b90bf831e0\",\n" +
+            "      \"externalizedKeyName\" : \"enableAD\",\n" +
             "      \"configFieldName\" : \"enableAD\",\n" +
-            "      \"description\" : \"Enable or disable the Active Directory authentication.\",\n" +
+            "      \"description\" : \"Enable Ldap Authentication, default is true.\",\n" +
             "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : false\n" +
+            "      \"defaultValue\" : \"true\"\n" +
             "    },\n" +
             "    \"allowAnonymous\" : {\n" +
             "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"4583486d-ad3b-4a55-aeef-8d3185965f0c\",\n" +
+            "      \"externalizedKeyName\" : \"allowAnonymous\",\n" +
             "      \"configFieldName\" : \"allowAnonymous\",\n" +
-            "      \"description\" : \"Allow anonymous access to the service.\",\n" +
+            "      \"description\" : \"Do we allow the anonymous to pass the authentication and limit it with some paths\\nto access? Default is false, and it should only be true in client-proxy.\",\n" +
             "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : false\n" +
+            "      \"defaultValue\" : \"\"\n" +
             "    },\n" +
             "    \"allowBearerToken\" : {\n" +
             "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"cf161f78-8832-49a0-af71-0bf57d1a1185\",\n" +
+            "      \"externalizedKeyName\" : \"allowBearerToken\",\n" +
             "      \"configFieldName\" : \"allowBearerToken\",\n" +
-            "      \"description\" : \"Allow bearer token access to the service.\",\n" +
+            "      \"description\" : \"Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\\nauthorization defined under username bearer. This feature is used in proxy-client\\nthat support multiple clients with different authorizations.\\n\",\n" +
             "      \"externalized\" : true,\n" +
-            "      \"defaultValue\" : false\n" +
+            "      \"defaultValue\" : \"\"\n" +
             "    },\n" +
             "    \"users\" : {\n" +
-            "      \"type\" : \"map\",\n" +
-            "      \"configFieldName\" : \"users\",\n" +
-            "      \"description\" : \"\",\n" +
-            "      \"externalized\" : true,\n" +
-            "      \"additionalProperties\" : {\n" +
+            "      \"ref\" : {\n" +
             "        \"properties\" : {\n" +
             "          \"username\" : {\n" +
             "            \"type\" : \"string\",\n" +
+            "            \"$id\" : \"97a737ed-22eb-4c77-b693-ec60ab8d77b0\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
             "            \"configFieldName\" : \"username\",\n" +
             "            \"description\" : \"UserAuth username\",\n" +
             "            \"externalized\" : false,\n" +
@@ -1327,6 +1334,8 @@ public static final String clientConfigMetadata = "{\n" +
             "          },\n" +
             "          \"password\" : {\n" +
             "            \"type\" : \"string\",\n" +
+            "            \"$id\" : \"97dcc8fb-80d3-4702-aa14-f5aa81bfd62c\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
             "            \"configFieldName\" : \"password\",\n" +
             "            \"description\" : \"UserAuth password\",\n" +
             "            \"externalized\" : false,\n" +
@@ -1337,13 +1346,15 @@ public static final String clientConfigMetadata = "{\n" +
             "            \"format\" : \"none\"\n" +
             "          },\n" +
             "          \"paths\" : {\n" +
+            "            \"ref\" : {\n" +
+            "              \"type\" : \"string\"\n" +
+            "            },\n" +
             "            \"type\" : \"array\",\n" +
+            "            \"$id\" : \"102cb7e0-fd01-4196-a573-7fb97913aaf2\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
             "            \"configFieldName\" : \"paths\",\n" +
             "            \"description\" : \"The different paths that will be valid for this UserAuth\",\n" +
             "            \"externalized\" : false,\n" +
-            "            \"items\" : {\n" +
-            "              \"type\" : \"string\"\n" +
-            "            },\n" +
             "            \"minItems\" : 0,\n" +
             "            \"maxItems\" : 2147483647,\n" +
             "            \"uniqueItems\" : false,\n" +
@@ -1354,85 +1365,104 @@ public static final String clientConfigMetadata = "{\n" +
             "        },\n" +
             "        \"type\" : \"object\"\n" +
             "      },\n" +
+            "      \"type\" : \"map\",\n" +
+            "      \"$id\" : \"b55f7b34-2cd9-450f-a9cb-604abe90d343\",\n" +
+            "      \"externalizedKeyName\" : \"users\",\n" +
+            "      \"configFieldName\" : \"users\",\n" +
+            "      \"description\" : \"usernames and passwords in a list, the password can be encrypted like user2 in test.\\nAs we are supporting multiple users, so leave the passwords in this file with users.\\nFor each user, you can specify a list of optional paths that this user is allowed to\\naccess. A special user anonymous can be used to set the paths for client without an\\nauthorization header. The paths are optional and used for proxy only to authorize.\\n\",\n" +
+            "      \"externalized\" : true,\n" +
             "      \"defaultValue\" : \"\"\n" +
             "    }\n" +
             "  },\n" +
-            "  \"type\" : \"object\"\n" +
+            "  \"type\" : \"object\",\n" +
+            "  \"description\" : \"Basic Authentication Security Configuration for light-4j\"\n" +
             "}";
     private static final String apiKeyMetadata = "{\n" +
-            "  \"type\": \"object\",\n" +
-            "  \"properties\": {\n" +
-            "    \"pathPrefixAuths\": {\n" +
-            "      \"minItems\": 0,\n" +
-            "      \"maxItems\": 2147483647,\n" +
-            "      \"contains\": false,\n" +
-            "      \"externalized\": true,\n" +
-            "      \"useSubObjectDefault\": false," +
-            "      \"defaultValue\": \"\",\n" +
-            "      \"uniqueItems\": false,\n" +
-            "      \"configFieldName\": \"pathPrefixAuths\",\n" +
-            "      \"description\": \"\",\n" +
-            "      \"type\": \"array\",\n" +
-            "      \"items\": {\n" +
-            "        \"type\": \"object\",\n" +
-            "        \"properties\": {\n" +
-            "          \"headerName\": {\n" +
-            "            \"externalized\": false,\n" +
-            "            \"defaultValue\": \"\",\n" +
-            "            \"minLength\": 0,\n" +
-            "            \"configFieldName\": \"headerName\",\n" +
-            "            \"pattern\": \"^[a-zA-Z0-9-_]*$\",\n" +
-            "            \"format\": \"none\",\n" +
-            "            \"description\": \"\",\n" +
-            "            \"type\": \"string\",\n" +
-            "            \"maxLength\": 2147483647\n" +
+            "  \"properties\" : {\n" +
+            "    \"enabled\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"dd62bf5c-c45a-41ac-815a-25cf97415d2b\",\n" +
+            "      \"externalizedKeyName\" : \"enabled\",\n" +
+            "      \"configFieldName\" : \"enabled\",\n" +
+            "      \"description\" : \"Enable ApiKey Authentication Handler, default is false.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : \"true\"\n" +
+            "    },\n" +
+            "    \"hashEnabled\" : {\n" +
+            "      \"type\" : \"boolean\",\n" +
+            "      \"$id\" : \"353cb374-4e74-41ef-8016-95562030f751\",\n" +
+            "      \"externalizedKeyName\" : \"hashEnabled\",\n" +
+            "      \"configFieldName\" : \"hashEnabled\",\n" +
+            "      \"description\" : \"If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\\nstored in the config file. It is more secure than put the encrypted key into the config file.\\nThe default value is false. If you want to enable it, you need to use the following repo\\nhttps://github.com/networknt/light-hash command line tool to hash the clear text key.\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"defaultValue\" : \"\"\n" +
+            "    },\n" +
+            "    \"pathPrefixAuths\" : {\n" +
+            "      \"ref\" : {\n" +
+            "        \"properties\" : {\n" +
+            "          \"pathPrefix\" : {\n" +
+            "            \"type\" : \"string\",\n" +
+            "            \"$id\" : \"2b2d6a4f-8d27-40ad-b131-8d7d42bdb7f2\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
+            "            \"configFieldName\" : \"pathPrefix\",\n" +
+            "            \"description\" : \"\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"defaultValue\" : \"\",\n" +
+            "            \"minLength\" : 0,\n" +
+            "            \"maxLength\" : 2147483647,\n" +
+            "            \"pattern\" : \"^/.*\",\n" +
+            "            \"format\" : \"none\"\n" +
             "          },\n" +
-            "          \"apiKey\": {\n" +
-            "            \"externalized\": false,\n" +
-            "            \"defaultValue\": \"\",\n" +
-            "            \"minLength\": 0,\n" +
-            "            \"configFieldName\": \"apiKey\",\n" +
-            "            \"pattern\": \"\",\n" +
-            "            \"format\": \"none\",\n" +
-            "            \"description\": \"\",\n" +
-            "            \"type\": \"string\",\n" +
-            "            \"maxLength\": 2147483647\n" +
+            "          \"headerName\" : {\n" +
+            "            \"type\" : \"string\",\n" +
+            "            \"$id\" : \"bb8d81d9-9f2a-4d3a-a3ea-064318bc79d0\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
+            "            \"configFieldName\" : \"headerName\",\n" +
+            "            \"description\" : \"\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"defaultValue\" : \"\",\n" +
+            "            \"minLength\" : 0,\n" +
+            "            \"maxLength\" : 2147483647,\n" +
+            "            \"pattern\" : \"^[a-zA-Z0-9-_]*$\",\n" +
+            "            \"format\" : \"none\"\n" +
             "          },\n" +
-            "          \"pathPrefix\": {\n" +
-            "            \"externalized\": false,\n" +
-            "            \"defaultValue\": \"\",\n" +
-            "            \"minLength\": 0,\n" +
-            "            \"configFieldName\": \"pathPrefix\",\n" +
-            "            \"pattern\": \"^/.*\",\n" +
-            "            \"format\": \"none\",\n" +
-            "            \"description\": \"\",\n" +
-            "            \"type\": \"string\",\n" +
-            "            \"maxLength\": 2147483647\n" +
+            "          \"apiKey\" : {\n" +
+            "            \"type\" : \"string\",\n" +
+            "            \"$id\" : \"109fd6cf-8718-4f33-b70e-3f8eb77acc25\",\n" +
+            "            \"externalizedKeyName\" : \"\",\n" +
+            "            \"configFieldName\" : \"apiKey\",\n" +
+            "            \"description\" : \"\",\n" +
+            "            \"externalized\" : false,\n" +
+            "            \"defaultValue\" : \"\",\n" +
+            "            \"minLength\" : 0,\n" +
+            "            \"maxLength\" : 2147483647,\n" +
+            "            \"pattern\" : \"\",\n" +
+            "            \"format\" : \"none\"\n" +
             "          }\n" +
-            "        }\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"enabled\": {\n" +
-            "      \"externalized\": true,\n" +
-            "      \"defaultValue\": false,\n" +
-            "      \"configFieldName\": \"enabled\",\n" +
-            "      \"description\": \"Enable or disable the api key filter.\",\n" +
-            "      \"type\": \"boolean\"\n" +
-            "    },\n" +
-            "    \"hashEnabled\": {\n" +
-            "      \"externalized\": true,\n" +
-            "      \"defaultValue\": false,\n" +
-            "      \"configFieldName\": \"hashEnabled\",\n" +
-            "      \"description\": \"If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\\nstored in the config file. It is more secure than put the encrypted key into the config file.\\nThe default value is false. If you want to enable it, you need to use the following repo\\nhttps://github.com/networknt/light-hash command line tool to hash the clear text key.\",\n" +
-            "      \"type\": \"boolean\"\n" +
+            "        },\n" +
+            "        \"type\" : \"object\"\n" +
+            "      },\n" +
+            "      \"type\" : \"array\",\n" +
+            "      \"$id\" : \"368ac7b4-f541-499d-b36b-24f52225b706\",\n" +
+            "      \"externalizedKeyName\" : \"pathPrefixAuths\",\n" +
+            "      \"configFieldName\" : \"pathPrefixAuths\",\n" +
+            "      \"description\" : \"path prefix to the api key mapping. It is a list of map between the path prefix and the api key\\nfor apikey authentication. In the handler, it loops through the list and find the matching path\\nprefix. Once found, it will check if the apikey is equal to allow the access or return an error.\\nThe map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test\\nresources/config folder for configuration examples.\\n\",\n" +
+            "      \"externalized\" : true,\n" +
+            "      \"minItems\" : 0,\n" +
+            "      \"maxItems\" : 2147483647,\n" +
+            "      \"uniqueItems\" : false,\n" +
+            "      \"contains\" : false,\n" +
+            "      \"useSubObjectDefault\" : false,\n" +
+            "      \"defaultValue\" : \"\"\n" +
             "    }\n" +
-            "  }\n" +
+            "  },\n" +
+            "  \"type\" : \"object\",\n" +
+            "  \"description\" : \"ApiKey Authentication Security Configuration for light-4j\"\n" +
             "}";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
 
     @Test
-    @Ignore
     public void writeJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(apiKeyMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("apikey-test", "apikey-test");
@@ -1443,7 +1473,6 @@ public static final String clientConfigMetadata = "{\n" +
     }
 
     @Test
-    @Ignore
     public void testMapFieldJsonSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(basicAuthMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("basic-auth-test", "basic-auth-test");

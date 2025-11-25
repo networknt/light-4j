@@ -30,7 +30,7 @@ import java.util.Map;
  */
 @ConfigSchema(configKey = "dump",
         configName = "dump",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Dump middleware configuration.")
 public class DumpConfig {
     public static final String CONFIG_NAME = "dump";

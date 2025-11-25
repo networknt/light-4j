@@ -33,7 +33,7 @@ import java.util.Map;
         configKey = "correlation",
         configName = "correlation",
         configDescription = "Correlation Handler Configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";

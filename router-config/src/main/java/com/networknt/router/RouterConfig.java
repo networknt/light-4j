@@ -38,7 +38,7 @@ import java.util.*;
         configKey = "router",
         configName = "router",
         configDescription = "Light router configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class RouterConfig {
     private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);

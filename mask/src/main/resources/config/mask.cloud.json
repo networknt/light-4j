@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.mask.MaskConfig",
+    "configDesc" : "This is the default mask config file that is used to mask password in\nuri before logging it. If you want to overwrite this config file, please\nmake sure that this entry is not removed. The metrics module is using it.",
+    "configName" : "mask",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}

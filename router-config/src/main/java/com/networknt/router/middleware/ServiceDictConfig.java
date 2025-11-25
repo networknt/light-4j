@@ -26,7 +26,7 @@ import java.util.Map;
         configKey = "serviceDict",
         configName = "serviceDict",
         configDescription = "Service dict configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ServiceDictConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServiceDictConfig.class);

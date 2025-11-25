@@ -14,23 +14,28 @@
     },
     "maxReqPerConn" : {
       "type" : "integer",
-      "description" : "number of requests before resetting the shared connection to work around HTTP/2 limitation"
+      "description" : "number of requests before resetting the shared connection to work around HTTP/2 limitation",
+      "default" : 1000000
     },
     "deregisterAfter" : {
       "type" : "integer",
-      "description" : "De-register the service after the amount of time with health check failed. Once a health check is failed, the\nservice will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\nthe value is an integer in milliseconds. 1000 means 1 second and default to 2 minutes"
+      "description" : "De-register the service after the amount of time with health check failed. Once a health check is failed, the\nservice will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\nthe value is an integer in milliseconds. 1000 means 1 second and default to 2 minutes",
+      "default" : 120000
     },
     "checkInterval" : {
       "type" : "integer",
-      "description" : "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\nrequest will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\nafter 10 seconds, then mark the service is critical. The value is an integer in milliseconds"
+      "description" : "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\nrequest will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\nafter 10 seconds, then mark the service is critical. The value is an integer in milliseconds",
+      "default" : 10000
     },
     "httpCheck" : {
       "type" : "boolean",
-      "description" : "enable health check HTTP. An HTTP get request will be sent to the service to ensure that 200 response status is\ncoming back. This is suitable for service that depending on the database or other infrastructure services. You should\nimplement a customized health check handler that checks dependencies. i.e. if DB is down, return status 400. This\nis the recommended configuration that allows the light-portal controller to poll the health info from each service."
+      "description" : "enable health check HTTP. An HTTP get request will be sent to the service to ensure that 200 response status is\ncoming back. This is suitable for service that depending on the database or other infrastructure services. You should\nimplement a customized health check handler that checks dependencies. i.e. if DB is down, return status 400. This\nis the recommended configuration that allows the light-portal controller to poll the health info from each service.",
+      "default" : false
     },
     "ttlCheck" : {
       "type" : "boolean",
-      "description" : "enable health check TTL. When this is enabled, The light-portal controller won't actively check your service to\nensure it is healthy, but your service will call check endpoint with a heartbeat to indicate it is alive. This\nrequires that the service is built on top of light-4j, and the HTTP check is not available. For example, your service\nis behind NAT. If you are running the service within your internal network and using the SaaS lightapi.net portal,\nthis is the only option as our portal controller cannot access your internal service to perform a health check.\nWe recommend deploying light-portal internally if you are running services within an internal network for efficiency.\n"
+      "description" : "enable health check TTL. When this is enabled, The light-portal controller won't actively check your service to\nensure it is healthy, but your service will call check endpoint with a heartbeat to indicate it is alive. This\nrequires that the service is built on top of light-4j, and the HTTP check is not available. For example, your service\nis behind NAT. If you are running the service within your internal network and using the SaaS lightapi.net portal,\nthis is the only option as our portal controller cannot access your internal service to perform a health check.\nWe recommend deploying light-portal internally if you are running services within an internal network for efficiency.\n",
+      "default" : true
     },
     "healthPath" : {
       "type" : "string",

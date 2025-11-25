@@ -7,27 +7,21 @@
       "type" : "object",
       "additionalProperties" : {
         "type" : "object",
-        "additionalProperties" : {
-          "type" : "string"
-        }
+        "additionalProperties" : { }
       }
     },
     "regex" : {
       "type" : "object",
       "additionalProperties" : {
         "type" : "object",
-        "additionalProperties" : {
-          "type" : "string"
-        }
+        "additionalProperties" : { }
       }
     },
     "json" : {
       "type" : "object",
       "additionalProperties" : {
         "type" : "object",
-        "additionalProperties" : {
-          "type" : "string"
-        }
+        "additionalProperties" : { }
       }
     }
   }

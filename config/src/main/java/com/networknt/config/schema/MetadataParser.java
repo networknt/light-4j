@@ -5,6 +5,7 @@ import org.yaml.snakeyaml.util.Tuple;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.MirroredTypesException;
 import java.lang.annotation.Annotation;
@@ -63,6 +64,7 @@ public class MetadataParser {
     public static final String EXCLUSIVE_MAX_KEY = "exclusiveMax";
     public static final String MULTIPLE_OF_KEY = "multipleOf";
     public static final String PROPERTIES_KEY = "properties";
+    public static final String CLASS_NAME_KEY = "className";
 
     private static final LinkedHashMap<String, String> DEFAULT_CONTAINER_PROPS = new LinkedHashMap<>();
 
@@ -70,7 +72,7 @@ public class MetadataParser {
         DEFAULT_CONTAINER_PROPS.put(TYPE_KEY, STRING_TYPE);
     }
 
-    private final static LinkedHashMap<Class<? extends Annotation>, Function<Tuple<Annotation, ProcessingEnvironment>, LinkedHashMap<String, Object>>> FIELD_PARSE_FUNCTIONS = new LinkedHashMap<>();
+    private static final LinkedHashMap<Class<? extends Annotation>, Function<Tuple<Annotation, ProcessingEnvironment>, LinkedHashMap<String, Object>>> FIELD_PARSE_FUNCTIONS = new LinkedHashMap<>();
 
     static {
         FIELD_PARSE_FUNCTIONS.put(BooleanField.class, (tuple) -> parseBooleanMetadata((BooleanField) tuple._1()));
@@ -92,6 +94,12 @@ public class MetadataParser {
      */
     public LinkedHashMap<String, Object> parseMetadata(final Element element, final ProcessingEnvironment processingEnvironment) {
         final var rootMetadata = new LinkedHashMap<String, Object>();
+
+        if (element instanceof javax.lang.model.element.TypeElement) {
+            final var typeElement = (TypeElement) element;
+            rootMetadata.put(CLASS_NAME_KEY, typeElement.getQualifiedName().toString());
+        }
+
         gatherObjectSchemaData(element, rootMetadata, processingEnvironment);
         return rootMetadata;
     }
@@ -344,7 +352,7 @@ public class MetadataParser {
 
         if (!parsed) {
             try {
-                field.valueTypeOneOf();
+                field.valueTypeAllOf();
             } catch (MirroredTypesException e) {
                 var mirrors = e.getTypeMirrors();
                 if (!mirrors.isEmpty()) {
@@ -405,6 +413,7 @@ public class MetadataParser {
         metadata.put(EXCLUSIVE_MAX_KEY, field.exclusiveMax());
         metadata.put(MULTIPLE_OF_KEY, field.multipleOf());
         metadata.put(FORMAT_KEY, field.format().name());
+
         return metadata;
     }
 

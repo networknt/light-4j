@@ -28,7 +28,7 @@ import java.util.*;
                 "This configuration file is only for JwtHelper class most of the cases. However, if there\n" +
                 "is no framework specific security configuration available. The fallback security config\n" +
                 "is read from this file. Hence, we leave the enableVerifyJwt and enableVerifyScope to true.\n",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class SecurityConfig {
     public static final String CONFIG_NAME = "security";

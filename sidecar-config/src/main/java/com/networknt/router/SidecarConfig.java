@@ -17,7 +17,7 @@ import java.util.Map;
         configKey = "sidecar",
         configName = "sidecar",
         configDescription = "Light http sidecar configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class SidecarConfig {
     private static final Logger logger = LoggerFactory.getLogger(SidecarConfig.class);

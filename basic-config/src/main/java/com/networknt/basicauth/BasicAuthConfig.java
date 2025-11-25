@@ -29,7 +29,7 @@ import java.util.Map;
         configKey = "basic",
         configName = "basic-auth",
         configDescription = "Basic Authentication Security Configuration for light-4j",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class BasicAuthConfig {
     public static final String CONFIG_NAME = "basic-auth";
@@ -66,8 +66,9 @@ public class BasicAuthConfig {
             configFieldName = ALLOW_ANONYMOUS,
             externalizedKeyName = ALLOW_ANONYMOUS,
             externalized = true,
+            defaultValue = "false",
             description = "Do we allow the anonymous to pass the authentication and limit it with some paths\n" +
-                          "to access? Default is false, and it should only be true in client-proxy."
+                    "to access? Default is false, and it should only be true in client-proxy."
     )
     boolean allowAnonymous;
 
@@ -75,6 +76,7 @@ public class BasicAuthConfig {
             configFieldName = ALLOW_BEARER_TOKEN,
             externalizedKeyName = ALLOW_BEARER_TOKEN,
             externalized = true,
+            defaultValue = "false",
             description = "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\n" +
                     "authorization defined under username bearer. This feature is used in proxy-client\n" +
                     "that support multiple clients with different authorizations.\n"
@@ -103,9 +105,11 @@ public class BasicAuthConfig {
         setConfigData();
         setConfigUser();
     }
+
     /**
      * Please note that this constructor is only for testing to load different config files
      * to test different configurations.
+     *
      * @param configName String
      */
     public BasicAuthConfig(String configName) {
@@ -161,17 +165,19 @@ public class BasicAuthConfig {
         this.allowBearerToken = allowBearerToken;
     }
 
-    public Map<String, UserAuth> getUsers() { return users; }
+    public Map<String, UserAuth> getUsers() {
+        return users;
+    }
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(ENABLE_AD);
-        if(object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
+        if (object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
         object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if(object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
+        if (object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
         object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if(object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
+        if (object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
     }
 
     private void setConfigUser() {
@@ -181,16 +187,16 @@ public class BasicAuthConfig {
         } else if (mappedConfig.get(USERS) instanceof String) {
             // The value can be a string from the config server or in values.yml
             // It must start with '[' in the beginning.
-            String s = (String)mappedConfig.get(USERS);
+            String s = (String) mappedConfig.get(USERS);
             s = s.trim();
-            if(!s.startsWith("[")) {
+            if (!s.startsWith("[")) {
                 throw new ConfigException("The string value must be start with [ as a JSON list");
             }
             List<Map<String, Object>> userList = JsonMapper.string2List(s);
             populateUsers(userList);
         } else {
             // if the basic auth is enabled and users is empty, we throw the ConfigException.
-            if(enabled) {
+            if (enabled) {
                 throw new ConfigException("Basic Auth is enabled but there is no users definition.");
             }
         }

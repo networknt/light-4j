@@ -19,7 +19,7 @@ import java.util.Map;
         configKey = "unified-security",
         configName = "unified-security",
         configDescription = "Unified security configuration.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class UnifiedSecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(UnifiedSecurityConfig.class);

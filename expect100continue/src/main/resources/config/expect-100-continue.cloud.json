@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.expect100continue.Expect100ContinueConfig",
+    "configDesc" : "Configuration for the 'Expect100Continue' handler.",
+    "configName" : "expect-100-continue",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}

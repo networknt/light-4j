@@ -10,23 +10,28 @@
     },
     "httpPort" : {
       "type" : "integer",
-      "description" : "Http port if enableHttp is true. It will be ignored if dynamicPort is true."
+      "description" : "Http port if enableHttp is true. It will be ignored if dynamicPort is true.",
+      "default" : 8080
     },
     "enableHttp" : {
       "type" : "boolean",
-      "description" : "Enable HTTP should be false by default. It should be only used for testing with clients or tools\nthat don't support https or very hard to import the certificate. Otherwise, https should be used.\nWhen enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is\nonly one protocol will be used for the server at anytime. If both http and https are true, only\nhttps listener will be created and the server will bind to https port only."
+      "description" : "Enable HTTP should be false by default. It should be only used for testing with clients or tools\nthat don't support https or very hard to import the certificate. Otherwise, https should be used.\nWhen enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is\nonly one protocol will be used for the server at anytime. If both http and https are true, only\nhttps listener will be created and the server will bind to https port only.",
+      "default" : false
     },
     "httpsPort" : {
       "type" : "integer",
-      "description" : "Https port if enableHttps is true. It will be ignored if dynamicPort is true."
+      "description" : "Https port if enableHttps is true. It will be ignored if dynamicPort is true.",
+      "default" : 8443
     },
     "enableHttps" : {
       "type" : "boolean",
-      "description" : "Enable HTTPS should be true on official environment and most dev environments."
+      "description" : "Enable HTTPS should be true on official environment and most dev environments.",
+      "default" : true
     },
     "enableHttp2" : {
       "type" : "boolean",
-      "description" : "Http/2 is enabled by default for better performance and it works with the client module\nPlease note that HTTP/2 only works with HTTPS."
+      "description" : "Http/2 is enabled by default for better performance and it works with the client module\nPlease note that HTTP/2 only works with HTTPS.",
+      "default" : true
     },
     "keystoreName" : {
       "type" : "string",
@@ -45,7 +50,8 @@
     },
     "enableTwoWayTls" : {
       "type" : "boolean",
-      "description" : "Flag that indicate if two way TLS is enabled. Not recommended in docker container."
+      "description" : "Flag that indicate if two way TLS is enabled. Not recommended in docker container.",
+      "default" : false
     },
     "truststoreName" : {
       "type" : "string",
@@ -74,23 +80,28 @@
     },
     "enableRegistry" : {
       "type" : "boolean",
-      "description" : "Flag to enable self service registration. This should be turned on on official test and production. And\ndynamicPort should be enabled if any orchestration tool is used like Kubernetes."
+      "description" : "Flag to enable self service registration. This should be turned on on official test and production. And\ndynamicPort should be enabled if any orchestration tool is used like Kubernetes.",
+      "default" : false
     },
     "startOnRegistryFailure" : {
       "type" : "boolean",
-      "description" : "When enableRegistry is true and the registry/discovery service is not reachable. Stop the server or continue\nstarting the server. When your global registry is not setup as high availability and only for monitoring, you\ncan set it true. If you are using it for global service discovery, leave it with false."
+      "description" : "When enableRegistry is true and the registry/discovery service is not reachable. Stop the server or continue\nstarting the server. When your global registry is not setup as high availability and only for monitoring, you\ncan set it true. If you are using it for global service discovery, leave it with false.",
+      "default" : false
     },
     "dynamicPort" : {
       "type" : "boolean",
-      "description" : "Dynamic port is used in situation that multiple services will be deployed on the same host and normally\nyou will have enableRegistry set to true so that other services can find the dynamic port service. When\ndeployed to Kubernetes cluster, the Pod must be annotated as hostNetwork: true"
+      "description" : "Dynamic port is used in situation that multiple services will be deployed on the same host and normally\nyou will have enableRegistry set to true so that other services can find the dynamic port service. When\ndeployed to Kubernetes cluster, the Pod must be annotated as hostNetwork: true",
+      "default" : false
     },
     "minPort" : {
       "type" : "integer",
-      "description" : "Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup\nfirewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be\nenough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods"
+      "description" : "Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup\nfirewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be\nenough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods",
+      "default" : 2400
     },
     "maxPort" : {
       "type" : "integer",
-      "description" : "Maximum port rang. The range can be customized to adopt your network security policy and can be increased or\nreduced to ease firewall rules."
+      "description" : "Maximum port rang. The range can be customized to adopt your network security policy and can be increased or\nreduced to ease firewall rules.",
+      "default" : 2500
     },
     "environment" : {
       "type" : "string",
@@ -103,7 +114,8 @@
     },
     "shutdownGracefulPeriod" : {
       "type" : "integer",
-      "description" : "Shutdown gracefully wait period in milliseconds\nIn this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set\nbased on the slowest request possible."
+      "description" : "Shutdown gracefully wait period in milliseconds\nIn this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set\nbased on the slowest request possible.",
+      "default" : 2000
     },
     "serviceName" : {
       "type" : "string",
@@ -112,23 +124,28 @@
     },
     "bufferSize" : {
       "type" : "integer",
-      "description" : "Buffer size of undertow server. Default to 16K"
+      "description" : "Buffer size of undertow server. Default to 16K",
+      "default" : 16384
     },
     "ioThreads" : {
       "type" : "integer",
-      "description" : "Number of IO thread. Default to number of processor * 2"
+      "description" : "Number of IO thread. Default to number of processor * 2",
+      "default" : 4
     },
     "workerThreads" : {
       "type" : "integer",
-      "description" : "Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu"
+      "description" : "Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu",
+      "default" : 200
     },
     "backlog" : {
       "type" : "integer",
-      "description" : "Backlog size. Default to 10000"
+      "description" : "Backlog size. Default to 10000",
+      "default" : 10000
     },
     "alwaysSetDate" : {
       "type" : "boolean",
-      "description" : "Flag to set UndertowOptions.ALWAYS_SET_DATE"
+      "description" : "Flag to set UndertowOptions.ALWAYS_SET_DATE",
+      "default" : false
     },
     "serverString" : {
       "type" : "string",
@@ -141,16 +158,19 @@
     },
     "allowUnescapedCharactersInUrl" : {
       "type" : "boolean",
-      "description" : "Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.\nPlease note that this option widens the attack surface and attacker can potentially access your filesystem.\nThis should only be used on an internal server and never be used on a server accessed from the Internet."
+      "description" : "Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.\nPlease note that this option widens the attack surface and attacker can potentially access your filesystem.\nThis should only be used on an internal server and never be used on a server accessed from the Internet.",
+      "default" : false
     },
     "maxTransferFileSize" : {
       "type" : "integer",
       "description" : "Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.",
+      "default" : 1000000,
       "format" : "u64"
     },
     "maskConfigProperties" : {
       "type" : "boolean",
-      "description" : "Indicate if the mask for the module registry should be applied or not. Default to true. If all the sensitive\nproperties are encrypted, then this flag can be set to false. This allows the encrypted sensitive properties\nto show up in the server info response. When config server is used, this flag should be set to false so that\nthe server info response can be automatically compared with the config server generated server info based on\nthe config properties."
+      "description" : "Indicate if the mask for the module registry should be applied or not. Default to true. If all the sensitive\nproperties are encrypted, then this flag can be set to false. This allows the encrypted sensitive properties\nto show up in the server info response. When config server is used, this flag should be set to false so that\nthe server info response can be automatically compared with the config server generated server info based on\nthe config properties.",
+      "default" : true
     }
   }
 }

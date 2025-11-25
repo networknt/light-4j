@@ -12,7 +12,6 @@ import com.networknt.config.schema.MetadataParser;
 import javax.tools.FileObject;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -103,7 +102,7 @@ public class JsonSchemaGenerator extends Generator {
 
         /* special handling for default key in json schema */
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING))
+        if (presentValue != null && !presentValue.isEmpty())
             property.put("default", presentValue);
 
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MIN_LENGTH_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
@@ -119,9 +118,15 @@ public class JsonSchemaGenerator extends Generator {
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
 
         /* special handling for default key in json schema */
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), Integer.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_INT))
-            property.put("default", presentValue);
+        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
+        if (presentValue != null) {
+            try {
+                property.put("default", Integer.parseInt(presentValue));
+            } catch (Exception e) {
+
+                // do nothing
+            }
+        }
 
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MINIMUM_KEY, ConfigSchema.DEFAULT_MIN_INT, Integer.class);
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAXIMUM_KEY, ConfigSchema.DEFAULT_MAX_INT, Integer.class);
@@ -137,9 +142,13 @@ public class JsonSchemaGenerator extends Generator {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.BOOLEAN_TYPE);
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
 
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), Boolean.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_BOOLEAN))
-            property.put("default", presentValue);
+        // Get the default string value
+        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
+        if (presentValue != null && presentValue.equalsIgnoreCase("true")) {
+            property.put("default", true);
+        } else if (presentValue != null && presentValue.equalsIgnoreCase("false")) {
+            property.put("default", false);
+        }
 
     }
 
@@ -157,9 +166,14 @@ public class JsonSchemaGenerator extends Generator {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.NUMBER_TYPE);
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
 
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), Number.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_NUMBER))
-            property.put("default", presentValue);
+        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
+        if (presentValue != null) {
+            try {
+                property.put("default", Double.parseDouble(presentValue));
+            } catch (Exception e) {
+                // do nothing
+            }
+        }
 
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MINIMUM_KEY, ConfigSchema.DEFAULT_MIN_NUMBER, Number.class);
         AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAXIMUM_KEY, ConfigSchema.DEFAULT_MAX_NUMBER, Number.class);
@@ -180,7 +194,7 @@ public class JsonSchemaGenerator extends Generator {
 
         /* special handling for json default value */
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
+        if (presentValue != null && !presentValue.isEmpty()) {
             try {
                 property.put("default", this.OBJECT_MAPPER.readValue(presentValue, Object.class));
             } catch (JsonProcessingException e) {
@@ -197,7 +211,7 @@ public class JsonSchemaGenerator extends Generator {
     protected void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.NULL_TYPE);
         final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING))
+        if (presentValue != null && !presentValue.isEmpty())
             property.put("default", presentValue);
 
     }

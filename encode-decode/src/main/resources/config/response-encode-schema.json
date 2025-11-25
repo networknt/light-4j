@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "response encode handler for gzip and deflate"
+      "description" : "response encode handler for gzip and deflate",
+      "default" : false
     },
     "encoders" : {
       "type" : "array",

@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the interceptor is enabled or not."
+      "description" : "Indicate if the interceptor is enabled or not.",
+      "default" : true
     },
     "appliedPathPrefixes" : {
       "type" : "array",

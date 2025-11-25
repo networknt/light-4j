@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "indicate if the interceptor is enabled or not."
+      "description" : "indicate if the interceptor is enabled or not.",
+      "default" : true
     },
     "requiredContent" : {
       "type" : "boolean",
-      "description" : "indicate if the transformer needs to modify the response body in the transform rules."
+      "description" : "indicate if the transformer needs to modify the response body in the transform rules.",
+      "default" : true
     },
     "defaultBodyEncoding" : {
       "type" : "string",

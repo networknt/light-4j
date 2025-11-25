@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@ConfigSchema(configName = "token-limit", configKey = "token-limit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configName = "token-limit", configKey = "token-limit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class TokenLimitConfig {
     private static final Logger logger = LoggerFactory.getLogger(TokenLimitConfig.class);
     public static final String CONFIG_NAME = "token-limit";

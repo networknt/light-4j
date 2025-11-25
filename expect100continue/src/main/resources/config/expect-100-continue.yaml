@@ -1,6 +1,6 @@
 # Configuration for the 'Expect100Continue' handler.
 # Indicate if the Expect100Continue middleware is enabled or not.
-enabled: ${expect-100-continue.enabled:false}
+enabled: ${expect-100-continue.enabled:}
 # List of paths that will not follow the expect-100-continue protocol. The Expect header will be removed altogether.
 # format is in array format, or in string array format (i.e. '[path1, path2]')
 inPlacePathPrefixes: ${expect-100-continue.inPlacePathPrefixes:}

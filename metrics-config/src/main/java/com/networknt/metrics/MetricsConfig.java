@@ -32,7 +32,7 @@ import java.util.Map;
 @ConfigSchema(
         configName = "metrics",
         configKey = "metrics",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Metrics handler configuration that is shared by all the push metrics handlers."
 )
 public class MetricsConfig {

@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if this handler is enabled or not. It is normally used for the third party integration\nso that only approved IPs can connect to the light-gateway or http-sidecar at certain endpoints.\nThe default value is true, and it will take effect as long as this handler is in the chain.\n"
+      "description" : "Indicate if this handler is enabled or not. It is normally used for the third party integration\nso that only approved IPs can connect to the light-gateway or http-sidecar at certain endpoints.\nThe default value is true, and it will take effect as long as this handler is in the chain.\n",
+      "default" : true
     },
     "defaultAllow" : {
       "type" : "boolean",
-      "description" : "Default allowed or denied if there is no rules defined for the path or the path is not defined.\nIf defaultAllow is true, all IP addresses defined under the matched path will be allowed and IP\naddresses are not in the list will be denied. If the request path prefix is not defined, then all\nrequests will be allowed by default. Basically, only IPs not listed under a path will be denied.\nIf defaultAllow is false, all IP addresses defined under the matched path will be denied and IP\naddresses are not in the list will be allowed. If the request path prefix is not defined, then all\nrequests will be denied by default. Basically, only IPs not listed under a path will be allowed.\n"
+      "description" : "Default allowed or denied if there is no rules defined for the path or the path is not defined.\nIf defaultAllow is true, all IP addresses defined under the matched path will be allowed and IP\naddresses are not in the list will be denied. If the request path prefix is not defined, then all\nrequests will be allowed by default. Basically, only IPs not listed under a path will be denied.\nIf defaultAllow is false, all IP addresses defined under the matched path will be denied and IP\naddresses are not in the list will be allowed. If the request path prefix is not defined, then all\nrequests will be denied by default. Basically, only IPs not listed under a path will be allowed.\n",
+      "default" : true
     },
     "paths" : {
       "type" : "object",

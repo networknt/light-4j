@@ -22,7 +22,7 @@ import java.util.Map;
         configKey = "response-cache",
         configName = "response-cache",
         configDescription = "Configuration for the Response Cache Handler.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ResponseCacheConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseCacheConfig.class);

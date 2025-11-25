@@ -29,7 +29,7 @@ import java.util.*;
  * @author Nicholas Azar
  * @author Dan Dobrin
  */
-@ConfigSchema(configName = "handler", configKey = "handler", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configName = "handler", configKey = "handler", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class HandlerConfig {
     public static final String CONFIG_NAME = "handler";
     private static final Logger logger = LoggerFactory.getLogger(HandlerConfig.class);

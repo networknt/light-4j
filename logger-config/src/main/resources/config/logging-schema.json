@@ -5,15 +5,18 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the logging info is enabled or not."
+      "description" : "Indicate if the logging info is enabled or not.",
+      "default" : true
     },
     "logStart" : {
       "type" : "integer",
-      "description" : "Indicate the default time period backward in millisecond for log content retrieve.\nDefault is an hour which indicate system will retrieve one hour log by default"
+      "description" : "Indicate the default time period backward in millisecond for log content retrieve.\nDefault is an hour which indicate system will retrieve one hour log by default",
+      "default" : 600000
     },
     "downstreamEnabled" : {
       "type" : "boolean",
-      "description" : "if the logger access needs to invoke down streams API. It is false by default."
+      "description" : "if the logger access needs to invoke down streams API. It is false by default.",
+      "default" : false
     },
     "downstreamHost" : {
       "type" : "string",

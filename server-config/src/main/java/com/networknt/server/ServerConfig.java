@@ -33,7 +33,7 @@ import java.util.Map;
         configKey = "server",
         configName = "server",
         configDescription = "Server configuration.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class  ServerConfig {
     public static Logger logger = LoggerFactory.getLogger(ServerConfig.class);

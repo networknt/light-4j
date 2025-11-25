@@ -30,7 +30,7 @@ import java.util.Map;
 @ConfigSchema(
         configName = "info",
         configKey = "info",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML},
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
         configDescription = "Server info endpoint that can output environment and component along with configuration."
 )
 public class ServerInfoConfig {

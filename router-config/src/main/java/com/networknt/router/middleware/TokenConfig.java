@@ -18,7 +18,7 @@ import java.util.*;
         configDescription = "This is the configuration file for the TokenHandler that is responsible for getting\n" +
                 "a client credentials token in http-sidecar and light-gateway when calling others.\n" +
                 "The configuration for one or multiple OAuth 2.0 providers is in the client.yml file.\n",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class TokenConfig {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfig.class);

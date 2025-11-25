@@ -5,11 +5,13 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Indicate if the proxy handler is enabled or not."
+      "description" : "Indicate if the proxy handler is enabled or not.",
+      "default" : true
     },
     "http2Enabled" : {
       "type" : "boolean",
-      "description" : "If HTTP 2.0 protocol will be used to connect to target servers. Only if all host are using https\nand support the HTTP2 can set this one to true.\n"
+      "description" : "If HTTP 2.0 protocol will be used to connect to target servers. Only if all host are using https\nand support the HTTP2 can set this one to true.\n",
+      "default" : false
     },
     "hosts" : {
       "type" : "string",
@@ -18,35 +20,43 @@
     },
     "connectionsPerThread" : {
       "type" : "integer",
-      "description" : "Connections per thread to the target servers."
+      "description" : "Connections per thread to the target servers.",
+      "default" : 20
     },
     "maxRequestTime" : {
       "type" : "integer",
-      "description" : "Max request time in milliseconds before timeout."
+      "description" : "Max request time in milliseconds before timeout.",
+      "default" : 1000
     },
     "rewriteHostHeader" : {
       "type" : "boolean",
-      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host."
+      "description" : "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host.",
+      "default" : true
     },
     "reuseXForwarded" : {
       "type" : "boolean",
-      "description" : "Reuse XForwarded for the target XForwarded header."
+      "description" : "Reuse XForwarded for the target XForwarded header.",
+      "default" : false
     },
     "maxConnectionRetries" : {
       "type" : "integer",
-      "description" : "Max Connection Retries."
+      "description" : "Max Connection Retries.",
+      "default" : 3
     },
     "maxQueueSize" : {
       "type" : "integer",
-      "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API.\n"
+      "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API.\n",
+      "default" : 0
     },
     "forwardJwtClaims" : {
       "type" : "boolean",
-      "description" : "Decode the JWT token claims and forward to the backend api in the form of json string."
+      "description" : "Decode the JWT token claims and forward to the backend api in the form of json string.",
+      "default" : false
     },
     "metricsInjection" : {
       "type" : "boolean",
-      "description" : "When LightProxyHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\ntotal response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.\n"
+      "description" : "When LightProxyHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\ntotal response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.\n",
+      "default" : false
     },
     "metricsName" : {
       "type" : "string",

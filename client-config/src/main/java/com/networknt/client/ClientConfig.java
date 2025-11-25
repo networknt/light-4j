@@ -17,7 +17,7 @@ import java.util.Map;
         configKey = "client",
         configName = "client",
         configDescription = "This is the configuration file for light-4j Http2Client and jdk 11 http-client.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ClientConfig {

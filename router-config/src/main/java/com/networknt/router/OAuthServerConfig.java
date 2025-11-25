@@ -16,7 +16,7 @@ import java.util.Map;
         configKey = "oauthServer",
         configName = "oauthServer",
         configDescription = "OAuth server configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class OAuthServerConfig {
     private static final Logger logger = LoggerFactory.getLogger(OAuthServerConfig.class);

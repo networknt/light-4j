@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@ConfigSchema(configKey = "decode", configName = "request-decode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "decode", configName = "request-decode", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class RequestDecodeConfig {
     private static final Logger logger = LoggerFactory.getLogger(RequestDecodeConfig.class);
     public static final String CONFIG_NAME = "request-decode";

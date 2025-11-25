@@ -38,7 +38,7 @@ import java.util.Map;
         configKey = "sanitizer",
         configName = "sanitizer",
         configDescription = "Sanitizer handler configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class SanitizerConfig {
     public static final String ENABLED = "enabled";

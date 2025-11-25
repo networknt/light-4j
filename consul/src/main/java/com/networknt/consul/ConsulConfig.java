@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-@ConfigSchema(configKey = "consul", configName = "consul", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "consul", configName = "consul", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ConsulConfig {
     public static final String CONFIG_NAME = "consul";
     private static final Logger logger = LoggerFactory.getLogger(ConsulConfig.class);

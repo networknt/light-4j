@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
         configKey = "direct-registry",
         configName = "direct-registry",
         configDescription = "Direct registry configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class DirectRegistryConfig {
     private static final Logger logger = LoggerFactory.getLogger(DirectRegistryConfig.class);
 

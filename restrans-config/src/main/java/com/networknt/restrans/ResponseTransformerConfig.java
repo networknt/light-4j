@@ -14,7 +14,7 @@ import java.util.*;
         configKey = "response-transformer",
         configName = "response-transformer",
         configDescription = "Response transformer configuration.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class ResponseTransformerConfig {
     public static final String CONFIG_NAME = "response-transformer";

@@ -18,7 +18,7 @@ package com.networknt.portal.registry;
 
 import com.networknt.config.schema.*;
 
-@ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML})
+@ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
 

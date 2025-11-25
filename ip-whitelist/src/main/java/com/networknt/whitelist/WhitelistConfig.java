@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
         configKey = "whitelist",
         configName = "whitelist",
         configDescription = "IP Whitelist configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class WhitelistConfig {
     public static final Logger logger = LoggerFactory.getLogger(WhitelistConfig.class);

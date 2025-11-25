@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.logging.model.LoggerConfig",
+    "configDesc" : "Logging endpoint that can output the logger with logging levels.",
+    "configName" : "logging",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}

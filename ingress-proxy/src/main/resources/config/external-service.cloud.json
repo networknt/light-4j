@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.proxy.ExternalServiceConfig",
+    "configDesc" : "Configuration for external service handler to access third party services through proxy/gateway.",
+    "configName" : "external-service",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}
