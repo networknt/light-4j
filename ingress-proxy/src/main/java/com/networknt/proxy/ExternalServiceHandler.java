@@ -270,13 +270,14 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         .sslContext(Http2Client.createSSLContext());
             }
 
-            if (config.getProxyHost() != null && !config.getProxyHost().isEmpty())
+            if (config.getProxyHost() != null && !config.getProxyHost().isEmpty()) {
                 clientBuilder.proxy(ProxySelector.of(
-                        new InetSocketAddress(
+                        InetSocketAddress.createUnresolved(
                                 config.getProxyHost(),
                                 config.getProxyPort() == 0 ? 443 : config.getProxyPort()
-                        ))
-                );
+                        )
+                ));
+            }
 
             if (config.isEnableHttp2())
                 clientBuilder.version(HttpClient.Version.HTTP_2);
