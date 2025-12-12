@@ -166,27 +166,57 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         return;
                     }
 
-                    if (client == null && !this.createJavaHttpClient()) {
+                    if (client == null) {
+                        client = this.createJavaHttpClient();
+                        if(client == null) {
+                            setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
+                            exchange.endExchange();
+                            return;
+                        }
+                    }
+
+                    /*
+                    A new client is created from the second attempt onwards as there is no way we can create new connections. Since this handler
+                    is a singleton, it would be a bad idea to repeatedly abandon HttpClient instances in a singleton handler. It will cause leak
+                    of resource. We need a clean connection without abandoning the shared resource. The solution is to create a temporary fresh
+                    client from the second attempt and discard it immediately to minimize resource footprint.
+                    */
+                    int maxRetries = config.getMaxConnectionRetries();
+                    HttpResponse<byte[]> response = null;
+
+                    for (int attempt = 0; attempt < maxRetries; attempt++) {
+
+                        try {
+                            if (attempt == 0) {
+                                // First attempt: Use the long-lived, shared client
+                                response = this.client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                            } else {
+                                // Subsequent attempts: Create a fresh, temporary client inside a try-with-resources
+                                logger.info("Attempt {} failed. Creating fresh client for retry.", attempt);
+
+                                try (HttpClient temporaryClient = createJavaHttpClient()) {
+                                    response = temporaryClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                                } // temporaryClient.close() called here if inner block exits normally/exceptionally
+                            }
+                            break; // Success! Exit the loop.
+                        } catch (IOException | InterruptedException e) {
+                            // Note: The exception could be from .send() OR from createJavaHttpClient() (if attempt > 0)
+                            if (attempt >= maxRetries - 1) {
+                                throw e; // Rethrow exception on final attempt failure
+                            }
+                            logger.warn("Attempt {} failed ({}). Retrying...", attempt + 1, e.getMessage());
+                            // Loop continues to next attempt
+                        }
+                    }
+
+                    // If loop finished without response, the request failed maxRetries times.
+                    if (response == null) {
+                        logger.error("Failed after retrying {} times.", maxRetries);
                         setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
                         exchange.endExchange();
                         return;
                     }
 
-                    int maxRetries = config.getMaxConnectionRetries();
-                    int attempt = 0;
-                    HttpResponse<byte[]> response = null;
-                    while (attempt < maxRetries) {
-                        try {
-                            response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                            break; // Exit loop if request is successful
-                        } catch (IOException | InterruptedException e) {
-                            attempt++;
-                            if (attempt >= maxRetries) {
-                                throw e; // Rethrow the exception if max retries reached
-                            }
-                            logger.warn("Attempt {} failed, retrying...", attempt, e);
-                        }
-                    }
                     var responseHeaders = response.headers();
                     byte[] responseBody = response.body();
                     if(response.statusCode() >= 400) {
@@ -243,55 +273,46 @@ public class ExternalServiceHandler implements MiddlewareHandler {
      * Builds our Java HttpClient based on parameters from the Undertow exchange.
      *
      *
-     * @return - returns true if the client was created successfully.
+     * @return - returns HttpClient instance if the client was created successfully.
      */
 
     @SuppressWarnings("unchecked")
-    private boolean createJavaHttpClient() {
+    private HttpClient createJavaHttpClient() throws IOException {
+        // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
+        var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+        final var props = System.getProperties();
+        props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
+        props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection"); // this essentially overwrites the above JVM arg value "Host"
 
-        try {
-            // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
-            var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-            final var props = System.getProperties();
-            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
-            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection"); // this essentially overwrites the above JVM arg value "Host"
+        var clientBuilder = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
 
-            var clientBuilder = HttpClient.newBuilder()
-                    .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
-
-            if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                // setting jdk.internal.httpclient.disableHostnameVerification=true set it globally for the JVM,
-                // however it is overwritten by the sslContext defined in the HttpClient builder.
-                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-            }
-            else {
-                clientBuilder
-                        .sslContext(Http2Client.createSSLContext());
-            }
-
-            if (config.getProxyHost() != null && !config.getProxyHost().isEmpty()) {
-                clientBuilder.proxy(ProxySelector.of(
-                        InetSocketAddress.createUnresolved(
-                                config.getProxyHost(),
-                                config.getProxyPort() == 0 ? 443 : config.getProxyPort()
-                        )
-                ));
-            }
-
-            if (config.isEnableHttp2())
-                clientBuilder.version(HttpClient.Version.HTTP_2);
-
-            else clientBuilder.version(HttpClient.Version.HTTP_1_1);
-
-            this.client = clientBuilder.build();
-
-        } catch (IOException e) {
-            logger.error("Cannot create HttpClient:", e);
-            return false;
+        if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            // setting jdk.internal.httpclient.disableHostnameVerification=true set it globally for the JVM,
+            // however it is overwritten by the sslContext defined in the HttpClient builder.
+            props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+        }
+        else {
+            clientBuilder
+                    .sslContext(Http2Client.createSSLContext());
         }
 
-        return true;
+        if (config.getProxyHost() != null && !config.getProxyHost().isEmpty()) {
+            clientBuilder.proxy(ProxySelector.of(
+                    InetSocketAddress.createUnresolved(
+                            config.getProxyHost(),
+                            config.getProxyPort() == 0 ? 443 : config.getProxyPort()
+                    )
+            ));
+        }
+
+        if (config.isEnableHttp2())
+            clientBuilder.version(HttpClient.Version.HTTP_2);
+
+        else clientBuilder.version(HttpClient.Version.HTTP_1_1);
+
+        return clientBuilder.build();
     }
 
     /**
