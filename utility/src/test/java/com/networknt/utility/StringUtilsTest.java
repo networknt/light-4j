@@ -16,6 +16,7 @@
 
 package com.networknt.utility;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -101,5 +102,29 @@ public class StringUtilsTest {
 
         result = StringUtils.getSecondPart("Hello  World ");
         Assert.assertEquals(" World ", result);
+    }
+
+    @Test
+    public void testJsonExtraBackSlash() {
+        // String jsonStringWithBackslashes =
+        // """
+        // {\n  \"$schema\": \"http://json-schema.org/draft-07/schema\",\n  \"$id\": \"http://example.com/example.json\",\n  \"type\": \"object\",\n  \"required\": [\n    \"extra_vars\"\n  ],\n  \"properties\": {\n    \"extra_vars\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"ev_whs_env\",\n        \"ev_whs_env\",\n        \"ev_targets\",\n        \"ev_action\",\n        \"ev_pre_validation_check\",\n        \"ev_api_jvm_name\",\n        \"ev_productVersion\",\n        \"ev_productId\",\n        \"ev_tag\",\n        \"ev_apiId\",\n        \"ev_api_version\"\n      ],\n      \"properties\": {\n        \"ev_chg_ticket_number\": {\n          \"type\": \"string\",\n          \"default\": \"dev\"\n        },\n        \"ev_whs_env\": {\n          \"type\": \"string\",\n          \"default\": \"dev\"\n        },\n        \"ev_targets\": {\n          \"type\": \"string\"\n        },\n        \"ev_action\": {\n          \"type\": \"string\"\n        },\n        \"ev_pre_validation_check\": {\n          \"type\": \"string\",\n          \"default\": \"no\"\n        },\n        \"ev_api_jvm_name\": {\n          \"type\": \"string\"\n        },\n        \"ev_productVersion\": {\n          \"type\": \"string\"\n        },\n        \"ev_productId\": {\n          \"type\": \"string\"\n        },\n        \"ev_tag\": {\n          \"type\": \"string\"\n        },\n        \"ev_apiId\": {\n          \"type\": \"string\"\n        },\n        \"ev_api_version\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}\n
+        // """;
+        String jsonStringWithBackslashes =
+        """
+        {\n  \"$schema\": \"http://json-schema.org/draft-07/schema\",\n  \"$id\": \"http://example.com/example.json\",\n  \"type\": \"object\",\n  \"required\": [\n    \"job\"\n  ],\n  \"properties\": {\n    \"job\": {\n      \"type\": \"integer\"\n    },\n    \"ignored_fields\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {}\n    }\n  }\n}
+        """;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            // Parse the JSON string into a Java object
+            Object jsonObject = objectMapper.readValue(jsonStringWithBackslashes, Object.class);
+            // Re-serialize the Java object into a JSON string
+            String cleanJsonString = objectMapper.writeValueAsString(jsonObject);
+            System.out.println(cleanJsonString); // Output: {"key":"value with \"escaped quote\" and \\ backslash"}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //{"$schema":"http://json-schema.org/draft-07/schema","$id":"http://example.com/example.json","type":"object","required":["extra_vars"],"properties":{"extra_vars":{"type":"object","required":["ev_whs_env","ev_whs_env","ev_targets","ev_action","ev_pre_validation_check","ev_api_jvm_name","ev_productVersion","ev_productId","ev_tag","ev_apiId","ev_api_version"],"properties":{"ev_chg_ticket_number":{"type":"string","default":"dev"},"ev_whs_env":{"type":"string","default":"dev"},"ev_targets":{"type":"string"},"ev_action":{"type":"string"},"ev_pre_validation_check":{"type":"string","default":"no"},"ev_api_jvm_name":{"type":"string"},"ev_productVersion":{"type":"string"},"ev_productId":{"type":"string"},"ev_tag":{"type":"string"},"ev_apiId":{"type":"string"},"ev_api_version":{"type":"string"}}}}}
+        //{"$schema":"http://json-schema.org/draft-07/schema","$id":"http://example.com/example.json","type":"object","required":["job"],"properties":{"job":{"type":"integer"},"ignored_fields":{"type":"object","additionalProperties":{}}}}
     }
 }
