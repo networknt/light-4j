@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,10 @@ public class UuidUtilTest {
     // Assumes only A-Z, a-z, 0-9, _, - characters for the key
     private static final Pattern BASE64_SQL_KEY_PATTERN = Pattern.compile("'([A-Za-z0-9_-]{22})'");
     private static final Pattern BASE64_EVENT_KEY_PATTERN = Pattern.compile("\"([A-Za-z0-9_-]{22})\"");
+
+    public static Instant getUUIDInstant(UUID uuid) {
+        return com.github.f4b6a3.uuid.util.UuidUtil.getInstant(uuid);
+    }
 
     @Test
     public void testGet10UUID() {
@@ -46,6 +51,12 @@ public class UuidUtilTest {
         System.out.println("uuid = " + id8);
         System.out.println("uuid = " + id9);
         Assert.assertNotEquals(id1, id2);
+    }
+
+    @Test
+    public void testGetNextUUID() {
+        UUID uuid = UUID.fromString("019aad40-eaef-73d2-b557-9af202340706");
+        System.out.println("uuid = " + UuidCreator.getTimeOrderedEpoch(getUUIDInstant(uuid).plusMillis(1)));
     }
 
     @Test
