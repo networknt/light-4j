@@ -19,13 +19,24 @@ public class RequestConfig {
     private Integer errorThreshold = 2;
 
     @IntegerField(
+            configFieldName = ClientConfig.CONNECT_TIMEOUT,
+            externalizedKeyName = ClientConfig.CONNECT_TIMEOUT,
+            externalized = true,
+            defaultValue = "2000",
+            description = "Timeout, in milliseconds, controlling the initial TCP connection establishment. When using the light-4j Http2Client, this value\n" +
+                    "specifies the timeout for obtaining a connection. When using the JDK 11 HttpClient wrapper, it represents the connection timeout.\n" +
+                    "The default value is 2000 ms.\n"
+    )
+    @JsonProperty(ClientConfig.CONNECT_TIMEOUT)
+    private final Integer connectTimeout = 3000;
+
+    @IntegerField(
             configFieldName = ClientConfig.TIMEOUT,
             externalizedKeyName = ClientConfig.TIMEOUT,
             externalized = true,
             defaultValue = "3000",
-            description = "timeout in millisecond to indicate a client error. " +
-                    "If light-4j Http2Client is used, it is the timeout to get the\n" +
-                    "connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000."
+            description = "Timeout, in milliseconds, controlling the entire request–response exchange. When using the light-4j Http2Client, this value\n" +
+            "represents the request timeout. When using the JDK 11 HttpClient wrapper, it also represents the request timeout. The default value is 3000 ms."
     )
     @JsonProperty(ClientConfig.TIMEOUT)
     private Integer timeout = 3000;
@@ -153,6 +164,10 @@ public class RequestConfig {
 
     public Integer getErrorThreshold() {
         return errorThreshold;
+    }
+
+    public Integer getConnectTimeout() {
+        return connectTimeout;
     }
 
     public Integer getTimeout() {

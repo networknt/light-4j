@@ -217,8 +217,12 @@ pathPrefixServices: ${client.pathPrefixServices:}
 request:
   # number of timeouts/errors to break the circuit
   errorThreshold: ${client.errorThreshold:2}
-  # timeout in millisecond to indicate a client error. If light-4j Http2Client is used, it is the timeout to get the
-  # connection. If http-client (JDK 11 client wrapper) is used, it is the request timeout. The default value is 3000.
+  # Timeout, in milliseconds, controlling the initial TCP connection establishment. When using the light-4j Http2Client, this value
+  # specifies the timeout for obtaining a connection. When using the JDK 11 HttpClient wrapper, it represents the connection timeout.
+  # The default value is 2000 ms.
+  connectTimeout: ${client.connectTimeout:2000}
+  # Timeout, in milliseconds, controlling the entire request–response exchange. When using the light-4j Http2Client, this value
+  # represents the request timeout. When using the JDK 11 HttpClient wrapper, it also represents the request timeout. The default value is 3000 ms.
   timeout: ${client.timeout:3000}
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}

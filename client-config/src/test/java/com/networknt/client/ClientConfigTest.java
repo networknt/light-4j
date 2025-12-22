@@ -13,8 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * This is a test class that deal with different configuration values for client.yml
@@ -28,9 +27,10 @@ public class ClientConfigTest {
         ClientConfig clientConfig = ClientConfig.get();
         assertEquals(ClientConfig.DEFAULT_ERROR_THRESHOLD, clientConfig.getErrorThreshold());
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
-        assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
+        assertEquals(ClientConfig.DEFAULT_TIMEOUT, (int)clientConfig.getRequest().getTimeout());
+        assertEquals(ClientConfig.DEFAULT_CONNECT_TIMEOUT, (int)clientConfig.getRequest().getConnectTimeout());
         assertFalse(clientConfig.isInjectOpenTracing());
-        assertNull(clientConfig.getTokenConfig());
+        assertNotNull(clientConfig.getOAuth().getToken());
     }
 
 
@@ -38,21 +38,24 @@ public class ClientConfigTest {
     @Ignore
     public void shouldLoadEmptyConfig() {
         ClientConfig clientConfig = ClientConfig.get();
-        assertEquals(ClientConfig.DEFAULT_ERROR_THRESHOLD, clientConfig.getErrorThreshold());
+        assertEquals(ClientConfig.DEFAULT_ERROR_THRESHOLD, (int)clientConfig.getRequest().getErrorThreshold());
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
-        assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
+        assertEquals(ClientConfig.DEFAULT_TIMEOUT, (int)clientConfig.getRequest().getTimeout());
+        assertEquals(ClientConfig.DEFAULT_CONNECT_TIMEOUT, (int)clientConfig.getRequest().getConnectTimeout());
         assertFalse(clientConfig.isInjectOpenTracing());
-        assertNull(clientConfig.getTokenConfig());
+        assertTrue(clientConfig.getOAuth().getToken() != null);
+        assertTrue(clientConfig.getOAuth().getToken() instanceof OAuthTokenConfig);
     }
 
     @Test
     @Ignore
     public void shouldLoadCompleteConfig() {
         ClientConfig clientConfig = ClientConfig.get();
-        assertEquals(3, clientConfig.getErrorThreshold());
-        assertEquals(3600000, clientConfig.getResetTimeout());
-        assertEquals(2000, clientConfig.getTimeout());
-        assertTrue(clientConfig.isInjectOpenTracing());
+        assertEquals(2, clientConfig.getErrorThreshold());
+        assertEquals(7000, clientConfig.getResetTimeout());
+        assertEquals(3000, (int)clientConfig.getRequest().getTimeout());
+        assertEquals(2000, (int)clientConfig.getRequest().getConnectTimeout());
+        assertFalse(clientConfig.isInjectOpenTracing());
         assertTrue(clientConfig.getTokenConfig() instanceof HashMap);
     }
 
