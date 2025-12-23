@@ -47,11 +47,19 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
     private static ExternalServiceConfig config;
+    private int connectTimeout;
+    private int timeout;
     private HttpClient client;
 
     public ExternalServiceHandler() {
         config = ExternalServiceConfig.load();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
     }
 
@@ -82,6 +90,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
     }
@@ -91,7 +105,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
-        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = {}", requestPath);
         if (config.getPathHostMappings() != null) {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
@@ -123,7 +137,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
                     logger.trace("External Service Request Info: host = '{}', method = '{}', requestPath = '{}', queryString = '{}'", requestHost, method, requestPath, queryString);
 
-                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
+                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                            .timeout((Duration.ofMillis(timeout)));
                     HttpRequest request = null;
 
                     this.handleHttpClientUrl(exchange, requestBuilder, requestPath, requestHost);
@@ -286,7 +301,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
         var clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
+                .connectTimeout(Duration.ofMillis(connectTimeout));
+
 
         if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
             // setting jdk.internal.httpclient.disableHostnameVerification=true set it globally for the JVM,
@@ -383,14 +399,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
      * @return - returns complete HttpRequest.
      */
     private HttpRequest buildRequestForMethod(HttpRequest.Builder builder, HttpRequest.BodyPublisher bodyPublisher, String method) {
-        switch (method) {
-            case "PUT":
-                return builder.PUT(bodyPublisher).build();
-            case "POST":
-                return builder.POST(bodyPublisher).build();
-            case "PATCH":
-            default:
-                return builder.method(method, bodyPublisher).build();
-        }
+        return switch (method) {
+            case "PUT" -> builder.PUT(bodyPublisher).build();
+            case "POST" -> builder.POST(bodyPublisher).build();
+            default -> builder.method(method, bodyPublisher).build();
+        };
     }
 }

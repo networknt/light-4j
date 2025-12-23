@@ -36,6 +36,8 @@ public class ExternalServiceConfig {
     private static final String METRICS_NAME = "metricsName";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
     private static final String URL_REWRITE_RULES = "urlRewriteRules"; // Constant for rewrite rules
+    private static final String CONNECT_TIMEOUT = "connectTimeout";
+    private static final String TIMEOUT = "timeout";
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -61,6 +63,23 @@ public class ExternalServiceConfig {
             externalized = true
     )
     int proxyPort;
+
+    @IntegerField(
+            configFieldName = CONNECT_TIMEOUT,
+            externalizedKeyName = CONNECT_TIMEOUT,
+            description = "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\n" +
+                    "value is 3000.\n",
+            externalized = true
+    )
+    int connectTimeout;
+
+    @IntegerField(
+            configFieldName = TIMEOUT,
+            externalizedKeyName = TIMEOUT,
+            description = "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
+            externalized = true
+    )
+    int timeout;
 
     @BooleanField(
             configFieldName = ENABLE_HTTP2,
@@ -96,7 +115,7 @@ public class ExternalServiceConfig {
     @ArrayField(
             configFieldName = URL_REWRITE_RULES,
             externalizedKeyName = URL_REWRITE_RULES,
-            description = "URL rewrite rules, each line will have two parts: the regex patten and replace string separated\n" +
+            description = "URL rewrite rules, each line will have two parts: the regex pattern and replace string separated\n" +
                     "with a space. For details, please refer to the light-router router.yml configuration.\n" +
                     "Test your rules at https://www.freeformatter.com/java-regex-tester.html\n",
             externalized = true,
@@ -173,6 +192,12 @@ public class ExternalServiceConfig {
 
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
+
+        object = mappedConfig.get(CONNECT_TIMEOUT);
+        if (object != null) connectTimeout = Config.loadIntegerValue(CONNECT_TIMEOUT, object);
+
+        object = mappedConfig.get(TIMEOUT);
+        if (object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
 
         object = mappedConfig.get(MAX_CONNECTION_RETRIES);
         if (object != null) maxConnectionRetries = Config.loadIntegerValue(MAX_CONNECTION_RETRIES, object);
@@ -296,6 +321,12 @@ public class ExternalServiceConfig {
     public int getProxyPort() {
         return proxyPort;
     }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public int getTimeout() { return timeout; }
 
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 

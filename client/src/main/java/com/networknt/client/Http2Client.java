@@ -273,7 +273,7 @@ public class Http2Client {
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(config.getTimeout());
+        return pool.borrow(config.getRequest().getConnectTimeout());
     }
 
     @Deprecated
@@ -358,7 +358,7 @@ public class Http2Client {
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(config.getTimeout());
+        return pool.borrow(config.getRequest().getConnectTimeout());
     }
 
     @Deprecated

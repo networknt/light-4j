@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "proxyHost", "proxyPort", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "metricsInjection", "metricsName" ],
+  "required" : [ "enabled", "proxyHost", "proxyPort", "connectTimeout", "timeout", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "metricsInjection", "metricsName" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -15,6 +15,14 @@
     "proxyPort" : {
       "type" : "integer",
       "description" : "Proxy Port if proxy host is used. default value will be 443 which means HTTPS."
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "description" : "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\nvalue is 3000.\n"
+    },
+    "timeout" : {
+      "type" : "integer",
+      "description" : "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000."
     },
     "enableHttp2" : {
       "type" : "boolean",
@@ -35,7 +43,7 @@
     },
     "urlRewriteRules" : {
       "type" : "array",
-      "description" : "URL rewrite rules, each line will have two parts: the regex patten and replace string separated\nwith a space. For details, please refer to the light-router router.yml configuration.\nTest your rules at https://www.freeformatter.com/java-regex-tester.html\n",
+      "description" : "URL rewrite rules, each line will have two parts: the regex pattern and replace string separated\nwith a space. For details, please refer to the light-router router.yml configuration.\nTest your rules at https://www.freeformatter.com/java-regex-tester.html\n",
       "items" : {
         "type" : "string"
       }

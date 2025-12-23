@@ -23,5 +23,10 @@ dummy: dummyEntry
 # Indicate to the config server we prefer yaml format over json format. default is json.
 # acceptHeader: application/yaml
 
-# The connect timeout for bootstrap from the config server. Default is 3 seconds.
+# The connect timeout for bootstrap from the config server. Default is 2 seconds. If not set,
+# The connectTimeout of client.yml will be used.
+# connectTimeout: 2000
+
+# The request timeout for bootstrap from the config server. Default is 3 seconds. If not set,
+# The timeout of client.yml will be used.
 # timeout: 3000

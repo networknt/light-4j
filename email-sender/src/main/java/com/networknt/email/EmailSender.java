@@ -80,7 +80,7 @@ public class EmailSender {
 
         // Send message
         Transport.send(message);
-        if(logger.isInfoEnabled()) logger.info("An email has been sent to " + to + " with subject " + subject);
+        if(logger.isInfoEnabled()) logger.info("An email has been sent to {} with subject {}", to, subject);
     }
 
     /**

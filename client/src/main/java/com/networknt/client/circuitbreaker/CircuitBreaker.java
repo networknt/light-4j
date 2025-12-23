@@ -51,7 +51,7 @@ public class CircuitBreaker {
                 throw new IllegalStateException("circuit is opened.");
             }
 
-            ClientResponse clientResponse = supplier.get().get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
+            ClientResponse clientResponse = supplier.get().get(ClientConfig.get().getRequest().getTimeout(), TimeUnit.MILLISECONDS);
             timeoutCount = new AtomicInteger(0);
 
             return clientResponse;

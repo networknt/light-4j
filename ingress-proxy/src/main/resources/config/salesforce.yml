@@ -11,6 +11,11 @@ proxyHost: ${salesforce.proxyHost:}
 proxyPort: ${salesforce.proxyPort:}
 # If HTTP2 is used to connect to the salesforce site.
 enableHttp2: ${salesforce.enableHttp2:true}
+# Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default
+# value is 3000.
+connectTimeout: ${salesforce.connectTimeout:3000}
+# Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.
+timeout: ${salesforce.timeout:5000}
 
 # A list of applied request path prefixes and authentication mappings, other requests will skip this handler.
 # Each item will have properties to help get the token from the salesforce access token service. For each API

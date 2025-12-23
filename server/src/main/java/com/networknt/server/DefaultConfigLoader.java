@@ -19,6 +19,7 @@ package com.networknt.server;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
+import com.networknt.client.ClientConfig;
 import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
@@ -86,6 +87,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String ENV_TAG = "envTag";
     public static final String ACCEPT_HEADER = "acceptHeader";
     public static final String TIMEOUT = "timeout";
+    public static final String CONNECT_TIMEOUT = "connectTimeout";
 
     public static String lightEnv = null;
     public static String configServerUri = null;
@@ -100,11 +102,11 @@ public class DefaultConfigLoader implements IConfigLoader{
             final Properties props = System.getProperties();
             props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
         }
-        int timeout = 3000;
-        if(startupConfig.get(TIMEOUT) != null) timeout = Config.loadIntegerValue(TIMEOUT, startupConfig.get(TIMEOUT));
+        int connectTimeout = ClientConfig.get().getRequest().getConnectTimeout();
+        if(startupConfig.get(CONNECT_TIMEOUT) != null) connectTimeout = Config.loadIntegerValue(CONNECT_TIMEOUT, startupConfig.get(CONNECT_TIMEOUT));
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofMillis(timeout)) // timeout from the startup.yml
+                .connectTimeout(Duration.ofMillis(connectTimeout)) // connectTimeout from the startup.yml and fall back to client.yml
                 .version(HttpClient.Version.HTTP_2)
                 .sslContext(createBootstrapContext());
         return clientBuilder.build();
@@ -275,7 +277,10 @@ public class DefaultConfigLoader implements IConfigLoader{
      */
     public String getConfigServerHealth(String host, String path) {
         String result = null;
+        int timeout = ClientConfig.get().getRequest().getTimeout();
+        if(startupConfig.get(TIMEOUT) != null) timeout = Config.loadIntegerValue(TIMEOUT, startupConfig.get(TIMEOUT));
         HttpRequest request = HttpRequest.newBuilder()
+                .timeout(Duration.ofMillis(timeout))
                 .uri(URI.create(host + path))
                 .build();
         try {
@@ -296,7 +301,11 @@ public class DefaultConfigLoader implements IConfigLoader{
         if(logger.isDebugEnabled()) logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
         String acceptHeader = "application/json";
         if(startupConfig.get(ACCEPT_HEADER) != null) acceptHeader = (String)startupConfig.get(ACCEPT_HEADER);
+
+        int timeout = ClientConfig.get().getRequest().getTimeout();
+        if(startupConfig.get(TIMEOUT) != null) timeout = Config.loadIntegerValue(TIMEOUT, startupConfig.get(TIMEOUT));
         HttpRequest request = HttpRequest.newBuilder()
+                .timeout(Duration.ofMillis(timeout))
                 .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)
                 .header(Headers.ACCEPT_STRING, acceptHeader)

@@ -45,6 +45,8 @@ public class SalesforceConfig {
     public static final String SERVICE_HOST = "serviceHost";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final String CONNECT_TIMEOUT = "connectTimeout";
+    private static final String TIMEOUT = "timeout";
 
     boolean enabled;
     String certFilename;
@@ -54,6 +56,8 @@ public class SalesforceConfig {
     boolean enableHttp2;
     boolean metricsInjection;
     String metricsName;
+    int connectTimeout;
+    int timeout;
 
     List<PathPrefixAuth> pathPrefixAuths;
     private Config config;
@@ -130,6 +134,13 @@ public class SalesforceConfig {
         this.proxyPort = proxyPort;
     }
 
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+    public int getTimeout() {
+        return timeout;
+    }
+
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
@@ -193,6 +204,10 @@ public class SalesforceConfig {
         if(object != null) setProxyHost((String) object);
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
+        object = mappedConfig.get(CONNECT_TIMEOUT);
+        if (object != null) connectTimeout = Config.loadIntegerValue(CONNECT_TIMEOUT, object);
+        object = mappedConfig.get(TIMEOUT);
+        if (object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
         object = mappedConfig.get(ENABLE_HTTP2);
         if(object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = mappedConfig.get(METRICS_INJECTION);

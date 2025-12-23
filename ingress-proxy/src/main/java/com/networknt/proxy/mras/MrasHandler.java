@@ -81,12 +81,19 @@ public class MrasHandler implements MiddlewareHandler {
     // the expiration time of access token in millisecond to control if we need to renew the token.
     private long accessTokenExpiration = 0;
     private long microsoftExpiration = 0;
-
+    private int connectTimeout;
+    private int timeout;
     private HttpClient clientMicrosoft;
 
     public MrasHandler() {
         config = MrasConfig.load();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -123,6 +130,12 @@ public class MrasHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         List<String> masks = new ArrayList<>();
         masks.add("keyStorePass");
         masks.add("keyPass");
@@ -138,12 +151,12 @@ public class MrasHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
-        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = {}", requestPath);
 
         for(String key: config.getPathPrefixAuth().keySet()) {
             if(requestPath.startsWith(key)) {
                 String endpoint = key + "@" + exchange.getRequestMethod().toString().toLowerCase();
-                if(logger.isTraceEnabled()) logger.trace("endpoint = " + endpoint);
+                if(logger.isTraceEnabled()) logger.trace("endpoint = {}", endpoint);
                 // handle the url rewrite here.
                 if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                     boolean matched = false;
@@ -166,7 +179,8 @@ public class MrasHandler implements MiddlewareHandler {
                 if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
                     // private access token for authentication.
                     if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
-                        if(logger.isTraceEnabled()) logger.trace("accessToken is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + accessTokenExpiration);
+                        if(logger.isTraceEnabled())
+                            logger.trace("accessToken is about or already expired. current time = {} expiration = {}", System.currentTimeMillis(), accessTokenExpiration);
                         Result<TokenResponse> result = getAccessToken();
                         if(result.isSuccess()) {
                             accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
@@ -226,10 +240,13 @@ public class MrasHandler implements MiddlewareHandler {
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if(contentType == null) contentType = ContentType.APPLICATION_JSON.value();
-        if(logger.isTraceEnabled()) logger.trace("Access MRAS API with method = " + method + " requestHost = " + serviceHost + " queryString = " + queryString + " contentType = " + contentType);
+
+        if(logger.isTraceEnabled())
+            logger.trace("Access MRAS API with method = {} requestHost = {} queryString = {} contentType = {} connectTimeout = {} timeout = {}", method, serviceHost, queryString, contentType, connectTimeout, timeout);
         HttpRequest request = null;
         if(method.equalsIgnoreCase("GET")) {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(serviceHost + requestPath + "?" + queryString))
                     .GET();
             if(authorization != null) {
@@ -240,6 +257,7 @@ public class MrasHandler implements MiddlewareHandler {
             request = builder.build();
         } else if(method.equalsIgnoreCase("DELETE")) {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(serviceHost + requestPath + "?" + queryString))
                     .DELETE();
             if(authorization != null) {
@@ -252,6 +270,7 @@ public class MrasHandler implements MiddlewareHandler {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
             if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(serviceHost + requestPath))
                     .POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
             if(authorization != null) {
@@ -264,6 +283,7 @@ public class MrasHandler implements MiddlewareHandler {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
             if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(serviceHost + requestPath))
                     .PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
             if(authorization != null) {
@@ -276,6 +296,7 @@ public class MrasHandler implements MiddlewareHandler {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
             if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(serviceHost + requestPath))
                     .method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
             if(authorization != null) {
@@ -293,7 +314,7 @@ public class MrasHandler implements MiddlewareHandler {
         try {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    .connectTimeout(Duration.ofMillis(connectTimeout))
                     // we cannot use the Http2Client SSL Context as we need two-way TLS here.
                     .sslContext(createSSLContext());
             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
@@ -346,7 +367,7 @@ public class MrasHandler implements MiddlewareHandler {
         try {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    .connectTimeout(Duration.ofMillis(connectTimeout))
                     // we cannot use the Http2Client SSL Context as we need two-way TLS here.
                     .sslContext(createSSLContext());
             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
@@ -384,6 +405,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .collect(Collectors.joining("&"));
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(URI.create(serverUrl))
                     .headers("Content-Type", "application/x-www-form-urlencoded", "Authorization", "BASIC " + encodeCredentials((String)config.getAccessToken().get(config.USERNAME), (String)config.getAccessToken().get(config.PASSWORD)))
                     .POST(HttpRequest.BodyPublishers.ofString(form))
@@ -421,7 +443,7 @@ public class MrasHandler implements MiddlewareHandler {
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .connectTimeout(Duration.ofMillis(connectTimeout))
                         // Token site only need one-way TLS with a public certificate.
                         .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
@@ -463,6 +485,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .collect(Collectors.joining("&"));
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(URI.create(serverUrl))
                     .headers("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(form))

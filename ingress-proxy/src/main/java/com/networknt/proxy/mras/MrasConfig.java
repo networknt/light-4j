@@ -45,6 +45,8 @@ public class MrasConfig {
     public static final String PATH_PREFIX_AUTH = "pathPrefixAuth";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final String CONNECT_TIMEOUT = "connectTimeout";
+    private static final String TIMEOUT = "timeout";
 
     boolean enabled;
     String keyStoreName;
@@ -57,6 +59,8 @@ public class MrasConfig {
     boolean enableHttp2;
     boolean metricsInjection;
     String metricsName;
+    int connectTimeout;
+    int timeout;
 
     List<UrlRewriteRule> urlRewriteRules;
     Map<String, Object> pathPrefixAuth;
@@ -126,6 +130,12 @@ public class MrasConfig {
     public int getProxyPort() {
         return proxyPort;
     }
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+    public int getTimeout() {
+        return timeout;
+    }
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
@@ -181,6 +191,10 @@ public class MrasConfig {
         if (object != null) proxyHost = (String) object;
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
+        object = mappedConfig.get(CONNECT_TIMEOUT);
+        if (object != null) connectTimeout = Config.loadIntegerValue(CONNECT_TIMEOUT, object);
+        object = mappedConfig.get(TIMEOUT);
+        if (object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
         object = mappedConfig.get(ENABLE_HTTP2);
         if (object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = mappedConfig.get(SERVICE_HOST);

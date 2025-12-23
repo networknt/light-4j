@@ -5,6 +5,11 @@ enabled: ${externalService.enabled:false}
 proxyHost: ${externalService.proxyHost:}
 # Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
 proxyPort: ${externalService.proxyPort:}
+# Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default
+# value is 3000.
+connectTimeout: ${externalService.connectTimeout:}
+# Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.
+timeout: ${externalService.timeout:}
 # If HTTP2 is used to connect to the external service.
 enableHttp2: ${externalService.enableHttp2:false}
 # Max Connection Retries
@@ -13,7 +18,7 @@ maxConnectionRetries: ${externalService.maxConnectionRetries:3}
 # a string with two parts. The first part is the path and the second is the target host the request is
 # finally routed to.
 pathHostMappings: ${externalService.pathHostMappings:}
-# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# URL rewrite rules, each line will have two parts: the regex pattern and replace string separated
 # with a space. For details, please refer to the light-router router.yml configuration.
 # Test your rules at https://www.freeformatter.com/java-regex-tester.html
 urlRewriteRules: ${externalService.urlRewriteRules:}

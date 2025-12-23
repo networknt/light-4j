@@ -27,6 +27,11 @@ metricsInjection: ${mras.metricsInjection:false}
 # metrics info can be categorized in a tree structure under the name. By default, it is mras-response, and
 # users can change it.
 metricsName: ${mras.metricsName:mras-response}
+# Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default
+# value is 3000.
+connectTimeout: ${mras.connectTimeout:3000}
+# Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.
+timeout: ${mras.timeout:5000}
 
 # URL rewrite rules, each line will have two parts: the regex patten and replace string separated
 # with a space. For details, please refer to the light-router router.yml configuration.

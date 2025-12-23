@@ -82,12 +82,20 @@ public class SalesforceHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
     private static SalesforceConfig config;
     // the cached jwt token so that we can use the same token for different requests.
+    private int connectTimeout;
+    private int timeout;
 
     private HttpClient client;
 
     public SalesforceHandler() {
         config = SalesforceConfig.load();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
@@ -120,6 +128,11 @@ public class SalesforceHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+        connectTimeout = config.getConnectTimeout();
+        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
+        timeout = config.getTimeout();
+        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
+
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
         ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
@@ -236,7 +249,7 @@ public class SalesforceHandler implements MiddlewareHandler {
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .connectTimeout(Duration.ofMillis(connectTimeout))
                         .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if (config.isEnableHttp2()) {
@@ -270,13 +283,13 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .addPart("response_type", pathPrefixAuth.getResponseType());
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(URI.create(pathPrefixAuth.getTokenUrl()))
                     .headers("Content-Type", "multipart/form-data; boundary=" + publisher.getBoundary())
                     .POST(publisher.build())
                     .build();
 
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            // {"access_token":"00D4c0000008cs2!AQgAQEz6V7E2zicFNvmfn5vZhMqVwqfx6lw1_iIH6HeqdiwUpfJdzRBwyP5WZmdastpC2whXl5XAadJ6yTiw5p9NhpnLuvh5","instance_url":"https://networknt-sit.my.salesforce.com","id":"https://test.salesforce.com/id/00D4c0000008cs2EAA/0054c000000etGWAAY","token_type":"Bearer","issued_at":"1668791215099","signature":"L9dAAP0spmigt5nJcwrU2C1nu2iMV37hBFXAXIMZrg8="}
             if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
@@ -306,7 +319,7 @@ public class SalesforceHandler implements MiddlewareHandler {
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .connectTimeout(Duration.ofMillis(connectTimeout))
                         .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if (config.isEnableHttp2()) {
@@ -342,6 +355,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .collect(Collectors.joining("&"));
             if(logger.isTraceEnabled()) logger.trace("request body = " + form);
             HttpRequest request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(URI.create(serverUrl))
                     .headers("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(form))
@@ -383,6 +397,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
         if(method.equalsIgnoreCase("GET")) {
             request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(requestHost + requestPath + "?" + queryString))
                     .headers("Authorization", authorization, "Content-Type", contentType)
                     .GET()
@@ -390,6 +405,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
         } else if(method.equalsIgnoreCase("DELETE")) {
             request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(requestHost + requestPath + "?" + queryString))
                     .headers("Authorization", authorization, "Content-Type", contentType)
                     .DELETE()
@@ -403,6 +419,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
             }
             request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
                     .POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
@@ -415,6 +432,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
             }
             request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
                     .PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
@@ -427,6 +445,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
             }
             request = HttpRequest.newBuilder()
+                    .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
                     .method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
