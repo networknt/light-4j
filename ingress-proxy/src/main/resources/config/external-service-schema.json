@@ -18,11 +18,13 @@
     },
     "connectTimeout" : {
       "type" : "integer",
-      "description" : "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\nvalue is 3000.\n"
+      "description" : "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\nvalue is 3000.\n",
+      "default" : 3000
     },
     "timeout" : {
       "type" : "integer",
-      "description" : "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000."
+      "description" : "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
+      "default" : 5000
     },
     "enableHttp2" : {
       "type" : "boolean",

@@ -69,7 +69,8 @@ public class ExternalServiceConfig {
             externalizedKeyName = CONNECT_TIMEOUT,
             description = "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\n" +
                     "value is 3000.\n",
-            externalized = true
+            externalized = true,
+            defaultValue = "3000"
     )
     int connectTimeout;
 
@@ -77,7 +78,8 @@ public class ExternalServiceConfig {
             configFieldName = TIMEOUT,
             externalizedKeyName = TIMEOUT,
             description = "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
-            externalized = true
+            externalized = true,
+            defaultValue = "5000"
     )
     int timeout;
 

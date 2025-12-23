@@ -7,9 +7,9 @@ proxyHost: ${externalService.proxyHost:}
 proxyPort: ${externalService.proxyPort:}
 # Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default
 # value is 3000.
-connectTimeout: ${externalService.connectTimeout:}
+connectTimeout: ${externalService.connectTimeout:3000}
 # Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.
-timeout: ${externalService.timeout:}
+timeout: ${externalService.timeout:5000}
 # If HTTP2 is used to connect to the external service.
 enableHttp2: ${externalService.enableHttp2:false}
 # Max Connection Retries
