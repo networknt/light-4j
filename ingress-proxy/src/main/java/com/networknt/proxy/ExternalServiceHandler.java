@@ -191,36 +191,44 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
 
                     /*
-                    A new client is created from the second attempt onwards as there is no way we can create new connections. Since this handler
-                    is a singleton, it would be a bad idea to repeatedly abandon HttpClient instances in a singleton handler. It will cause leak
-                    of resource. We need a clean connection without abandoning the shared resource. The solution is to create a temporary fresh
-                    client from the second attempt and discard it immediately to minimize resource footprint.
-                    */
+                     * 1st Attempt (Normal): Use the default persistent connection. This is fast and efficient.
+
+                     * 2nd Attempt (The "Fresh Connection" Retry): Use the Connection: close header. This forces
+                     *  the load balancer to re-evaluate the target node if the first one was dead or hanging.
+
+                     * 3rd Attempt (Final Safeguard): It will use a new connection to send the request.
+                     */
                     int maxRetries = config.getMaxConnectionRetries();
                     HttpResponse<byte[]> response = null;
 
                     for (int attempt = 0; attempt < maxRetries; attempt++) {
-
                         try {
-                            if (attempt == 0) {
-                                // First attempt: Use the long-lived, shared client
-                                response = this.client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                            } else {
-                                // Subsequent attempts: Create a fresh, temporary client inside a try-with-resources
-                                logger.info("Attempt {} failed. Creating fresh client for retry.", attempt);
+                            HttpRequest finalRequest;
 
-                                try (HttpClient temporaryClient = createJavaHttpClient()) {
-                                    response = temporaryClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                                } // temporaryClient.close() called here if inner block exits normally/exceptionally
+                            if (attempt == 0) {
+                                // First attempt: Use original request (Keep-Alive enabled by default)
+                                finalRequest = request;
+                            } else {
+                                // Subsequent attempts: Force a fresh connection by adding the 'Connection: close' header.
+                                // This ensures the load balancer sees a new TCP handshake and can route to a new node.
+                                logger.info("Attempt {} failed. Retrying with 'Connection: close' to force fresh connection.", attempt);
+
+                                finalRequest = HttpRequest.newBuilder(request, (name, value) -> true)
+                                        .header("Connection", "close")
+                                        .build();
                             }
+
+                            // Always use the same shared, long-lived client
+                            response = this.client.send(finalRequest, HttpResponse.BodyHandlers.ofByteArray());
                             break; // Success! Exit the loop.
+
                         } catch (IOException | InterruptedException e) {
-                            // Note: The exception could be from .send() OR from createJavaHttpClient() (if attempt > 0)
                             if (attempt >= maxRetries - 1) {
-                                throw e; // Rethrow exception on final attempt failure
+                                throw e; // Rethrow on final attempt
                             }
                             logger.warn("Attempt {} failed ({}). Retrying...", attempt + 1, e.getMessage());
-                            // Loop continues to next attempt
+
+                            // Optional: Add a small sleep/backoff here to allow LB health checks to update
                         }
                     }
 
