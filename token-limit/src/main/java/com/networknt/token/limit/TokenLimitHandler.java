@@ -183,6 +183,15 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("other grant type {}, ignore it", grantType);
             }
 
+            // Include AUDIT information
+            Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+            if (auditInfo == null) {
+                auditInfo = new HashMap<>();
+                exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+            }
+            auditInfo.put("client_id", clientId);
+            auditInfo.put("scope_client_id", scope);
+
             // secondly, we need to identify if the ClientID is considered Legacy or not. If it is, bypass limit, cache and call next handler.
             List<String> legacyClient = config.getLegacyClient();
             if(legacyClient.contains(clientId)) {
@@ -212,13 +221,11 @@ public class TokenLimitHandler implements MiddlewareHandler {
                     if(count != null) {
                         // check if the count is reached limit already.
                         if(count >= config.duplicateLimit) {
+                            logger.error("Too many token requests for key {}.", key);
                             if(config.errorOnLimit) {
                                 // return an error to the caller.
                                 setExchangeStatus(exchange, TOKEN_LIMIT_ERROR);
                                 return;
-                            } else {
-                                // log the error in the log.
-                                logger.error("Too many token requests. Please cache the token on the client side.");
                             }
                         } else {
                             cacheManager.put(TOKEN_LIMIT, key, ++count);
