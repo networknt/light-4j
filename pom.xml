@@ -228,6 +228,7 @@
         <module>unified-security</module>
         <module>token-limit</module>
         <module>expect100continue</module>
+        <module>access-config</module>
     </modules>
 
     <dependencyManagement>
@@ -641,6 +642,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>token-limit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>expect100continue</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>access-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->
