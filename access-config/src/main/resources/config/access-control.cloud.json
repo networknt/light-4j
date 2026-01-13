@@ -1,0 +1,24 @@
+{
+  "id" : "",
+  "data" : {
+    "configId" : "",
+    "updateTs" : "",
+    "classPath" : "com.networknt.access.AccessControlConfig",
+    "configDesc" : "AccessControlHandler will be the last middleware handler before the proxy on the sidecar or the last\none before the business handler to handle the fine-grained authorization in the business domain.",
+    "configName" : "access-control",
+    "configType" : "Handler",
+    "updateUser" : "",
+    "configPhase" : ""
+  },
+  "host" : "",
+  "time" : "",
+  "type" : "ConfigCreatedEvent",
+  "user" : "",
+  "nonce" : "",
+  "source" : "https://github.com/networknt/light4j",
+  "subject" : "",
+  "specversion" : "",
+  "aggregatetype" : "Config",
+  "datacontenttype" : "application/json",
+  "aggregateversion" : ""
+}
