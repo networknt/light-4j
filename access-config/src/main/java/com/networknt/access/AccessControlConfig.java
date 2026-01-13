@@ -33,9 +33,10 @@ import java.util.Map;
 @ConfigSchema(
         configName = "access-control",
         configKey = "access-control",
-        configDescription = "AccessControlHandler will be the last middleware handler before the proxy on the sidecar or the last\n" +
-                "one before the business handler to handle the fine-grained authorization in the business domain.",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+        configDescription = """
+                AccessControlHandler will be the last middleware handler before the proxy on the sidecar or the last
+                one before the business handler to handle the fine-grained authorization in the business domain.""",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class AccessControlConfig {
     private static final Logger logger = LoggerFactory.getLogger(AccessControlConfig.class);
@@ -65,8 +66,9 @@ public class AccessControlConfig {
             externalizedKeyName = ACCESS_RULE_LOGIC,
             externalized = true,
             defaultValue = "any",
-            description = "If there are multiple rules, the logic to combine them can be any or all. The default is any, and it\n" +
-                    "means that any rule is satisfied, the access is granted. If all is set, all rules must be satisfied."
+            description = """
+                    If there are multiple rules, the logic to combine them can be any or all. The default is any, and it
+                    means that any rule is satisfied, the access is granted. If all is set, all rules must be satisfied."""
     )
     String accessRuleLogic;
 
@@ -75,9 +77,10 @@ public class AccessControlConfig {
             externalizedKeyName = DEFAULT_DENY,
             externalized = true,
             defaultValue = "true",
-            description = "If there is no access rule defined for the endpoint, default access is denied. Users can overwrite\n" +
-                    "this default action by setting this config value to false. If true, the handle will force users to\n" +
-                    "define the rules for each endpoint when the access control handler is enabled."
+            description = """
+                    If there is no access rule defined for the endpoint, default access is denied. Users can overwrite
+                    this default action by setting this config value to false. If true, the handle will force users to
+                    define the rules for each endpoint when the access control handler is enabled."""
     )
     boolean defaultDeny;
 
@@ -85,11 +88,12 @@ public class AccessControlConfig {
             configFieldName = SKIP_PATH_PREFIXES,
             externalizedKeyName = SKIP_PATH_PREFIXES,
             externalized = true,
-            description = "Define a list of path prefixes to skip the access-control to ease the configuration for the handler.yml\n" +
-                    "so that users can define some endpoint without fine-grained access-control security even through it uses\n" +
-                    "the default chain. This is useful if some endpoints want to skip the fine-grained access control in the\n" +
-                    "application. The format is a list of strings separated with commas or a JSON list in values.yml definition\n" +
-                    "from config server, or you can use yaml format in externalized access-control.yml file.",
+            description = """
+                    Define a list of path prefixes to skip the access-control to ease the configuration for the handler.yml
+                    so that users can define some endpoint without fine-grained access-control security even through it uses
+                    the default chain. This is useful if some endpoints want to skip the fine-grained access control in the
+                    application. The format is a list of strings separated with commas or a JSON list in values.yml definition
+                    from config server, or you can use yaml format in externalized access-control.yml file.""",
             items = String.class
     )
     private List<String> skipPathPrefixes;

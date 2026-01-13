@@ -49,10 +49,11 @@ public class ApiKeyConfig {
             externalizedKeyName = HASH_ENABLED,
             externalized = true,
             defaultValue = "false",
-            description = "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\n" +
-                          "stored in the config file. It is more secure than put the encrypted key into the config file.\n" +
-                          "The default value is false. If you want to enable it, you need to use the following repo\n" +
-                          "https://github.com/networknt/light-hash command line tool to hash the clear text key."
+            description = """
+                          If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is
+                          stored in the config file. It is more secure than put the encrypted key into the config file.
+                          The default value is false. If you want to enable it, you need to use the following repo
+                          https://github.com/networknt/light-hash command line tool to hash the clear text key."""
     )
     boolean hashEnabled;
 
@@ -61,11 +62,13 @@ public class ApiKeyConfig {
             externalizedKeyName = PATH_PREFIX_AUTHS,
             externalized = true,
             items = ApiKey.class,
-            description = "path prefix to the api key mapping. It is a list of map between the path prefix and the api key\n" +
-                    "for apikey authentication. In the handler, it loops through the list and find the matching path\n" +
-                    "prefix. Once found, it will check if the apikey is equal to allow the access or return an error.\n" +
-                    "The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test\n" +
-                    "resources/config folder for configuration examples.\n"
+            description = """
+                    path prefix to the api key mapping. It is a list of map between the path prefix and the api key
+                    for apikey authentication. In the handler, it loops through the list and find the matching path
+                    prefix. Once found, it will check if the apikey is equal to allow the access or return an error.
+                    The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test
+                    resources/config folder for configuration examples.
+                    """
     )
     List<ApiKey> pathPrefixAuths;
 
@@ -137,27 +140,30 @@ public class ApiKeyConfig {
         if (mappedConfig.get(PATH_PREFIX_AUTHS) != null) {
             Object object = mappedConfig.get(PATH_PREFIX_AUTHS);
             pathPrefixAuths = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("pathPrefixAuth s = " + s);
-                if(s.startsWith("[")) {
-                    // json format
-                    try {
-                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new TypeReference<>() {});
-                        pathPrefixAuths = populatePathPrefixAuths(values);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                        throw new ConfigException("could not parse the pathPrefixAuth json with a list of string and object.");
+            switch (object) {
+                case String jsonList -> {
+                    jsonList = jsonList.trim();
+                    logger.trace("pathPrefixAuth s = {}", jsonList);
+                    if (jsonList.startsWith("[")) {
+                        // json format
+                        try {
+                            List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(jsonList, new TypeReference<>() {
+                            });
+                            pathPrefixAuths = populatePathPrefixAuths(values);
+                        } catch (Exception e) {
+                            logger.error("Exception:", e);
+                            throw new ConfigException("could not parse the pathPrefixAuth json with a list of string and object.");
+                        }
+                    } else {
+                        throw new ConfigException("pathPrefixAuth must be a list of string object map.");
                     }
-                } else {
-                    throw new ConfigException("pathPrefixAuth must be a list of string object map.");
                 }
-            } else if (object instanceof List) {
-                // the object is a list of map, we need convert it to PathPrefixAuth object.
-                pathPrefixAuths = populatePathPrefixAuths((List<Map<String, Object>>)object);
-            } else {
-                throw new ConfigException("pathPrefixAuth must be a list of string object map.");
+                case List<?> authList when authList.stream().allMatch(item -> item instanceof Map<?, ?>) -> {
+                    // the object is a list of map, we need convert it to PathPrefixAuth object.
+                    @SuppressWarnings("unchecked") final var castAuthList = (List<Map<String, Object>>) authList;
+                    pathPrefixAuths = populatePathPrefixAuths(castAuthList);
+                }
+                default -> throw new ConfigException("pathPrefixAuth must be a list of string object map.");
             }
         }
     }
