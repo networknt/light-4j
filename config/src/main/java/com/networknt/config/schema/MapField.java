@@ -47,13 +47,26 @@ public @interface MapField {
     boolean additionalProperties() default false;
 
     /**
-     * The valueType of the map.
+     * The value type of the map.
      */
     Class<?> valueType() default Object.class;
 
-
+    /**
+     * Represents a list of classes the value of the map contains.
+     * Constrains the field to be 'anyOf' the classes in the list.
+     */
     Class<?>[] valueTypeAnyOf() default {};
+
+    /**
+     * Represents a list of classes the value of the map contains.
+     * Constrains the field to be 'oneOf' the classes in the list.
+     */
     Class<?>[] valueTypeOneOf() default {};
+
+    /**
+     * Represents a list of classes the value of the map contains.
+     * Constrains the field to be 'allOf' the classes in the list.
+     */
     Class<?>[] valueTypeAllOf() default {};
 
 }

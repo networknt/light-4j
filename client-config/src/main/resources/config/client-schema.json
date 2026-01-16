@@ -82,24 +82,28 @@
                 "capacity" : {
                   "type" : "integer",
                   "description" : "Capacity of caching tokens in the client for downstream API calls. The default value is 200.",
-                  "default" : 200
+                  "default" : 200,
+                  "format" : "int32"
                 }
               }
             },
             "tokenRenewBeforeExpired" : {
               "type" : "integer",
               "description" : "The scope token will be renewed automatically 1 minute before expiry",
-              "default" : 60000
+              "default" : 60000,
+              "format" : "int32"
             },
             "expiredRefreshRetryDelay" : {
               "type" : "integer",
               "description" : "if scope token is expired, we need short delay so that we can retry faster.",
-              "default" : 2000
+              "default" : 2000,
+              "format" : "int32"
             },
             "earlyRefreshRetryDelay" : {
               "type" : "integer",
               "description" : "if scope token is not expired but in renew window, we need slow retry delay.",
-              "default" : 4000
+              "default" : 4000,
+              "format" : "int32"
             },
             "server_url" : {
               "type" : "string",
@@ -118,7 +122,8 @@
               "type" : "integer",
               "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
               "minimum" : 0,
-              "maximum" : 65535
+              "maximum" : 65535,
+              "format" : "int32"
             },
             "enableHttp2" : {
               "type" : "boolean",
@@ -199,7 +204,8 @@
                       "proxyPort" : {
                         "type" : "integer",
                         "minimum" : 0,
-                        "maximum" : 65535
+                        "maximum" : 65535,
+                        "format" : "int32"
                       },
                       "enableHttp2" : {
                         "type" : "boolean"
@@ -337,7 +343,8 @@
                       "proxyPort" : {
                         "type" : "integer",
                         "minimum" : 0,
-                        "maximum" : 65535
+                        "maximum" : 65535,
+                        "format" : "int32"
                       },
                       "enableHttp2" : {
                         "type" : "boolean"
@@ -387,7 +394,8 @@
               "type" : "integer",
               "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
               "minimum" : 0,
-              "maximum" : 65535
+              "maximum" : 65535,
+              "format" : "int32"
             },
             "serviceId" : {
               "type" : "string",
@@ -402,7 +410,8 @@
             "timeout" : {
               "type" : "integer",
               "description" : "timeout in milliseconds",
-              "default" : 2000
+              "default" : 2000,
+              "format" : "int32"
             },
             "enableHttp2" : {
               "type" : "boolean",
@@ -474,7 +483,8 @@
             },
             "proxyPort" : {
               "type" : "integer",
-              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection."
+              "description" : "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\na different port, please specify it here. If proxyHost is available and proxyPort is missing, then\nthe default value 443 is going to be used for the HTTP connection.",
+              "format" : "int32"
             },
             "serviceId" : {
               "type" : "string",
@@ -519,22 +529,26 @@
         "errorThreshold" : {
           "type" : "integer",
           "description" : "number of timeouts/errors to break the circuit",
-          "default" : 2
+          "default" : 2,
+          "format" : "int32"
         },
         "connectTimeout" : {
           "type" : "integer",
           "description" : "Timeout, in milliseconds, controlling the initial TCP connection establishment. When using the light-4j Http2Client, this value\nspecifies the timeout for obtaining a connection. When using the JDK 11 HttpClient wrapper, it represents the connection timeout.\nThe default value is 2000 ms.\n",
-          "default" : 2000
+          "default" : 2000,
+          "format" : "int32"
         },
         "timeout" : {
           "type" : "integer",
           "description" : "Timeout, in milliseconds, controlling the entire request–response exchange. When using the light-4j Http2Client, this value\nrepresents the request timeout. When using the JDK 11 HttpClient wrapper, it also represents the request timeout. The default value is 3000 ms.",
-          "default" : 3000
+          "default" : 3000,
+          "format" : "int32"
         },
         "resetTimeout" : {
           "type" : "integer",
           "description" : "reset the circuit after this timeout in millisecond",
-          "default" : 7000
+          "default" : 7000,
+          "format" : "int32"
         },
         "injectOpenTracing" : {
           "type" : "boolean",
@@ -554,37 +568,44 @@
         "connectionPoolSize" : {
           "type" : "integer",
           "description" : "the maximum host capacity of connection pool",
-          "default" : 1000
+          "default" : 1000,
+          "format" : "int32"
         },
         "connectionExpireTime" : {
           "type" : "integer",
           "description" : "Connection expire time when connection pool is used. By default, the cached connection will be closed after 30 minutes.\nThis is one way to force the connection to be closed so that the client-side discovery can be balanced.",
-          "default" : 1800000
+          "default" : 1800000,
+          "format" : "int32"
         },
         "maxReqPerConn" : {
           "type" : "integer",
           "description" : "The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after\nsending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.",
-          "default" : 1000000
+          "default" : 1000000,
+          "format" : "int32"
         },
         "maxConnectionNumPerHost" : {
           "type" : "integer",
           "description" : "maximum quantity of connection in connection pool for each host",
-          "default" : 1000
+          "default" : 1000,
+          "format" : "int32"
         },
         "minConnectionNumPerHost" : {
           "type" : "integer",
           "description" : "minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost\nby remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.",
-          "default" : 250
+          "default" : 250,
+          "format" : "int32"
         },
         "maxRequestRetry" : {
           "type" : "integer",
           "description" : "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.",
-          "default" : 3
+          "default" : 3,
+          "format" : "int32"
         },
         "requestRetryDelay" : {
           "type" : "integer",
           "description" : "The delay time in milliseconds for each request retry. The default value is 1000.",
-          "default" : 1000
+          "default" : 1000,
+          "format" : "int32"
         }
       }
     }

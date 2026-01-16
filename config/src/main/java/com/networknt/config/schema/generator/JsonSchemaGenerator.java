@@ -1,19 +1,15 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.config.schema.AnnotationUtils;
-import com.networknt.config.schema.ConfigSchema;
-import com.networknt.config.schema.Format;
-import com.networknt.config.schema.MetadataParser;
+import com.networknt.config.schema.*;
 
 import javax.tools.FileObject;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Generates draft 07 JSON schema files for Light4J config POJOs.
@@ -22,10 +18,36 @@ import java.util.Objects;
  */
 public class JsonSchemaGenerator extends Generator {
 
-    private final static String JSON_DRAFT = "http://json-schema.org/draft-07/schema#";
-    private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private final static DefaultPrettyPrinter DEFAULT_PRETTY_PRINTER = new DefaultPrettyPrinter();
-    private final static DefaultIndenter DEFAULT_INDENTER = new DefaultIndenter();
+    private static final String JSON_DRAFT = "http://json-schema.org/draft-07/schema#";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final DefaultPrettyPrinter DEFAULT_PRETTY_PRINTER = new DefaultPrettyPrinter();
+    private static final DefaultIndenter DEFAULT_INDENTER = new DefaultIndenter();
+
+    /* Subset of OpenAPI specification fields used in the generator. */
+    public static final String TYPE_KEY = "type";
+    public static final String DESCRIPTION_KEY = "description";
+    public static final String ADDITIONAL_PROPERTIES_KEY = "additionalProperties";
+    public static final String MINIMUM_KEY = "minimum";
+    public static final String MAXIMUM_KEY = "maximum";
+    public static final String MIN_LENGTH_KEY = "minLength";
+    public static final String MAX_LENGTH_KEY = "maxLength";
+    public static final String PATTERN_KEY = "pattern";
+    public static final String FORMAT_KEY = "format";
+    public static final String ITEMS_KEY = "items";
+    public static final String MIN_ITEMS_KEY = "minItems";
+    public static final String MAX_ITEMS_KEY = "maxItems";
+    public static final String UNIQUE_ITEMS_KEY = "uniqueItems";
+    public static final String EXCLUSIVE_MIN_KEY = "exclusiveMin";
+    public static final String EXCLUSIVE_MAX_KEY = "exclusiveMax";
+    public static final String MULTIPLE_OF_KEY = "multipleOf";
+    public static final String PROPERTIES_KEY = "properties";
+    public static final String DEFAULT_KEY = "default";
+    public static final String REQUIRED_KEY = "required";
+    public static final String SCHEMA_KEY = "$schema";
+    public static final String ALL_OF_KEY = "allOf";
+    public static final String ANY_OF_KEY = "anyOf";
+    public static final String ONE_OF_KEY = "oneOf";
+
     static {
         DEFAULT_INDENTER.withLinefeed("\n");
         DEFAULT_PRETTY_PRINTER.withObjectIndenter(DEFAULT_INDENTER);
@@ -33,343 +55,278 @@ public class JsonSchemaGenerator extends Generator {
         OBJECT_MAPPER.setDefaultPrettyPrinter(DEFAULT_PRETTY_PRINTER);
     }
 
-
     public JsonSchemaGenerator(final String configKey, final String configName) {
         super(configKey, configName);
     }
 
     @Override
-    public void writeSchemaToFile(OutputStream os, LinkedHashMap<String, Object> metadata) throws IOException {
-        final var schemaMap = this.prepJsonMetadataObject(metadata);
+    public void writeSchemaToFile(OutputStream os, FieldNode annotatedField) throws IOException {
+        final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, schemaMap);
     }
 
     @Override
-    public void writeSchemaToFile(final FileObject source, final LinkedHashMap<String, Object> metadata) throws IOException {
-        final var schemaMap = this.prepJsonMetadataObject(metadata);
+    public void writeSchemaToFile(final FileObject source, final FieldNode annotatedField) throws IOException {
+        final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(source.openOutputStream(), schemaMap);
     }
 
     @Override
-    public void writeSchemaToFile(final Writer br, final LinkedHashMap<String, Object> metadata) throws IOException {
-        final var schemaMap = this.prepJsonMetadataObject(metadata);
+    public void writeSchemaToFile(final Writer br, final FieldNode annotatedField) throws IOException {
+        final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
     }
 
     /**
      * Shared update logic when generating a JSON schema.
-     * @param metadata The metadata to generate the schema for.
+     *
+     * @param annotatedField The metadata to generate the schema for.
      * @return The prepared JSON schema object.
      */
-    private LinkedHashMap<String, Object> prepJsonMetadataObject(final LinkedHashMap<String, Object> metadata) {
+    protected LinkedHashMap<String, Object> addJsonSchemaRootInfo(final FieldNode annotatedField) {
         final var schemaMap = new LinkedHashMap<String, Object>();
-        schemaMap.put("$schema", JSON_DRAFT);
-        schemaMap.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
-
-        if (Generator.fieldIsSubMap(metadata, MetadataParser.PROPERTIES_KEY)) {
-            schemaMap.put("required", ((LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY)).keySet().toArray());
-            schemaMap.put(MetadataParser.PROPERTIES_KEY, this.getRootSchemaProperties(metadata));
-
-        } else schemaMap.put("additionalProperties", true);
-
+        schemaMap.put(SCHEMA_KEY, JSON_DRAFT);
+        schemaMap.put(TYPE_KEY, FieldType.OBJECT.toString());
+        annotatedField.getOptionalChildNodes().ifPresent(nodes -> {
+            List<String> required = nodes.stream()
+                    .map(FieldNode::getConfigFieldName)
+                    .collect(Collectors.toList());
+            if (!required.isEmpty()) {
+                schemaMap.put(REQUIRED_KEY, required);
+                schemaMap.put(PROPERTIES_KEY, this.convertConfigRoot(annotatedField));
+            }
+        });
         return schemaMap;
     }
 
     @Override
-    protected LinkedHashMap<String, Object> getRootSchemaProperties(final LinkedHashMap<String, Object> metadata) {
-        final var properties = new LinkedHashMap<String, Object>();
-        final var metadataProperties = (LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY);
-
-        metadataProperties.forEach((key, value) -> {
-            final var property = new LinkedHashMap<String, Object>();
-            this.parseField((LinkedHashMap<String, Object>) value, property);
-
-            if (metadata.containsKey(MetadataParser.CONFIG_FIELD_NAME_KEY)
-                    && !((String) metadata.get(MetadataParser.CONFIG_FIELD_NAME_KEY)).isEmpty())
-                properties.put((String) metadata.get(MetadataParser.CONFIG_FIELD_NAME_KEY), property);
-
-            else properties.put(key, property);
-        });
-
-        return properties;
+    protected LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField) {
+        return annotatedField.getOptionalChildNodes()
+                .filter(nodes -> !nodes.isEmpty())
+                .map(nodes -> {
+                    var props = new LinkedHashMap<String, Object>();
+                    nodes.forEach(node -> props.put(node.getConfigFieldName(), this.convertNode(node)));
+                    return props;
+                })
+                .or(() -> annotatedField.getOptionalRef().map(this::convertNode))
+                .or(() -> annotatedField.getOptionalRefOneOf().map(fieldNodes -> {
+                    var props = new LinkedHashMap<String, Object>();
+                    var oneOfMembers = fieldNodes.stream()
+                            .map(this::convertNode)
+                            .collect(Collectors.toList());
+                    props.put(ONE_OF_KEY, oneOfMembers);
+                    return props;
+                }))
+                .or(() -> annotatedField.getOptionalRefAnyOf().map(fieldNodes -> {
+                    var props = new LinkedHashMap<String, Object>();
+                    var anyOfMembers = fieldNodes.stream()
+                            .map(this::convertNode)
+                            .collect(Collectors.toList());
+                    props.put(ANY_OF_KEY, anyOfMembers);
+                    return props;
+                }))
+                .or(() -> annotatedField.getOptionalRefAllOf().map(fieldNodes -> {
+                    var props = new LinkedHashMap<String, Object>();
+                    var allOfMembers = fieldNodes.stream()
+                            .map(this::convertNode)
+                            .collect(Collectors.toList());
+                    props.put(ALL_OF_KEY, allOfMembers);
+                    return props;
+                }))
+                .orElseGet(LinkedHashMap::new);
     }
 
 
     @Override
-    protected void parseString(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.STRING_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-
-        /* special handling for default key in json schema */
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !presentValue.isEmpty())
-            property.put("default", presentValue);
-
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MIN_LENGTH_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAX_LENGTH_KEY, ConfigSchema.DEFAULT_MAX_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.PATTERN_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.none.toString(), String.class);
-
+    protected LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> props.put(DEFAULT_KEY, value));
+        annotatedField.getOptionalMinLength().ifPresent(value -> props.put(MIN_LENGTH_KEY, value));
+        annotatedField.getOptionalMaxLength().ifPresent(value -> props.put(MAX_LENGTH_KEY, value));
+        annotatedField.getOptionalPattern().ifPresent(value -> props.put(PATTERN_KEY, value));
+        annotatedField.getOptionalFormat().ifPresent(value -> props.put(FORMAT_KEY, value));
+        return props;
     }
 
     @Override
-    protected void parseInteger(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.INTEGER_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-
-        /* special handling for default key in json schema */
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null) {
+    protected LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(description -> props.put(DESCRIPTION_KEY, description));
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> {
             try {
-                property.put("default", Integer.parseInt(presentValue));
-            } catch (Exception e) {
-
-                // do nothing
-            }
-        }
-
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MINIMUM_KEY, ConfigSchema.DEFAULT_MIN_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAXIMUM_KEY, ConfigSchema.DEFAULT_MAX_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MIN_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MAX_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MULTIPLE_OF_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.int32.toString(), String.class);
-
-    }
-
-    @Override
-    protected void parseBoolean(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.BOOLEAN_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-
-        // Get the default string value
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && presentValue.equalsIgnoreCase("true")) {
-            property.put("default", true);
-        } else if (presentValue != null && presentValue.equalsIgnoreCase("false")) {
-            property.put("default", false);
-        }
-
-    }
-
-    @Override
-    protected void parseMapField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-        var innerProps = new LinkedHashMap<String, Object>();
-        buildObjectProperties(field, innerProps);
-        property.put(MetadataParser.ADDITIONAL_PROPERTIES_KEY, innerProps);
-    }
-
-    @Override
-    protected void parseNumber(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.NUMBER_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null) {
-            try {
-                property.put("default", Double.parseDouble(presentValue));
+                props.put(DEFAULT_KEY, Integer.parseInt(value));
             } catch (Exception e) {
                 // do nothing
             }
-        }
-
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MINIMUM_KEY, ConfigSchema.DEFAULT_MIN_NUMBER, Number.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAXIMUM_KEY, ConfigSchema.DEFAULT_MAX_NUMBER, Number.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MIN_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MAX_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MULTIPLE_OF_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.float32.toString(), String.class);
+        });
+        annotatedField.getOptionalMinInteger().ifPresent(value -> props.put(MINIMUM_KEY, value));
+        annotatedField.getOptionalMaxInteger().ifPresent(value -> props.put(MAXIMUM_KEY, value));
+        annotatedField.isOptionalExclusiveMin().ifPresent(value -> props.put(EXCLUSIVE_MIN_KEY, value));
+        annotatedField.isOptionalExclusiveMax().ifPresent(value -> props.put(EXCLUSIVE_MAX_KEY, value));
+        annotatedField.getOptionalMultipleOfInteger().ifPresent(value -> props.put(MULTIPLE_OF_KEY, value));
+        annotatedField.getOptionalFormat().ifPresent(value -> props.put(FORMAT_KEY, value));
+        return props;
     }
 
+    @Override
+    protected LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> {
+            if (value.equalsIgnoreCase("true")) {
+                props.put(DEFAULT_KEY, true);
+            } else if (value.equalsIgnoreCase("false")) {
+                props.put(DEFAULT_KEY, false);
+            }
+        });
+        return props;
+    }
 
     @Override
-    protected void parseArray(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.ARRAY_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MIN_ITEMS_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.MAX_ITEMS_KEY, ConfigSchema.DEFAULT_MAX_INT, Integer.class);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.UNIQUE_ITEMS_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
+    protected LinkedHashMap<String, Object> convertMapNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
 
-        /* special handling for json default value */
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !presentValue.isEmpty()) {
+        var additionalProps = buildObjectProperties(annotatedField);
+        props.put(ADDITIONAL_PROPERTIES_KEY, additionalProps);
+        return props;
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> {
             try {
-                property.put("default", this.OBJECT_MAPPER.readValue(presentValue, Object.class));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                props.put(DEFAULT_KEY, Double.parseDouble(value));
+            } catch (Exception e) {
+                // do nothing
             }
-        }
-        final var arraySubProperties = new LinkedHashMap<String, Object>();
-        buildObjectProperties(field, arraySubProperties);
-        property.put(MetadataParser.ITEMS_KEY, arraySubProperties);
+        });
+        annotatedField.getOptionalMinNumber().ifPresent(value -> props.put(MINIMUM_KEY, value));
+        annotatedField.getOptionalMaxNumber().ifPresent(value -> props.put(MAXIMUM_KEY, value));
+        annotatedField.isOptionalExclusiveMin().ifPresent(value -> props.put(EXCLUSIVE_MIN_KEY, value));
+        annotatedField.isOptionalExclusiveMax().ifPresent(value -> props.put(EXCLUSIVE_MAX_KEY, value));
+        annotatedField.getOptionalMultipleOfNumber().ifPresent(value -> props.put(MULTIPLE_OF_KEY, value));
+        annotatedField.getOptionalFormat().ifPresent(value -> props.put(FORMAT_KEY, value));
+        return props;
     }
 
 
     @Override
-    protected void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.NULL_TYPE);
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !presentValue.isEmpty())
-            property.put("default", presentValue);
-
-    }
-
-    /**
-     * Handles oneOf, anyOf, and allOf property resolution. Resolved properties are put into list structures.
-     * i.e. "oneOf": [...]
-     *
-     * @param field - The metadata parsed from the defined annotations.
-     * @param key - The key we are getting the data from. i.e. REF_ONE_OF_KEY
-     * @param property - The json output map
-     * @param propertyKey - The key we are putting the resolved data in the output map.
-     */
-    private void handleMultiRefProds(
-            final LinkedHashMap<String, Object> field,
-            final String key,
-            final LinkedHashMap<String, Object> property,
-            final String propertyKey
-    ) {
-        var multiRefs = (ArrayList<LinkedHashMap<String, Object>>) field.get(key);
-        var outerWrapper = new ArrayList<LinkedHashMap<String, Object>>();
-        for (var ref : multiRefs) {
-            if (Generator.fieldIsSubMap(ref, MetadataParser.REF_KEY)){
-                var resolvedProps = new LinkedHashMap<String, Object>();
-                this.handleSingleRefProps((LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) ref.get(MetadataParser.REF_KEY)).get(MetadataParser.PROPERTIES_KEY), false, resolvedProps);
-                outerWrapper.add(resolvedProps);
-            } else if (Generator.fieldIsSubMap(ref, MetadataParser.PROPERTIES_KEY)) {
-                var resolvedProps = new LinkedHashMap<String, Object>();
-                this.handleSingleRefProps((LinkedHashMap<String, Object>) ref.get(MetadataParser.PROPERTIES_KEY), false, resolvedProps);
-                outerWrapper.add(resolvedProps);
-            } else {
-                outerWrapper.add(ref);
+    protected LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
+        annotatedField.getOptionalMinItems().ifPresent(value -> props.put(MIN_ITEMS_KEY, value));
+        annotatedField.getOptionalMaxItems().ifPresent(value -> props.put(MAX_ITEMS_KEY, value));
+        annotatedField.isOptionalUnique().ifPresent(value -> props.put(UNIQUE_ITEMS_KEY, value));
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> {
+            try {
+                props.put(DEFAULT_KEY, OBJECT_MAPPER.readValue(value, Object.class));
+            } catch (Exception e) {
+                // No default value
             }
-        }
-        property.put(propertyKey, outerWrapper);
+        });
+        var items = buildObjectProperties(annotatedField);
+        props.put(ITEMS_KEY, items);
+        return props;
     }
 
-    /**
-     * Resolves the properties and sub-properties of json objects.
-     *
-     * @param objectProperties - The found properties of the object we are currently looking at.
-     * @param usesAdditionalProperties - additionalProperties true/false
-     * @param jsonOutputMap - The output for the JSON structure.
-     */
-    private void handleSingleRefProps(
-            final LinkedHashMap<String, Object> objectProperties,
-            final boolean usesAdditionalProperties,
-            final LinkedHashMap<String, Object> jsonOutputMap
-    ) {
-        final var subObjectProperties = new LinkedHashMap<String, Object>();
-        objectProperties.forEach((key, value) -> {
-            final var subProperty = new LinkedHashMap<String, Object>();
-            this.parseField((LinkedHashMap<String, Object>) value, subProperty);
 
-            if (subProperty.containsKey(MetadataParser.CONFIG_FIELD_NAME_KEY) && !((String) subProperty.get(MetadataParser.CONFIG_FIELD_NAME_KEY)).isEmpty())
-                subObjectProperties.put((String) subProperty.get(MetadataParser.CONFIG_FIELD_NAME_KEY), subProperty);
+    @Override
+    protected LinkedHashMap<String, Object> convertNullNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDefaultValue().ifPresent(value -> props.put(DEFAULT_KEY, value));
+        return props;
+    }
 
-            else subObjectProperties.put(key, subProperty);
+
+    @Override
+    protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        props.put(TYPE_KEY, annotatedField.getType().toString());
+        annotatedField.getOptionalDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
+        var hasProps = new AtomicBoolean(false);
+        annotatedField.getOptionalRef().ifPresent(ref -> {
+            hasProps.set(true);
+            var refProps = this.convertNode(ref);
+            props.putAll(refProps);
+        });
+        if (!hasProps.get())
+            annotatedField.getOptionalRefOneOf().ifPresent(fieldNodes -> {
+                hasProps.set(true);
+                var oneOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
+                fieldNodes.stream().map(this::convertNode).forEach(oneOfMembers::add);
+                props.put(ONE_OF_KEY, oneOfMembers);
+            });
+        if (!hasProps.get())
+            annotatedField.getOptionalRefAnyOf().ifPresent(fieldNodes -> {
+                hasProps.set(true);
+                var anyOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
+                fieldNodes.stream().map(this::convertNode).forEach(anyOfMembers::add);
+                props.put(ANY_OF_KEY, anyOfMembers);
+            });
+
+        if (!hasProps.get())
+            annotatedField.getOptionalRefAllOf().ifPresent(fieldNodes -> {
+                hasProps.set(true);
+                var allOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
+                fieldNodes.stream().map(this::convertNode).forEach(allOfMembers::add);
+                props.put(ALL_OF_KEY, allOfMembers);
+            });
+
+        if (!hasProps.get())
+            annotatedField.getOptionalChildNodes().ifPresent(nodes -> {
+                var innerProperties = new LinkedHashMap<String, Object>();
+                nodes.stream()
+                        .map(node -> new Object[]{node.getConfigFieldName(), this.convertNode(node)})
+                        .forEach(tuple -> innerProperties.put((String) tuple[0], tuple[1]));
+                props.put(PROPERTIES_KEY, innerProperties);
+            });
+
+        return props;
+    }
+
+    private LinkedHashMap<String, Object> buildObjectProperties(FieldNode annotatedField) {
+        var props = new LinkedHashMap<String, Object>();
+        annotatedField.getOptionalRefAllOf().ifPresent(nodes -> {
+            var subProps = new ArrayList<LinkedHashMap<String, Object>>();
+            nodes.stream().map(this::convertNode).forEach(subProps::add);
+            props.put(ALL_OF_KEY, subProps);
         });
 
-        if (usesAdditionalProperties) {
-            final var wrapperObject = new LinkedHashMap<String, Object>();
-            wrapperObject.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
-            wrapperObject.put(MetadataParser.PROPERTIES_KEY, subObjectProperties);
-            jsonOutputMap.put(MetadataParser.ADDITIONAL_PROPERTIES_KEY, wrapperObject);
+        if (props.isEmpty())
+            annotatedField.getOptionalRefOneOf().ifPresent(nodes -> {
+                var subProps = new ArrayList<LinkedHashMap<String, Object>>();
+                nodes.stream().map(this::convertNode).forEach(subProps::add);
+                props.put(ONE_OF_KEY, subProps);
+            });
 
-        } else jsonOutputMap.put(MetadataParser.PROPERTIES_KEY, subObjectProperties);
-    }
+        if (props.isEmpty())
+            annotatedField.getOptionalRefAnyOf().ifPresent(nodes -> {
+                var subProps = new ArrayList<LinkedHashMap<String, Object>>();
+                nodes.stream().map(this::convertNode).forEach(subProps::add);
+                props.put(ANY_OF_KEY, subProps);
+            });
 
-
-    @Override
-    protected void parseObject(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        property.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
-        AnnotationUtils.updateIfNotDefault(field, property, MetadataParser.DESCRIPTION_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-
-        // Look to see if there is a 'ref' key. Use the properties of the ref key if present.
-        if (Generator.fieldIsSubMap(field, MetadataParser.REF_KEY)) {
-            this.handleSingleRefProps((LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.REF_KEY)).get(MetadataParser.PROPERTIES_KEY), false, property);
-
-        // Look to see if additionalProperties is set. Use the properties of the additionalProperties key if present.
-        } else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY)) {
-            this.handleSingleRefProps((LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY)).get(MetadataParser.PROPERTIES_KEY), true, property);
-
-        // Look for a regular properties key
-        } else if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY)) {
-            this.handleSingleRefProps((LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY), false, property);
-
-        // Handle special cases for oneOf, allOf, and anyOf
-        } else if (Generator.fieldIsSubArray(field, MetadataParser.REF_ONE_OF_KEY)) {
-            this.handleMultiRefProds(field, MetadataParser.REF_ONE_OF_KEY, property, "oneOf");
-        } else if (Generator.fieldIsSubArray(field, MetadataParser.REF_ALL_OF_KEY)) {
-            this.handleMultiRefProds(field, MetadataParser.REF_ALL_OF_KEY, property, "allOf");
-        } else if (Generator.fieldIsSubArray(field, MetadataParser.REF_ANY_OF_KEY)) {
-            this.handleMultiRefProds(field, MetadataParser.REF_ANY_OF_KEY, property, "anyOf");
-
-        // Default, just return a blank 'object' schema.
-        } else {
-            AnnotationUtils.logWarning("Type '%s' will be left as a generic object...", field.toString());
-            return;
+        if (props.isEmpty()) {
+            annotatedField.getOptionalRef().ifPresent(ref -> props.putAll(this.convertNode(ref)));
         }
 
-        /* special handling for json default value */
-        final var presentValue = AnnotationUtils.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
-            try {
-                property.put("default", this.OBJECT_MAPPER.readValue(presentValue, Object.class));
-            } catch (JsonProcessingException e) {
-                // Just leave out the default field.
-            }
-        }
-    }
-
-    /**
-     * Resolved the subtypes for maps and arrays. Includes handling for anyOf, oneOf, and allOf.
-     * @param parsedMetadata - The metadata parsed from the defined annotations.
-     * @param jsonOutputMap - The output for the JSON structure.
-     */
-    private void buildObjectProperties(LinkedHashMap<String, Object> parsedMetadata, LinkedHashMap<String, Object> jsonOutputMap) {
-        if (parsedMetadata.containsKey(MetadataParser.REF_ALL_OF_KEY)) {
-            var allOf = parsedMetadata.get(MetadataParser.REF_ALL_OF_KEY);
-            assert allOf instanceof ArrayList;
-            var outerStructure = new ArrayList<LinkedHashMap<String, Object>>();
-            for (var rawProps : (ArrayList<LinkedHashMap<String, Object>>) allOf) {
-                var parsedProps = new LinkedHashMap<String, Object>();
-                this.parseField(rawProps, parsedProps);
-                outerStructure.add(parsedProps);
-            }
-            jsonOutputMap.put("allOf", outerStructure);
-        } else if (parsedMetadata.containsKey(MetadataParser.REF_ONE_OF_KEY)) {
-            var oneOf = parsedMetadata.get(MetadataParser.REF_ONE_OF_KEY);
-            assert oneOf instanceof ArrayList;
-            var outerStructure = new ArrayList<LinkedHashMap<String, Object>>();
-            for (var rawProps : (ArrayList<LinkedHashMap<String, Object>>) oneOf) {
-                var parsedProps = new LinkedHashMap<String, Object>();
-                this.parseField(rawProps, parsedProps);
-                outerStructure.add(parsedProps);
-            }
-            jsonOutputMap.put("oneOf", outerStructure);
-        } else if (parsedMetadata.containsKey(MetadataParser.REF_ANY_OF_KEY)) {
-            var anyOf = parsedMetadata.get(MetadataParser.REF_ANY_OF_KEY);
-            assert anyOf instanceof ArrayList;
-            var outerStructure = new ArrayList<LinkedHashMap<String, Object>>();
-            for (var rawProps : (ArrayList<LinkedHashMap<String, Object>>) anyOf) {
-                var parsedProps = new LinkedHashMap<String, Object>();
-                this.parseField(rawProps, parsedProps);
-                outerStructure.add(parsedProps);
-            }
-            jsonOutputMap.put("anyOf", outerStructure);
-        } else if (parsedMetadata.containsKey(MetadataParser.REF_KEY)) {
-            var ref = (LinkedHashMap<String, Object>) (parsedMetadata.get(MetadataParser.REF_KEY));
-            var resolvedRefData = new LinkedHashMap<String, Object>();
-            this.parseField(ref, resolvedRefData);
-            jsonOutputMap.putAll(resolvedRefData);
-        } else if (parsedMetadata.containsKey(MetadataParser.PROPERTIES_KEY)) {
-            var ref = (LinkedHashMap<String, Object>) (parsedMetadata.get(MetadataParser.PROPERTIES_KEY));
-            var resolvedRefData = new LinkedHashMap<String, Object>();
-            this.parseField(ref, resolvedRefData);
-            jsonOutputMap.putAll(resolvedRefData);
-        }
+        if (props.isEmpty())
+            annotatedField.getOptionalChildNodes().ifPresent(nodes -> {
+                var subProps = new LinkedHashMap<String, Object>();
+                nodes.stream().map(this::convertNode).forEach(subProps::putAll);
+                props.putAll(subProps);
+            });
+        return props;
     }
 }

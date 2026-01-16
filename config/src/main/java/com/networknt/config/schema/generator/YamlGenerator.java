@@ -1,10 +1,6 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
-import com.networknt.config.schema.AnnotationUtils;
-import com.networknt.config.schema.ConfigSchema;
-import com.networknt.config.schema.MetadataParser;
+import com.networknt.config.schema.FieldNode;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.comments.CommentLine;
@@ -18,10 +14,7 @@ import javax.tools.FileObject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -33,7 +26,8 @@ public class YamlGenerator extends Generator {
 
     private static final String EXTERNAL_CONFIG_PREFIX = "${";
     private static final String EXTERNAL_CONFIG_SUFFIX = "}";
-    private static final DumperOptions YAML_OPTIONS = new DumperOptions();
+    protected static final DumperOptions YAML_OPTIONS = new DumperOptions();
+
     static {
         YAML_OPTIONS.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         YAML_OPTIONS.setIndent(2);
@@ -47,41 +41,112 @@ public class YamlGenerator extends Generator {
     }
 
     @Override
-    protected LinkedHashMap<String, Object> getRootSchemaProperties(LinkedHashMap<String, Object> metadata) {
+    protected LinkedHashMap<String, Object> convertConfigRoot(FieldNode annotatedField) {
         final var properties = new LinkedHashMap<String, Object>();
-        final var metadataProperties = (LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY);
-
-        metadataProperties.forEach((key, value) -> {
-            final var property = new LinkedHashMap<String, Object>();
-            if (!(value instanceof LinkedHashMap))
-                return;
-            this.parseField((LinkedHashMap<String, Object>) value, property);
-            properties.putAll(property);
-        });
-
+        annotatedField.getOptionalChildNodes()
+                .filter(nodes -> !nodes.isEmpty())
+                .ifPresent(nodes -> nodes.stream()
+                        .map(this::convertNode)
+                        .forEach(properties::putAll));
         return properties;
     }
 
     @Override
-    public void writeSchemaToFile(final FileObject object, final LinkedHashMap<String, Object> metadata) throws IOException {
-        writeSchemaToFile(object.openOutputStream(), metadata);
+    public void writeSchemaToFile(final FileObject object, final FieldNode annotatedField) throws IOException {
+        writeSchemaToFile(object.openOutputStream(), annotatedField);
     }
 
     @Override
-    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException {
-        final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-        final var rootDescription = AnnotationUtils.getAsType(metadata.get(MetadataParser.DESCRIPTION_KEY), String.class);
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata, rootDescription), YAML_OPTIONS);
+    public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
+        final var json = this.convertConfigRoot(annotatedField);
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, annotatedField), YAML_OPTIONS);
         final var fileContent = yaml.dump(json);
         os.write(fileContent.getBytes());
     }
 
     @Override
-    public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
-        final var json = new LinkedHashMap<>(this.getRootSchemaProperties(metadata));
-        final var rootDescription = AnnotationUtils.getAsType(metadata.get(MetadataParser.DESCRIPTION_KEY), String.class);
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, metadata, rootDescription), YAML_OPTIONS);
+    public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) {
+        final var json = this.convertConfigRoot(annotatedField);
+        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, annotatedField), YAML_OPTIONS);
         yaml.dump(json, writer);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField) {
+        return convertNested(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertMapNode(final FieldNode annotatedField) {
+        return convertNested(annotatedField);
+    }
+
+    private LinkedHashMap<String, Object> convertNested(final FieldNode annotatedField) {
+        final var useSubObjectDefault = annotatedField.isOptionalUseSubTypeDefault();
+
+        if (useSubObjectDefault.isPresent()) {
+            return annotatedField.getOptionalChildNodes()
+                    .map(nodes -> {
+                        var subProps = new LinkedHashMap<String, Object>();
+                        nodes.stream().map(this::convertNode).forEach(subProps::putAll);
+                        return subProps;
+                    })
+                    .or(() -> annotatedField.getOptionalRef().map(this::convertNode))
+                    .orElse(new LinkedHashMap<>());
+        }
+        return this.buildYamlProperty(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField) {
+        return this.buildYamlProperty(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField) {
+        return this.buildYamlProperty(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField) {
+        return this.buildYamlProperty(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
+        final var key = annotatedField.getConfigFieldName() + YamlCommentRepresenter.REPRESENTER_SEPARATOR + annotatedField.getId().toString();
+        final var childNodeProps = annotatedField.getOptionalChildNodes().map(nodes -> {
+            var subProps = new LinkedHashMap<>();
+            nodes.stream().map(this::convertNode).forEach(subProps::putAll);
+            return subProps;
+        });
+
+        if (childNodeProps.isPresent()) {
+            final var outer = new LinkedHashMap<String, Object>();
+            final var inner = childNodeProps.get();
+            outer.put(key, inner);
+            return outer;
+        }
+
+        final var nodeRefProps = annotatedField.getOptionalRef().flatMap(node -> node.getOptionalChildNodes().map(nodes -> {
+            final var outer = new LinkedHashMap<String, Object>();
+            final var inner = new LinkedHashMap<String, Object>();
+            nodes.stream().map(this::convertNode).forEach(inner::putAll);
+            outer.put(key, inner);
+            return outer;
+        }));
+
+        return nodeRefProps.orElseGet(() -> this.buildYamlProperty(annotatedField));
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField) {
+        return this.buildYamlProperty(annotatedField);
+    }
+
+    @Override
+    protected LinkedHashMap<String, Object> convertNullNode(final FieldNode property) {
+        return this.buildYamlProperty(property);
     }
 
     /**
@@ -89,148 +154,34 @@ public class YamlGenerator extends Generator {
      * If externalized, the property value will be formatted as ${configFileName.configFieldName:defaultValue}
      * The default value is only added if it was set in the Annotation.
      *
-     * @param field The field to parse.
-     * @param property The property to add the field to.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
      */
-    private void buildYamlProperty(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        final var externalized = AnnotationUtils.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
-        final var isExternalized = externalized != null && externalized;
-        final var externalizedKeyName = AnnotationUtils.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY_NAME), String.class);
-        final var uuid = AnnotationUtils.getAsType(field.get(MetadataParser.ID_KEY), String.class);
-        final var configFieldName = AnnotationUtils.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
-        final var defaultValue = field.get(MetadataParser.DEFAULT_VALUE_KEY);
+    protected LinkedHashMap<String, Object> buildYamlProperty(final FieldNode annotatedField) {
+        var yamlProp = new LinkedHashMap<String, Object>();
+        final boolean externalized = annotatedField.getOptionalExternalizedKeyName().isPresent();
+        final var externalName = annotatedField.getOptionalExternalizedKeyName();
+        final var id = annotatedField.getId().toString();
+        final var configFieldName = annotatedField.getConfigFieldName();
+        final var defaultValue = annotatedField.getOptionalDefaultValue();
 
         /* Don't stringify non-string values if not externalized. */
-        if (!(defaultValue instanceof String) && defaultValue != null && !isExternalized) {
-            property.put(configFieldName, defaultValue);
-            return;
+        if (defaultValue.isPresent() && !externalized) {
+            yamlProp.put(configFieldName, defaultValue.get());
+            return yamlProp;
         }
-
         final var builder = new StringBuilder();
-        if (isExternalized)
-            builder.append(EXTERNAL_CONFIG_PREFIX)
-                    .append(this.configKey)
-                    .append(".")
-                    .append(externalizedKeyName)
-                    .append(":");
-
-        if (isExternalized && defaultValue != null)
-            builder.append(defaultValue);
-
-        else if (defaultValue != null) {
-            final var mapper = Config.getInstance().getMapper();
-            final var stringValue = (String) defaultValue;
-
-            try {
-                final var jsonMapValue = mapper.readValue(stringValue, new TypeReference<LinkedHashMap<String, Object>>() {});
-                property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonMapValue);
-                return;
-
-            } catch (Exception me) {
-
-                try {
-                    final var jsonListValue = mapper.readValue(stringValue, new TypeReference<List<String>>() {});
-                    property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, jsonListValue);
-                    return;
-
-                } catch (Exception le) {
-                    builder.append(defaultValue);
-                }
-            }
-        }
-
-        if (isExternalized)
-            builder.append(EXTERNAL_CONFIG_SUFFIX);
-
+        externalName.ifPresent(s -> builder.append(EXTERNAL_CONFIG_PREFIX)
+                .append(this.configKey)
+                .append(".")
+                .append(s)
+                .append(":"));
+        defaultValue.ifPresent(builder::append);
+        externalName.ifPresent(s -> builder.append(EXTERNAL_CONFIG_SUFFIX));
         final var propertyValue = builder.toString();
-        property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, propertyValue);
+        final var propertyName = configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + id;
+        yamlProp.put(propertyName, propertyValue);
+        return yamlProp;
     }
-
-    @Override
-    protected void parseArray(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-
-        final var useSubObjectDefault = AnnotationUtils.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
-        if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
-
-            if (Generator.fieldIsSubMap(field, MetadataParser.ITEMS_KEY)) {
-                final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.ITEMS_KEY);
-                props.values().forEach(value -> {
-                    final var itemProp = new LinkedHashMap<String, Object>();
-                    this.parseField((LinkedHashMap<String, Object>) value, itemProp);
-                    property.putAll(itemProp);
-                });
-            }
-        } else this.buildYamlProperty(field, property);
-
-    }
-
-    @Override
-    protected void parseMapField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
-    @Override
-    protected void parseBoolean(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
-    @Override
-    protected void parseInteger(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
-    @Override
-    protected void parseNumber(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
-    @Override
-    protected void parseObject(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-
-        final var useSubObjectDefault = AnnotationUtils.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
-        if (useSubObjectDefault != null && useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
-
-            final LinkedHashMap<String, Object> props;
-            if (Generator.fieldIsSubMap(field, MetadataParser.PROPERTIES_KEY))
-                props = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
-
-            else if (Generator.fieldIsSubMap(field, MetadataParser.REF_KEY)) {
-                final var refProps = (LinkedHashMap<String, Object>) field.get(MetadataParser.REF_KEY);
-                props = (LinkedHashMap<String, Object>) refProps.get(MetadataParser.PROPERTIES_KEY);
-            }
-
-            else if (Generator.fieldIsSubMap(field, MetadataParser.ADDITIONAL_PROPERTIES_KEY)) {
-                final var additionalProps = (LinkedHashMap<String, Object>) field.get(MetadataParser.ADDITIONAL_PROPERTIES_KEY);
-                props = (LinkedHashMap<String, Object>) additionalProps.get(MetadataParser.PROPERTIES_KEY);
-            }
-
-            else props = new LinkedHashMap<>();
-
-
-            final var objectProperties = new LinkedHashMap<String, Object>();
-            props.forEach((key, value) -> {
-                this.parseField((LinkedHashMap<String, Object>) value, objectProperties);
-            });
-
-            final var configFieldName = AnnotationUtils.getAsType(field.get(MetadataParser.CONFIG_FIELD_NAME_KEY), String.class);
-            final var uuid = AnnotationUtils.getAsType(field.get(MetadataParser.ID_KEY), String.class);
-            property.put(configFieldName + YamlCommentRepresenter.REPRESENTER_SEPARATOR + uuid, objectProperties);
-
-
-        } else this.buildYamlProperty(field, property);
-
-    }
-
-    @Override
-    protected void parseString(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
-    @Override
-    protected void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        this.buildYamlProperty(field, property);
-    }
-
 
 
     /**
@@ -241,45 +192,39 @@ public class YamlGenerator extends Generator {
         public static final String REPRESENTER_SEPARATOR = "___";
         private final AtomicBoolean firstNodeProcessed = new AtomicBoolean(false);
 
-        public YamlCommentRepresenter(final DumperOptions options, final LinkedHashMap<String, Object> metadata, final String rootDescription) {
+        public YamlCommentRepresenter(final DumperOptions options, final FieldNode rootAnnotatedField) {
             super(options);
             this.representers.put(String.class, new RepresentString() {
 
                 @Override
-                public Node representData(Object data) {
-                    final String configFieldName;
-                    final String uuid;
+                public Node representData(Object nodeData) {
+                    final String nodeConfigName;
+                    final String nodeId;
 
-                    final var stringData = (String) data;
+                    final var stringData = (String) nodeData;
                     if (stringData.contains(REPRESENTER_SEPARATOR)) {
                         final var parts = stringData.split(REPRESENTER_SEPARATOR);
-                        configFieldName = parts[0];
-                        uuid = parts[1];
+                        nodeConfigName = parts[0];
+                        nodeId = parts[1];
                     } else {
-                        configFieldName = stringData;
-                        uuid = null;
+                        nodeConfigName = stringData;
+                        nodeId = null;
                     }
-                    Node node = super.representData(configFieldName);
+                    final var node = super.representData(nodeConfigName);
                     final var start = node.getStartMark();
                     final var end = node.getEndMark();
                     final var descriptionBuilder = new StringBuilder();
-
-                    final var nodeDescription = findCommentForNode(metadata, configFieldName, uuid);
-
-                    if (!firstNodeProcessed.compareAndExchange(false, true) && rootDescription != null) {
-                        descriptionBuilder.append(rootDescription);
-                        descriptionBuilder.append('\n');
+                    final var nodeDescription = findCommentForNode(rootAnnotatedField, nodeConfigName, nodeId);
+                    if (!firstNodeProcessed.compareAndExchange(false, true)) {
+                        rootAnnotatedField.getOptionalDescription().ifPresent(description -> {
+                            descriptionBuilder.append(description);
+                            descriptionBuilder.append('\n');
+                        });
                     }
-
-                    if (nodeDescription != null && !nodeDescription.isEmpty()) {
-                        descriptionBuilder.append(nodeDescription);
-                    }
-//                    final var description = findCommentForNode(metadata, configFieldName, uuid);
-
+                    nodeDescription.ifPresent(descriptionBuilder::append);
                     final var description = descriptionBuilder.toString();
-                    if (!description.isEmpty())
+                    if (!description.isBlank())
                         this.addCommentsToNode(start, end, description, node);
-
                     return node;
                 }
 
@@ -293,51 +238,46 @@ public class YamlGenerator extends Generator {
                 private void addCommentsToNode(final Mark start, final Mark end, final String description, final Node node) {
                     final var commentLines = new ArrayList<CommentLine>();
 
-                    /* Add description comment line or multiple lines if the description contains multiple lines. */
-                    if (description.contains("\n")) {
-                        final var lines = description.split("\n");
-
-                        for (final var line : lines)
-                            commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + line, start, end)));
-
-                    } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + description, start, end)));
-
+                    // Split the description by newline and add comments to the node.
+                    Arrays.stream(description.split("\n")).forEach(line -> commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + line, start, end))));
                     node.setBlockComments(commentLines);
                 }
 
                 /**
                  * Recursive function to search for the description of the current node based on the name and id.
-                 * @param metadata - The metadata to search through.
+                 * @param annotatedField - The metadata to search through.
                  * @param nodeName - The name of the node to search for.
                  * @param uuid - The id of the node to search for.
                  * @return The description of the node if found, otherwise null.
                  */
-                private String findCommentForNode(final LinkedHashMap<String, Object> metadata, final String nodeName, final String uuid) {
-                    String returnString = null;
-                    for (final var entry : metadata.entrySet()) {
-
-                        if (!(entry.getValue() instanceof LinkedHashMap))
-                            continue;
-
-                        final var field = (LinkedHashMap<String, Object>) entry.getValue();
-                        final var fieldId = field.get(MetadataParser.ID_KEY);
-                        if (fieldId != null && entry.getKey().equals(nodeName) && fieldId.equals(uuid)) {
-                            returnString =  (String) field.get(MetadataParser.DESCRIPTION_KEY);
-                            break;
-
-                        } else {
-                            returnString = findCommentForNode(field, nodeName, uuid);
-                            if (returnString != null)
-                                break;
-                        }
-                    }
-                    return returnString;
+                private Optional<String> findCommentForNode(final FieldNode annotatedField, final String nodeName, final String uuid) {
+                    if (annotatedField.getConfigFieldName().equals(nodeName) && annotatedField.getId().toString().equals(uuid)) {
+                        return annotatedField.getOptionalDescription();
+                    } else
+                        return annotatedField.getOptionalRef().flatMap(ref -> this.findCommentForNode(ref, nodeName, uuid))
+                                .or(() -> annotatedField.getOptionalChildNodes().flatMap(nodes -> nodes.stream()
+                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
+                                        .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                        .findAny())
+                                ).or(() -> annotatedField.getOptionalRefAnyOf().flatMap(nodes -> nodes.stream()
+                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
+                                        .filter(Optional::isPresent).map(Optional::get)
+                                        .findAny())
+                                ).or(() -> annotatedField.getOptionalRefAllOf().flatMap(nodes -> nodes.stream()
+                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
+                                        .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                        .findAny()))
+                                .or(() -> annotatedField.getOptionalRefOneOf().flatMap(nodes -> nodes.stream()
+                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
+                                        .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                        .findAny())
+                                );
                 }
 
             });
         }
     }
-
-
-
 }

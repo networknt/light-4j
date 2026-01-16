@@ -2,8 +2,7 @@ package com.networknt.config.schema.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.networknt.config.schema.AnnotationUtils;
-import com.networknt.config.schema.MetadataParser;
+import com.networknt.config.schema.FieldNode;
 
 import javax.tools.FileObject;
 import java.io.IOException;
@@ -39,89 +38,82 @@ public class CloudEventGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(FileObject object, LinkedHashMap<String, Object> metadata) throws IOException {
-        writeSchemaToFile(object.openOutputStream(), metadata);
+    public void writeSchemaToFile(FileObject object, FieldNode annotatedField) throws IOException {
+        writeSchemaToFile(object.openOutputStream(), annotatedField);
     }
 
     @Override
-    public void writeSchemaToFile(Writer writer, LinkedHashMap<String, Object> metadata) throws IOException {
-        final var cloudEvent = getRootSchemaProperties(metadata);
+    public void writeSchemaToFile(Writer writer, FieldNode annotatedField) throws IOException {
+        final var cloudEvent = convertConfigRoot(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(writer, cloudEvent);
     }
 
     @Override
-    public void writeSchemaToFile(OutputStream os, LinkedHashMap<String, Object> metadata) throws IOException {
-        final var cloudEvent = getRootSchemaProperties(metadata);
+    public void writeSchemaToFile(OutputStream os, FieldNode annotatedField) throws IOException {
+        final var cloudEvent = convertConfigRoot(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, cloudEvent);
     }
 
 
     @Override
-    protected void parseArray(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertArrayNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseBoolean(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertBooleanNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseInteger(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertIntegerNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseNumber(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertNumberNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseObject(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertObjectNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseString(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertStringNode(FieldNode annotatedField) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseNullField(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertNullNode(FieldNode property) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseMapField(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertMapNode(FieldNode property) {
         // Not needed for CloudEvent generation
+        return new LinkedHashMap<>();
     }
 
     /**
      * Builds a CloudEvent structure based on the metadata.
-     * @param metadata The metadata from the config annotations.
+     * @param annotatedField The metadata from the config annotations.
      * @return A LinkedHashMap representing the CloudEvent structure.
      */
     @Override
-    protected LinkedHashMap<String, Object> getRootSchemaProperties(LinkedHashMap<String, Object> metadata) {
+    protected LinkedHashMap<String, Object> convertConfigRoot(FieldNode annotatedField) {
         final var cloudEvent = new LinkedHashMap<String, Object>();
 
         // Create inner data object.
-        final var data = new LinkedHashMap<String, Object>();
-        data.put("configId", "");
-        data.put("updateTs", "");
-        if (metadata.get(MetadataParser.CLASS_NAME_KEY) instanceof String) {
-            data.put("classPath", metadata.get(MetadataParser.CLASS_NAME_KEY));
-        } else {
-            data.put("classPath", FAILED_PARSE_VALUE);
-        }
-
-        final var rootDescription = AnnotationUtils.getAsType(metadata.get(MetadataParser.DESCRIPTION_KEY), String.class);
-        data.put("configDesc", rootDescription);
-
-        data.put("configName", this.configName);
-        data.put("configType", DEFAULT_CONFIG_TYPE);
-        data.put("updateUser", "");
-        data.put("configPhase", "");
+        final var data = getStringObjectLinkedHashMap(annotatedField);
 
         // Create outer cloud event structure including data.
         cloudEvent.put("id", "");
@@ -138,5 +130,22 @@ public class CloudEventGenerator extends Generator {
         cloudEvent.put("datacontenttype", DEFAULT_DATA_TYPE);
         cloudEvent.put("aggregateversion", "");
         return cloudEvent;
+    }
+
+    private LinkedHashMap<String, Object> getStringObjectLinkedHashMap(FieldNode annotatedField) {
+        final var data = new LinkedHashMap<String, Object>();
+        data.put("configId", "");
+        data.put("updateTs", "");
+        var className = annotatedField.getOptionalSimpleClassName().orElse(FAILED_PARSE_VALUE);
+        data.put("classPath", className);
+
+        final var rootDescription = annotatedField.getOptionalDescription().orElse("");
+        data.put("configDesc", rootDescription);
+
+        data.put("configName", this.configName);
+        data.put("configType", DEFAULT_CONFIG_TYPE);
+        data.put("updateUser", "");
+        data.put("configPhase", "");
+        return data;
     }
 }

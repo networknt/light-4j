@@ -1,20 +1,26 @@
 package com.networknt.config.schema;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import java.lang.annotation.Annotation;
-import java.util.LinkedHashMap;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 public class AnnotationUtils {
+
+    private AnnotationUtils() {
+        throw new IllegalStateException("AnnotationUtils is a utility class");
+    }
 
     /**
      * Safely gets an element from a canonical name.
      *
-     * @param canonicalName The canonical name of the element.
+     * @param canonicalName         The canonical name of the element.
      * @param processingEnvironment The processing environment to use.
      * @return The element if it exists, otherwise null.
      */
@@ -26,35 +32,31 @@ public class AnnotationUtils {
         }
     }
 
-    public static boolean elementIsClass(
+    /**
+     * Checks to see if the provided element is a specific class, or if the element inherits from the specific class.
+     *
+     * @param element - The element to check.
+     * @param clazz - The class to compare to.
+     * @param pe - The current processing environment.
+     * @return - Returns true if element is the class or inherits from it.
+     */
+    public static boolean isRelatedToClass(
             final Element element,
             final Class<?> clazz,
-            final ProcessingEnvironment processingEnvironment
+            final ProcessingEnvironment pe
     ) {
-        final var elementClass = AnnotationUtils.getClassFromElement(element, processingEnvironment);
-        return elementClass.map(aClass -> aClass.equals(clazz)).orElse(false);
-    }
-
-    public static boolean elementImplementsClass(final Element element, final Class<?> clazz, final ProcessingEnvironment processingEnv) {
-        final var elementClass = AnnotationUtils.getClassFromElement(element, processingEnv);
-        if (elementClass.isEmpty())
-            return false;
-
-        for (final var implementedInterface : elementClass.get().getInterfaces()) {
-            if (implementedInterface.equals(clazz)) {
-                return true;
-            }
-        }
-
-        return false;
+        return AnnotationUtils.getClassFromElement(element, pe)
+                .map(Class::getInterfaces).stream().flatMap(Arrays::stream).anyMatch(clazz::equals)
+                || AnnotationUtils.getClassFromElement(element, pe)
+                .map(aClass -> aClass.equals(clazz)).orElse(false);
     }
 
     /**
      * Gets the full canonical name from the element and gets the class from the string.
      *
-     * @param element -
-     * @param processingEnv
-     * @return
+     * @param element       The element to get the class from.
+     * @param processingEnv The current processing environment
+     * @return - Optionally returns the class for a given element. None if the element does not contain the class.
      */
     public static Optional<Class<?>> getClassFromElement(final Element element, final ProcessingEnvironment processingEnv) {
         final var typeElement = processingEnv.getElementUtils().getTypeElement(element.toString());
@@ -68,46 +70,29 @@ public class AnnotationUtils {
     /**
      * Safely gets an annotation from an element.
      *
-     * @param element The element to get the annotation from.
-     * @param annotationClass The annotation class to get.
-     * @param <A> The type of the annotation.
-     * @return The annotation if it exists, otherwise an empty optional.
-     */
-    public static <A extends Annotation> Optional<A> safeGetAnnotation(final Element element, final Class<A> annotationClass) {
-        return safeGetAnnotation(element, annotationClass, null);
-    }
-
-    /**
-     * Safely gets an annotation from an element.
-     *
-     * @param element The element to get the annotation from.
-     * @param annotationClass The annotation class to get.
-     * @param processingEnvironment The processing environment to use.
-     * @param <A> The type of the annotation.
-     * @return The annotation if it exists, otherwise an empty optional.
+     * @param element               - The element to get the annotation from.
+     * @param annotationClass       - The annotation class to get.
+     * @param processingEnvironment - The processing environment to use.
+     * @param <A>                   - The type of the annotation.
+     * @return                      - The annotation if it exists, otherwise an empty optional.
      */
     public static <A extends Annotation> Optional<A> safeGetAnnotation(
             final Element element,
             final Class<A> annotationClass,
             final ProcessingEnvironment processingEnvironment
     ) {
-
         if (element == null || annotationClass == null)
             return Optional.empty();
 
         try {
-
             final var annotation = element.getAnnotation(annotationClass);
-
             if (annotation == null)
                 return Optional.empty();
 
             else return Optional.of(annotation);
 
         } catch (final MirroredTypeException e) {
-
             final var typeMirror = e.getTypeMirror();
-
             if (processingEnvironment == null)
                 return Optional.empty();
 
@@ -122,86 +107,42 @@ public class AnnotationUtils {
     }
 
     /**
-     * Updates the property if the field is not the default value.
+     * Safely accesses Class[] type members of an annotation class.
      *
-     * @param field        The field to update.
-     * @param property     The property to update.
-     * @param key          The key to update.
-     * @param defaultValue The default value.
-     * @param type         The class type of the value.
-     * @param <T>          The type of the value.
+     * @param element               - The annotated element.
+     * @param annotationClass       - The annotation class containing Class[]
+     * @param memberName            - The method in from the annotation class to access the class array.
+     * @param processingEnvironment - The current annotation processing environment
+     * @return                      - Returns a list of type mirrors for. None if it was not found.
      */
-    public static <T> void updateIfNotDefault(
-            final LinkedHashMap<String, Object> field,
-            final LinkedHashMap<String, Object> property,
-            final String key,
-            final Object defaultValue,
-            final Class<T> type
+    public static Optional<List<TypeMirror>> getClassArrayValue(
+            final Element element,
+            final Class<? extends Annotation> annotationClass,
+            final String memberName,
+            final ProcessingEnvironment processingEnvironment
     ) {
-        final var value = getAsType(field.get(key), type);
-        updateIfNotDefault(property, value, key, defaultValue);
-    }
+        final var elements = processingEnvironment.getElementUtils();
+        final var annotationMirror = element.getAnnotationMirrors()
+                .stream()
+                .filter(mirror -> mirror.getAnnotationType().toString().equals(annotationClass.getCanonicalName()))
+                .findFirst();
 
-    /**
-     * Updates the property if the field is not the default value.
-     *
-     * @param property     The property to update.
-     * @param key          The key to update.
-     * @param defaultValue The default value.
-     * @param <T>          The type of the value.
-     */
-    public static <T> void updateIfNotDefault(
-            final LinkedHashMap<String, Object> property,
-            final T value,
-            final String key,
-            final Object defaultValue
-    ) {
-        if (value != null && !Objects.equals(value, defaultValue))
-            property.put(key, value);
-    }
-
-    /**
-     * Casts the provided value to a specific class.
-     *
-     * @param value The value to cast.
-     * @param type  The class to cast to.
-     * @param <T>   The type to cast to.
-     * @return The cast value.
-     */
-    public static <T> T getAsType(final Object value, final Class<T> type) {
-        if (value == null)
-            return null;
-
-        if (type.isInstance(value))
-            return type.cast(value);
-
-        else return null;
-    }
-
-    public static void logError(String message, Object... args) {
-        final var errorPrefix = "[ERROR] ";
-        final var formattedMessage = formatMessage(errorPrefix + message, args);
-        System.out.println(formattedMessage);
-    }
-
-    public static void logWarning(String message, Object... args) {
-        final var warningPrefix = "[WARNING] ";
-        final var formattedMessage = formatMessage(warningPrefix + message, args);
-        System.out.println(formattedMessage);
-    }
-
-    public static void logInfo(String message, Object... args) {
-        final var warningPrefix = "[INFO] ";
-        final var formattedMessage = formatMessage(warningPrefix + message, args);
-        System.out.println(formattedMessage);
-    }
-
-
-    private static String formatMessage(String message, Object... args) {
-        if (args == null || args.length == 0) {
-            return message;
+        if (annotationMirror.isEmpty()) {
+            return Optional.empty();
         }
 
-        return String.format(message, args);
+        final var elementValues = elements.getElementValuesWithDefaults(annotationMirror.get());
+
+        return elementValues
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() instanceof List<?> && entry.getKey().getSimpleName().toString().equals(memberName))
+                .findFirst()
+                .map(entry -> ((List<?>) entry.getValue())
+                        .stream()
+                        .filter(AnnotationValue.class::isInstance)
+                        .map(v -> (TypeMirror) ((AnnotationValue) v).getValue()).collect(toList()));
     }
+
+
 }
