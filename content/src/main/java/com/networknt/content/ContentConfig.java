@@ -44,7 +44,6 @@ public class ContentConfig {
   @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "Indicate if the content middleware is enabled or not.",
             defaultValue = "true"
   )
@@ -54,7 +53,6 @@ public class ContentConfig {
             configFieldName = CONTENT_TYPE,
             externalizedKeyName = CONTENT_TYPE,
             pattern = ".*/.*",
-            externalized = true,
             description = "The content type to be used in the response.",
             defaultValue = "application/json"
   )

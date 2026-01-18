@@ -36,7 +36,6 @@ public class SidecarConfig {
                     "If the egressIngressIndicator set as header, sidecar will router request based on if the request header has service id/service url or not. This will be default setting\n" +
                     "If the egressIngressIndicator set protocol, sidecar will router request based on protocol. normally the traffic inside pod will http (from api container to sidecar container), and sidecar will treat http traffic as egress router\n" +
                     "If the egressIngressIndicator set as other values, currently sidecar will skip router handler and leave the request traffic to proxy\n",
-            externalized = true,
             defaultValue = "header"
     )
     String egressIngressIndicator;

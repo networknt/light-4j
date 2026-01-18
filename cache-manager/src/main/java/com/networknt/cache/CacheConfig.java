@@ -26,7 +26,6 @@ public class CacheConfig {
     @ArrayField(
             configFieldName = CACHES,
             externalizedKeyName = CACHES,
-            externalized = true,
             description = "There will be multiple caches per application and each cache should have it own name and expiryInMinutes. The\n" +
             "caches are lists of caches. The cache name is used to identify the cache and the expiryInMinutes the expiry time.\n" +
             "caches:\n" +

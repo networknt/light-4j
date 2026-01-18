@@ -29,7 +29,6 @@ public class ResponseInjectionConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicator of enabled"
     )
@@ -38,7 +37,6 @@ public class ResponseInjectionConfig {
     @ArrayField(
             configFieldName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
             externalizedKeyName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
-            externalized = true,
             description = "response body injection applied path prefixes. Injecting the response body and output into the audit log is very heavy operation,\n" +
                     "and it should only be enabled when necessary or for diagnose session to resolve issues. This list can be updated on the config\n" +
                     "server or local values.yml, then an API call to the config-reload endpoint to apply the changes from light-portal control pane.\n" +

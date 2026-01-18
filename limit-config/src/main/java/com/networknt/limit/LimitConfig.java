@@ -63,7 +63,6 @@ public class LimitConfig {
     @BooleanField(
             configFieldName = IS_ENABLED,
             externalizedKeyName = IS_ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = """
                     If this handler is enabled or not. It is disabled by default as this handle might be in
@@ -76,7 +75,6 @@ public class LimitConfig {
     @IntegerField(
             configFieldName = CONCURRENT_REQUEST,
             externalizedKeyName = CONCURRENT_REQUEST,
-            externalized = true,
             defaultValue = "2",
             description = """
                     Maximum concurrent requests allowed per second on the entire server. This is property is
@@ -89,7 +87,6 @@ public class LimitConfig {
     @IntegerField(
             configFieldName = QUEUE_SIZE,
             externalizedKeyName = QUEUE_SIZE,
-            externalized = true,
             defaultValue = "-1",
             description = """
                     This property is kept to ensure backward compatibility. Please don't use it anymore. All
@@ -101,7 +98,6 @@ public class LimitConfig {
     @IntegerField(
             configFieldName = ERROR_CODE,
             externalizedKeyName = ERROR_CODE,
-            externalized = true,
             defaultValue = "429",
             description = """
                     If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503
@@ -117,7 +113,6 @@ public class LimitConfig {
     @StringField(
             configFieldName = RATE_LIMIT,
             externalizedKeyName = RATE_LIMIT,
-            externalized = true,
             defaultValue = "10/s 10000/d",
             description = """
                     Default request rate limit 10 requests per second and 10000 quota per day. This is the
@@ -131,7 +126,6 @@ public class LimitConfig {
     @BooleanField(
             configFieldName = HEADERS_ALWAYS_SET,
             externalizedKeyName = HEADERS_ALWAYS_SET,
-            externalized = true,
             defaultValue = "false",
             description = """
                     By default, the rate limit headers are not set when limit is not reached. However, you can
@@ -144,7 +138,6 @@ public class LimitConfig {
     @StringField(
             configFieldName = LIMIT_KEY,
             externalizedKeyName = LIMIT_KEY,
-            externalized = true,
             pattern = "server|address|client|user",
             defaultValue = "server",
             description = """
@@ -160,7 +153,6 @@ public class LimitConfig {
     @MapField(
             configFieldName = SERVER,
             externalizedKeyName = SERVER,
-            externalized = true,
             description = "If server is the key, we can set up different rate limit per request path prefix.",
             valueType = String.class
     )
@@ -169,7 +161,6 @@ public class LimitConfig {
     @ObjectField(
             configFieldName = ADDRESS,
             externalizedKeyName = ADDRESS,
-            externalized = true,
             description = """
                     If address is the key, we can set up different rate limit per address and optional per
                     path or service for certain addresses. All other un-specified addresses will share the
@@ -182,7 +173,6 @@ public class LimitConfig {
     @ObjectField(
             configFieldName = CLIENT,
             externalizedKeyName = CLIENT,
-            externalized = true,
             description = """
                     If client is the key, we can set up different rate limit per client and optional per
                     path or service for certain clients. All other un-specified clients will share the limit
@@ -197,7 +187,6 @@ public class LimitConfig {
     @ObjectField(
             configFieldName = USER,
             externalizedKeyName = USER,
-            externalized = true,
             description = """
                     If user is the key, we can set up different rate limit per user and optional per
                     path or service for certain users. All other un-specified users will share the limit
@@ -211,7 +200,6 @@ public class LimitConfig {
     @StringField(
             configFieldName = CLIENT_ID_KEY,
             externalizedKeyName = CLIENT_ID_KEY,
-            externalized = true,
             defaultValue = "com.networknt.limit.key.JwtClientIdKeyResolver",
             description = "Client id Key Resolver."
     )
@@ -220,7 +208,6 @@ public class LimitConfig {
     @StringField(
             configFieldName = ADDRESS_KEY,
             externalizedKeyName = ADDRESS_KEY,
-            externalized = true,
             defaultValue = "com.networknt.limit.key.RemoteAddressKeyResolver",
             description = "Address Key Resolver."
     )
@@ -229,7 +216,6 @@ public class LimitConfig {
     @StringField(
             configFieldName = USER_ID_KEY,
             externalizedKeyName = USER_ID_KEY,
-            externalized = true,
             defaultValue = "com.networknt.limit.key.JwtUserIdKeyResolver",
             description = "User Id Key Resolver."
     )

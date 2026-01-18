@@ -29,7 +29,6 @@ public class TokenConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = "Indicate if the handler is enabled."
     )
@@ -38,7 +37,6 @@ public class TokenConfig {
     @ArrayField(
             configFieldName = APPLIED_PATH_PREFIXES,
             externalizedKeyName = APPLIED_PATH_PREFIXES,
-            externalized = true,
             description = "applied path prefixes for the token handler. Only the path prefixes listed here will\n" +
                     "get the token based on the configuration in the client.yml section. This will allow\n" +
                     "the share gateway to define only one default chain with some endpoints get the token\n" +

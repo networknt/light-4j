@@ -29,7 +29,11 @@ import com.networknt.config.schema.OutputFormat;
 @ConfigSchema(
         configName = "exception",
         configKey = "exception",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
+        outputFormats = {
+                OutputFormat.JSON_SCHEMA,
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
+        },
         configDescription = "Exception handler for runtime exception and ApiException if it is not handled by other handlers in the chain."
         )
 public class ExceptionConfig {
@@ -39,7 +43,6 @@ public class ExceptionConfig {
             configFieldName = "enabled",
             externalizedKeyName = "enabled",
             defaultValue = "true",
-            externalized = true,
             description = "Enable or disable the exception module."
     )
     boolean enabled;

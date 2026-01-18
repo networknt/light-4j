@@ -42,7 +42,6 @@ public class ServiceDictConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if ServiceDictHandler is enabled or not"
     )
@@ -51,7 +50,6 @@ public class ServiceDictConfig {
     @MapField(
             configFieldName = MAPPING,
             externalizedKeyName = MAPPING,
-            externalized = true,
             description = "mapping from 'pathPrefix@requestMethod' to serviceIds\n" +
             "The following are examples in values.yml\n" +
             "  /v1/address@get: party.address-1.0.0\n" +

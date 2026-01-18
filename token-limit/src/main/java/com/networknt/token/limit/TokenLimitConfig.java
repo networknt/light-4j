@@ -27,7 +27,6 @@ public class TokenLimitConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "indicate if the handler is enabled or not. By default, it is enabled.",
             defaultValue = "true"
     )
@@ -37,7 +36,6 @@ public class TokenLimitConfig {
     @BooleanField(
             configFieldName = ERROR_ON_LIMIT,
             externalizedKeyName = ERROR_ON_LIMIT,
-            externalized = true,
             description = "return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,\n" +
                     "a warning message should be logged. Also, this handler can be disabled on production for performance.",
             defaultValue = "true"
@@ -48,7 +46,6 @@ public class TokenLimitConfig {
     @IntegerField(
             configFieldName = DUPLICATE_LIMIT,
             externalizedKeyName = DUPLICATE_LIMIT,
-            externalized = true,
             description = "The max number of duplicated token requests. Once this number is passed, the limit is triggered. This\n" +
                     "number is set based on the number of client instances as each instance might get its token if there\n" +
                     "is no distributed cache. The duplicated tokens are calculated based on the local in memory cache per\n" +
@@ -61,7 +58,6 @@ public class TokenLimitConfig {
     @ArrayField(
             configFieldName = TOKEN_PATH_TEMPLATES,
             externalizedKeyName = TOKEN_PATH_TEMPLATES,
-            externalized = true,
             description = "Different OAuth 2.0 providers have different token request path. To make sure that this handler only\n" +
                     "applied to the token endpoint, we define a list of path templates here to ensure request path is matched.\n" +
                     "The following is an example with two different OAuth 2.0 providers in values.yml file.\n" +
@@ -76,7 +72,6 @@ public class TokenLimitConfig {
     @ArrayField(
             configFieldName = LEGACY_CLIENT,
             externalizedKeyName = LEGACY_CLIENT,
-            externalized = true,
             description = "List of ClientID that should be treated as Legacy and thus excluded from the token limit rules.\n" +
                     "This should only be used by approved legacy clients. The client ID is case insensitive.\n" +
                     "token-limit.legacyClient:\n" +
@@ -90,7 +85,6 @@ public class TokenLimitConfig {
             configFieldName = EXPIRE_KEY,
             externalizedKeyName = EXPIRE_KEY,
             defaultValue = "expires_in",
-            externalized = true,
             description = "Expire key field name for the token limit cache feature. This is used to parse the response from\n" +
                     "the Auth Server, extract the expire time of the token and update to account for the time drift.\n" +
                     "The default value is \"expires_in\" and unit is seconds. If there's no such field in the response,\n" +

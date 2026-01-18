@@ -46,7 +46,6 @@ public class CorsConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "Indicate if the CORS middleware is enabled or not."
     )
     boolean enabled;
@@ -54,7 +53,6 @@ public class CorsConfig {
     @ArrayField(
             configFieldName = ALLOWED_ORIGINS,
             externalizedKeyName = ALLOWED_ORIGINS,
-            externalized = true,
             description = "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\n" +
                     "configuration for all paths. If you want to have different configuration for different paths, you\n" +
                     "can use pathPrefixAllowed. The value is a list of strings.\n" +
@@ -66,7 +64,6 @@ public class CorsConfig {
     @ArrayField(
             configFieldName = ALLOWED_METHODS,
             externalizedKeyName = ALLOWED_METHODS,
-            externalized = true,
             description = "Allowed methods list. The value is a list of strings. The possible value is GET, POST, PUT, DELETE, PATCH\n" +
                     "This is the global configuration for all paths. If you want to have different configuration for different\n" +
                     "paths, you can use pathPrefixAllowed.\n - GET\n - POST",
@@ -78,7 +75,6 @@ public class CorsConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ALLOWED,
             externalizedKeyName = PATH_PREFIX_ALLOWED,
-            externalized = true,
             description = "cors configuration per path prefix on a shared gateway. You either have allowedOrigins and allowedMethods\n" +
                     "or you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.\n" +
                     "The value is a map with the key as the path prefix and the value is another map with allowedOrigins and\n" +

@@ -11,7 +11,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.SERVER_URL,
             externalizedKeyName = "derefServerUrl",
-            externalized = true,
             description = "Token service server url, this might be different than the above token server url.\n" +
                     "The static url will be used if it is configured."
     )
@@ -21,7 +20,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.PROXY_HOST,
             externalizedKeyName = "derefProxyHost",
-            externalized = true,
             description = "For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal\n" +
                     "proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost\n" +
                     "here for the HTTPS traffic. This option is only working with server_url and serviceId\n" +
@@ -33,7 +31,6 @@ public class OAuthDerefConfig {
     @IntegerField(
             configFieldName = ClientConfig.PROXY_PORT,
             externalizedKeyName = "derefProxyPort",
-            externalized = true,
             description = "We only support HTTPS traffic for the proxy and the default port is 443. " +
                     "If your proxy server has\n" +
                     "a different port, please specify it here. " +
@@ -46,7 +43,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.SERVICE_ID,
             externalizedKeyName = "derefServiceId",
-            externalized = true,
             defaultValue = "com.networknt.oauth2-token-1.0.0",
             description = "token service unique id for OAuth 2.0 provider. " +
                     "Need for service lookup/discovery. It will be used if above server_url is not configured."
@@ -58,7 +54,6 @@ public class OAuthDerefConfig {
             configFieldName = ClientConfig.ENABLE_HTTP2,
             externalizedKeyName = "derefEnableHttp2",
             defaultValue = "true",
-            externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )
     @JsonProperty(ClientConfig.ENABLE_HTTP2)
@@ -67,7 +62,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.URI,
             externalizedKeyName = "derefUri",
-            externalized = true,
             defaultValue = "/oauth2/deref",
             description = "the path for the key distribution endpoint"
     )
@@ -77,7 +71,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "derefClientId",
-            externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id used to access key distribution service. " +
                     "It can be the same client_id with token service or not."
@@ -88,7 +81,6 @@ public class OAuthDerefConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "derefClientSecret",
-            externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for deref"
     )

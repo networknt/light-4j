@@ -115,7 +115,6 @@ public final class ClientConfig {
             configFieldName = ClientConfig.PATH_PREFIX_SERVICES,
             externalizedKeyName = ClientConfig.PATH_PREFIX_SERVICES,
             valueType = String.class,
-            externalized = true,
             description = "If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server\n" +
                     "to get the token or JWK. If two or more services have the same path, you must use serviceId in\n" +
                     "the request header to use the serviceId to find the OAuth 2.0 provider configuration."

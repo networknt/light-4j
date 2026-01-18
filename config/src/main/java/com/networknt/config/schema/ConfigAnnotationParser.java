@@ -6,6 +6,7 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.File;
@@ -25,120 +26,95 @@ import java.util.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ConfigAnnotationParser extends AbstractProcessor {
 
-    private MetadataParser metadataParser;
     private static final String BUILD_COMMAND_PROPERTY = "sun.java.command";
     private static final String PROFILE_FLAG = "-P";
     private static final String SCHEMA_GENERATION_PROFILE = "schema-generation";
-
-    private ProcessingEnvironment processingEnv;
     private boolean generated = false;
 
     @Override
     public synchronized void init(final ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         this.processingEnv = processingEnv;
-        this.metadataParser = new MetadataParser();
     }
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
-
         final var configs = roundEnv.getElementsAnnotatedWith(ConfigSchema.class);
         if (roundEnv.processingOver() || this.generated) {
-            return true;
+            return false;
         }
 
-        var schemaEnabled = false;
-        final var javaCmd = System.getProperty(BUILD_COMMAND_PROPERTY);
-        final var cmdProps = javaCmd.split(" ");
-        if (cmdProps.length == 0) {
-            return true;
-        }
-
-        var x = 0;
-        var profilesDefined = false;
-        for (;x < cmdProps.length; x++) {
-            if (cmdProps[x].equals(PROFILE_FLAG)) {
-                x = x + 1;
-                profilesDefined = true;
-                break;
-            }
-        }
-
-        if (!profilesDefined) {
-            AnnotationUtils.logWarning("No profiles defined, skipping schema-generation..");
-            return true;
-        }
-
-        final var profileArr = cmdProps[x].split(",");
-        for (var profile : profileArr) {
-            if (profile.equals(SCHEMA_GENERATION_PROFILE)) {
-                schemaEnabled = true;
-                break;
-            }
-        }
-
+        var schemaEnabled = this.isSchemaProfileEnabled();
         if (!schemaEnabled) {
-            AnnotationUtils.logInfo("%s profile is disabled, skipping schema generation...", SCHEMA_GENERATION_PROFILE);
-            return true;
+            return false;
         }
 
         for (final var config : configs) {
-
             final var configClassMetadata = config.getAnnotation(ConfigSchema.class);
 
             /* Get config path inside project folder */
-            final var modulePath = this.getPathInCurrentModule(
+            final var optionalModulePath = this.getPathInCurrentModule(
                     "../../src/main/resources/config/",
                     configClassMetadata.configKey() + "_module"
             );
 
             /* Get config path inside target folder */
-            final var targetPathMirror = this.getPathInCurrentModule(
+            final var optionalTargetPathMirror = this.getPathInCurrentModule(
                     "config/",
                     configClassMetadata.configKey() + "_target"
             );
 
-            /* Generate a file inside the project folder and inside the target folder. */
-            final var configMetadata = this.metadataParser.parseMetadata(config, this.processingEnv);
+            final Path modulePath;
+            final Path targetPathMirror;
+            if (optionalTargetPathMirror.isPresent() && optionalModulePath.isPresent()) {
+                modulePath = optionalModulePath.get();
+                targetPathMirror = optionalTargetPathMirror.get();
+            } else return false;
 
-            AnnotationUtils.updateIfNotDefault(
-                    configMetadata,
-                    configClassMetadata.configDescription(),
-                    MetadataParser.DESCRIPTION_KEY,
-                    ConfigSchema.DEFAULT_STRING
-            );
+            final var configMetadata = MetadataParser.gatherObjectSchemaData(config, processingEnv)
+                    .description(configClassMetadata.configDescription())
+                    .build();
 
             for (final var output : configClassMetadata.outputFormats()) {
                 final var extension = output.getExtension();
 
                 /* write config in project folder. */
-                final var projectFile = this.resolveOrCreateFile(
+                final var optionalProjectFile = this.resolveOrCreateFile(
                         modulePath,
                         configClassMetadata.configName() + extension
-                ).toPath();
+                );
+                final Path projectFile;
+                if (optionalProjectFile.isPresent()) {
+                    projectFile = optionalProjectFile.get().toPath();
+                } else return false;
 
                 try (var writer = Files.newBufferedWriter(projectFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
                 } catch (IOException e) {
-                    throw new RuntimeException("Error generating config file", e);
+                    this.logError("Error generating config file: %s", e.getMessage());
+                    return false;
                 }
 
                 /* write config in target folder. */
-                final var targetFile = this.resolveOrCreateFile(
+                final var optionalTargetFile = this.resolveOrCreateFile(
                         targetPathMirror,
                         configClassMetadata.configName() + extension
-                ).toPath();
+                );
+
+                final Path targetFile;
+                if (optionalTargetFile.isPresent()) {
+                    targetFile = optionalTargetFile.get().toPath();
+                } else return false;
 
                 try (var writer = Files.newBufferedWriter(targetFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
                 } catch (IOException e) {
-                    throw new RuntimeException("Error generating config file", e);
+                    this.logError("Error generating config file: %s", e.getMessage());
+                    return false;
                 }
             }
-
         }
         this.generated = true;
         return true;
@@ -151,33 +127,23 @@ public class ConfigAnnotationParser extends AbstractProcessor {
      * @param fileName The name of the file.
      * @return The resolved file.
      */
-    private File resolveOrCreateFile(final Path path, final String fileName) {
+    private Optional<File> resolveOrCreateFile(final Path path, final String fileName) {
         final var file = path.resolve(fileName).toFile();
-
         if (!file.exists()) {
             try {
-
                 if (file.createNewFile())
-                    AnnotationUtils.logInfo("File %s created", file.getName());
-
-                else AnnotationUtils.logInfo("File %s already exists, replacing file content...");
-
+                    this.logInfo("File %s created", file.getName());
+                else this.logInfo("File %s already exists, replacing file content...");
             } catch (IOException e) {
-                throw new RuntimeException(
-                        "Could not create a new file '" +
-                                fileName +
-                                "', for the directory '" +
-                                file + "'. " +
-                                e.getMessage()
-                );
+                this.logError("Could not create a new file '%s' on path '%s': %s", fileName, file.toString(), e.getMessage());
+                return Optional.empty();
             }
         }
-
-        return file;
+        return Optional.of(file);
     }
 
 
-    private Path getPathInCurrentModule(final String relativeModulePath, final String tempAnchorName) {
+    private Optional<Path> getPathInCurrentModule(final String relativeModulePath, final String tempAnchorName) {
         final var path = Objects.requireNonNullElse(relativeModulePath, "");
         final FileObject resource;
         try {
@@ -188,11 +154,39 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                     (Element[]) null
             );
         } catch (IOException e) {
-            throw new RuntimeException("Could not create a temporary anchor '"+ tempAnchorName +"' under path '" + path + "'.", e);
+            this.logError("Could not create the temporary anchor '%s' on path '%s': %s", tempAnchorName, path, e.getMessage());
+            return Optional.empty();
         }
 
         // return parent folder of the temp file.
-        return Paths.get(resource.toUri()).getParent().resolve(path);
+        return Optional.of(Paths.get(resource.toUri()).getParent().resolve(path));
+    }
+
+    public void logError(String message, Object... args) {
+        final var formattedMessage = formatMessage(message, args);
+        this.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, formattedMessage);
+    }
+
+    public void logInfo(String message, Object... args) {
+        final var formattedMessage = formatMessage(message, args);
+        this.processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, formattedMessage);
+    }
+
+    private static String formatMessage(String message, Object... args) {
+        if (args == null || args.length == 0) {
+            return message;
+        }
+        return String.format(message, args);
+    }
+
+    private boolean isSchemaProfileEnabled() {
+        return Arrays.stream(System.getProperty(BUILD_COMMAND_PROPERTY)
+                .split(" "))
+                .dropWhile(arg -> !arg.equals(PROFILE_FLAG))
+                .skip(1)
+                .findFirst()
+                .map(profileListString -> Arrays.asList(profileListString.split(",")).contains(SCHEMA_GENERATION_PROFILE))
+                .orElse(false);
     }
 
 }

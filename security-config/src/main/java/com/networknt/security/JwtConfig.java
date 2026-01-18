@@ -54,7 +54,6 @@ public class JwtConfig {
                     "  filename: \"primary.jks\"                  # private key that is used to sign JWT tokens.\n" +
                     "  keyName: selfsigned                      # key name that is used to identify the right key in keystore.\n" +
                     "  password: password                       # private key store password and private key password is the same\n",
-            externalized =true,
             ref = Key.class
     )
     Key key;
@@ -63,7 +62,6 @@ public class JwtConfig {
             configFieldName = ISSUER,
             externalizedKeyName = ISSUER,
             defaultValue = "urn:com:networknt:oauth2:v1",
-            externalized = true,
             description = "issuer of the JWT token"
     )
     String issuer;
@@ -73,7 +71,6 @@ public class JwtConfig {
             configFieldName = AUDIENCE,
             externalizedKeyName = AUDIENCE,
             defaultValue = "urn:com.networknt",
-            externalized = true,
             description = "audience of the JWT token"
     )
     String audience;
@@ -82,7 +79,6 @@ public class JwtConfig {
             configFieldName = EXPIRED_IN_MINUTES,
             externalizedKeyName = EXPIRED_IN_MINUTES,
             defaultValue = "10",
-            externalized = true,
             description = "expired in 10 minutes by default for issued JWT tokens"
     )
     int expiredInMinutes;
@@ -90,7 +86,6 @@ public class JwtConfig {
     @StringField(
             configFieldName = VERSION,
             externalizedKeyName = VERSION,
-            externalized = true,
             defaultValue = "1.0",
             description = "JWT token version"
     )
@@ -100,7 +95,6 @@ public class JwtConfig {
     @StringField(
             configFieldName = PROVIDER_ID,
             externalizedKeyName = PROVIDER_ID,
-            externalized = true,
             description = "If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this\n" +
                     "value should be null so that the OAuth 2.0 provider is run as one instance"
     )

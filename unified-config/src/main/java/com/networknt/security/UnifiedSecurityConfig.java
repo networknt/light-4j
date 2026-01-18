@@ -41,7 +41,6 @@ public class UnifiedSecurityConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\n" +
                           "request/response chain in the handler.yml configuration."
     )
@@ -51,7 +50,6 @@ public class UnifiedSecurityConfig {
             configFieldName = ANONYMOUS_PREFIXES,
             externalizedKeyName = ANONYMOUS_PREFIXES,
             items = String.class,
-            externalized = true,
             description = "Anonymous prefixes configuration. A list of request path prefixes. The anonymous prefixes will be checked\n" +
                           "first, and if any path is matched, all other security checks will be bypassed, and the request goes to\n" +
                           "the next handler in the chain. You can use json array or string separated by comma or YAML format."
@@ -62,7 +60,6 @@ public class UnifiedSecurityConfig {
             configFieldName = PATH_PREFIX_AUTHS,
             externalizedKeyName = PATH_PREFIX_AUTHS,
             items = UnifiedPathPrefixAuth.class,
-            externalized = true,
             description =
                     "String format with comma separator\n" +
                     "/v1/pets,/v1/cats,/v1/dogs\n" +

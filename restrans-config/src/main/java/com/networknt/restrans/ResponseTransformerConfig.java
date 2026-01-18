@@ -32,7 +32,6 @@ public class ResponseTransformerConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if the interceptor is enabled or not."
     )
@@ -41,7 +40,6 @@ public class ResponseTransformerConfig {
     @BooleanField(
             configFieldName = REQUIRED_CONTENT,
             externalizedKeyName = REQUIRED_CONTENT,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if the transformer needs to modify the response body in the transform rules."
     )
@@ -50,7 +48,6 @@ public class ResponseTransformerConfig {
     @StringField(
             configFieldName = DEFAULT_BODY_ENCODING,
             externalizedKeyName = DEFAULT_BODY_ENCODING,
-            externalized = true,
             defaultValue = "UTF-8",
             description = "default body encoding for the response body. The default value is UTF-8. Other options are ISO-8859-1 and US-ASCII."
     )
@@ -59,7 +56,6 @@ public class ResponseTransformerConfig {
     @ArrayField(
             configFieldName = APPLIED_PATH_PREFIXES,
             externalizedKeyName = APPLIED_PATH_PREFIXES,
-            externalized = true,
             description = "A list of applied request path prefixes, other requests will skip this handler. The value can be a string\n" +
                     "if there is only one request path prefix needs this handler. or a list of strings if there are multiple.",
             items = String.class
@@ -69,7 +65,6 @@ public class ResponseTransformerConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ENCODING,
             externalizedKeyName = PATH_PREFIX_ENCODING,
-            externalized = true,
             description = "For certain path prefixes that are not using the defaultBodyEncoding UTF-8, you can define the customized\n" +
                     "encoding like ISO-8859-1 for the path prefixes here. This is only for the legacy APIs that can only accept\n" +
                     "ISO-8859-1 response body but the backend server is sending the response in UTF-8 as it is standard on the Web.\n" +

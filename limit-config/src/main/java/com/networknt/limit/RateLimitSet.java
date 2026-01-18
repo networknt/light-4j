@@ -11,7 +11,10 @@ public class RateLimitSet {
     @MapField(
             configFieldName = "directMaps",
             externalizedKeyName = "directMaps",
-            valueTypeOneOf = {Map.class, String.class}
+            valueTypeOneOf = {
+                    Map.class,
+                    String.class
+            }
     )
     public Map<String, List<LimitQuota>> directMaps;
 

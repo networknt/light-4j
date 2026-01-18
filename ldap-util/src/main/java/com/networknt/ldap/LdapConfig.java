@@ -37,48 +37,42 @@ public class LdapConfig {
     @StringField(
             configFieldName = URI,
             externalizedKeyName = URI,
-            description = "The LDAP server uri.",
-            externalized = true
+            description = "The LDAP server uri."
     )
     String uri;
 
     @StringField(
             configFieldName = DOMAIN,
             externalizedKeyName = DOMAIN,
-            description = "The LDAP domain name.",
-            externalized = true
+            description = "The LDAP domain name."
     )
     String domain;
 
     @StringField(
             configFieldName = PRINCIPAL,
             externalizedKeyName = PRINCIPAL,
-            description = "The user principal for binding (authentication).",
-            externalized = true
+            description = "The user principal for binding (authentication)."
     )
     String principal;
 
     @StringField(
             configFieldName = CREDENTIAL,
             externalizedKeyName = CREDENTIAL,
-            description = "The user credential (password) for binding.",
-            externalized = true
+            description = "The user credential (password) for binding."
     )
     String credential;
 
     @StringField(
             configFieldName = SEARCH_FILTER,
             externalizedKeyName = SEARCH_FILTER,
-            description = "The search filter (e.g., (&(objectClass=user)(sAMAccountName={0}))).",
-            externalized = true
+            description = "The search filter (e.g., (&(objectClass=user)(sAMAccountName={0})))."
     )
     String searchFilter;
 
     @StringField(
             configFieldName = SEARCH_BASE,
             externalizedKeyName = SEARCH_BASE,
-            description = "The search base DN (Distinguished Name).",
-            externalized = true
+            description = "The search base DN (Distinguished Name)."
     )
     String searchBase;
 

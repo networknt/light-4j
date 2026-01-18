@@ -43,7 +43,6 @@ public class ExternalServiceConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Indicate if the handler is enabled or not",
-            externalized = true,
             defaultValue = "false"
     )
     boolean enabled;
@@ -51,16 +50,14 @@ public class ExternalServiceConfig {
     @StringField(
             configFieldName = PROXY_HOST,
             externalizedKeyName = PROXY_HOST,
-            description = "Proxy Host if calling within the corp network with a gateway like Mcafee gateway.",
-            externalized = true
+            description = "Proxy Host if calling within the corp network with a gateway like Mcafee gateway."
     )
     String proxyHost;
 
     @IntegerField(
             configFieldName = PROXY_PORT,
             externalizedKeyName = PROXY_PORT,
-            description = "Proxy Port if proxy host is used. default value will be 443 which means HTTPS.",
-            externalized = true
+            description = "Proxy Port if proxy host is used. default value will be 443 which means HTTPS."
     )
     int proxyPort;
 
@@ -69,7 +66,6 @@ public class ExternalServiceConfig {
             externalizedKeyName = CONNECT_TIMEOUT,
             description = "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\n" +
                     "value is 3000.\n",
-            externalized = true,
             defaultValue = "3000"
     )
     int connectTimeout;
@@ -78,7 +74,6 @@ public class ExternalServiceConfig {
             configFieldName = TIMEOUT,
             externalizedKeyName = TIMEOUT,
             description = "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
-            externalized = true,
             defaultValue = "5000"
     )
     int timeout;
@@ -87,7 +82,6 @@ public class ExternalServiceConfig {
             configFieldName = ENABLE_HTTP2,
             externalizedKeyName = ENABLE_HTTP2,
             description = "If HTTP2 is used to connect to the external service.",
-            externalized = true,
             defaultValue = "false"
     )
     boolean enableHttp2;
@@ -96,7 +90,6 @@ public class ExternalServiceConfig {
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
             description = "Max Connection Retries",
-            externalized = true,
             defaultValue = "3"
     )
     int maxConnectionRetries;
@@ -108,7 +101,6 @@ public class ExternalServiceConfig {
             description = "A list of request path to the service host mappings. Other requests will skip this handler. The value is\n" +
                     "a string with two parts. The first part is the path and the second is the target host the request is\n" +
                     "finally routed to.\n",
-            externalized = true,
             items = String.class // Items are strings that will be split later
     )
     List<String[]> pathHostMappings; // Keep as List<String[]>
@@ -120,7 +112,6 @@ public class ExternalServiceConfig {
             description = "URL rewrite rules, each line will have two parts: the regex pattern and replace string separated\n" +
                     "with a space. For details, please refer to the light-router router.yml configuration.\n" +
                     "Test your rules at https://www.freeformatter.com/java-regex-tester.html\n",
-            externalized = true,
             items = String.class // Items are strings that will be converted to UrlRewriteRule later
     )
     List<UrlRewriteRule> urlRewriteRules; // Keep as List<UrlRewriteRule>
@@ -133,7 +124,6 @@ public class ExternalServiceConfig {
                     "time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\n" +
                     "the network latency. By default, it is false, and metrics will not be collected and injected into the metrics\n" +
                     "handler configured in the request/response chain.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean metricsInjection;
@@ -144,7 +134,6 @@ public class ExternalServiceConfig {
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\n" +
                     "metrics info can be categorized in a tree structure under the name. By default, it is external-response, and\n" +
                     "users can change it.\n",
-            externalized = true,
             defaultValue = "external-response"
     )
     String metricsName;

@@ -43,7 +43,6 @@ public class RequestDecodeConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "request decode handler for gzip and deflate",
             defaultValue = "false"
     )
@@ -52,7 +51,6 @@ public class RequestDecodeConfig {
     @ArrayField(
             configFieldName = DECODERS,
             externalizedKeyName = DECODERS,
-            externalized = true,
             defaultValue = "[\"gzip\", \"deflate\"]",
             items = String.class,
             description = "A list of decoders.\n  -gzip\n  -deflate\ngzip,deflate"

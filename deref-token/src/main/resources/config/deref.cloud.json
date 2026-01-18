@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.deref.DerefConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "deref",
     "configType" : "Handler",
     "updateUser" : "",

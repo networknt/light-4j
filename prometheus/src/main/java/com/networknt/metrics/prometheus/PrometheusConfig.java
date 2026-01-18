@@ -40,7 +40,6 @@ public class PrometheusConfig {
         configFieldName = "enabled",
         externalizedKeyName = "enabled",
         defaultValue = "false",
-        externalized = true,
         description = "If metrics handler is enabled or not"
     )
     boolean enabled;
@@ -49,7 +48,6 @@ public class PrometheusConfig {
             configFieldName = "enableHotspot",
             externalizedKeyName = "enableHotspot",
             defaultValue = "false",
-            externalized = true,
             description = "If the Prometheus hotspot is enabled or not.\n" +
                     "hotspot include thread, memory, classloader,..."
     )

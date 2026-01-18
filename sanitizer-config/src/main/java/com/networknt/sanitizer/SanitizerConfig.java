@@ -60,7 +60,6 @@ public class SanitizerConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = "indicate if sanitizer is enabled or not"
     )
@@ -69,7 +68,6 @@ public class SanitizerConfig {
     @BooleanField(
             configFieldName = BODY_ENABLED,
             externalizedKeyName = BODY_ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "if it is enabled, the body needs to be sanitized"
     )
@@ -78,7 +76,6 @@ public class SanitizerConfig {
     @StringField(
             configFieldName = BODY_ENCODER,
             externalizedKeyName = BODY_ENCODER,
-            externalized = true,
             defaultValue = "javascript-source",
             description = "the encoder for the body. javascript, javascript-attribute, javascript-block or javascript-source\n" +
                     "There are other encoders that you can choose depending on your requirement. Please refer to site\n" +
@@ -89,7 +86,6 @@ public class SanitizerConfig {
     @ArrayField(
             configFieldName = BODY_ATTRIBUTES_TO_ENCODE,
             externalizedKeyName = BODY_ATTRIBUTES_TO_ENCODE,
-            externalized = true,
             description = "pick up a list of keys to encode the values to limit the scope to only selected keys. You can\n" +
                     "choose this option if you want to only encode certain fields in the body. When this option is\n" +
                     "selected, you can not use the bodyAttributesToIgnore list.",
@@ -100,7 +96,6 @@ public class SanitizerConfig {
     @ArrayField(
             configFieldName = BODY_ATTRIBUTES_TO_IGNORE,
             externalizedKeyName = BODY_ATTRIBUTES_TO_IGNORE,
-            externalized = true,
             description = "pick up a list of keys to ignore the values encoding to skip some of the values so that these\n" +
                     "values won't be encoded. You can choose this option if you want to encode everything except\n" +
                     "several values with a list of the keys. When this option is selected, you can not use the\n" +
@@ -112,7 +107,6 @@ public class SanitizerConfig {
     @BooleanField(
             configFieldName = HEADER_ENABLED,
             externalizedKeyName = HEADER_ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "if it is enabled, the header needs to be sanitized"
     )
@@ -121,7 +115,6 @@ public class SanitizerConfig {
     @StringField(
             configFieldName = HEADER_ENCODER,
             externalizedKeyName =  HEADER_ENCODER,
-            externalized = true,
             defaultValue = "javascript-source",
             description = "the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source\n" +
                     "There are other encoders that you can choose depending on your requirement. Please refer to site\n" +
@@ -132,7 +125,6 @@ public class SanitizerConfig {
     @ArrayField(
             configFieldName = HEADER_ATTRIBUTES_TO_ENCODE,
             externalizedKeyName = HEADER_ATTRIBUTES_TO_ENCODE,
-            externalized = true,
             description = "pick up a list of keys to encode the values to limit the scope to only selected keys. You can\n" +
                     "choose this option if you want to only encode certain values in the headers. When this option is\n" +
                     "selected, you can not use the headerAttributesToIgnore list.",
@@ -143,7 +135,6 @@ public class SanitizerConfig {
     @ArrayField(
             configFieldName = HEADER_ATTRIBUTES_TO_IGNORE,
             externalizedKeyName = HEADER_ATTRIBUTES_TO_IGNORE,
-            externalized = true,
             description = "pick up a list of keys to ignore the values encoding to skip some of the values so that these\n" +
                     "values won't be encoded. You can choose this option if you want to encode everything except\n" +
                     "several values with a list of the keys. When this option is selected, you can not use the\n" +

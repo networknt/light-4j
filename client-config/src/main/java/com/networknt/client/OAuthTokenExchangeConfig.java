@@ -13,7 +13,6 @@ public class OAuthTokenExchangeConfig {
     @StringField(
             configFieldName = ClientConfig.URI,
             externalizedKeyName = "tokenExUri",
-            externalized = true,
             defaultValue = "/oauth2/token",
             description = "token endpoint for token exchange grant type"
     )
@@ -23,7 +22,6 @@ public class OAuthTokenExchangeConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "tokenExClientId",
-            externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id for token exchange grant flow."
     )
@@ -33,7 +31,6 @@ public class OAuthTokenExchangeConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "tokenExClientSecret",
-            externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for token exchange grant flow"
     )
@@ -43,7 +40,6 @@ public class OAuthTokenExchangeConfig {
     @ArrayField(
             configFieldName = ClientConfig.SCOPE,
             externalizedKeyName = "tokenExScope",
-            externalized = true,
             items = String.class,
             description = "optional scope, default scope in the client registration will be used if not defined.\n" +
                     "If there are scopes specified here, they will be verified against the registered scopes.\n" +
@@ -59,7 +55,6 @@ public class OAuthTokenExchangeConfig {
     @StringField(
             configFieldName = ClientConfig.SUBJECT_TOKEN,
             externalizedKeyName = "subjectToken",
-            externalized = true,
             description = "subject token the identity of the party on behalf of whom the request is being made"
     )
     @JsonProperty(ClientConfig.SUBJECT_TOKEN)
@@ -69,7 +64,6 @@ public class OAuthTokenExchangeConfig {
     @StringField(
             configFieldName = ClientConfig.SUBJECT_TOKEN_TYPE,
             externalizedKeyName = "subjectTokenType",
-            externalized = true,
             description = "Subject token type the type of the subject token. The default value 'urn:ietf:params:oauth:token-type:jwt'\nis chosen because it represents a JWT token type as defined in the OAuth 2.0 specification."
     )
     @JsonProperty(ClientConfig.SUBJECT_TOKEN_TYPE)
