@@ -71,7 +71,8 @@
         },
         "clockSkewInSeconds" : {
           "type" : "integer",
-          "default" : 60
+          "default" : 60,
+          "format" : "int32"
         },
         "keyResolver" : {
           "type" : "string",
@@ -98,7 +99,8 @@
     "jwtCacheFullSize" : {
       "type" : "integer",
       "description" : "If enableJwtCache is true, then an error message will be shown up in the log if the\ncache size is bigger than the jwtCacheFullSize. This helps the developers to detect\ncache problem if many distinct tokens flood the cache in a short period of time. If\nyou see JWT cache exceeds the size limit in logs, you need to turn off the enableJwtCache\nor increase the cache full size to a bigger number from the default 100.",
-      "default" : 100
+      "default" : 100,
+      "format" : "int32"
     },
     "bootstrapFromKeyService" : {
       "type" : "boolean",

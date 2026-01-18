@@ -14,17 +14,20 @@
     },
     "proxyPort" : {
       "type" : "integer",
-      "description" : "Proxy Port if proxy host is used. default value will be 443 which means HTTPS."
+      "description" : "Proxy Port if proxy host is used. default value will be 443 which means HTTPS.",
+      "format" : "int32"
     },
     "connectTimeout" : {
       "type" : "integer",
       "description" : "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\nvalue is 3000.\n",
-      "default" : 3000
+      "default" : 3000,
+      "format" : "int32"
     },
     "timeout" : {
       "type" : "integer",
       "description" : "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
-      "default" : 5000
+      "default" : 5000,
+      "format" : "int32"
     },
     "enableHttp2" : {
       "type" : "boolean",
@@ -34,7 +37,8 @@
     "maxConnectionRetries" : {
       "type" : "integer",
       "description" : "Max Connection Retries",
-      "default" : 3
+      "default" : 3,
+      "format" : "int32"
     },
     "pathHostMappings" : {
       "type" : "array",

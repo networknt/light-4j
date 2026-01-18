@@ -34,9 +34,6 @@ public class FieldNode {
     String description;
 
     @JsonProperty
-    Boolean externalized;
-
-    @JsonProperty
     String defaultValue;
 
     @JsonProperty
@@ -132,137 +129,132 @@ public class FieldNode {
     }
 
     @JsonIgnore
-    public Optional<String> getOptionalExternalizedKeyName() {
+    public Optional<String> getExternalizedKeyName() {
         return this.getOptional(this.externalizedKeyName);
     }
 
     @JsonIgnore
-    public Optional<String> getOptionalDescription() {
+    public Optional<String> getDescription() {
         return this.getOptional(this.description);
     }
 
     @JsonIgnore
-    public Optional<Boolean> getOptionalExternalized() {
-        return this.getOptional(this.externalized);
-    }
-
-    @JsonIgnore
-    public Optional<String> getOptionalDefaultValue() {
+    public Optional<String> getDefaultValue() {
         return this.getOptional(this.defaultValue);
     }
 
     @JsonIgnore
-    public Optional<FieldNode> getOptionalRef() {
+    public Optional<FieldNode> getRef() {
         return this.getOptional(this.ref);
     }
 
     @JsonIgnore
-    public Optional<List<FieldNode>> getOptionalRefAllOf() {
+    public Optional<List<FieldNode>> getAllOf() {
         return this.getOptional(this.refAllOf);
     }
 
     @JsonIgnore
-    public Optional<List<FieldNode>> getOptionalRefAnyOf() {
+    public Optional<List<FieldNode>> getAnyOf() {
         return this.getOptional(this.refAnyOf);
     }
 
     @JsonIgnore
-    public Optional<List<FieldNode>> getOptionalRefOneOf() {
+    public Optional<List<FieldNode>> getOneOf() {
         return this.getOptional(this.refOneOf);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMinInteger() {
+    public Optional<Integer> getMinInteger() {
         return this.getOptional(this.minInteger);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMaxInteger() {
+    public Optional<Integer> getMaxInteger() {
         return this.getOptional(this.maxInteger);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMultipleOfInteger() {
+    public Optional<Integer> getMultipleOfInteger() {
         return this.getOptional(this.multipleOfInteger);
     }
 
     @JsonIgnore
-    public Optional<Format> getOptionalFormat() {
+    public Optional<Format> getFormat() {
         return this.getOptional(this.format);
     }
 
     @JsonIgnore
-    public Optional<String> getOptionalPattern() {
+    public Optional<String> getPattern() {
         return this.getOptional(this.pattern);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMinLength() {
+    public Optional<Integer> getMinLength() {
         return this.getOptional(this.minLength);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMaxLength() {
+    public Optional<Integer> getMaxLength() {
         return this.getOptional(this.maxLength);
     }
 
     @JsonIgnore
-    public Optional<Double> getOptionalMinNumber() {
+    public Optional<Double> getMinNumber() {
         return this.getOptional(this.minNumber);
     }
 
     @JsonIgnore
-    public Optional<Double> getOptionalMaxNumber() {
+    public Optional<Double> getMaxNumber() {
         return this.getOptional(this.maxNumber);
     }
 
     @JsonIgnore
-    public Optional<Double> getOptionalMultipleOfNumber() {
+    public Optional<Double> getMultipleOfNumber() {
         return this.getOptional(this.multipleOfNumber);
     }
 
     @JsonIgnore
-    public Optional<Boolean> isOptionalExclusiveMin() {
+    public Optional<Boolean> getExclusiveMax() {
         return this.getOptional(this.exclusiveMin);
     }
 
     @JsonIgnore
-    public Optional<Boolean> isOptionalExclusiveMax() {
+    public Optional<Boolean> getExclusiveMin() {
         return this.getOptional(this.exclusiveMax);
     }
 
     @JsonIgnore
-    public Optional<Boolean> isOptionalUnique() {
+    public Optional<Boolean> getUnique() {
         return this.getOptional(this.uniqueItems);
     }
 
     @JsonIgnore
-    public Optional<Boolean> isOptionalUseSubTypeDefault() {
+    public Optional<Boolean> getUseSubTypeDefault() {
         return this.getOptional(this.useSubTypeDefaultValue);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMinItems() {
+    public Optional<Integer> getMinItems() {
         return this.getOptional(this.minItems);
     }
 
     @JsonIgnore
-    public Optional<Integer> getOptionalMaxItems() {
+    public Optional<Integer> getMaxItems() {
         return this.getOptional(this.maxItems);
     }
 
     @JsonIgnore
-    public Optional<Boolean> getOptionalContains() {
+    public Optional<Boolean> getContains() {
         return this.getOptional(this.contains);
     }
 
     @JsonIgnore
-    public Optional<String> getOptionalSimpleClassName() {
+    public Optional<String> getClassName() {
         return this.getOptional(this.className);
     }
 
     @JsonIgnore
-    public Optional<List<FieldNode>> getOptionalChildNodes() {
+    public Optional<List<FieldNode>> getChildren() {
         return this.getOptional(this.childNodes);
     }
 
@@ -287,12 +279,6 @@ public class FieldNode {
         public Builder description(final String value) {
             if (!value.equals(ConfigSchema.DEFAULT_STRING))
                 this.node.description = value;
-            return this;
-        }
-
-        public Builder externalized(final Boolean value) {
-            if (!value.equals(ConfigSchema.DEFAULT_BOOLEAN))
-                this.node.externalized = value;
             return this;
         }
 
@@ -403,7 +389,7 @@ public class FieldNode {
         }
 
         public Builder minLength(Integer value) {
-            if (!value.equals(ConfigSchema.DEFAULT_MIN_INT))
+            if (!value.equals(ConfigSchema.DEFAULT_INT))
                 this.node.minLength = value;
             return this;
         }

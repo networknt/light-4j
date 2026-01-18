@@ -1,7 +1,5 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import org.junit.Assert;
@@ -14,13 +12,15 @@ import static com.networknt.config.schema.generator.YamlGenerator.YAML_OPTIONS;
 
 public class YamlGeneratorTest {
 
+    /**
+     * Tests converting a boolean node.
+     */
     @Test
     public void testYamlPropertyBoolean() {
         final var generator = new YamlGenerator("configTest", "configTest");
         var testDefaultValue = "false";
 
         var testFieldNode = new FieldNode.Builder(FieldType.BOOLEAN, "root")
-                .externalized(true)
                 .externalizedKeyName("alternateExternalName")
                 .defaultValue(testDefaultValue)
                 .build();
@@ -29,6 +29,9 @@ public class YamlGeneratorTest {
         Assert.assertTrue(parsed.contains("${configTest.alternateExternalName:false}"));
     }
 
+    /**
+     * Tests converting a number node.
+     */
     @Test
     public void testYamlPropertyNumber() {
         final var generator = new YamlGenerator("configTest", "configTest");
@@ -36,7 +39,6 @@ public class YamlGeneratorTest {
 
         var testFieldNode = new FieldNode.Builder(FieldType.NUMBER, "root")
                 .externalizedKeyName("root")
-                .externalized(true)
                 .defaultValue(defaultValue)
                 .build();
 
@@ -44,13 +46,15 @@ public class YamlGeneratorTest {
         Assert.assertTrue(parsed.contains("${configTest.root:3.38}"));
     }
 
+    /**
+     * Tests converting an integer node.
+     */
     @Test
     public void testYamlPropertyInteger() {
         final var generator = new YamlGenerator("configTest", "configTest");
         var defaultValue = "4";
 
         var testFieldNode = new FieldNode.Builder(FieldType.INTEGER, "root")
-                .externalized(true)
                 .externalizedKeyName("root")
                 .defaultValue(defaultValue)
                 .build();
@@ -59,6 +63,9 @@ public class YamlGeneratorTest {
         Assert.assertTrue(parsed.contains("${configTest.root:4}"));
     }
 
+    /**
+     * Tests converting an array node.
+     */
     @Test
     public void testYamlPropertyArray() {
         final var generator = new YamlGenerator("configTest", "configTest");
@@ -66,7 +73,6 @@ public class YamlGeneratorTest {
         var testDefaultValue = "[\"testValue1\", \"testValue2\"]";
         var testFieldNode = new FieldNode.Builder(FieldType.ARRAY, "arrayNode")
                 .externalizedKeyName("arrayNode")
-                .externalized(true)
                 .description(description)
                 .defaultValue(testDefaultValue)
                 .build();
@@ -75,6 +81,9 @@ public class YamlGeneratorTest {
         Assert.assertTrue(json.contains("${configTest.arrayNode:[\"testValue1\", \"testValue2\"]}"));
     }
 
+    /**
+     * Tests converting a map node.
+     */
     @Test
     public void testYamlPropertyMap() {
         final var generator = new YamlGenerator("configTest", "configTest");
@@ -86,7 +95,6 @@ public class YamlGeneratorTest {
         var testNestedArrayNode = new FieldNode.Builder(FieldType.ARRAY, "innerArray")
                 .description(multiLineDesc)
                 .externalizedKeyName("innerArray")
-                .externalized(true)
                 .defaultValue(testDefaultValue)
                 .build();
 
@@ -101,22 +109,22 @@ public class YamlGeneratorTest {
         Assert.assertTrue(json.contains("${configTest.innerArray:[\"testValue1\", \"testValue2\"]}"));
     }
 
+    /**
+     * Tests converting an object node.
+     */
     @Test
     public void testYamlPropertyObject() {
         final var generator = new YamlGenerator("configTest", "configTest");
         var description = "This is a test description.";
         var node1 = new FieldNode.Builder(FieldType.STRING, "node1")
-                .externalized(true)
                 .externalizedKeyName("node1")
                 .defaultValue("Node1DefaultValue")
                 .build();
         var node2 = new FieldNode.Builder(FieldType.STRING, "node2")
-                .externalized(true)
                 .externalizedKeyName("node2")
                 .defaultValue("Node2DefaultValue")
                 .build();
         var node3 = new FieldNode.Builder(FieldType.STRING, "node3")
-                .externalized(true)
                 .externalizedKeyName("node3")
                 .defaultValue("Node3DefaultValue")
                 .build();
@@ -134,19 +142,21 @@ public class YamlGeneratorTest {
         Assert.assertTrue(parsed.contains("${configTest.node3:Node3DefaultValue}"));
     }
 
+    /**
+     * Builds a standard config root object with some properties.
+     * Makes sure that we are building nodes and generating the correct properties.
+     */
     @Test
     public void testYamlPropertyFullConfig() {
         final var generator = new YamlGenerator("configTest", "configTest");
         var innerStrNode = new FieldNode.Builder(FieldType.STRING, "innerStringNode")
                 .defaultValue("123")
-                .externalized(true)
                 .externalizedKeyName("innerStringNode")
                 .description("This is the inner most string field.")
                 .build();
 
         var otherStringNode = new FieldNode.Builder(FieldType.STRING, "otherNode")
                 .defaultValue("abc")
-                .externalized(true)
                 .externalizedKeyName("otherNode")
                 .build();
 
@@ -178,63 +188,52 @@ public class YamlGeneratorTest {
     }
 
 
-    // TODO[BUG] - This unit test hits the bug!
+    /**
+     * Builds a 'complex' structure of nested nodes with various types.
+     * The test makes sure that we are not losing any properties that we explicitly set as externalized.
+     */
     @Test
-    public void complexConfigStructureYamlGenerationTest() throws JsonProcessingException {
+    public void complexConfigStructureYamlGenerationTest() {
         final var generator = new YamlGenerator("configTest", "configTest");
-        /*
-         * ...
-         * # int1 description
-         * integer1:${configTest.integer1:}
-         * ...
-         * */
-        var int1 = FieldType.INTEGER.newBuilder("integer1").description("int1 description").externalized(true).externalizedKeyName("integer1").build();
-        /*
-        * ...
-        * string1:${configTest.strstr1:abc123}
-        * ...
-        * */
-        var str1 = FieldType.STRING.newBuilder("string1").externalized(true).externalizedKeyName("strstr1").defaultValue("abc123").build();
 
-        /*
-        * ...
-        * obj1:
-        *   # int1 description
-        *   integer1: ${configTest.integer1:}
-        *   string1:${configTest.strstr1:abc123}
-        * ...
-        * */
+        /* ${configTest.integer1:} */
+        var int1 = FieldType.INTEGER.newBuilder("integer1")
+                .description("int1 description")
+                .externalizedKeyName("integer1")
+                .build();
+
+        /* ${configTest.strstr1:abc123} */
+        var str1 = FieldType.STRING.newBuilder("string1")
+                .externalizedKeyName("strstr1")
+                .defaultValue("abc123")
+                .build();
+
         var obj1 = FieldType.OBJECT.newBuilder("obj1")
                 .subObjectDefault(true)
                 .childNodes(List.of(int1, str1))
                 .build();
 
-        /*
-         * ...
-         * # int2 description
-         * integer2:${configTest.integer2:3}
-         * ...
-         * */
-        var int2 = FieldType.INTEGER.newBuilder("integer2").description("int2 description").externalized(true).externalizedKeyName("integer1").defaultValue("3").build();
-        /*
-         * ...
-         * string2:${configTest.strstr2:}
-         * ...
-         * */
-        var str2 = FieldType.STRING.newBuilder("string2").externalized(true).externalizedKeyName("strstr2").build();
+        /* ${configTest.integer2:3} */
+        var int2 = FieldType.INTEGER.newBuilder("integer2")
+                .description("int2 description")
+                .externalizedKeyName("integer1")
+                .defaultValue("3")
+                .build();
 
-        var val1 = FieldType.STRING.newBuilder("val1").pattern("somePattern").maxLength(100).build();
-        var arr1 = FieldType.ARRAY.newBuilder("arr1").defaultValue("[\"test1\", \"test2\"]").ref(val1).build();
+        /* ${configTest.strstr2:} */
+        var str2 = FieldType.STRING.newBuilder("string2")
+                .externalizedKeyName("strstr2")
+                .build();
+
+        /* ${configTest.externalarr1:["test1", "test2"]} */
+        var val1 = FieldType.STRING.newBuilder("val1").build();
+        var arr1 = FieldType.ARRAY.newBuilder("arr1")
+                .defaultValue("[\"test1\", \"test2\"]")
+                .externalizedKeyName("externalarr1")
+                .ref(val1)
+                .build();
 
         var ref1 = FieldType.OBJECT.newBuilder("ref1").childNodes(List.of(int2, str2, arr1, obj1)).build();
-        /*
-         * ...
-         * obj2:
-         *   # int2 description
-         *   integer2:${configTest.integer2:3}
-         *   string2:${configTest.strstr2:}
-         * ...
-         * */
         var obj2 = FieldType.OBJECT.newBuilder("obj1")
                 .subObjectDefault(true)
                 .description("This is a multiline description.\n This is the second line.")
@@ -249,12 +248,13 @@ public class YamlGeneratorTest {
 
         var root = FieldType.OBJECT.newBuilder("root").childNodes(List.of(obj3)).build();
         var result = generator.convertConfigRoot(root);
-        ObjectMapper mapper = new ObjectMapper();
-        var printRes = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-        System.out.println(printRes);
         final var yaml = new Yaml(new YamlGenerator.YamlCommentRepresenter(YAML_OPTIONS, root), YAML_OPTIONS);
         final var fileContent = yaml.dump(result);
-        System.out.println(fileContent);
+
+        Assert.assertTrue(fileContent.contains("${configTest.externalarr1:[\"test1\", \"test2\"]}"));
+        Assert.assertTrue(fileContent.contains("${configTest.strstr1:abc123}"));
+        Assert.assertTrue(fileContent.contains("${configTest.integer1:}"));
+        Assert.assertTrue(fileContent.contains("${configTest.strstr2:}"));
     }
 
 

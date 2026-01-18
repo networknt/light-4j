@@ -38,7 +38,6 @@ public class ApiKeyConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "Enable ApiKey Authentication Handler, default is false."
     )
@@ -47,7 +46,6 @@ public class ApiKeyConfig {
     @BooleanField(
             configFieldName = HASH_ENABLED,
             externalizedKeyName = HASH_ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = """
                           If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is
@@ -60,7 +58,6 @@ public class ApiKeyConfig {
     @ArrayField(
             configFieldName = PATH_PREFIX_AUTHS,
             externalizedKeyName = PATH_PREFIX_AUTHS,
-            externalized = true,
             items = ApiKey.class,
             description = """
                     path prefix to the api key mapping. It is a list of map between the path prefix and the api key

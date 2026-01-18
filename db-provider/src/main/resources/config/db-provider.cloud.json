@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.db.provider.DbProviderConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "db-provider",
     "configType" : "Handler",
     "updateUser" : "",

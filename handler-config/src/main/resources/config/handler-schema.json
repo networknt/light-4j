@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "auditOnError", "auditStackTrace", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "handlers", "defaultHandlers", "paths" ],
+  "required" : [ "enabled", "auditOnError", "auditStackTrace", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "handlers", "chains", "paths", "defaultHandlers" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -38,15 +38,16 @@
         "type" : "string"
       }
     },
-    "defaultHandlers" : {
-      "type" : "array",
-      "description" : "If there is no matched path, then it goes here first. If this is not set, then an error\nwill be returned.",
-      "items" : {
-        "type" : "string"
+    "chains" : {
+      "type" : "object",
+      "description" : "List of defined chains",
+      "additionalProperties" : {
+        "type" : "object"
       }
     },
     "paths" : {
       "type" : "array",
+      "description" : "List of defined paths",
       "items" : {
         "type" : "object",
         "properties" : {
@@ -68,6 +69,13 @@
             }
           }
         }
+      }
+    },
+    "defaultHandlers" : {
+      "type" : "array",
+      "description" : "If there is no matched path, then it goes here first. If this is not set, then an error\nwill be returned.",
+      "items" : {
+        "type" : "string"
       }
     }
   }

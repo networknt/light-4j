@@ -37,7 +37,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "host",
             externalizedKeyName = "host",
-            externalized = true,
             description = "Email server host name or IP address",
             defaultValue = "mail.lightapi.net"
     )
@@ -46,7 +45,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "port",
             externalizedKeyName = "port",
-            externalized = true,
             defaultValue = "587",
             description = "Email SMTP port number. Please don't use port 25 as it is not safe"
     )
@@ -55,7 +53,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "user",
             externalizedKeyName = "user",
-            externalized = true,
             description = "Email user or sender address.",
             defaultValue = "noreply@lightapi.net"
     )
@@ -64,7 +61,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "pass",
             externalizedKeyName = "pass",
-            externalized = true,
             description = "Email password. If you want to put the email.pass in values.yml, you must encrypt it.\n" +
                     "If you don't want to put the password in the config file, you can use the following environment variable.\n" +
                     "EMAIL_PASS=password\n",
@@ -75,7 +71,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "debug",
             externalizedKeyName = "debug",
-            externalized = true,
             defaultValue = "true",
             description = "Email debug mode. Default to true"
     )
@@ -84,7 +79,6 @@ public class EmailConfig {
     @StringField(
             configFieldName = "auth",
             externalizedKeyName = "auth",
-            externalized = true,
             defaultValue = "true",
             description = "Email authentication. Default to true"
     )

@@ -13,7 +13,6 @@ public class OAuthTokenAuthorizationCodeConfig {
     @StringField(
             configFieldName = ClientConfig.URI,
             externalizedKeyName = "tokenAcUri",
-            externalized = true,
             defaultValue = "/oauth2/token",
             description = "token endpoint for authorization code grant"
     )
@@ -23,7 +22,6 @@ public class OAuthTokenAuthorizationCodeConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "tokenAcClientId",
-            externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id for authorization code grant flow."
     )
@@ -33,7 +31,6 @@ public class OAuthTokenAuthorizationCodeConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "tokenAcClientSecret",
-            externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for authorization code grant flow."
     )
@@ -43,7 +40,6 @@ public class OAuthTokenAuthorizationCodeConfig {
     @StringField(
             configFieldName = ClientConfig.REDIRECT_URI,
             externalizedKeyName = "tokenAcRedirectUri",
-            externalized = true,
             defaultValue = "https://localhost:3000/authorization",
             description = "the web server uri that will receive the redirected authorization code"
     )
@@ -53,7 +49,6 @@ public class OAuthTokenAuthorizationCodeConfig {
     @ArrayField(
             configFieldName = ClientConfig.SCOPE,
             externalizedKeyName = "tokenAcScope",
-            externalized = true,
             items = String.class,
             description = "optional scope, default scope in the client registration will be used if not defined.\n" +
                     "If there are scopes specified here, they will be verified against the registered scopes.\n" +

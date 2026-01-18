@@ -39,7 +39,6 @@ public class PathServiceConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if PathServiceHandler is enabled or not"
     )
@@ -48,7 +47,6 @@ public class PathServiceConfig {
     @MapField(
         configFieldName = MAPPING,
         externalizedKeyName = MAPPING,
-        externalized = true,
         description = "mapping from request endpoints to serviceIds.\n" +
                 "The following are examples in the values.yml\n" +
                 "  /v1/address/{id}@get: party.address-1.0.0\n" +

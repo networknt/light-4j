@@ -65,7 +65,6 @@ public class AuditConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Enable Audit Logging",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean enabled;
@@ -74,7 +73,6 @@ public class AuditConfig {
             configFieldName = MASK,
             externalizedKeyName = MASK,
             description = "Enable mask in the audit log",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean mask;
@@ -83,7 +81,6 @@ public class AuditConfig {
             configFieldName = STATUS_CODE,
             externalizedKeyName = STATUS_CODE,
             description = "Output response status code.",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean statusCode;
@@ -92,7 +89,6 @@ public class AuditConfig {
             configFieldName = RESPONSE_TIME,
             externalizedKeyName = RESPONSE_TIME,
             description = "Output response time.",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean responseTime;
@@ -109,7 +105,6 @@ public class AuditConfig {
                     "when auditOnError is false:\n" +
                     " - it will log on every request\n" +
                     "log level is controlled by logLevel",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean auditOnError;
@@ -118,7 +113,6 @@ public class AuditConfig {
             configFieldName = LOG_LEVEL_IS_ERROR,
             externalizedKeyName = LOG_LEVEL_IS_ERROR,
             description = "log level is error; by default the logging level is set to info. If you want to change it to error, set to true.",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean logLevelIsError;
@@ -127,8 +121,7 @@ public class AuditConfig {
             configFieldName = TIMESTAMP_FORMAT,
             externalizedKeyName = TIMESTAMP_FORMAT,
             description = "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\n" +
-                    "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.",
-            externalized = true
+                    "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format."
     )
     private String timestampFormat;
 
@@ -143,7 +136,6 @@ public class AuditConfig {
                     "- X-Traceability-Id\n" +
                     "caller id for metrics\n" +
                     "- caller_id\n",
-            externalized = true,
             items = String.class,
             defaultValue = "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
     )
@@ -168,7 +160,6 @@ public class AuditConfig {
                     "- requestBody\n" +
                     "Response payload, this is optional and must be set by the service in its implementation\n" +
                     "- responseBody\n",
-            externalized = true,
             items = String.class,
             defaultValue = "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
     )
@@ -179,7 +170,6 @@ public class AuditConfig {
             externalizedKeyName = REQUEST_BODY_MAX_SIZE,
             description = "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\n" +
                     "request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-            externalized = true,
             defaultValue = "4096"
     )
     private int requestBodyMaxSize;
@@ -189,7 +179,6 @@ public class AuditConfig {
             externalizedKeyName = RESPONSE_BODY_MAX_SIZE,
             description = "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\n" +
                     "response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-            externalized = true,
             defaultValue = "4096"
     )
     private int responseBodyMaxSize;

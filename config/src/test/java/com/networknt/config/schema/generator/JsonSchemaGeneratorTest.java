@@ -1,5 +1,7 @@
 package com.networknt.config.schema.generator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import com.networknt.config.schema.Format;
@@ -252,6 +254,24 @@ public class JsonSchemaGeneratorTest {
 
         var innerBooleanDefault = ((LinkedHashMap<String, Object>)rootProps.get("outerBoolean")).get(JsonSchemaGenerator.DEFAULT_KEY);
         Assert.assertEquals(false, innerBooleanDefault);
+    }
+
+    @Test
+    public void testMultiClassJsonSchema() throws JsonProcessingException {
+        final var generator = new JsonSchemaGenerator("configTest", "configTest");
+        var type1 = FieldType.STRING.newBuilder("type1").build();
+        var type2 = FieldType.MAP.newBuilder("type2")
+                .ref(FieldType.STRING.newBuilder("mapType1")
+                        .build()).build();
+
+        var multiClassMap = FieldType.MAP.newBuilder("multiClassMap").externalizedKeyName("multi").oneOf(List.of(type1, type2)).build();
+        var steppingClass = FieldType.OBJECT.newBuilder("steppingClass").childNodes(List.of(multiClassMap)).build();
+        var rootObj = FieldType.OBJECT.newBuilder("root").ref(steppingClass).build();
+        var parsed = generator.convertConfigRoot(rootObj);
+        ObjectMapper objectMapper = new ObjectMapper();
+        var result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsed);
+        System.out.println(result);
+
     }
 
 

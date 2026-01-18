@@ -47,7 +47,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = "Enable Basic Authentication Handler, default is true."
     )
@@ -56,7 +55,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ENABLE_AD,
             externalizedKeyName = ENABLE_AD,
-            externalized = true,
             defaultValue = "true",
             description = "Enable Ldap Authentication, default is true."
     )
@@ -65,7 +63,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ALLOW_ANONYMOUS,
             externalizedKeyName = ALLOW_ANONYMOUS,
-            externalized = true,
             defaultValue = "false",
             description = "Do we allow the anonymous to pass the authentication and limit it with some paths\n" +
                     "to access? Default is false, and it should only be true in client-proxy."
@@ -75,7 +72,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ALLOW_BEARER_TOKEN,
             externalizedKeyName = ALLOW_BEARER_TOKEN,
-            externalized = true,
             defaultValue = "false",
             description = "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\n" +
                     "authorization defined under username bearer. This feature is used in proxy-client\n" +
@@ -86,7 +82,6 @@ public class BasicAuthConfig {
     @MapField(
             configFieldName = USERS,
             externalizedKeyName = USERS,
-            externalized = true,
             description = "usernames and passwords in a list, the password can be encrypted like user2 in test.\n" +
                     "As we are supporting multiple users, so leave the passwords in this file with users.\n" +
                     "For each user, you can specify a list of optional paths that this user is allowed to\n" +

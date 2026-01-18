@@ -24,7 +24,6 @@ public class MaskConfig {
     @MapField(
             configFieldName = STRING,
             externalizedKeyName = STRING,
-            externalized = true,
             defaultValue = "{\"uri\":{\"password=[^&]*\": \"password=******\"}}",
             valueType = Map.class
     )
@@ -33,7 +32,6 @@ public class MaskConfig {
     @MapField(
             configFieldName = REGEX,
             externalizedKeyName = REGEX,
-            externalized = true,
             valueType = Map.class
     )
     private Map<String, Map<String, String>> regex;
@@ -41,7 +39,6 @@ public class MaskConfig {
     @MapField(
             configFieldName = JSON,
             externalizedKeyName = JSON,
-            externalized = true,
             valueType = Map.class
     )
     private Map<String, Map<String, String>> json;

@@ -11,7 +11,8 @@
     "httpPort" : {
       "type" : "integer",
       "description" : "Http port if enableHttp is true. It will be ignored if dynamicPort is true.",
-      "default" : 8080
+      "default" : 8080,
+      "format" : "int32"
     },
     "enableHttp" : {
       "type" : "boolean",
@@ -21,7 +22,8 @@
     "httpsPort" : {
       "type" : "integer",
       "description" : "Https port if enableHttps is true. It will be ignored if dynamicPort is true.",
-      "default" : 8443
+      "default" : 8443,
+      "format" : "int32"
     },
     "enableHttps" : {
       "type" : "boolean",
@@ -96,12 +98,14 @@
     "minPort" : {
       "type" : "integer",
       "description" : "Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup\nfirewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be\nenough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods",
-      "default" : 2400
+      "default" : 2400,
+      "format" : "int32"
     },
     "maxPort" : {
       "type" : "integer",
       "description" : "Maximum port rang. The range can be customized to adopt your network security policy and can be increased or\nreduced to ease firewall rules.",
-      "default" : 2500
+      "default" : 2500,
+      "format" : "int32"
     },
     "environment" : {
       "type" : "string",
@@ -115,7 +119,8 @@
     "shutdownGracefulPeriod" : {
       "type" : "integer",
       "description" : "Shutdown gracefully wait period in milliseconds\nIn this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set\nbased on the slowest request possible.",
-      "default" : 2000
+      "default" : 2000,
+      "format" : "int32"
     },
     "serviceName" : {
       "type" : "string",
@@ -125,22 +130,26 @@
     "bufferSize" : {
       "type" : "integer",
       "description" : "Buffer size of undertow server. Default to 16K",
-      "default" : 16384
+      "default" : 16384,
+      "format" : "int32"
     },
     "ioThreads" : {
       "type" : "integer",
       "description" : "Number of IO thread. Default to number of processor * 2",
-      "default" : 4
+      "default" : 4,
+      "format" : "int32"
     },
     "workerThreads" : {
       "type" : "integer",
       "description" : "Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu",
-      "default" : 200
+      "default" : 200,
+      "format" : "int32"
     },
     "backlog" : {
       "type" : "integer",
       "description" : "Backlog size. Default to 10000",
-      "default" : 10000
+      "default" : 10000,
+      "format" : "int32"
     },
     "alwaysSetDate" : {
       "type" : "boolean",
@@ -154,7 +163,8 @@
     },
     "shutdownTimeout" : {
       "type" : "integer",
-      "description" : "The server shutdown timeout in milliseconds after which the executor will be forcefully shut down\ninterrupting tasks which are still executing."
+      "description" : "The server shutdown timeout in milliseconds after which the executor will be forcefully shut down\ninterrupting tasks which are still executing.",
+      "format" : "int32"
     },
     "allowUnescapedCharactersInUrl" : {
       "type" : "boolean",

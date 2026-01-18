@@ -49,7 +49,6 @@ public class ProxyConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Indicate if the proxy handler is enabled or not.",
-            externalized = true,
             defaultValue = "true" // Assuming true is the intended default if not explicitly set in YAML
     )
     boolean enabled;
@@ -59,7 +58,6 @@ public class ProxyConfig {
             externalizedKeyName = HTTP2_ENABLED,
             description = "If HTTP 2.0 protocol will be used to connect to target servers. Only if all host are using https\n" +
                     "and support the HTTP2 can set this one to true.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean http2Enabled;
@@ -69,7 +67,6 @@ public class ProxyConfig {
             externalizedKeyName = HOSTS,
             description = "Target URIs. Use comma separated string for multiple hosts. You can have mix http and https and\n" +
                     "they will be load balanced. If the host start with https://, then TLS context will be created.\n",
-            externalized = true,
             defaultValue = "http://localhost:8080"
     )
     String hosts;
@@ -78,7 +75,6 @@ public class ProxyConfig {
             configFieldName = CONNECTIONS_PER_THREAD,
             externalizedKeyName = CONNECTIONS_PER_THREAD,
             description = "Connections per thread to the target servers.",
-            externalized = true,
             defaultValue = "20"
     )
     int connectionsPerThread;
@@ -87,7 +83,6 @@ public class ProxyConfig {
             configFieldName = MAX_REQUEST_TIME,
             externalizedKeyName = MAX_REQUEST_TIME,
             description = "Max request time in milliseconds before timeout.",
-            externalized = true,
             defaultValue = "1000"
     )
     int maxRequestTime;
@@ -96,7 +91,6 @@ public class ProxyConfig {
             configFieldName = REWRITE_HOST_HEADER,
             externalizedKeyName = REWRITE_HOST_HEADER,
             description = "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host.",
-            externalized = true,
             defaultValue = "true"
     )
     boolean rewriteHostHeader;
@@ -105,7 +99,6 @@ public class ProxyConfig {
             configFieldName = REUSE_X_FORWARDED,
             externalizedKeyName = REUSE_X_FORWARDED,
             description = "Reuse XForwarded for the target XForwarded header.",
-            externalized = true,
             defaultValue = "false"
     )
     boolean reuseXForwarded;
@@ -114,7 +107,6 @@ public class ProxyConfig {
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
             description = "Max Connection Retries.",
-            externalized = true,
             defaultValue = "3"
     )
     int maxConnectionRetries;
@@ -126,7 +118,6 @@ public class ProxyConfig {
                     "The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\n" +
                     "need to use the request queue to increase the memory usage. It should only be used when you see 503 errors\n" +
                     "in the log after maxConnectionRetries to accommodate slow backend API.\n",
-            externalized = true,
             defaultValue = "0"
     )
     int maxQueueSize;
@@ -135,7 +126,6 @@ public class ProxyConfig {
             configFieldName = FORWARD_JWT_CLAIMS,
             externalizedKeyName = FORWARD_JWT_CLAIMS,
             description = "Decode the JWT token claims and forward to the backend api in the form of json string.",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean forwardJwtClaims;
@@ -148,7 +138,6 @@ public class ProxyConfig {
                     "time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\n" +
                     "the network latency. By default, it is false, and metrics will not be collected and injected into the metrics\n" +
                     "handler configured in the request/response chain.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean metricsInjection;
@@ -159,7 +148,6 @@ public class ProxyConfig {
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\n" +
                     "metrics info can be categorized in a tree structure under the name. By default, it is proxy-response, and\n" +
                     "users can change it.\n",
-            externalized = true,
             defaultValue = "proxy-response"
     )
     String metricsName;

@@ -28,7 +28,6 @@ public class SecurityJwtConfig {
     @MapField(
             configFieldName = CERTIFICATE,
             externalizedKeyName = CERTIFICATE,
-            externalized = true,
             defaultValue = "100=primary.crt&101=secondary.crt",
             description =
                     " '100': primary.crt\n" +
@@ -41,15 +40,13 @@ public class SecurityJwtConfig {
     @IntegerField(
             configFieldName = CLOCK_SKEW_IN_SECONDS,
             externalizedKeyName = CLOCK_SKEW_IN_SECONDS,
-            defaultValue = "60",
-            externalized = true
+            defaultValue = "60"
     )
     private int clockSkewInSeconds;
 
     @StringField(
             configFieldName = KEY_RESOLVER,
             externalizedKeyName = KEY_RESOLVER,
-            externalized = true,
             defaultValue = "JsonWebKeySet",
             description = "Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2"
     )

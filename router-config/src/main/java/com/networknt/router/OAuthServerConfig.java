@@ -33,7 +33,6 @@ public class OAuthServerConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if the handler is enabled or not in the handler chain."
     )
@@ -42,7 +41,6 @@ public class OAuthServerConfig {
     @BooleanField(
             configFieldName = GET_METHOD_ENABLED,
             externalizedKeyName = GET_METHOD_ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = "If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as\n" +
                     "a temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL."
@@ -52,7 +50,6 @@ public class OAuthServerConfig {
     @ArrayField(
             configFieldName = CLIENT_CREDENTIALS,
             externalizedKeyName = CLIENT_CREDENTIALS,
-            externalized = true,
             description = "A list of client_id and client_secret concat with a colon.",
             items = String.class
     )
@@ -61,7 +58,6 @@ public class OAuthServerConfig {
     @BooleanField(
             configFieldName = PASS_THROUGH,
             externalizedKeyName = PASS_THROUGH,
-            externalized = true,
             defaultValue = "false",
             description = "An indicator to for path through to an OAuth 2.0 server to get a real token."
     )
@@ -70,7 +66,6 @@ public class OAuthServerConfig {
     @StringField(
             configFieldName = TOKEN_SERVICE_ID,
             externalizedKeyName = TOKEN_SERVICE_ID,
-            externalized = true,
             defaultValue = "light-proxy-client",
             description = "If pathThrough is set to true, this is the serviceId that is used in the client.yml configuration as the key\n" +
                     "to get all the properties to connect to the target OAuth 2.0 provider to get client_credentials access token.\n" +

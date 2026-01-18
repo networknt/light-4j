@@ -23,7 +23,6 @@ public class RequestInjectionConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicator of enabled"
     )
@@ -32,7 +31,6 @@ public class RequestInjectionConfig {
     @ArrayField(
             configFieldName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
             externalizedKeyName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
-            externalized = true,
             description = "request body injection applied path prefixes. Injecting the request body and output into the audit log is very heavy operation,\n" +
                     "and it should only be enabled when necessary or for diagnose session to resolve issues. This list can be updated on the config\n" +
                     "server or local values.yml, then an API call to the config-reload endpoint to apply the changes from light-portal control pane.\n" +
@@ -52,7 +50,6 @@ public class RequestInjectionConfig {
     @IntegerField(
             configFieldName = MAX_BUFFERS,
             externalizedKeyName = MAX_BUFFERS,
-            externalized = true,
             defaultValue = "1024",
             description = "Max number of buffers for the interceptor. The default value is 1024. If the number of buffers exceeds this value, the large\n" +
                     "request body will be truncated. The buffer size is 16K, so the max size of the body can be intercepted is 16M. If you want to\n" +

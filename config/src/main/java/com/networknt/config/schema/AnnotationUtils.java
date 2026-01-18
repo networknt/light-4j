@@ -8,8 +8,7 @@ import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.lang.annotation.Annotation;
 import java.util.*;
-
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
 
 public class AnnotationUtils {
 
@@ -20,27 +19,30 @@ public class AnnotationUtils {
     /**
      * Safely gets an element from a canonical name.
      *
-     * @param canonicalName         The canonical name of the element.
-     * @param processingEnvironment The processing environment to use.
-     * @return The element if it exists, otherwise null.
+     * @param name             - The canonical name of the element.
+     * @param pe               - The processing environment to use.
+     * @return                 - Returns the element if it exists, otherwise none.
      */
-    public static Element safeGetElement(final String canonicalName, final ProcessingEnvironment processingEnvironment) {
+    public static Optional<Element> getElement(
+            final String name,
+            final ProcessingEnvironment pe
+    ) {
         try {
-            return processingEnvironment.getElementUtils().getTypeElement(canonicalName);
+            return Optional.ofNullable(pe.getElementUtils().getTypeElement(name));
         } catch (final MirroredTypeException e) {
-            return processingEnvironment.getTypeUtils().asElement(e.getTypeMirror());
+            return Optional.ofNullable(pe.getTypeUtils().asElement(e.getTypeMirror()));
         }
     }
 
     /**
      * Checks to see if the provided element is a specific class, or if the element inherits from the specific class.
      *
-     * @param element - The element to check.
-     * @param clazz - The class to compare to.
-     * @param pe - The current processing environment.
-     * @return - Returns true if element is the class or inherits from it.
+     * @param element               - The element to check.
+     * @param clazz                 - The class to compare to.
+     * @param pe                    - The current processing environment.
+     * @return                      - Returns true if element is the class or inherits from it.
      */
-    public static boolean isRelatedToClass(
+    public static boolean isRelated(
             final Element element,
             final Class<?> clazz,
             final ProcessingEnvironment pe
@@ -54,12 +56,15 @@ public class AnnotationUtils {
     /**
      * Gets the full canonical name from the element and gets the class from the string.
      *
-     * @param element       The element to get the class from.
-     * @param processingEnv The current processing environment
-     * @return - Optionally returns the class for a given element. None if the element does not contain the class.
+     * @param element               - The element to get the class from.
+     * @param pe                    - The current processing environment
+     * @return                      - Optionally returns the class for a given element. None if the element does not contain the class.
      */
-    public static Optional<Class<?>> getClassFromElement(final Element element, final ProcessingEnvironment processingEnv) {
-        final var typeElement = processingEnv.getElementUtils().getTypeElement(element.toString());
+    public static Optional<Class<?>> getClassFromElement(
+            final Element element,
+            final ProcessingEnvironment pe
+    ) {
+        final var typeElement = pe.getElementUtils().getTypeElement(element.toString());
         try {
             return Optional.of(Class.forName(typeElement.toString()));
         } catch (ClassNotFoundException e) {
@@ -76,7 +81,7 @@ public class AnnotationUtils {
      * @param <A>                   - The type of the annotation.
      * @return                      - The annotation if it exists, otherwise an empty optional.
      */
-    public static <A extends Annotation> Optional<A> safeGetAnnotation(
+    public static <A extends Annotation> Optional<A> getAnnotation(
             final Element element,
             final Class<A> annotationClass,
             final ProcessingEnvironment processingEnvironment
@@ -115,7 +120,7 @@ public class AnnotationUtils {
      * @param processingEnvironment - The current annotation processing environment
      * @return                      - Returns a list of type mirrors for. None if it was not found.
      */
-    public static Optional<List<TypeMirror>> getClassArrayValue(
+    public static Optional<List<TypeMirror>> getClassArrayMirrors(
             final Element element,
             final Class<? extends Annotation> annotationClass,
             final String memberName,
@@ -136,13 +141,16 @@ public class AnnotationUtils {
         return elementValues
                 .entrySet()
                 .stream()
-                .filter(entry -> entry.getValue() instanceof List<?> && entry.getKey().getSimpleName().toString().equals(memberName))
+                .filter(entry -> entry.getKey().getSimpleName().toString().equals(memberName))
                 .findFirst()
-                .map(entry -> ((List<?>) entry.getValue())
-                        .stream()
-                        .filter(AnnotationValue.class::isInstance)
-                        .map(v -> (TypeMirror) ((AnnotationValue) v).getValue()).collect(toList()));
+                .map(entry -> {
+                    AnnotationValue valueWrapper = entry.getValue();
+                    @SuppressWarnings("unchecked")
+                    List<? extends AnnotationValue> values = (List<? extends AnnotationValue>) valueWrapper.getValue();
+                    return values.stream()
+                            .map(v -> (TypeMirror) v.getValue())
+                            .collect(Collectors.toList());
+                });
     }
-
 
 }

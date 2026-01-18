@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.token.limit.TokenLimitConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "token-limit",
     "configType" : "Handler",
     "updateUser" : "",

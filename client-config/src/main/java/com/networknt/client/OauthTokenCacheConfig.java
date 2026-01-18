@@ -9,7 +9,6 @@ public class OauthTokenCacheConfig {
     @IntegerField(
             configFieldName = ClientConfig.CAPACITY,
             externalizedKeyName = "tokenCacheCapacity",
-            externalized = true,
             defaultValue = "200",
             description = "Capacity of caching tokens in the client for downstream API calls. The default value is 200."
     )

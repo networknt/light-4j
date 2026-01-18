@@ -25,7 +25,6 @@ public class HeaderConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "Enable header handler or not. The default to false and it can be enabled in the externalized\n" +
                     "values.yml file. It is mostly used in the http-sidecar, light-proxy or light-router.",
             defaultValue = "false"
@@ -51,7 +50,6 @@ public class HeaderConfig {
     @MapField(
             configFieldName = "pathPrefixHeader",
             externalizedKeyName = "pathPrefixHeader",
-            externalized = true,
             description = "requestPath specific header configuration. The entire object is a map with path prefix as the\n" +
                     "key and request/response like above as the value. For config format, please refer to test folder.",
             valueType = HeaderPathPrefixConfig.class

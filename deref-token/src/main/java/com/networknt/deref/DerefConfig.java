@@ -32,7 +32,6 @@ public class DerefConfig {
     @BooleanField(
         configFieldName = "enabled",
         externalizedKeyName = "enabled",
-        externalized = true,
         description = "indicate if the deref handler is enabled or not.",
         defaultValue = "false"
     )

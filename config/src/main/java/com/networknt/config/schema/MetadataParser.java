@@ -48,12 +48,12 @@ public class MetadataParser {
         fields.forEach(field -> resolveAnnotationData(field, pe).ifPresent(childNodes::add));
 
         final FieldNode.Builder builder;
-        if (AnnotationUtils.isRelatedToClass(currentRoot, Collection.class, pe)) {
+        if (AnnotationUtils.isRelated(currentRoot, Collection.class, pe)) {
             builder = new FieldNode.Builder(FieldType.ARRAY, name);
             if (childNodes.isEmpty())
                 builder.childNodes(List.of(DEFAULT_CONTAINER_PROPS));
 
-        } else if (AnnotationUtils.isRelatedToClass(currentRoot, Map.class, pe)) {
+        } else if (AnnotationUtils.isRelated(currentRoot, Map.class, pe)) {
             builder = new FieldNode.Builder(FieldType.MAP, name);
             if (childNodes.isEmpty())
                 builder.childNodes(List.of(DEFAULT_CONTAINER_PROPS));
@@ -121,21 +121,21 @@ public class MetadataParser {
             final Element annotatedClassField,
             final ProcessingEnvironment processingEnvironment
     ) {
-        return AnnotationUtils.safeGetAnnotation(annotatedClassField, BooleanField.class, processingEnvironment)
+        return AnnotationUtils.getAnnotation(annotatedClassField, BooleanField.class, processingEnvironment)
                 .map(MetadataParser::parseBooleanMetadata)
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, IntegerField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, IntegerField.class, processingEnvironment)
                         .map(MetadataParser::parseIntegerMetadata))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, NullField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, NullField.class, processingEnvironment)
                         .map(MetadataParser::parseNullMetadata))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, ObjectField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, ObjectField.class, processingEnvironment)
                         .map(annotation -> parseObjectMetadata(annotatedClassField, annotation, processingEnvironment)))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, StringField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, StringField.class, processingEnvironment)
                         .map(MetadataParser::parseStringMetadata))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, NumberField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, NumberField.class, processingEnvironment)
                         .map(MetadataParser::parseNumberMetadata))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, ArrayField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, ArrayField.class, processingEnvironment)
                         .map(annotation -> parseArrayMetadata(annotatedClassField, annotation, processingEnvironment)))
-                .or(() -> AnnotationUtils.safeGetAnnotation(annotatedClassField, MapField.class, processingEnvironment)
+                .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, MapField.class, processingEnvironment)
                         .map(annotation -> parseMapMetadata(annotatedClassField, annotation, processingEnvironment)));
     }
 
@@ -167,13 +167,13 @@ public class MetadataParser {
             } catch (MirroredTypeException e) {
                 canonicalName = e.getTypeMirrors().get(0).toString();
             }
-            final var refElement = AnnotationUtils.safeGetElement(canonicalName, processingEnvironment);
-            var ref = gatherObjectSchemaData(refElement, processingEnvironment).build();
-            builder.ref(ref);
+            AnnotationUtils.getElement(canonicalName, processingEnvironment).ifPresent(ref -> {
+                var data = gatherObjectSchemaData(ref, processingEnvironment).build();
+                builder.ref(data);
+            });
         }
         return builder.externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
-                .externalized(field.externalized())
                 .minItems(field.minItems())
                 .maxItems(field.maxItems())
                 .uniqueItems(field.uniqueItems())
@@ -195,7 +195,6 @@ public class MetadataParser {
                         .map(builder::allOf))
                 .or(() -> handleReferenceClassArray(element, MapField.class, "valueTypeAnyOf", pe)
                         .map(builder::anyOf));
-
         if (parsed.isEmpty()) {
             String canonicalName;
             try {
@@ -203,13 +202,13 @@ public class MetadataParser {
             } catch (MirroredTypeException e) {
                 canonicalName = e.getTypeMirrors().get(0).toString();
             }
-            final var refElement = AnnotationUtils.safeGetElement(canonicalName, pe);
-            var ref = gatherObjectSchemaData(refElement, pe).build();
-            builder.ref(ref);
+            AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
+                var data = gatherObjectSchemaData(ref, pe).build();
+                builder.ref(data);
+            });
         }
         return builder.externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
-                .externalized(field.externalized())
                 .defaultValue(field.defaultValue())
                 .build();
     }
@@ -224,7 +223,6 @@ public class MetadataParser {
     private static FieldNode parseIntegerMetadata(final IntegerField field) {
         return FieldType.INTEGER.newBuilder(field.configFieldName())
                 .description(field.description())
-                .externalized(field.externalized())
                 .externalizedKeyName(field.externalizedKeyName())
                 .defaultValue(field.defaultValue())
                 .min(field.min())
@@ -246,7 +244,6 @@ public class MetadataParser {
     private static FieldNode parseNumberMetadata(final NumberField field) {
         return FieldType.NUMBER.newBuilder(field.configFieldName())
                 .externalizedKeyName(field.externalizedKeyName())
-                .externalized(field.externalized())
                 .description(field.description())
                 .defaultValue(field.defaultValue())
                 .min(field.min())
@@ -269,7 +266,7 @@ public class MetadataParser {
         return FieldType.STRING.newBuilder(field.configFieldName())
                 .externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
-                .maxLength(field.maxLength())
+                .minLength(field.minLength())
                 .maxLength(field.maxLength())
                 .defaultValue(field.defaultValue())
                 .pattern(field.pattern())
@@ -283,14 +280,15 @@ public class MetadataParser {
             final String memberName,
             final ProcessingEnvironment pe
     ) {
-        return AnnotationUtils.getClassArrayValue(element, annotationClass, memberName, pe)
+        return AnnotationUtils.getClassArrayMirrors(element, annotationClass, memberName, pe)
                 .filter(list -> !list.isEmpty())
                 .map(list -> {
                     final var dataList = new ArrayList<FieldNode>();
                     list.forEach(mirror -> {
-                        final var refElement = AnnotationUtils.safeGetElement(mirror.toString(), pe);
-                        var fieldNode = gatherObjectSchemaData(refElement, pe).build();
-                        dataList.add(fieldNode);
+                        AnnotationUtils.getElement(mirror.toString(), pe).ifPresent(el -> {
+                            var fieldNode = gatherObjectSchemaData(el, pe).build();
+                            dataList.add(fieldNode);
+                        });
                     });
                     return dataList;
                 });
@@ -325,13 +323,13 @@ public class MetadataParser {
             } catch (MirroredTypeException e) {
                 canonicalName = e.getTypeMirrors().get(0).toString();
             }
-            final var refElement = AnnotationUtils.safeGetElement(canonicalName, pe);
-            var ref = gatherObjectSchemaData(refElement, pe).build();
-            builder.ref(ref);
+            AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
+                var data = gatherObjectSchemaData(ref, pe).build();
+                builder.ref(data);
+            });
         }
         return builder.externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
-                .externalized(field.externalized())
                 .defaultValue(field.defaultValue())
                 .subObjectDefault(field.useSubObjectDefault())
                 .build();
@@ -348,7 +346,6 @@ public class MetadataParser {
     private static FieldNode parseNullMetadata(final NullField field) {
         return FieldType.NULL.newBuilder(field.configFieldName())
                 .externalizedKeyName(field.externalizedKeyName())
-                .externalized(field.externalized())
                 .description(field.description())
                 .defaultValue(field.defaultValue())
                 .build();
@@ -365,7 +362,6 @@ public class MetadataParser {
         return FieldType.BOOLEAN.newBuilder(field.configFieldName())
                 .externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
-                .externalized(field.externalized())
                 .defaultValue(field.defaultValue())
                 .build();
     }

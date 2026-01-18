@@ -11,17 +11,20 @@
     "concurrentRequest" : {
       "type" : "integer",
       "description" : "Maximum concurrent requests allowed per second on the entire server. This is property is\nhere to keep backward compatible. New users should use the rateLimit property for config\nwith different keys and different time unit.\n",
-      "default" : 2
+      "default" : 2,
+      "format" : "int32"
     },
     "queueSize" : {
       "type" : "integer",
       "description" : "This property is kept to ensure backward compatibility. Please don't use it anymore. All\nrequests will return the rate limit headers with error messages after the limit is reached.\n",
-      "default" : -1
+      "default" : -1,
+      "format" : "int32"
     },
     "errorCode" : {
       "type" : "integer",
       "description" : "If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503\nerror code to trick the DDoS client/tool to stop the attacks as it considers the server\nis down. However, if the rate limit is used internally to throttle the client requests to\nprotect a slow backend API, it will return 429 error code to indicate too many requests\nfor the client to wait a grace period to resent the request. By default, 429 is returned.\n",
-      "default" : 429
+      "default" : 429,
+      "format" : "int32"
     },
     "rateLimit" : {
       "type" : "string",
@@ -55,7 +58,9 @@
           "additionalProperties" : {
             "oneOf" : [ {
               "type" : "object",
-              "additionalProperties" : { }
+              "additionalProperties" : {
+                "type" : "string"
+              }
             }, {
               "type" : "string"
             } ]
@@ -72,7 +77,9 @@
           "additionalProperties" : {
             "oneOf" : [ {
               "type" : "object",
-              "additionalProperties" : { }
+              "additionalProperties" : {
+                "type" : "string"
+              }
             }, {
               "type" : "string"
             } ]
@@ -89,7 +96,9 @@
           "additionalProperties" : {
             "oneOf" : [ {
               "type" : "object",
-              "additionalProperties" : { }
+              "additionalProperties" : {
+                "type" : "string"
+              }
             }, {
               "type" : "string"
             } ]

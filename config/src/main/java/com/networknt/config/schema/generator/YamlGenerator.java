@@ -43,7 +43,7 @@ public class YamlGenerator extends Generator {
     @Override
     protected LinkedHashMap<String, Object> convertConfigRoot(FieldNode annotatedField) {
         final var properties = new LinkedHashMap<String, Object>();
-        annotatedField.getOptionalChildNodes()
+        annotatedField.getChildren()
                 .filter(nodes -> !nodes.isEmpty())
                 .ifPresent(nodes -> nodes.stream()
                         .map(this::convertNode)
@@ -82,19 +82,12 @@ public class YamlGenerator extends Generator {
     }
 
     private LinkedHashMap<String, Object> convertNested(final FieldNode annotatedField) {
-        final var useSubObjectDefault = annotatedField.isOptionalUseSubTypeDefault();
-
-        if (useSubObjectDefault.isPresent()) {
-            return annotatedField.getOptionalChildNodes()
-                    .map(nodes -> {
-                        var subProps = new LinkedHashMap<String, Object>();
-                        nodes.stream().map(this::convertNode).forEach(subProps::putAll);
-                        return subProps;
-                    })
-                    .or(() -> annotatedField.getOptionalRef().map(this::convertNode))
-                    .orElse(new LinkedHashMap<>());
+        if (annotatedField.getUseSubTypeDefault().isEmpty()) {
+            return this.buildYamlProperty(annotatedField);
         }
-        return this.buildYamlProperty(annotatedField);
+        return this.buildChildYamlProperties(annotatedField)
+                .or(() -> annotatedField.getRef().map(this::convertNode))
+                .orElse(new LinkedHashMap<>());
     }
 
     @Override
@@ -115,28 +108,19 @@ public class YamlGenerator extends Generator {
     @Override
     protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
         final var key = annotatedField.getConfigFieldName() + YamlCommentRepresenter.REPRESENTER_SEPARATOR + annotatedField.getId().toString();
-        final var childNodeProps = annotatedField.getOptionalChildNodes().map(nodes -> {
-            var subProps = new LinkedHashMap<>();
-            nodes.stream().map(this::convertNode).forEach(subProps::putAll);
-            return subProps;
-        });
-
-        if (childNodeProps.isPresent()) {
-            final var outer = new LinkedHashMap<String, Object>();
-            final var inner = childNodeProps.get();
-            outer.put(key, inner);
-            return outer;
+        if (annotatedField.getUseSubTypeDefault().isEmpty()) {
+            return this.buildYamlProperty(annotatedField);
         }
-
-        final var nodeRefProps = annotatedField.getOptionalRef().flatMap(node -> node.getOptionalChildNodes().map(nodes -> {
-            final var outer = new LinkedHashMap<String, Object>();
-            final var inner = new LinkedHashMap<String, Object>();
-            nodes.stream().map(this::convertNode).forEach(inner::putAll);
-            outer.put(key, inner);
-            return outer;
-        }));
-
-        return nodeRefProps.orElseGet(() -> this.buildYamlProperty(annotatedField));
+        return this.buildChildYamlProperties(annotatedField).map(props -> this.wrapWithKey(key, props))
+                .or(() -> annotatedField.getRef().flatMap(this::buildChildYamlProperties)
+                        .map(props -> this.wrapWithKey(key, props)))
+                .or(() -> annotatedField.getAnyOf().flatMap(this::buildMultiClassYamlProperty)
+                        .map(props -> this.wrapWithKey(key, props)))
+                .or(() -> annotatedField.getAllOf().flatMap(this::buildMultiClassYamlProperty)
+                        .map(props -> this.wrapWithKey(key, props)))
+                .or(() -> annotatedField.getOneOf().flatMap(this::buildMultiClassYamlProperty)
+                        .map(props -> wrapWithKey(key, props)))
+                .orElseGet(() -> this.buildYamlProperty(annotatedField));
     }
 
     @Override
@@ -150,6 +134,35 @@ public class YamlGenerator extends Generator {
     }
 
     /**
+     * For any multi list of nodes, take the first node and format it into a yaml property.
+     * You can't represent anyOf, oneOf, allOf, etc. in a yaml configuration.
+     *
+     * @param nodes - List of nodes with potential child nodes.
+     * @return - Returns a JSON schema formatted hashmap.
+     */
+    private Optional<LinkedHashMap<String, Object>> buildMultiClassYamlProperty(final List<FieldNode> nodes) {
+        return nodes.stream().findFirst().flatMap(FieldNode::getChildren).map(childNodes -> {
+            final var inner = new LinkedHashMap<String, Object>();
+            childNodes.stream().map(this::convertNode).forEach(inner::putAll);
+            return inner;
+        });
+    }
+
+    private Optional<LinkedHashMap<String, Object>> buildChildYamlProperties(final FieldNode node) {
+        return node.getChildren().map(nodes -> {
+            final var inner = new LinkedHashMap<String, Object>();
+            nodes.stream().map(this::convertNode).forEach(inner::putAll);
+            return inner;
+        });
+    }
+
+    private LinkedHashMap<String, Object> wrapWithKey(final String key, final LinkedHashMap<String, Object> inner) {
+        var outer = new LinkedHashMap<String, Object>();
+        outer.put(key, inner);
+        return outer;
+    }
+
+    /**
      * Builds the yaml property value for Light4J configurations.
      * If externalized, the property value will be formatted as ${configFileName.configFieldName:defaultValue}
      * The default value is only added if it was set in the Annotation.
@@ -158,11 +171,11 @@ public class YamlGenerator extends Generator {
      */
     protected LinkedHashMap<String, Object> buildYamlProperty(final FieldNode annotatedField) {
         var yamlProp = new LinkedHashMap<String, Object>();
-        final boolean externalized = annotatedField.getOptionalExternalizedKeyName().isPresent();
-        final var externalName = annotatedField.getOptionalExternalizedKeyName();
+        final boolean externalized = annotatedField.getExternalizedKeyName().isPresent();
+        final var externalName = annotatedField.getExternalizedKeyName();
         final var id = annotatedField.getId().toString();
         final var configFieldName = annotatedField.getConfigFieldName();
-        final var defaultValue = annotatedField.getOptionalDefaultValue();
+        final var defaultValue = annotatedField.getDefaultValue();
 
         /* Don't stringify non-string values if not externalized. */
         if (defaultValue.isPresent() && !externalized) {
@@ -216,7 +229,7 @@ public class YamlGenerator extends Generator {
                     final var descriptionBuilder = new StringBuilder();
                     final var nodeDescription = findCommentForNode(rootAnnotatedField, nodeConfigName, nodeId);
                     if (!firstNodeProcessed.compareAndExchange(false, true)) {
-                        rootAnnotatedField.getOptionalDescription().ifPresent(description -> {
+                        rootAnnotatedField.getDescription().ifPresent(description -> {
                             descriptionBuilder.append(description);
                             descriptionBuilder.append('\n');
                         });
@@ -239,7 +252,13 @@ public class YamlGenerator extends Generator {
                     final var commentLines = new ArrayList<CommentLine>();
 
                     // Split the description by newline and add comments to the node.
-                    Arrays.stream(description.split("\n")).forEach(line -> commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, " " + line, start, end))));
+                    Arrays.stream(description.split("\n")).forEach(line -> {
+                        final String spacedLine;
+                        if (line.isBlank())
+                            spacedLine = line;
+                        else spacedLine = " " + line;
+                        commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, spacedLine, start, end)));
+                    });
                     node.setBlockComments(commentLines);
                 }
 
@@ -252,24 +271,24 @@ public class YamlGenerator extends Generator {
                  */
                 private Optional<String> findCommentForNode(final FieldNode annotatedField, final String nodeName, final String uuid) {
                     if (annotatedField.getConfigFieldName().equals(nodeName) && annotatedField.getId().toString().equals(uuid)) {
-                        return annotatedField.getOptionalDescription();
+                        return annotatedField.getDescription();
                     } else
-                        return annotatedField.getOptionalRef().flatMap(ref -> this.findCommentForNode(ref, nodeName, uuid))
-                                .or(() -> annotatedField.getOptionalChildNodes().flatMap(nodes -> nodes.stream()
+                        return annotatedField.getRef().flatMap(ref -> this.findCommentForNode(ref, nodeName, uuid))
+                                .or(() -> annotatedField.getChildren().flatMap(nodes -> nodes.stream()
                                         .map(node -> this.findCommentForNode(node, nodeName, uuid))
                                         .filter(Optional::isPresent)
                                         .map(Optional::get)
                                         .findAny())
-                                ).or(() -> annotatedField.getOptionalRefAnyOf().flatMap(nodes -> nodes.stream()
+                                ).or(() -> annotatedField.getAnyOf().flatMap(nodes -> nodes.stream()
                                         .map(node -> this.findCommentForNode(node, nodeName, uuid))
                                         .filter(Optional::isPresent).map(Optional::get)
                                         .findAny())
-                                ).or(() -> annotatedField.getOptionalRefAllOf().flatMap(nodes -> nodes.stream()
+                                ).or(() -> annotatedField.getAllOf().flatMap(nodes -> nodes.stream()
                                         .map(node -> this.findCommentForNode(node, nodeName, uuid))
                                         .filter(Optional::isPresent)
                                         .map(Optional::get)
                                         .findAny()))
-                                .or(() -> annotatedField.getOptionalRefOneOf().flatMap(nodes -> nodes.stream()
+                                .or(() -> annotatedField.getOneOf().flatMap(nodes -> nodes.stream()
                                         .map(node -> this.findCommentForNode(node, nodeName, uuid))
                                         .filter(Optional::isPresent)
                                         .map(Optional::get)

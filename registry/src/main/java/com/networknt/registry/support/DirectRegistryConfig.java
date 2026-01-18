@@ -27,7 +27,6 @@ public class DirectRegistryConfig {
     @MapField(
             configFieldName = DIRECT_URLS,
             externalizedKeyName = DIRECT_URLS,
-            externalized = true,
             description = "For light-gateway or http-sidecar that needs to reload configuration for the router hosts, you can define the\n" +
                     "service to hosts mapping in this configuration to overwrite the definition in the service.yml file as part of\n" +
                     "the parameters. This configuration will only be used if parameters in the service.yml for DirectRegistry is null.\n" +

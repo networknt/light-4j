@@ -136,10 +136,10 @@ public class CloudEventGenerator extends Generator {
         final var data = new LinkedHashMap<String, Object>();
         data.put("configId", "");
         data.put("updateTs", "");
-        var className = annotatedField.getOptionalSimpleClassName().orElse(FAILED_PARSE_VALUE);
+        var className = annotatedField.getClassName().orElse(FAILED_PARSE_VALUE);
         data.put("classPath", className);
 
-        final var rootDescription = annotatedField.getOptionalDescription().orElse("");
+        final var rootDescription = annotatedField.getDescription().orElse("");
         data.put("configDesc", rootDescription);
 
         data.put("configName", this.configName);

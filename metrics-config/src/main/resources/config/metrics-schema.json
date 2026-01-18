@@ -31,7 +31,8 @@
     "serverPort" : {
       "type" : "integer",
       "description" : "Time series database or metrics server port number.",
-      "default" : 8086
+      "default" : 8086,
+      "format" : "int32"
     },
     "serverName" : {
       "type" : "string",
@@ -51,7 +52,8 @@
     "reportInMinutes" : {
       "type" : "integer",
       "description" : "report and reset metrics in minutes.",
-      "default" : 1
+      "default" : 1,
+      "format" : "int32"
     },
     "productName" : {
       "type" : "string",

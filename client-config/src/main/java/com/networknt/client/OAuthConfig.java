@@ -11,7 +11,6 @@ public class OAuthConfig {
     @BooleanField(
             configFieldName = ClientConfig.MULTIPLE_AUTH_SERVERS,
             externalizedKeyName = ClientConfig.MULTIPLE_AUTH_SERVERS,
-            externalized = true,
             description = "OAuth 2.0 token endpoint configuration\n" +
                     "If there are multiple oauth providers per serviceId, then we need to update this flag to true. " +
                     "In order to derive the serviceId from the\n" +

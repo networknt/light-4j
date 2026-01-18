@@ -56,7 +56,6 @@ public class MetricsConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "If metrics handler is enabled or not. Default is true as long as one of the handlers is in the\n" +
                     "request/response chain."
@@ -66,7 +65,6 @@ public class MetricsConfig {
     @BooleanField(
             configFieldName = ENABLED_JVM_MONITOR,
             externalizedKeyName = ENABLED_JVM_MONITOR,
-            externalized = true,
             defaultValue = "false",
             description = "If metrics handler is enabled for JVM MBean or not. If enabled, the CPU and Memory usage will be\n" +
                     "collected and send to the time series database."
@@ -76,7 +74,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_PROTOCOL,
             externalizedKeyName = SERVER_PROTOCOL,
-            externalized = true,
             defaultValue = "http",
             description = "Time series database server protocol. It can be http or https. Others can be added upon request."
     )
@@ -85,7 +82,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_HOST,
             externalizedKeyName = SERVER_HOST,
-            externalized = true,
             defaultValue = "localhost",
             description = "Time series database or metrics server hostname."
     )
@@ -94,7 +90,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_PATH,
             externalizedKeyName = SERVER_PATH,
-            externalized = true,
             defaultValue = "/apm/metricFeed",
             description = "Time series database or metrics server request path. It is optional and only some metrics handlers\n" +
                     "will use it. For example, the Broadcom APM metrics server needs the path to access the agent."
@@ -104,7 +99,6 @@ public class MetricsConfig {
     @IntegerField(
             configFieldName = SERVER_PORT,
             externalizedKeyName = SERVER_PORT,
-            externalized = true,
             defaultValue = "8086",
             description = "Time series database or metrics server port number."
     )
@@ -113,7 +107,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_NAME,
             externalizedKeyName = SERVER_NAME,
-            externalized = true,
             defaultValue = "metrics",
             description = "Time series database name."
     )
@@ -122,7 +115,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_USER,
             externalizedKeyName = SERVER_USER,
-            externalized = true,
             defaultValue = "admin",
             description = "Time series database or metrics server user."
     )
@@ -131,7 +123,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = SERVER_PASS,
             externalizedKeyName = SERVER_PASS,
-            externalized = true,
             defaultValue = "admin",
             description = "Time series database or metrics server password."
     )
@@ -140,7 +131,6 @@ public class MetricsConfig {
     @IntegerField(
             configFieldName = REPORT_IN_MINUTES,
             externalizedKeyName = REPORT_IN_MINUTES,
-            externalized = true,
             defaultValue = "1",
             description = "report and reset metrics in minutes."
     )
@@ -149,7 +139,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = PRODUCT_NAME,
             externalizedKeyName = PRODUCT_NAME,
-            externalized = true,
             defaultValue = "http-sidecar",
             description = "This is the metrics product name for the centralized time series database. The product name will be\n" +
                     "the top level category under a Kubernetes cluster or a virtual machine. The following is the light-4j\n" +
@@ -162,7 +151,6 @@ public class MetricsConfig {
     @BooleanField(
             configFieldName = SEND_SCOPE_CLIENT_ID,
             externalizedKeyName = SEND_SCOPE_CLIENT_ID,
-            externalized = true,
             defaultValue = "false",
             description = "A flag to indicate if the scope client id will be sent as a common tag. If it is true, try to retrieve\n" +
                     "it from the audit info and send it if it is not null. If it does not exist, \"unknown\" will be sent.\n" +
@@ -176,7 +164,6 @@ public class MetricsConfig {
     @BooleanField(
             configFieldName = SEND_CALLER_ID,
             externalizedKeyName = SEND_CALLER_ID,
-            externalized = true,
             defaultValue = "false",
             description = "A flag to indicate if the caller id will be sent as a common tag. If it is true, try to retrieve it\n" +
                     "from the audit info and send it if it is not null. If it doesn't exist, \"unknown\" will be sent.\n" +
@@ -191,7 +178,6 @@ public class MetricsConfig {
     @BooleanField(
             configFieldName = SEND_ISSUER,
             externalizedKeyName = SEND_ISSUER,
-            externalized = true,
             defaultValue = "false",
             description = "A flag to indicate if the issuer will be sent as a common tag. If it is true, try to retrieve it\n" +
                     "from the audit info and send it if it is not null. If it doesn't exist, \"unknown\" will be sent.\n" +
@@ -205,7 +191,6 @@ public class MetricsConfig {
     @StringField(
             configFieldName = ISSUER_REGEX,
             externalizedKeyName = ISSUER_REGEX,
-            externalized = true,
             description = "If issuer is sent, it might be necessary to extract only partial of the string with a regex pattern.\n" +
                     "For example, Okta iss is something like: \"https://networknt.oktapreview.com/oauth2/aus9xt6dd1cSYyRPH1d6\"\n" +
                     "We only need to extract the last part after the last slash. The following default regex is just for it.\n" +
