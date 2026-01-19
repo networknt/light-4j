@@ -8,7 +8,6 @@ import com.networknt.config.schema.*;
 import javax.tools.FileObject;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -76,63 +75,21 @@ public class JsonSchemaGenerator extends Generator {
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
     }
 
-    /**
-     * Shared update logic when generating a JSON schema.
-     *
-     * @param annotatedField The metadata to generate the schema for.
-     * @return The prepared JSON schema object.
-     */
-    protected LinkedHashMap<String, Object> addJsonSchemaRootInfo(final FieldNode annotatedField) {
-        final var schemaMap = new LinkedHashMap<String, Object>();
-        schemaMap.put(SCHEMA_KEY, JSON_DRAFT);
-        schemaMap.put(TYPE_KEY, FieldType.OBJECT.toString());
-        annotatedField.getChildren().ifPresent(nodes -> {
-            List<String> required = nodes.stream()
-                    .map(FieldNode::getConfigFieldName)
-                    .collect(Collectors.toList());
-            if (!required.isEmpty()) {
-                schemaMap.put(REQUIRED_KEY, required);
-                schemaMap.put(PROPERTIES_KEY, this.convertConfigRoot(annotatedField));
-            }
-        });
-        return schemaMap;
-    }
 
     @Override
     protected LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField) {
-        return annotatedField.getChildren()
-                .filter(nodes -> !nodes.isEmpty())
-                .map(nodes -> {
-                    var props = new LinkedHashMap<String, Object>();
-                    nodes.forEach(node -> props.put(node.getConfigFieldName(), this.convertNode(node)));
-                    return props;
-                })
+        var props = new LinkedHashMap<String, Object>();
+        annotatedField.getAllOf().map(nodes -> this.buildMultiClassJsonProperties(ALL_OF_KEY, nodes))
+                .or(() -> annotatedField.getAnyOf().map(nodes -> this.buildMultiClassJsonProperties(ANY_OF_KEY, nodes)))
+                .or(() -> annotatedField.getOneOf().map(nodes -> this.buildMultiClassJsonProperties(ONE_OF_KEY, nodes)))
                 .or(() -> annotatedField.getRef().map(this::convertNode))
-                .or(() -> annotatedField.getOneOf().map(fieldNodes -> {
-                    var props = new LinkedHashMap<String, Object>();
-                    var oneOfMembers = fieldNodes.stream()
-                            .map(this::convertNode)
-                            .collect(Collectors.toList());
-                    props.put(ONE_OF_KEY, oneOfMembers);
-                    return props;
+                .or(() -> annotatedField.getChildren().map(nodes -> {
+                    var inner = new LinkedHashMap<String, Object>();
+                    nodes.forEach(node -> inner.put(node.getConfigFieldName(), this.convertNode(node)));
+                    return inner;
                 }))
-                .or(() -> annotatedField.getAnyOf().map(fieldNodes -> {
-                    var props = new LinkedHashMap<String, Object>();
-                    var anyOfMembers = fieldNodes.stream()
-                            .map(this::convertNode)
-                            .collect(Collectors.toList());
-                    props.put(ANY_OF_KEY, anyOfMembers);
-                    return props;
-                }))
-                .or(() -> annotatedField.getAllOf().map(fieldNodes -> {
-                    var props = new LinkedHashMap<String, Object>();
-                    var allOfMembers = fieldNodes.stream()
-                            .map(this::convertNode)
-                            .collect(Collectors.toList());
-                    props.put(ALL_OF_KEY, allOfMembers);
-                    return props;
-                }))
-                .orElseGet(LinkedHashMap::new);
+                .ifPresent(props::putAll);
+        return props;
     }
 
 
@@ -260,71 +217,30 @@ public class JsonSchemaGenerator extends Generator {
                 // No default value
             }
         });
-
-        var hasProps = new AtomicBoolean(false);
-        annotatedField.getRef().ifPresent(ref -> {
-            hasProps.set(true);
-            var refProps = this.convertNode(ref);
-            props.putAll(refProps);
-        });
-        if (!hasProps.get())
-            annotatedField.getOneOf().ifPresent(fieldNodes -> {
-                hasProps.set(true);
-                var oneOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
-                fieldNodes.stream().map(this::convertNode).forEach(oneOfMembers::add);
-                props.put(ONE_OF_KEY, oneOfMembers);
-            });
-        if (!hasProps.get())
-            annotatedField.getAnyOf().ifPresent(fieldNodes -> {
-                hasProps.set(true);
-                var anyOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
-                fieldNodes.stream().map(this::convertNode).forEach(anyOfMembers::add);
-                props.put(ANY_OF_KEY, anyOfMembers);
-            });
-
-        if (!hasProps.get())
-            annotatedField.getAllOf().ifPresent(fieldNodes -> {
-                hasProps.set(true);
-                var allOfMembers = new ArrayList<LinkedHashMap<String, Object>>();
-                fieldNodes.stream().map(this::convertNode).forEach(allOfMembers::add);
-                props.put(ALL_OF_KEY, allOfMembers);
-            });
-
-        if (!hasProps.get())
-            annotatedField.getChildren().ifPresent(nodes -> {
-                var innerProperties = new LinkedHashMap<String, Object>();
-                nodes.stream()
-                        .map(node -> new Object[]{node.getConfigFieldName(), this.convertNode(node)})
-                        .forEach(tuple -> innerProperties.put((String) tuple[0], tuple[1]));
-                props.put(PROPERTIES_KEY, innerProperties);
-            });
-
+        annotatedField.getAllOf().map(nodes -> this.buildMultiClassJsonProperties(ALL_OF_KEY, nodes))
+                .or(() -> annotatedField.getAnyOf().map(nodes -> this.buildMultiClassJsonProperties(ANY_OF_KEY, nodes)))
+                .or(() -> annotatedField.getOneOf().map(nodes -> this.buildMultiClassJsonProperties(ONE_OF_KEY, nodes)))
+                .or(() -> annotatedField.getRef().map(this::convertNode))
+                .or(() -> annotatedField.getChildren().map(nodes -> {
+                    var outer = new LinkedHashMap<String, Object>();
+                    var inner = new LinkedHashMap<String, Object>();
+                    nodes.stream()
+                            .map(node -> new Object[]{
+                                    node.getConfigFieldName(),
+                                    this.convertNode(node)
+                            })
+                            .forEach(tuple -> inner.put((String) tuple[0], tuple[1]));
+                    outer.put(PROPERTIES_KEY, inner);
+                    return outer;
+                }))
+                .ifPresent(props::putAll);
         return props;
     }
 
-    private LinkedHashMap<String, Object> buildNestedJsonProperties(FieldNode annotatedField) {
-        return annotatedField.getAllOf()
-                .map(nodes -> {
-                    var outer = new LinkedHashMap<String, Object>();
-                    var inner = new ArrayList<LinkedHashMap<String, Object>>();
-                    nodes.stream().map(this::convertNode).forEach(inner::add);
-                    outer.put(ALL_OF_KEY, inner);
-                    return outer;
-                })
-                .or(() -> annotatedField.getOneOf().map(nodes -> {
-                    var outer = new LinkedHashMap<String, Object>();
-                    var inner = new ArrayList<LinkedHashMap<String, Object>>();
-                    nodes.stream().map(this::convertNode).forEach(inner::add);
-                    outer.put(ONE_OF_KEY, inner);
-                    return outer;
-                }))
-                .or(() -> annotatedField.getAnyOf().map(nodes -> {
-                    var outer = new LinkedHashMap<String, Object>();
-                    var inner = new ArrayList<LinkedHashMap<String, Object>>();
-                    nodes.stream().map(this::convertNode).forEach(inner::add);
-                    outer.put(ONE_OF_KEY, inner);
-                    return outer;
-                }))
+    private LinkedHashMap<String, Object> buildNestedJsonProperties(final FieldNode annotatedField) {
+        return annotatedField.getAllOf().map(nodes -> this.buildMultiClassJsonProperties(ALL_OF_KEY, nodes))
+                .or(() -> annotatedField.getOneOf().map(nodes -> this.buildMultiClassJsonProperties(ONE_OF_KEY, nodes)))
+                .or(() -> annotatedField.getAnyOf().map(nodes -> this.buildMultiClassJsonProperties(ANY_OF_KEY, nodes)))
                 .or(() -> annotatedField.getRef().map(this::convertNode))
                 .or(() -> annotatedField.getChildren().map(nodes -> {
                     var outer = new LinkedHashMap<String, Object>();
@@ -332,5 +248,43 @@ public class JsonSchemaGenerator extends Generator {
                     return outer;
                 }))
                 .orElse(new LinkedHashMap<>());
+    }
+
+    /**
+     * Shared update logic when generating a JSON schema.
+     *
+     * @param annotatedField The metadata to generate the schema for.
+     * @return The prepared JSON schema object.
+     */
+    protected LinkedHashMap<String, Object> addJsonSchemaRootInfo(final FieldNode annotatedField) {
+        final var schemaMap = new LinkedHashMap<String, Object>();
+        schemaMap.put(SCHEMA_KEY, JSON_DRAFT);
+        schemaMap.put(TYPE_KEY, FieldType.OBJECT.toString());
+        annotatedField.getChildren().ifPresent(nodes -> {
+            List<String> required = nodes.stream()
+                    .map(FieldNode::getConfigFieldName)
+                    .collect(Collectors.toList());
+            if (!required.isEmpty()) {
+                schemaMap.put(REQUIRED_KEY, required);
+                schemaMap.put(PROPERTIES_KEY, this.convertConfigRoot(annotatedField));
+            }
+        });
+        return schemaMap;
+    }
+
+
+    /**
+     * Builds multi-class json properties. i.e. anyOf, allOf, oneOf, etc.
+     *
+     * @param key - The keyword to identify the multi-class type.
+     * @param nodes - The list of nodes.
+     * @return - Returns a list of converted classes.
+     */
+    private LinkedHashMap<String, Object> buildMultiClassJsonProperties(final String key, final List<FieldNode> nodes) {
+        var outer = new LinkedHashMap<String, Object>();
+        var inner = new ArrayList<LinkedHashMap<String, Object>>();
+        nodes.stream().map(this::convertNode).forEach(inner::add);
+        outer.put(key, inner);
+        return outer;
     }
 }

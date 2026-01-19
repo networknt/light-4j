@@ -201,7 +201,7 @@ public class YamlGenerator extends Generator {
      * Custom representer to add comments to the yaml schema.
      */
     public static class YamlCommentRepresenter extends Representer {
-
+        private static final char LINE_SEPARATOR = '\n';
         public static final String REPRESENTER_SEPARATOR = "___";
         private final AtomicBoolean firstNodeProcessed = new AtomicBoolean(false);
 
@@ -231,7 +231,7 @@ public class YamlGenerator extends Generator {
                     if (!firstNodeProcessed.compareAndExchange(false, true)) {
                         rootAnnotatedField.getDescription().ifPresent(description -> {
                             descriptionBuilder.append(description);
-                            descriptionBuilder.append('\n');
+                            descriptionBuilder.append(LINE_SEPARATOR);
                         });
                     }
                     nodeDescription.ifPresent(descriptionBuilder::append);
@@ -252,7 +252,7 @@ public class YamlGenerator extends Generator {
                     final var commentLines = new ArrayList<CommentLine>();
 
                     // Split the description by newline and add comments to the node.
-                    Arrays.stream(description.split("\n")).forEach(line -> {
+                    Arrays.stream(description.split(String.valueOf(LINE_SEPARATOR))).forEach(line -> {
                         final String spacedLine;
                         if (line.isBlank())
                             spacedLine = line;

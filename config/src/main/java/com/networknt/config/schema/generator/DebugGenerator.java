@@ -25,7 +25,7 @@ public class DebugGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final FileObject path, FieldNode annotatedField) throws IOException {
+    public void writeSchemaToFile(final FileObject path, final FieldNode annotatedField) throws IOException {
         writeSchemaToFile(path.openOutputStream(), annotatedField);
     }
 
@@ -40,55 +40,55 @@ public class DebugGenerator extends Generator {
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertArrayNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertMapNode(FieldNode property) {
+    protected LinkedHashMap<String, Object> convertMapNode(final FieldNode property) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertBooleanNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertIntegerNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertNumberNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertObjectNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertStringNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertNullNode(FieldNode property) {
+    protected LinkedHashMap<String, Object> convertNullNode(final FieldNode property) {
         // no need to parse anything
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertConfigRoot(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField) {
         return new LinkedHashMap<>();
     }
 }

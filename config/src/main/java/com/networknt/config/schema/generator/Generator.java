@@ -50,38 +50,46 @@ public abstract class Generator {
     public abstract void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException;
 
     /**
-     * Parses an array field.
+     * Converts an array field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted array node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField);
 
     /**
-     * Parses a boolean field.
+     * Converts a boolean field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted boolean node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField);
 
     /**
-     * Parses an integer field.
+     * Converts an integer field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted integer node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField);
 
     /**
-     * Parses a number field.
+     * Converts a number field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted number node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField);
 
@@ -91,43 +99,49 @@ public abstract class Generator {
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted object node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField);
 
     /**
-     * Parses a string field.
+     * Converts a string field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted string node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField);
 
     /**
-     * Parses a null field.
+     * Converts a null field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param property The property to update.
+     * @return Converted null node entry.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertNullNode(final FieldNode property);
 
     /**
-     * Parses a map field.
+     * Converts a map field.
      * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
      * @param property Contains all the data parsed from our annotated config field.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertMapNode(final FieldNode property);
 
     /**
-     * Gets the root schema properties.
-     * The input node is converted into the properties required for the generator.
-     * How the field gets parsed depends on the generator implementation.
+     * Converts the root {@link ConfigSchema} class into the root of the output format defined by the generator.
      *
      * @param annotatedField Contains all the data parsed from our annotated config field.
      * @return The root schema properties.
+     * @see FieldNode
      */
     protected abstract LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField);
 
@@ -137,28 +151,22 @@ public abstract class Generator {
      *
      * @param format    The output format to get the generator for.
      * @param configKey The configuration key to use.
+     * @param configName The name of the configuration file.
      * @return The generator for the specified output format.
+     *
+     * @see OutputFormat
      */
     public static Generator getGenerator(final OutputFormat format, final String configKey, final String configName) {
-        switch (format) {
-            case JSON_SCHEMA:
-                return new JsonSchemaGenerator(configKey, configName);
-            case YAML:
-                return new YamlGenerator(configKey, configName);
-            case CLOUD:
-                return new CloudEventGenerator(configKey, configName);
-            case DEBUG:
-                return new DebugGenerator(configKey, configName);
-            default:
-                throw new IllegalArgumentException("Unsupported output format: " + format);
-        }
+        return format.getGenerator(configKey, configName);
     }
 
     /**
-     * Parses a field.
-     * How the field gets parsed depends on the generator implementation.
+     * Converts a {@link FieldNode} into a hash entry.
+     * How the node data gets ingested and the output structure are determined by the generator implementation.
      *
      * @param annotatedField The property to update.
+     *
+     * @see FieldNode
      */
     protected LinkedHashMap<String, Object> convertNode(final FieldNode annotatedField) {
 

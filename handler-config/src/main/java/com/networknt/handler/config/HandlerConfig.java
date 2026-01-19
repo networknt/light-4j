@@ -137,6 +137,8 @@ public class HandlerConfig {
     )
     private List<String> handlers;
 
+    // NOTE: Current limitations of the schema generator cannot handle wrapped types.
+    // This means the JSON schema output will be inaccurate for this field.
     @MapField(
             configFieldName = CHAINS,
             externalizedKeyName = CHAINS,

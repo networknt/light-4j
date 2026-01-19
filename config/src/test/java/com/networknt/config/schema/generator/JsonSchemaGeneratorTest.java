@@ -205,8 +205,10 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertObjectNode(testFieldNode);
+        System.out.println(parsed);
         Assert.assertEquals(FieldType.OBJECT.toString(), parsed.get("type"));
         Assert.assertEquals(description, parsed.get("description"));
+
         Assert.assertEquals(propertiesList.size(), ((LinkedHashMap<String, Object>)parsed.get("properties")).size());
     }
 
@@ -258,6 +260,24 @@ public class JsonSchemaGeneratorTest {
 
     @Test
     public void testMultiClassJsonSchema() throws JsonProcessingException {
+        final var testOutput = "{\n" +
+                "  \"type\" : \"object\",\n" +
+                "  \"properties\" : {\n" +
+                "    \"multiClassMap\" : {\n" +
+                "      \"type\" : \"object\",\n" +
+                "      \"additionalProperties\" : {\n" +
+                "        \"oneOf\" : [ {\n" +
+                "          \"type\" : \"string\"\n" +
+                "        }, {\n" +
+                "          \"type\" : \"object\",\n" +
+                "          \"additionalProperties\" : {\n" +
+                "            \"type\" : \"string\"\n" +
+                "          }\n" +
+                "        } ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
         final var generator = new JsonSchemaGenerator("configTest", "configTest");
         var type1 = FieldType.STRING.newBuilder("type1").build();
         var type2 = FieldType.MAP.newBuilder("type2")
@@ -270,10 +290,9 @@ public class JsonSchemaGeneratorTest {
         var parsed = generator.convertConfigRoot(rootObj);
         ObjectMapper objectMapper = new ObjectMapper();
         var result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsed);
-        System.out.println(result);
-
+        Assert.assertEquals(
+                testOutput.replace("\n", "").replace("\r", "").replace(" ", ""),
+                result.replace("\n", "").replace("\r", "").replace(" ", "")
+        );
     }
-
-
-
 }

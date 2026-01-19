@@ -38,67 +38,66 @@ public class CloudEventGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(FileObject object, FieldNode annotatedField) throws IOException {
+    public void writeSchemaToFile(final FileObject object, final FieldNode annotatedField) throws IOException {
         writeSchemaToFile(object.openOutputStream(), annotatedField);
     }
 
     @Override
-    public void writeSchemaToFile(Writer writer, FieldNode annotatedField) throws IOException {
+    public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) throws IOException {
         final var cloudEvent = convertConfigRoot(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(writer, cloudEvent);
     }
 
     @Override
-    public void writeSchemaToFile(OutputStream os, FieldNode annotatedField) throws IOException {
+    public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
         final var cloudEvent = convertConfigRoot(annotatedField);
         OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, cloudEvent);
     }
 
-
     @Override
-    protected LinkedHashMap<String, Object> convertArrayNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertBooleanNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertIntegerNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertNumberNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertObjectNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertStringNode(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertNullNode(FieldNode property) {
+    protected LinkedHashMap<String, Object> convertNullNode(final FieldNode property) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> convertMapNode(FieldNode property) {
+    protected LinkedHashMap<String, Object> convertMapNode(final FieldNode property) {
         // Not needed for CloudEvent generation
         return new LinkedHashMap<>();
     }
@@ -109,7 +108,7 @@ public class CloudEventGenerator extends Generator {
      * @return A LinkedHashMap representing the CloudEvent structure.
      */
     @Override
-    protected LinkedHashMap<String, Object> convertConfigRoot(FieldNode annotatedField) {
+    protected LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField) {
         final var cloudEvent = new LinkedHashMap<String, Object>();
 
         // Create inner data object.
@@ -132,7 +131,7 @@ public class CloudEventGenerator extends Generator {
         return cloudEvent;
     }
 
-    private LinkedHashMap<String, Object> getStringObjectLinkedHashMap(FieldNode annotatedField) {
+    private LinkedHashMap<String, Object> getStringObjectLinkedHashMap(final FieldNode annotatedField) {
         final var data = new LinkedHashMap<String, Object>();
         data.put("configId", "");
         data.put("updateTs", "");

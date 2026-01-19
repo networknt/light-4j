@@ -15,18 +15,35 @@ import java.util.UUID;
  */
 public class FieldNode {
 
+    /**
+     * Randomly generated id.
+     * Normally used when there collisions in nested yaml structure names.
+     */
     @JsonProperty
     final UUID id;
 
+    /**
+     * The {@link FieldType} of the node.
+     * Used by generators to determine how the node gets processed.
+     */
     @JsonProperty
     final FieldType type;
 
+    /**
+     * The string name of the configuration field.
+     */
     @JsonProperty
     final String configFieldName;
 
+    /**
+     * This property is only populated when class types are defined in the annotation definition. i.e. ref or anyOf
+     */
     @JsonProperty
     String className;
 
+    /**
+     * The external name
+     */
     @JsonProperty
     String externalizedKeyName;
 
