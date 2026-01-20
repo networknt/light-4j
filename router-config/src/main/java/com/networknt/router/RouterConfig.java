@@ -66,7 +66,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = HTTP2_ENABLED,
             externalizedKeyName = HTTP2_ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "As this router is built to support discovery and security for light-4j services,\n" +
                     "the outbound connection is always HTTP 2.0 with TLS enabled.\n" +
@@ -77,7 +76,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = HTTPS_ENABLED,
             externalizedKeyName = HTTPS_ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "If TLS is enabled when accepting incoming request. Should be true on test and prod."
     )
@@ -86,7 +84,6 @@ public class RouterConfig {
     @IntegerField(
             configFieldName = MAX_REQUEST_TIME,
             externalizedKeyName = MAX_REQUEST_TIME,
-            externalized = true,
             defaultValue = "1000",
             description = "Max request time in milliseconds before timeout to the server. This is the global setting shared\n" +
                     "by all backend services if they don't have service specific timeout."
@@ -96,7 +93,6 @@ public class RouterConfig {
     @MapField(
             configFieldName = PATH_PREFIX_MAX_REQUEST_TIME,
             externalizedKeyName = PATH_PREFIX_MAX_REQUEST_TIME,
-            externalized = true,
             description = "If a particular downstream service has different timeout than the above global definition, you can\n" +
                     "add the path prefix and give it another timeout in millisecond. For downstream APIs not defined here,\n" +
                     "they will use the global timeout defined in router.maxRequestTime. The value is a map with key is the\n" +
@@ -116,7 +112,6 @@ public class RouterConfig {
     @IntegerField(
             configFieldName = CONNECTION_PER_THREAD,
             externalizedKeyName = CONNECTION_PER_THREAD,
-            externalized = true,
             defaultValue = "10",
             description = "Connections per thread."
     )
@@ -125,7 +120,6 @@ public class RouterConfig {
     @IntegerField(
             configFieldName = MAX_QUEUE_SIZE,
             externalizedKeyName = MAX_QUEUE_SIZE,
-            externalized = true,
             defaultValue = "0",
             description = "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\n" +
                     "The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\n" +
@@ -137,7 +131,6 @@ public class RouterConfig {
     @IntegerField(
             configFieldName = SOFT_MAX_CONNECTIONS_PER_THREAD,
             externalizedKeyName = SOFT_MAX_CONNECTIONS_PER_THREAD,
-            externalized = true,
             defaultValue = "5",
             description = "Soft max connections per thread."
     )
@@ -146,7 +139,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = REWRITE_HOST_HEADER,
             externalizedKeyName = REWRITE_HOST_HEADER,
-            externalized = true,
             defaultValue = "true",
             description = "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host"
     )
@@ -155,7 +147,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = REUSE_X_FORWARDED,
             externalizedKeyName = REUSE_X_FORWARDED,
-            externalized = true,
             defaultValue = "false",
             description = "Reuse XForwarded for the target XForwarded header"
     )
@@ -164,7 +155,6 @@ public class RouterConfig {
     @IntegerField(
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
-            externalized = true,
             defaultValue = "3",
             description = "Max Connection Retries"
     )
@@ -174,7 +164,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = PRE_RESOLVE_FQDN_2_IP,
             externalizedKeyName = PRE_RESOLVE_FQDN_2_IP,
-            externalized = true,
             defaultValue = "false",
             description = "Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be\n" +
                     "only used when the downstream FQDN is a load balancer for multiple real API servers."
@@ -184,7 +173,6 @@ public class RouterConfig {
     @ArrayField(
             configFieldName = HOST_WHITE_LIST,
             externalizedKeyName = HOST_WHITE_LIST,
-            externalized = true,
             description = "allowed host list. Use Regex to do wildcard match",
             items = String.class
     )
@@ -193,7 +181,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = SERVICE_ID_QUERY_PARAMETER,
             externalizedKeyName = SERVICE_ID_QUERY_PARAMETER,
-            externalized = true,
             defaultValue = "false",
             description = "support serviceId in the query parameter for routing to overwrite serviceId in header routing.\n" +
                     "by default, it is false and should not be used unless you are dealing with a legacy client that\n" +
@@ -205,7 +192,6 @@ public class RouterConfig {
     @ArrayField(
             configFieldName = URL_REWRITE_RULES,
             externalizedKeyName = URL_REWRITE_RULES,
-            externalized = true,
             description = "URL rewrite rules, each line will have two parts: the regex patten and replace string separated\n" +
                     "with a space. The light-router has service discovery for host routing, so whe working on the\n" +
                     "url rewrite rules, we only need to create about the path in the URL.\n" +
@@ -228,7 +214,6 @@ public class RouterConfig {
     @ArrayField(
             configFieldName = METHOD_REWRITE_RULES,
             externalizedKeyName = METHOD_REWRITE_RULES,
-            externalized = true,
             description = "Method rewrite rules for legacy clients that do not support DELETE, PUT, and PATCH HTTP methods to\n" +
                     "send a request with GET and POST instead. The gateway will rewrite the method from GET to DELETE or\n" +
                     "from POST to PUT or PATCH. This will be set up at the endpoint level to limit the application.\n" +
@@ -252,7 +237,6 @@ public class RouterConfig {
     @ArrayField(
             configFieldName = QUERY_PARAM_REWRITE_RULES,
             externalizedKeyName = QUERY_PARAM_REWRITE_RULES,
-            externalized = true,
             description = "Query parameter rewrite rules for client applications that send different query parameter keys or values\n" +
                     "than the target server expecting. When overwriting a value, the key must be specified in order to\n" +
                     "identify the right query parameter. If only the oldK and newK are specified, the router will rewrite the\n" +
@@ -278,7 +262,6 @@ public class RouterConfig {
     @ArrayField(
             configFieldName = HEADER_REWRITE_RULES,
             externalizedKeyName = HEADER_REWRITE_RULES,
-            externalized = true,
             description = "Header rewrite rules for client applications that send different header keys or values than the target\n" +
                     "server expecting. When overwriting a value, the key must be specified in order to identify the right\n" +
                     "header. If only the oldK and newK are specified, the router will rewrite the header key oldK with different\n" +
@@ -304,7 +287,6 @@ public class RouterConfig {
     @BooleanField(
             configFieldName = METRICS_INJECTION,
             externalizedKeyName = METRICS_INJECTION,
-            externalized = true,
             defaultValue = "false",
             description = "When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\n" +
                     "total response time of the downstream API. With this value injected, users can quickly determine how much\n" +
@@ -317,7 +299,6 @@ public class RouterConfig {
     @StringField(
             configFieldName = METRICS_NAME,
             externalizedKeyName = METRICS_NAME,
-            externalized = true,
             defaultValue = "router-response",
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\n" +
                     "metrics info can be categorized in a tree structure under the name. By default, it is router-response, and\n" +

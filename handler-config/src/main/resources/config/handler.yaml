@@ -1,5 +1,5 @@
 # Indicate if the handler middleware is enabled or not.
-enabled: 'true'
+enabled: ${handler.enabled:true}
 # Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
 # set the Status Object in the AUDIT_INFO, for auditing purposes
 # default, if not set:false
@@ -40,7 +40,10 @@ basePath: ${handler.basePath:/}
 #   handlers element altogether
 # ------------------------------------------------------------------------------
 handlers: ${handler.handlers:}
+# List of defined chains
+chains: ${handler.chains:}
+# List of defined paths
+paths: ${handler.paths:}
 # If there is no matched path, then it goes here first. If this is not set, then an error
 # will be returned.
 defaultHandlers: ${handler.defaultHandlers:}
-paths: ${handler.paths:}

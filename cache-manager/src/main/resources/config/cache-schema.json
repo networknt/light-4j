@@ -16,12 +16,14 @@
           "expiryInMinutes" : {
             "type" : "integer",
             "description" : "The expiry time of the cache in minutes.",
-            "minimum" : 0
+            "minimum" : 0,
+            "format" : "int32"
           },
           "maxSize" : {
             "type" : "integer",
             "description" : "The maximum size of the cache.",
-            "minimum" : 0
+            "minimum" : 0,
+            "format" : "int32"
           }
         }
       }

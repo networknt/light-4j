@@ -20,7 +20,6 @@ public class DbProviderConfig {
     @StringField(
             configFieldName = DRIVER_CLASS_NAME,
             externalizedKeyName = DRIVER_CLASS_NAME,
-            externalized = true,
             defaultValue = "org.postgresql.Driver",
             description = "The driver class name for the database connection."
     )
@@ -30,7 +29,6 @@ public class DbProviderConfig {
             configFieldName = JDBC_URL,
             externalizedKeyName = JDBC_URL,
             defaultValue = "jdbc:postgresql://timescale:5432/configserver",
-            externalized = true,
             description = "JDBC connection URL"
     )
     String jdbcUrl;
@@ -39,7 +37,6 @@ public class DbProviderConfig {
             configFieldName = USERNAME,
             externalizedKeyName = USERNAME,
             defaultValue = "postgres",
-            externalized = true,
             description = "JDBC connection username"
     )
     String username;
@@ -48,7 +45,6 @@ public class DbProviderConfig {
             configFieldName = PASSWORD,
             externalizedKeyName = PASSWORD,
             defaultValue = "secret",
-            externalized = true,
             description = "JDBC connection password"
     )
     char[] password;
@@ -57,7 +53,6 @@ public class DbProviderConfig {
             configFieldName = MAXIMUM_POOL_SIZE,
             externalizedKeyName = MAXIMUM_POOL_SIZE,
             defaultValue = "3",
-            externalized = true,
             description = "Maximum number of connections in the pool"
     )
     int maximumPoolSize;

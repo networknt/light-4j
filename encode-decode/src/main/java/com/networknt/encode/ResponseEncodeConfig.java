@@ -45,7 +45,6 @@ public class ResponseEncodeConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "response encode handler for gzip and deflate",
             defaultValue = "false"
     )
@@ -54,7 +53,6 @@ public class ResponseEncodeConfig {
     @ArrayField(
             configFieldName = ENCODERS,
             externalizedKeyName = ENCODERS,
-            externalized = true,
             defaultValue = "[\"gzip\", \"deflate\"]",
             items = String.class,
             description = "A list of encoders.\n  -gzip\n  -deflate\n\ngzip,deflate"

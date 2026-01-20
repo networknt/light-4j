@@ -13,7 +13,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.SERVER_URL,
             externalizedKeyName = "tokenKeyServerUrl",
-            externalized = true,
             description = "key distribution server url for token verification. It will be used if it is configured.\n" +
                     "If it is not set, a service lookup will be taken with serviceId to find an instance."
     )
@@ -23,7 +22,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.SERVICE_ID,
             externalizedKeyName = "tokenKeyServiceId",
-            externalized = true,
             defaultValue = "com.networknt.oauth2-key-1.0.0",
             description = "key serviceId for key distribution service, " +
                     "it will be used if above server_url is not configured."
@@ -34,7 +32,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.URI,
             externalizedKeyName = "tokenKeyUri",
-            externalized = true,
             defaultValue = "/oauth2/key",
             description = "the path for the key distribution endpoint"
     )
@@ -44,7 +41,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "tokenKeyClientId",
-            externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id used to access key distribution service. " +
                     "It can be the same client_id with token service or not."
@@ -55,7 +51,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "tokenKeyClientSecret",
-            externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client secret used to access the key distribution service."
     )
@@ -66,7 +61,6 @@ public class OAuthTokenKeyConfig {
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = "tokenKeyEnableHttp2",
             defaultValue = "true",
-            externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )
     @JsonProperty(ClientConfig.ENABLE_HTTP2)
@@ -76,7 +70,6 @@ public class OAuthTokenKeyConfig {
             configFieldName = ClientConfig.SERVICE_ID_AUTH_SERVERS,
             externalizedKeyName = "tokenKeyServiceIdAuthServers",
             valueType = AuthServerConfig.class,
-            externalized = true,
             description = "The serviceId to the service specific OAuth 2.0 configuration. " +
                     "Used only when multipleOAuthServer is\n" +
                     "set as true. For detailed config options, please see the values.yml in the client module test."
@@ -87,7 +80,6 @@ public class OAuthTokenKeyConfig {
     @StringField(
             configFieldName = ClientConfig.AUDIENCE,
             externalizedKeyName = "tokenKeyAudience",
-            externalized = true,
             description = "audience for the token validation. " +
                     "It is optional and if it is not configured, no audience validation will be executed."
     )

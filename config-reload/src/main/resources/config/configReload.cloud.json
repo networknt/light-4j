@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.config.reload.model.ConfigReloadConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "configReload",
     "configType" : "Handler",
     "updateUser" : "",

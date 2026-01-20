@@ -1,6 +1,7 @@
 package com.networknt.config.schema.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.schema.FieldNode;
 
 import javax.tools.FileObject;
 import java.io.File;
@@ -24,62 +25,70 @@ public class DebugGenerator extends Generator {
     }
 
     @Override
-    public void writeSchemaToFile(final FileObject path, LinkedHashMap<String, Object> metadata) throws IOException {
-        writeSchemaToFile(path.openOutputStream(), metadata);
+    public void writeSchemaToFile(final FileObject path, final FieldNode annotatedField) throws IOException {
+        writeSchemaToFile(path.openOutputStream(), annotatedField);
     }
 
     @Override
-    public void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException {
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(writer, metadata);
+    public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) throws IOException {
+        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(writer, annotatedField);
     }
 
     @Override
-    public void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException {
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, metadata);
+    public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
+        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, annotatedField);
     }
 
     @Override
-    protected void parseArray(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseMapField(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertMapNode(final FieldNode property) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseBoolean(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseInteger(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseNumber(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseObject(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseString(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected void parseNullField(LinkedHashMap<String, Object> field, LinkedHashMap<String, Object> property) {
+    protected LinkedHashMap<String, Object> convertNullNode(final FieldNode property) {
         // no need to parse anything
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected LinkedHashMap<String, Object> getRootSchemaProperties(LinkedHashMap<String, Object> metadata) {
-        return null;
+    protected LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField) {
+        return new LinkedHashMap<>();
     }
 }

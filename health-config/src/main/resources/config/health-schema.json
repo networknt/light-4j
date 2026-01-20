@@ -16,7 +16,8 @@
     "timeout" : {
       "type" : "integer",
       "description" : "timeout in milliseconds for the health check. If the duration is passed, a failure will return.\nIt is to prevent taking too much time to check subsystems that are not available or timeout.\nAs the health check is used by the control plane for service discovery, by default, one request\nper ten seconds. The quick response time is very important to not block the control plane.",
-      "default" : 2000
+      "default" : 2000,
+      "format" : "int32"
     },
     "downstreamEnabled" : {
       "type" : "boolean",

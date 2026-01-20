@@ -18,14 +18,6 @@ public @interface ObjectField {
     String description() default ConfigSchema.DEFAULT_STRING;
 
     /**
-     * The externalized flag of the field.
-     * If set to true, the value of the field will be formatted in the Light4J configuration style.
-     * i.e.
-     * ${configFileName.configFieldName:defaultValue}
-     */
-    boolean externalized() default ConfigSchema.DEFAULT_BOOLEAN;
-
-    /**
      * The externalized key name of the field.
      * If set, the value of the field will be formatted in the Light4J configuration style.
      * i.e.

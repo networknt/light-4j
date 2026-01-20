@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.handler.config.HandlerConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "handler",
     "configType" : "Handler",
     "updateUser" : "",

@@ -55,7 +55,6 @@ public class AccessControlConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName =  ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "Enable Access Control Handler"
     )
@@ -64,7 +63,6 @@ public class AccessControlConfig {
     @StringField(
             configFieldName = ACCESS_RULE_LOGIC,
             externalizedKeyName = ACCESS_RULE_LOGIC,
-            externalized = true,
             defaultValue = "any",
             description = """
                     If there are multiple rules, the logic to combine them can be any or all. The default is any, and it
@@ -75,7 +73,6 @@ public class AccessControlConfig {
     @BooleanField(
             configFieldName = DEFAULT_DENY,
             externalizedKeyName = DEFAULT_DENY,
-            externalized = true,
             defaultValue = "true",
             description = """
                     If there is no access rule defined for the endpoint, default access is denied. Users can overwrite
@@ -87,7 +84,6 @@ public class AccessControlConfig {
     @ArrayField(
             configFieldName = SKIP_PATH_PREFIXES,
             externalizedKeyName = SKIP_PATH_PREFIXES,
-            externalized = true,
             description = """
                     Define a list of path prefixes to skip the access-control to ease the configuration for the handler.yml
                     so that users can define some endpoint without fine-grained access-control security even through it uses

@@ -33,7 +33,6 @@ public class RuleLoaderConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "A flag to enable the rule loader to get rules for the service from portal"
     )
@@ -43,7 +42,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = PORTAL_HOST,
             externalizedKeyName = PORTAL_HOST,
-            externalized = true,
             defaultValue = "https://localhost",
             description = "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal"
     )
@@ -52,7 +50,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = PORTAL_TOKEN,
             externalizedKeyName = PORTAL_TOKEN,
-            externalized = true,
             description = "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\n" +
                     "is light-portal."
     )
@@ -61,7 +58,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = RULE_SOURCE,
             externalizedKeyName = RULE_SOURCE,
-            externalized = true,
             defaultValue = "light-portal",
             description = "Source of the rule. light-portal or config-folder and default to light-portal. If config folder is set,\n" +
                     "a rules.yml must be in the externalized folder to load rules from it. The config-folder option should\n" +
@@ -73,7 +69,6 @@ public class RuleLoaderConfig {
     @MapField(
             configFieldName = ENDPOINT_RULES,
             externalizedKeyName = ENDPOINT_RULES,
-            externalized = true,
             description = "When ruleSource is config-folder, then we can load the endpoint to rules mapping here instead of portal\n" +
                     "service details. Each endpoint will have a list of rules and the type of the rules.",
             valueType = List.class

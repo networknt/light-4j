@@ -63,26 +63,25 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = AUDIT_ON_ERROR,
             externalizedKeyName = AUDIT_ON_ERROR,
-            externalized = true,
-            description = "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\n" +
-                    "set the Status Object in the AUDIT_INFO, for auditing purposes\n" +
-                    "default, if not set:false"
+            description = """
+                    Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+                    set the Status Object in the AUDIT_INFO, for auditing purposes
+                    default, if not set:false"""
     )
     private boolean auditOnError;
 
     @BooleanField(
             configFieldName = AUDIT_STACK_TRACE,
             externalizedKeyName = AUDIT_STACK_TRACE,
-            externalized = true,
-            description = "set the StackTrace in the AUDIT_INFO, for auditing purposes\n" +
-                    "default, if not set:false"
+            description = """
+                    set the StackTrace in the AUDIT_INFO, for auditing purposes
+                    default, if not set:false"""
     )
     private boolean auditStackTrace;
 
     @BooleanField(
             configFieldName = REPORT_HANDLER_DURATION,
             externalizedKeyName = REPORT_HANDLER_DURATION,
-            externalized = true,
             description = "Indicate if the handler middleware should report handler duration."
     )
     private boolean enabledHandlerMetrics;
@@ -90,7 +89,6 @@ public class HandlerConfig {
     @StringField(
             configFieldName = HANDLER_METRICS_LOG_LEVEL,
             externalizedKeyName = HANDLER_METRICS_LOG_LEVEL,
-            externalized = true,
             defaultValue = "DEBUG",
             pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
             description = "The log level for the handler metrics."
@@ -100,7 +98,6 @@ public class HandlerConfig {
     @StringField(
             configFieldName = BASE_PATH,
             externalizedKeyName = BASE_PATH,
-            externalized = true,
             defaultValue = "/",
             description = "Base Path of the API endpoints"
     )
@@ -109,41 +106,42 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = HANDLERS,
             externalizedKeyName = HANDLERS,
-            externalized = true,
-            description = "------------------------------------------------------------------------------\n" +
-                    "Support individual handler chains for each separate endpoint. It allows framework\n" +
-                    "handlers like health check, server info to bypass majority of the middleware handlers\n" +
-                    "and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.\n" +
-                    "\n" +
-                    "handlers  --  list of handlers to be used across chains in this microservice\n" +
-                    "              including the routing handlers for ALL endpoints\n" +
-                    "          --  format: fully qualified handler class name@optional:given name\n" +
-                    "chains    --  allows forming of [1..N] chains, which could be wholly or\n" +
-                    "              used to form handler chains for each endpoint\n" +
-                    "              ex.: default chain below, reused partially across multiple endpoints\n" +
-                    "paths     --  list all the paths to be used for routing within the microservice\n" +
-                    "          ----  path: the URI for the endpoint (ex.: path: '/v1/pets')\n" +
-                    "          ----  method: the operation in use (ex.: 'post')\n" +
-                    "          ----  exec: handlers to be executed -- this element forms the list and\n" +
-                    "                      the order of execution for the handlers\n" +
-                    "\n" +
-                    "IMPORTANT NOTES:\n" +
-                    "- to avoid executing a handler, it has to be removed/commented out in the chain\n" +
-                    "  or change the enabled:boolean to false for a middleware handler configuration.\n" +
-                    "- all handlers, routing handler included, are to be listed in the execution chain\n" +
-                    "- for consistency, give a name to each handler; it is easier to refer to a name\n" +
-                    "  vs a fully qualified class name and is more elegant\n" +
-                    "- you can list in chains the fully qualified handler class names, and avoid using the\n" +
-                    "  handlers element altogether\n" +
-                    "------------------------------------------------------------------------------",
+            description = """
+                    ------------------------------------------------------------------------------
+                    Support individual handler chains for each separate endpoint. It allows framework
+                    handlers like health check, server info to bypass majority of the middleware handlers
+                    and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.
+
+                    handlers  --  list of handlers to be used across chains in this microservice
+                                  including the routing handlers for ALL endpoints
+                              --  format: fully qualified handler class name@optional:given name
+                    chains    --  allows forming of [1..N] chains, which could be wholly or
+                                  used to form handler chains for each endpoint
+                                  ex.: default chain below, reused partially across multiple endpoints
+                    paths     --  list all the paths to be used for routing within the microservice
+                              ----  path: the URI for the endpoint (ex.: path: '/v1/pets')
+                              ----  method: the operation in use (ex.: 'post')
+                              ----  exec: handlers to be executed -- this element forms the list and
+                                          the order of execution for the handlers
+
+                    IMPORTANT NOTES:
+                    - to avoid executing a handler, it has to be removed/commented out in the chain
+                      or change the enabled:boolean to false for a middleware handler configuration.
+                    - all handlers, routing handler included, are to be listed in the execution chain
+                    - for consistency, give a name to each handler; it is easier to refer to a name
+                      vs a fully qualified class name and is more elegant
+                    - you can list in chains the fully qualified handler class names, and avoid using the
+                      handlers element altogether
+                    ------------------------------------------------------------------------------""",
             items = String.class
     )
     private List<String> handlers;
 
+    // NOTE: Current limitations of the schema generator cannot handle wrapped types.
+    // This means the JSON schema output will be inaccurate for this field.
     @MapField(
-            configFieldName = DEFAULT_HANDLERS,
-            externalizedKeyName = DEFAULT_HANDLERS,
-            externalized = true,
+            configFieldName = CHAINS,
+            externalizedKeyName = CHAINS,
             description = "List of defined chains",
             valueType = List.class
     )
@@ -152,7 +150,7 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = PATHS,
             externalizedKeyName = PATHS,
-            externalized = true,
+            description = "List of defined paths",
             items = PathChain.class
     )
     private List<PathChain> paths;
@@ -160,9 +158,9 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = DEFAULT_HANDLERS,
             externalizedKeyName = DEFAULT_HANDLERS,
-            externalized = true,
-            description = "If there is no matched path, then it goes here first. If this is not set, then an error\n" +
-                    "will be returned.",
+            description = """
+                    If there is no matched path, then it goes here first. If this is not set, then an error
+                    will be returned.""",
             items = String.class
     )
     private List<String> defaultHandlers;

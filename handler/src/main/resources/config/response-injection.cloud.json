@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.handler.ResponseInjectionConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "response-injection",
     "configType" : "Handler",
     "updateUser" : "",

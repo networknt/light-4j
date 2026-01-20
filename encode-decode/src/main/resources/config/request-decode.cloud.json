@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.decode.RequestDecodeConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "request-decode",
     "configType" : "Handler",
     "updateUser" : "",

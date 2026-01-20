@@ -53,7 +53,6 @@ public class ConsulConfig {
     @StringField(
             configFieldName = CONSUL_URL,
             externalizedKeyName = CONSUL_URL,
-            externalized = true,
             defaultValue = "http://localhost:8500",
             description = "Consul URL for accessing APIs"
     )
@@ -63,7 +62,6 @@ public class ConsulConfig {
             configFieldName = CONSUL_TOKEN,
             externalizedKeyName = CONSUL_TOKEN,
             defaultValue = "the_one_ring",
-            externalized = true,
             description = "access token to the consul server"
     )
     String consulToken;
@@ -72,7 +70,6 @@ public class ConsulConfig {
             configFieldName = MAX_REQ_PER_CONN,
             externalizedKeyName = MAX_REQ_PER_CONN,
             defaultValue = "1000000",
-            externalized = true,
             description = "number of requests before reset the shared connection."
     )
     int maxReqPerConn;
@@ -82,7 +79,6 @@ public class ConsulConfig {
             externalizedKeyName = DEREGISTER_AFTER,
             pattern = "^\\d+[smh]$",
             defaultValue = "2m",
-            externalized = true,
             description = "deregister the service after the amount of time after health check failed."
     )
     String deregisterAfter;
@@ -92,7 +88,6 @@ public class ConsulConfig {
             externalizedKeyName = CHECK_INTERVAL,
             pattern = "^\\d+[smh]$",
             defaultValue = "10s",
-            externalized = true,
             description = "health check interval for TCP or HTTP check. Or it will be the TTL for TTL check. Every 10 seconds,\n" +
                     "TCP or HTTP check request will be sent. Or if there is no heart beat request from service after 10 seconds,\n" +
                     "then mark the service is critical."
@@ -102,7 +97,6 @@ public class ConsulConfig {
     @BooleanField(
             configFieldName = TCP_CHECK,
             externalizedKeyName = TCP_CHECK,
-            externalized = true,
             defaultValue = "false",
             description = "One of the following health check approach will be selected. Two passive (TCP and HTTP) and one active (TTL)\n" +
                     "enable health check TCP. Ping the IP/port to ensure that the service is up. This should be used for most of\n" +
@@ -113,7 +107,6 @@ public class ConsulConfig {
     @BooleanField(
             configFieldName = HTTP_CHECK,
             externalizedKeyName = HTTP_CHECK,
-            externalized = true,
             defaultValue = "false",
             description = "enable health check HTTP. A http get request will be sent to the service to ensure that 200 response status is\n" +
                     "coming back. This is suitable for service that depending on database or other infrastructure services. You should\n" +
@@ -124,7 +117,6 @@ public class ConsulConfig {
     @BooleanField(
             configFieldName = TTL_CHECK,
             externalizedKeyName = TTL_CHECK,
-            externalized = true,
             defaultValue = "true",
             description = "enable health check TTL. When this is enabled, Consul won't actively check your service to ensure it is healthy,\n" +
                     "but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service\n" +
@@ -137,7 +129,6 @@ public class ConsulConfig {
             externalizedKeyName = WAIT,
             defaultValue = "600s",
             pattern = "^\\d+[smh]$",
-            externalized = true,
             description = "endpoints that support blocking will also honor a wait parameter specifying a maximum duration for the blocking request.\n" +
                     "This is limited to 10 minutes.This value can be specified in the form of \"10s\" or \"5m\" (i.e., 10 seconds or 5 minutes,\n" +
                     "respectively)."
@@ -149,7 +140,6 @@ public class ConsulConfig {
             externalizedKeyName = TIMEOUT_BUFFER,
             defaultValue = "5s",
             pattern = "^\\d+[smh]$",
-            externalized = true,
             description = "Additional buffer of time to allow Consul to terminate the blocking query connection."
     )
     String timeoutBuffer = "5s";
@@ -157,7 +147,6 @@ public class ConsulConfig {
     @BooleanField(
             configFieldName = ENABLE_HTTP2,
             externalizedKeyName = ENABLE_HTTP2,
-            externalized = true,
             defaultValue = "false",
             description = "enable HTTP/2\n" +
                     "must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS\n" +
@@ -169,7 +158,6 @@ public class ConsulConfig {
             configFieldName = CONNECTION_TIMEOUT,
             externalizedKeyName = CONNECTION_TIMEOUT,
             defaultValue = "5",
-            externalized = true,
             description = "Consul connection establishment timeout in seconds"
     )
     int connectionTimeout = 5;
@@ -178,7 +166,6 @@ public class ConsulConfig {
             configFieldName = REQUEST_TIMEOUT,
             externalizedKeyName = REQUEST_TIMEOUT,
             defaultValue = "5",
-            externalized = true,
             description = "Consul request completion timeout in seconds\n" +
                     "This does NOT apply to Consul service discovery lookups (see the 'wait' and 'timeoutBuffer' properties for that)"
     )
@@ -188,7 +175,6 @@ public class ConsulConfig {
             configFieldName = RECONNECT_INTERVAL,
             externalizedKeyName = RECONNECT_INTERVAL,
             defaultValue = "2",
-            externalized = true,
             description = "Time to wait in seconds between reconnect attempts when Consul connection fails"
     )
     int reconnectInterval = 2;
@@ -197,7 +183,6 @@ public class ConsulConfig {
             configFieldName = RECONNECT_JITTER,
             externalizedKeyName = RECONNECT_JITTER,
             defaultValue = "2",
-            externalized = true,
             description = "A random number of seconds in between 0 and reconnectJitter added to reconnectInterval (to avoid too many reconnect\n" +
                     "requests at one time)"
     )
@@ -207,7 +192,6 @@ public class ConsulConfig {
             configFieldName = LOOKUP_INTERVAL,
             externalizedKeyName = LOOKUP_INTERVAL,
             defaultValue = "30",
-            externalized = true,
             description = "Time in seconds between blocking queries with Consul. Consul blocking queries time should be set via the\n" +
                     "'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml"
     )
@@ -217,7 +201,6 @@ public class ConsulConfig {
             configFieldName = MAX_ATTEMPTS_BEFORE_SHUTDOWN,
             externalizedKeyName = MAX_ATTEMPTS_BEFORE_SHUTDOWN,
             defaultValue = "-1",
-            externalized = true,
             description = "Max number of failed Consul connection or request attempts before self-termination\n" +
                     "-1 means an infinite # of attempts are allowed"
     )
@@ -227,7 +210,6 @@ public class ConsulConfig {
     @BooleanField(
             configFieldName = SHUTDOWN_IF_THREAD_FROZEN,
             externalizedKeyName = SHUTDOWN_IF_THREAD_FROZEN,
-            externalized = true,
             defaultValue = "false",
             description = "Shuts down host application if any Consul lookup thread stops reporting a heartbeat for\n" +
                     "2 * ( lookupInterval + wait (in seconds) + timeoutBuffer (in seconds) ) seconds"

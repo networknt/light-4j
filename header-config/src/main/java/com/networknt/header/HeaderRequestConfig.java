@@ -11,7 +11,6 @@ public class HeaderRequestConfig {
     @ArrayField(
             configFieldName = "remove",
             externalizedKeyName = "request.remove",
-            externalized = true,
             description = "Remove all the request headers listed here. The value is a list of keys.",
             items = String.class
     )
@@ -21,7 +20,6 @@ public class HeaderRequestConfig {
     @MapField(
             configFieldName = "update",
             externalizedKeyName = "request.update",
-            externalized = true,
             description = "Add or update the header with key/value pairs. The value is a map of key and value pairs.\nAlthough HTTP header supports multiple values per key, it is not supported here.",
             valueType = String.class
     )

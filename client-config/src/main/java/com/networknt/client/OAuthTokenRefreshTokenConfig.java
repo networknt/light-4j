@@ -13,7 +13,6 @@ public class OAuthTokenRefreshTokenConfig {
     @StringField(
             configFieldName = ClientConfig.URI,
             externalizedKeyName = "tokenRtUri",
-            externalized = true,
             defaultValue = "/oauth2/token",
             description = "token endpoint for refresh token grant"
     )
@@ -23,7 +22,6 @@ public class OAuthTokenRefreshTokenConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_ID,
             externalizedKeyName = "tokenRtClientId",
-            externalized = true,
             defaultValue = "f7d42348-c647-4efb-a52d-4c5787421e72",
             description = "client_id for refresh token grant flow."
     )
@@ -33,7 +31,6 @@ public class OAuthTokenRefreshTokenConfig {
     @StringField(
             configFieldName = ClientConfig.CLIENT_SECRET,
             externalizedKeyName = "tokenRtClientSecret",
-            externalized = true,
             defaultValue = "f6h1FTI8Q3-7UScPZDzfXA",
             description = "client_secret for refresh token grant flow"
     )
@@ -43,7 +40,6 @@ public class OAuthTokenRefreshTokenConfig {
     @ArrayField(
             configFieldName = ClientConfig.SCOPE,
             externalizedKeyName = "tokenRtScope",
-            externalized = true,
             items = String.class,
             description = "optional scope, default scope in the client registration will be used if not defined.\n" +
                     "If there are scopes specified here, they will be verified against the registered scopes.\n" +

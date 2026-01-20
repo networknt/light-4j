@@ -79,7 +79,6 @@ public class WhitelistConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = """
                     Indicate if this handler is enabled or not. It is normally used for the third party integration
@@ -92,7 +91,6 @@ public class WhitelistConfig {
     @BooleanField(
             configFieldName = DEFAULT_ALLOW,
             externalizedKeyName = DEFAULT_ALLOW,
-            externalized = true,
             defaultValue = "true",
             description = """
                     Default allowed or denied if there is no rules defined for the path or the path is not defined.
@@ -109,7 +107,6 @@ public class WhitelistConfig {
     @MapField(
             configFieldName = PATHS,
             externalizedKeyName = PATHS,
-            externalized = true,
             description = """
                     List of path prefixes and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and
                     Slash format. The path prefix is defined as request path prefix only without differentiate method.

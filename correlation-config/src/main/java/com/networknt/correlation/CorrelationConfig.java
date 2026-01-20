@@ -48,7 +48,6 @@ public class CorrelationConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "If enabled is true, the handler will be injected into the request and response chain."
     )
     boolean enabled;
@@ -57,7 +56,6 @@ public class CorrelationConfig {
             configFieldName = AUTOGEN_CORRELATION_ID,
             externalizedKeyName = AUTOGEN_CORRELATION_ID,
             defaultValue = "true",
-            externalized = true,
             description = "If set to true, it will auto-generate the correlationID if it is not provided in the request"
     )
     boolean autogenCorrelationID;
@@ -65,7 +63,6 @@ public class CorrelationConfig {
     @StringField(
             configFieldName = CORRELATION_MDC_FIELD,
             externalizedKeyName = CORRELATION_MDC_FIELD,
-            externalized = true,
             defaultValue = "cId",
             description = "The MDC context field name for the correlation id value"
     )
@@ -74,7 +71,6 @@ public class CorrelationConfig {
     @StringField(
             configFieldName = TRACEABILITY_MDC_FIELD,
             externalizedKeyName = TRACEABILITY_MDC_FIELD,
-            externalized = true,
             defaultValue = "tId",
             description = "The MDC context field name for the traceability id value"
     )

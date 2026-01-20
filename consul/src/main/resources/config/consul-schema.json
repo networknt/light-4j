@@ -16,7 +16,8 @@
     "maxReqPerConn" : {
       "type" : "integer",
       "description" : "number of requests before reset the shared connection.",
-      "default" : 1000000
+      "default" : 1000000,
+      "format" : "int32"
     },
     "deregisterAfter" : {
       "type" : "string",
@@ -65,32 +66,38 @@
     "connectionTimeout" : {
       "type" : "integer",
       "description" : "Consul connection establishment timeout in seconds",
-      "default" : 5
+      "default" : 5,
+      "format" : "int32"
     },
     "requestTimeout" : {
       "type" : "integer",
       "description" : "Consul request completion timeout in seconds\nThis does NOT apply to Consul service discovery lookups (see the 'wait' and 'timeoutBuffer' properties for that)",
-      "default" : 5
+      "default" : 5,
+      "format" : "int32"
     },
     "reconnectInterval" : {
       "type" : "integer",
       "description" : "Time to wait in seconds between reconnect attempts when Consul connection fails",
-      "default" : 2
+      "default" : 2,
+      "format" : "int32"
     },
     "reconnectJitter" : {
       "type" : "integer",
       "description" : "A random number of seconds in between 0 and reconnectJitter added to reconnectInterval (to avoid too many reconnect\nrequests at one time)",
-      "default" : 2
+      "default" : 2,
+      "format" : "int32"
     },
     "lookupInterval" : {
       "type" : "integer",
       "description" : "Time in seconds between blocking queries with Consul. Consul blocking queries time should be set via the\n'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml",
-      "default" : 30
+      "default" : 30,
+      "format" : "int32"
     },
     "maxAttemptsBeforeShutdown" : {
       "type" : "integer",
       "description" : "Max number of failed Consul connection or request attempts before self-termination\n-1 means an infinite # of attempts are allowed",
-      "default" : -1
+      "default" : -1,
+      "format" : "int32"
     },
     "shutdownIfThreadFrozen" : {
       "type" : "boolean",

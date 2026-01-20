@@ -11,7 +11,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.ERROR_THRESHOLD,
             externalizedKeyName = ClientConfig.ERROR_THRESHOLD,
-            externalized = true,
             defaultValue = "2",
             description = "number of timeouts/errors to break the circuit"
     )
@@ -21,7 +20,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.CONNECT_TIMEOUT,
             externalizedKeyName = ClientConfig.CONNECT_TIMEOUT,
-            externalized = true,
             defaultValue = "2000",
             description = "Timeout, in milliseconds, controlling the initial TCP connection establishment. When using the light-4j Http2Client, this value\n" +
                     "specifies the timeout for obtaining a connection. When using the JDK 11 HttpClient wrapper, it represents the connection timeout.\n" +
@@ -33,7 +31,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.TIMEOUT,
             externalizedKeyName = ClientConfig.TIMEOUT,
-            externalized = true,
             defaultValue = "3000",
             description = "Timeout, in milliseconds, controlling the entire request–response exchange. When using the light-4j Http2Client, this value\n" +
             "represents the request timeout. When using the JDK 11 HttpClient wrapper, it also represents the request timeout. The default value is 3000 ms."
@@ -44,7 +41,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.RESET_TIMEOUT,
             externalizedKeyName = ClientConfig.RESET_TIMEOUT,
-            externalized = true,
             defaultValue = "7000",
             description = "reset the circuit after this timeout in millisecond"
     )
@@ -54,7 +50,6 @@ public class RequestConfig {
     @BooleanField(
             configFieldName = ClientConfig.INJECT_OPEN_TRACING,
             externalizedKeyName = ClientConfig.INJECT_OPEN_TRACING,
-            externalized = true,
             description = "if open tracing is enabled. traceability, " +
                     "correlation and metrics should not be in the chain if opentracing is used.",
             defaultValue = "false"
@@ -65,7 +60,6 @@ public class RequestConfig {
     @BooleanField(
             configFieldName = ClientConfig.INJECT_CALLER_ID,
             externalizedKeyName = ClientConfig.INJECT_CALLER_ID,
-            externalized = true,
             description = "inject serviceId as callerId into the http header for metrics to collect the caller. " +
                     "The serviceId is from server.yml",
             defaultValue = "false"
@@ -76,7 +70,6 @@ public class RequestConfig {
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = ClientConfig.ENABLE_HTTP_2,
-            externalized = true,
             defaultValue = "true",
             description = "the flag to indicate whether http/2 is enabled when calling client.callService()"
     )
@@ -86,7 +79,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.CONNECTION_POOL_SIZE,
             externalizedKeyName = ClientConfig.CONNECTION_POOL_SIZE,
-            externalized = true,
             defaultValue = "1000",
             description = "the maximum host capacity of connection pool"
     )
@@ -96,7 +88,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.CONNECTION_EXPIRE_TIME,
             externalizedKeyName = ClientConfig.CONNECTION_EXPIRE_TIME,
-            externalized = true,
             defaultValue = "1800000",
             description = "Connection expire time when connection pool is used. " +
                     "By default, the cached connection will be closed after 30 minutes.\n" +
@@ -109,7 +100,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.MAX_REQ_PER_CONN,
             externalizedKeyName = ClientConfig.MAX_REQ_PER_CONN,
-            externalized = true,
             defaultValue = "1000000",
             description = "The maximum request limitation for each connection in the connection pool. " +
                     "By default, a connection will be closed after\n" +
@@ -122,7 +112,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
             externalizedKeyName = ClientConfig.MAX_CONNECTION_NUM_PER_HOST,
-            externalized = true,
             defaultValue = "1000",
             description = "maximum quantity of connection in connection pool for each host"
     )
@@ -132,7 +121,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
             externalizedKeyName = ClientConfig.MIN_CONNECTION_NUM_PER_HOST,
-            externalized = true,
             defaultValue = "250",
             description = "minimum quantity of connection in connection pool for each host. " +
                     "The corresponding connection number will shrink to minConnectionNumPerHost\n" +
@@ -145,7 +133,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.MAX_REQUEST_RETRY,
             externalizedKeyName = ClientConfig.MAX_REQUEST_RETRY,
-            externalized = true,
             defaultValue = "3",
             description = "Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3."
     )
@@ -155,7 +142,6 @@ public class RequestConfig {
     @IntegerField(
             configFieldName = ClientConfig.REQUEST_RETRY_DELAY,
             externalizedKeyName = ClientConfig.REQUEST_RETRY_DELAY,
-            externalized = true,
             defaultValue = "1000",
             description = "The delay time in milliseconds for each request retry. The default value is 1000."
     )

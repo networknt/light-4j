@@ -66,7 +66,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_VERIFY_JWT,
             externalizedKeyName = ENABLE_VERIFY_JWT,
-            externalized = true,
             defaultValue = "true",
             description = "Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification\n" +
                     "if this flag is false. It should only be set to false on the dev environment for testing\n" +
@@ -78,7 +77,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_VERIFY_SWT,
             externalizedKeyName = ENABLE_VERIFY_SWT,
-            externalized = true,
             defaultValue = "true",
             description = "Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification\n" +
                     "if this flag is false. It should only be set to false on the dev environment for testing\n" +
@@ -90,7 +88,6 @@ public class SecurityConfig {
     @StringField(
             configFieldName = SWT_CLIENT_ID_HEADER,
             externalizedKeyName = SWT_CLIENT_ID_HEADER,
-            externalized = true,
             defaultValue = "swt-client",
             description = "swt clientId header name. When light-gateway is used and the consumer app does not want to save\n" +
                     "the client secret in the configuration file, it can be passed in the header."
@@ -100,7 +97,6 @@ public class SecurityConfig {
     @StringField(
             configFieldName = SWT_CLIENT_SECRET_HEADER,
             externalizedKeyName = SWT_CLIENT_SECRET_HEADER,
-            externalized = true,
             defaultValue = "swt-secret",
             description = "swt clientSecret header name. When light-gateway is used and the consumer app does not want to save\n" +
                     "the client secret in the configuration file, it can be passed in the header."
@@ -110,7 +106,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_EXTRACT_SCOPE_TOKEN,
             externalizedKeyName = ENABLE_EXTRACT_SCOPE_TOKEN,
-            externalized = true,
             defaultValue = "true",
             description = "Extract JWT scope token from the X-Scope-Token header and validate the JWT token"
     )
@@ -119,7 +114,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_VERIFY_SCOPE,
             externalizedKeyName = ENABLE_VERIFY_SCOPE,
-            externalized = true,
             defaultValue = "true",
             description = "Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the\n" +
                     "light gateway as a centralized gateway without backend API specifications, you can still enable\n" +
@@ -134,7 +128,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
             externalizedKeyName = SKIP_VERIFY_SCOPE_WITHOUT_SPEC,
-            externalized = true,
             defaultValue = "false",
             description = "Users should only use this flag in a shared light gateway if the backend API specifications are\n" +
                     "unavailable in the gateway config folder. If this flag is true and the enableVerifyScope is true,\n" +
@@ -146,7 +139,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = IGNORE_JWT_EXPIRY,
             externalizedKeyName = IGNORE_JWT_EXPIRY,
-            externalized = true,
             defaultValue = "false",
             description = "If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless\n" +
                     "you have a strong reason, please use it only on the dev environment if your OAuth 2 provider\n" +
@@ -159,7 +151,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_H2C,
             externalizedKeyName = ENABLE_H2C,
-            externalized = true,
             defaultValue = "false",
             description = "set true if you want to allow http 1/1 connections to be upgraded to http/2 using the UPGRADE method (h2c).\n" +
                     "By default, this is set to false for security reasons. If you choose to enable it make sure you can handle http/2 w/o tls."
@@ -169,7 +160,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_MOCK_JWT,
             externalizedKeyName = ENABLE_MOCK_JWT,
-            externalized = true,
             defaultValue = "false",
             description = "User for test only. should be always be false on official environment."
     )
@@ -178,7 +168,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_RELAXED_KEY_CONSTRAINTS,
             externalizedKeyName = ENABLE_RELAXED_KEY_CONSTRAINTS,
-            externalized = true,
             defaultValue = "false",
             description = "Enables relaxed verification for jwt. e.g. Disables key length requirements.\n" +
                     "Should be used in test environments only.\n"
@@ -196,7 +185,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = LOG_JWT_TOKEN,
             externalizedKeyName = LOG_JWT_TOKEN,
-            externalized = true,
             defaultValue = "true",
             description = "Enable or disable JWT token logging for audit. This is to log the entire token\n" +
                     "or choose the next option that only logs client_id, user_id and scope."
@@ -206,7 +194,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = LOG_CLIENT_USER_SCOPE,
             externalizedKeyName = LOG_CLIENT_USER_SCOPE,
-            externalized = true,
             defaultValue = "false",
             description = "Enable or disable client_id, user_id and scope logging if you don't want to log\n" +
                     "the entire token. Choose this option or the option above."
@@ -216,7 +203,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = ENABLE_JWT_CACHE,
             externalizedKeyName = ENABLE_JWT_CACHE,
-            externalized = true,
             defaultValue = "true",
             description = "Enable JWT token cache to speed up verification. This will only verify expired time\n" +
                     "and skip the signature verification as it takes more CPU power and a long time. If\n" +
@@ -230,7 +216,6 @@ public class SecurityConfig {
     @IntegerField(
             configFieldName = JWT_CACHE_FULL_SIZE,
             externalizedKeyName = JWT_CACHE_FULL_SIZE,
-            externalized = true,
             defaultValue = "100",
             description = "If enableJwtCache is true, then an error message will be shown up in the log if the\n" +
                     "cache size is bigger than the jwtCacheFullSize. This helps the developers to detect\n" +
@@ -243,7 +228,6 @@ public class SecurityConfig {
     @BooleanField(
             configFieldName = BOOTSTRAP_FROM_KEY_SERVICE,
             externalizedKeyName = BOOTSTRAP_FROM_KEY_SERVICE,
-            externalized = true,
             defaultValue = "false",
             description = "If you are using light-oauth2, then you don't need to have oauth subfolder for public\n" +
                     "key certificate to verify JWT token, the key will be retrieved from key endpoint once\n" +
@@ -257,7 +241,6 @@ public class SecurityConfig {
     @StringField(
             configFieldName = PROVIDER_ID,
             externalizedKeyName = PROVIDER_ID,
-            externalized = true,
             description = "Used in light-oauth2 and oauth-kafka key service for federated deployment. Each instance\n" +
                     "will have a providerId, and it will be part of the kid to allow each instance to get the\n" +
                     "JWK from other instance based on the providerId in the kid."
@@ -267,7 +250,6 @@ public class SecurityConfig {
     @ArrayField(
             configFieldName = SKIP_PATH_PREFIXES,
             externalizedKeyName = SKIP_PATH_PREFIXES,
-            externalized = true,
             description = "Define a list of path prefixes to skip the security to ease the configuration for the\n" +
                     "handler.yml so that users can define some endpoint without security even through it uses\n" +
                     "the default chain. This is particularly useful in the light-gateway use case as the same\n" +
@@ -281,7 +263,6 @@ public class SecurityConfig {
     @MapField(
             configFieldName = PASS_THROUGH_CLAIMS,
             externalizedKeyName = PASS_THROUGH_CLAIMS,
-            externalized = true,
             description = "When light-gateway or http-sidecar is used for security, sometimes, we need to pass some\n" +
                     "claims from the JWT or SWT to the backend API for further verification or audit. You can\n" +
                     "select some claims to pass to the backend API with HTTP headers. The format is a map of\n" +

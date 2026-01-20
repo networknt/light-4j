@@ -39,7 +39,6 @@ public class ResponseCacheConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Indicate if the interceptor is enabled or not.",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean enabled;
@@ -49,7 +48,6 @@ public class ResponseCacheConfig {
             externalizedKeyName = APPLIED_PATH_PREFIXES,
             description = "A list of applied request path prefixes, other requests will skip this handler. The value can be a string\n" +
                     "if there is only one request path prefix needs this handler. or a list of strings if there are multiple.\n",
-            externalized = true,
             items = String.class // The items in the list are strings
     )
     List<String> appliedPathPrefixes; // Keep as List<String>

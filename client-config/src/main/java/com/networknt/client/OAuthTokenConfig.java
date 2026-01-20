@@ -21,7 +21,6 @@ public class OAuthTokenConfig  {
     @IntegerField(
             configFieldName = ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED,
             externalizedKeyName = ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED,
-            externalized = true,
             defaultValue = "60000",
             description = "The scope token will be renewed automatically 1 minute before expiry"
     )
@@ -31,7 +30,6 @@ public class OAuthTokenConfig  {
     @IntegerField(
             configFieldName = ClientConfig.EXPIRED_REFRESH_RETRY_DELAY,
             externalizedKeyName = ClientConfig.EXPIRED_REFRESH_RETRY_DELAY,
-            externalized = true,
             defaultValue = "2000",
             description = "if scope token is expired, we need short delay so that we can retry faster."
     )
@@ -41,7 +39,6 @@ public class OAuthTokenConfig  {
     @IntegerField(
             configFieldName = ClientConfig.EARLY_REFRESH_RETRY_DELAY,
             externalizedKeyName = ClientConfig.EARLY_REFRESH_RETRY_DELAY,
-            externalized = true,
             defaultValue = "4000",
             description = "if scope token is not expired but in renew window, we need slow retry delay."
     )
@@ -51,7 +48,6 @@ public class OAuthTokenConfig  {
     @StringField(
             configFieldName = ClientConfig.SERVER_URL,
             externalizedKeyName = "tokenServerUrl",
-            externalized = true,
             description = "token server url. The default port number for token service is 6882. If this is set,\n" +
                     "it will take high priority than serviceId for the direct connection"
     )
@@ -61,7 +57,6 @@ public class OAuthTokenConfig  {
     @StringField(
             configFieldName = ClientConfig.SERVICE_ID,
             externalizedKeyName = "tokenServiceId",
-            externalized = true,
             defaultValue = "com.networknt.oauth2-token-1.0.0",
             description = "token service unique id for OAuth 2.0 provider. If server_url is not set above,\n" +
                     "a service discovery action will be taken to find an instance of token service."
@@ -72,7 +67,6 @@ public class OAuthTokenConfig  {
     @StringField(
             configFieldName = ClientConfig.PROXY_HOST,
             externalizedKeyName = "tokenProxyHost",
-            externalized = true,
             description = "For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud\n" +
                     "and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the\n" +
                     "proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId\n" +
@@ -86,7 +80,6 @@ public class OAuthTokenConfig  {
             externalizedKeyName = "tokenProxyPort",
             min = 0,
             max = 65535,
-            externalized = true,
             description = "We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has\n" +
                     "a different port, please specify it here. If proxyHost is available and proxyPort is missing, then\n" +
                     "the default value 443 is going to be used for the HTTP connection."
@@ -98,7 +91,6 @@ public class OAuthTokenConfig  {
             configFieldName = ClientConfig.ENABLE_HTTP_2,
             externalizedKeyName = "tokenEnableHttp2",
             defaultValue = "true",
-            externalized = true,
             description = "set to true if the oauth2 provider supports HTTP/2"
     )
     @JsonProperty(ClientConfig.ENABLE_HTTP_2)
