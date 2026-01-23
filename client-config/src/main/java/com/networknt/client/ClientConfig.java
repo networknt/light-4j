@@ -131,9 +131,12 @@ public final class ClientConfig {
     @JsonProperty(ClientConfig.REQUEST)
     private RequestConfig request = null;
 
+    private final String configName;
+
     private static volatile ClientConfig instance;
 
     private ClientConfig() {
+        this.configName = CONFIG_NAME;
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
         load();
@@ -145,20 +148,14 @@ public final class ClientConfig {
      * @param configName String
      */
     private ClientConfig(String configName) {
+        this.configName = configName;
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         load();
     }
 
 
     private void load() {
-        if(mappedConfig != null) {
-            this.setValues();
-        }
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         if(mappedConfig != null) {
             this.setValues();
         }
@@ -179,9 +176,9 @@ public final class ClientConfig {
     }
 
     public static ClientConfig get() {
-        if (instance == null) {
+        if (instance == null || instance.mappedConfig != Config.getInstance().getJsonMapConfig(instance.configName)) {
             synchronized (ClientConfig.class) {
-                if (instance == null) {
+                if (instance == null || instance.mappedConfig != Config.getInstance().getJsonMapConfig(instance.configName)) {
                     instance = new ClientConfig();
                 }
             }

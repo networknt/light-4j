@@ -41,6 +41,7 @@ public class ConfigReloadConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
+            defaultValue = "true",
             description = "config reload from config server.\n" +
             "Indicate if the config reload from config server  is enabled or not."
     )
