@@ -37,10 +37,10 @@ import java.util.Map;
 )
 public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";
-    private static final String ENABLED = "enabled";
-    private static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
-    private static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
-    private static final String CORRELATION_MDC_FIELD = "correlationMdcField";
+    public static final String ENABLED = "enabled";
+    public static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
+    public static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
+    public static final String CORRELATION_MDC_FIELD = "correlationMdcField";
     private Map<String, Object> mappedConfig;
     private final Config config;
 
@@ -78,9 +78,10 @@ public class CorrelationConfig {
 
     private CorrelationConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
+
     private CorrelationConfig() {
         this(CONFIG_NAME);
     }
@@ -91,16 +92,6 @@ public class CorrelationConfig {
 
     public static CorrelationConfig load() {
         return new CorrelationConfig();
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
     }
 
     public boolean isEnabled() {

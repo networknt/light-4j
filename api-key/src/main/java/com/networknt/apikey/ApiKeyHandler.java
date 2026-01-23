@@ -38,7 +38,6 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     public ApiKeyHandler() {
         if(logger.isTraceEnabled()) logger.trace("ApiKeyHandler is loaded.");
-        config = ApiKeyConfig.load();
     }
 
     /**
@@ -65,7 +64,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ApiKeyConfig.load().isEnabled();
     }
 
     @Override
@@ -79,16 +78,6 @@ public class ApiKeyHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        List<String> masks = new ArrayList<>();
-        if(!config.hashEnabled) {
-            masks.add("apiKey");
-        }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
-        if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is reloaded.");
-    }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
@@ -102,7 +91,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
     }
 
     public boolean handleApiKey(HttpServerExchange exchange, String requestPath) {
-        if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+        if(logger.isTraceEnabled()) logger.trace("requestPath = {}", requestPath);
+        ApiKeyConfig config = ApiKeyConfig.load();
         if (config.getPathPrefixAuths() != null) {
             boolean matched = false;
             boolean found = false;

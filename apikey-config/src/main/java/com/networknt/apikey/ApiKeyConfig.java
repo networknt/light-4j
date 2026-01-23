@@ -72,33 +72,22 @@ public class ApiKeyConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
+    private ApiKeyConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        setConfigData();
+    }
+
     private ApiKeyConfig() {
         this(CONFIG_NAME);
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
-    private ApiKeyConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-    }
     public static ApiKeyConfig load() {
         return new ApiKeyConfig();
     }
 
     public static ApiKeyConfig load(String configName) {
         return new ApiKeyConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {
@@ -125,11 +114,22 @@ public class ApiKeyConfig {
         this.pathPrefixAuths = pathPrefixAuths;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(HASH_ENABLED);
-        if(object != null) hashEnabled = Config.loadBooleanValue(HASH_ENABLED, object);
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(HASH_ENABLED);
+            if (object != null) hashEnabled = Config.loadBooleanValue(HASH_ENABLED, object);
+            setConfigList();
+        }
     }
 
     private void setConfigList() {
@@ -167,11 +167,11 @@ public class ApiKeyConfig {
 
     public static List<ApiKey> populatePathPrefixAuths(List<Map<String, Object>> values) {
         List<ApiKey> pathPrefixAuths = new ArrayList<>();
-        for(Map<String, Object> value: values) {
+        for (Map<String, Object> value : values) {
             ApiKey apiKey = new ApiKey();
-            apiKey.setPathPrefix((String)value.get(PATH_PREFIX));
-            apiKey.setHeaderName((String)value.get(HEADER_NAME));
-            apiKey.setApiKey((String)value.get(API_KEY));
+            apiKey.setPathPrefix((String) value.get(PATH_PREFIX));
+            apiKey.setHeaderName((String) value.get(HEADER_NAME));
+            apiKey.setApiKey((String) value.get(API_KEY));
             pathPrefixAuths.add(apiKey);
         }
         return pathPrefixAuths;

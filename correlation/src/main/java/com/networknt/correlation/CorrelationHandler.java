@@ -49,17 +49,17 @@ import java.util.HashMap;
 public class CorrelationHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
 
-    public static CorrelationConfig config;
+
 
     private volatile HttpHandler next;
 
     public CorrelationHandler() {
-        config = CorrelationConfig.load();
         logger.info("CorrelationHandler is loaded.");
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        CorrelationConfig config = CorrelationConfig.load();
         logger.debug("CorrelationHandler.handleRequest starts.");
 
         var tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
@@ -125,18 +125,11 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return CorrelationConfig.load().isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), config.getMappedConfig(), null);
-        logger.info("CorrelationHandler is enabled.");
+        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME), null);
     }
 }

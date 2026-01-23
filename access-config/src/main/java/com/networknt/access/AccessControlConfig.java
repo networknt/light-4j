@@ -49,7 +49,7 @@ public class AccessControlConfig {
     private static final String DEFAULT_DENY = "defaultDeny";
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
@@ -99,7 +99,7 @@ public class AccessControlConfig {
     }
     private AccessControlConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -119,15 +119,6 @@ public class AccessControlConfig {
      */
     public static AccessControlConfig load(String configName) {
         return new AccessControlConfig(configName);
-    }
-
-    /**
-     * Reloads the configuration from the config file.
-     */
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     /**
