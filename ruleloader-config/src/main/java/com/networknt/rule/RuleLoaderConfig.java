@@ -81,7 +81,7 @@ public class RuleLoaderConfig {
 
     private RuleLoaderConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setMapData();
     }
@@ -92,12 +92,6 @@ public class RuleLoaderConfig {
 
     public static RuleLoaderConfig load(String configName) {
         return new RuleLoaderConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setMapData();
     }
 
     public boolean isEnabled() {

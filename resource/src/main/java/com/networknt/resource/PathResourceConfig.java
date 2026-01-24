@@ -15,6 +15,7 @@
  */
 
 package com.networknt.resource;
+import com.networknt.config.Config;
 
 public class PathResourceConfig {
     public static final String CONFIG_NAME = "path-resource";
@@ -25,7 +26,45 @@ public class PathResourceConfig {
     int transferMinSize;
     boolean directoryListingEnabled;
 
-    public PathResourceConfig() {
+    private final Config config;
+    private java.util.Map<String, Object> mappedConfig;
+
+    private PathResourceConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
+    }
+
+    private PathResourceConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static PathResourceConfig load() {
+        return new PathResourceConfig();
+    }
+
+    public static PathResourceConfig load(String configName) {
+        return new PathResourceConfig(configName);
+    }
+
+    private void setConfigData() {
+        if (mappedConfig.containsKey("path")) {
+            path = (String) mappedConfig.get("path");
+        }
+        if (mappedConfig.containsKey("base")) {
+            base = (String) mappedConfig.get("base");
+        }
+        if (mappedConfig.containsKey("prefix")) {
+            prefix = Config.loadBooleanValue("prefix", mappedConfig.get("prefix"));
+        }
+        if (mappedConfig.containsKey("transferMinSize")) {
+            transferMinSize = Config.loadIntegerValue("transferMinSize", mappedConfig.get("transferMinSize"));
+        }
+        if (mappedConfig.containsKey("directoryListingEnabled")) {
+            directoryListingEnabled = Config.loadBooleanValue("directoryListingEnabled", mappedConfig.get("directoryListingEnabled"));
+        }
     }
 
     public String getPath() {

@@ -48,16 +48,22 @@ public class HealthGetHandler implements LightHttpHandler {
 
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandler.class);
 
-    static HealthConfig config;
+    private String configName = HealthConfig.CONFIG_NAME;
 
     public HealthGetHandler(){
-        config = HealthConfig.load();
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
         if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
+    }
+
+    public HealthGetHandler(String configName){
+        this.configName = configName;
+        ModuleRegistry.registerModule(configName, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+        if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed with {}.", configName);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        HealthConfig config = HealthConfig.load(configName);
         if (config != null && config.isUseJson()) {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.getResponseSender().send(HEALTH_RESULT_OK_JSON);
@@ -81,11 +87,5 @@ public class HealthGetHandler implements LightHttpHandler {
         public void setResult(String result) {
             this.result = result;
         }
-    }
-
-    public static void reload() {
-        config = HealthConfig.load();
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("HealthGetHandler is reloaded.");
     }
 }

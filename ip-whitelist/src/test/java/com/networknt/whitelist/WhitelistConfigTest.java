@@ -23,7 +23,7 @@ import org.junit.Test;
 public class WhitelistConfigTest {
     @Test
     public void testLoadConfig() {
-        WhitelistConfig config = (WhitelistConfig) Config.getInstance().getJsonObjectConfig("whitelist", WhitelistConfig.class);
+        WhitelistConfig config = WhitelistConfig.load();
         System.out.println(config);
     }
 

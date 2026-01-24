@@ -42,7 +42,7 @@ public class LimitHandleTemplateTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            LimitHandler limitHandler = new LimitHandler(config);
+            LimitHandler limitHandler = new LimitHandler("limit-template");
             limitHandler.setNext(handler);
             handler = limitHandler;
             server = Undertow.builder()

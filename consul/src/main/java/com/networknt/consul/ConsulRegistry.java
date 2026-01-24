@@ -72,7 +72,7 @@ public class ConsulRegistry extends AbstractRegistry {
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
         notifyExecutor = new ThreadPoolExecutor(10, 30, 30 * 1000, TimeUnit.MILLISECONDS, workQueue);
         logger.info("ConsulRegistry init finish.");
-        ModuleRegistry.registerModule(ConsulConfig.CONFIG_NAME, ConsulRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ConsulConfig.CONFIG_NAME), List.of(MASK_KEY_CONSUL_TOKEN));
+        ModuleRegistry.registerModule(ConsulConfig.CONFIG_NAME, ConsulRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(ConsulConfig.CONFIG_NAME), List.of(MASK_KEY_CONSUL_TOKEN));
     }
 
     public ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> getNotifyListeners() {
@@ -475,7 +475,7 @@ public class ConsulRegistry extends AbstractRegistry {
     }
 
     private ConsulConfig getConsulConfig(){
-        return (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+        return ConsulConfig.load();
     }
 
     private String getConsulToken() {

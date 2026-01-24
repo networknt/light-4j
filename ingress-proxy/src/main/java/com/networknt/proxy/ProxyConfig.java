@@ -161,7 +161,7 @@ public class ProxyConfig {
 
     private ProxyConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -171,11 +171,6 @@ public class ProxyConfig {
 
     public static ProxyConfig load(String configName) {
         return new ProxyConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public Map<String, Object> getMappedConfig() {

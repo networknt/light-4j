@@ -37,7 +37,7 @@ public class PathResourceHandler implements HttpHandler {
     PathHandler pathHandler;
 
     public PathResourceHandler() {
-        PathResourceConfig config = (PathResourceConfig)Config.getInstance().getJsonObjectConfig(PathResourceConfig.CONFIG_NAME, PathResourceConfig.class);
+        PathResourceConfig config = PathResourceConfig.load();
         if(config.isPrefix()) {
             pathHandler = new PathHandler()
                     .addPrefixPath(config.getPath(), new ResourceHandler(new PathResourceManager(Paths.get(config.getBase()), config.getTransferMinSize()))

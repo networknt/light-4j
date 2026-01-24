@@ -44,12 +44,9 @@ import org.slf4j.LoggerFactory;
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
 
-    public static TraceabilityConfig config;
-
     private volatile HttpHandler next;
 
     public TraceabilityHandler() {
-        config = TraceabilityConfig.load();
     }
 
     @Override
@@ -74,7 +71,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return TraceabilityConfig.load().isEnabled();
     }
 
     @Override
@@ -84,7 +81,6 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config.reload();
         ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TraceabilityConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("TraceabilityHandler is reloaded.");
     }

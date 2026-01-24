@@ -29,16 +29,11 @@ public class MetricsHandler extends AbstractMetricsHandler {
     private volatile HttpHandler next;
 
     public MetricsHandler() {
-        config = MetricsConfig.load();
-        if (config.getIssuerRegex() != null) {
-            pattern = Pattern.compile(config.getIssuerRegex());
-        }
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
         logger.debug("MetricsHandler is constructed!");
     }
 
     @Override
-    protected void createMetricsReporter(TimeSeriesDbSender sender) {
+    protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) {
         InfluxDbReporter reporter = InfluxDbReporter
                 .forRegistry(registry)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -46,8 +41,8 @@ public class MetricsHandler extends AbstractMetricsHandler {
                 .filter(MetricFilter.ALL)
                 .build(sender);
         reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
-        if (config.enableJVMMonitor) {
-            createJVMMetricsReporter(sender);
+        if (config.isEnableJVMMonitor()) {
+            createJVMMetricsReporter(sender, config);
         }
 
         logger.info("metrics is enabled and reporter is started");
@@ -55,6 +50,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        MetricsConfig config = MetricsConfig.load();
         if (firstTime.compareAndSet(true, false)) {
             logger.debug("First request received, initializing MetricsHandler.");
             AbstractMetricsHandler.addCommonTags(commonTags);
@@ -67,14 +63,14 @@ public class MetricsHandler extends AbstractMetricsHandler {
                         config.getServerUser(),
                         config.getServerPass()
                 );
-                this.createMetricsReporter(sender);
+                this.createMetricsReporter(sender, config);
             } catch (Exception e) {
                 // if there are any exception, chances are influxdb is not available.
                 logger.error("metrics is failed to connect to the influxdb", e);
             }
         }
         long startTime = Clock.defaultClock().getTick();
-        final var exchangeCompletionListener = new MetricsExchangeCompletionListener(commonTags, startTime);
+        final var exchangeCompletionListener = new MetricsExchangeCompletionListener(commonTags, startTime, config);
         exchange.addExchangeCompleteListener(exchangeCompletionListener);
         Handler.next(exchange, next);
     }
@@ -86,7 +82,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void reload() {
-        config.reload();
+        // config.reload();
         ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
         if (logger.isInfoEnabled()) logger.info("MetricsHandler is reloaded.");
     }

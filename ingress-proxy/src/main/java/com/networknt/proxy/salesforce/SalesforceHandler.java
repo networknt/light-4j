@@ -80,7 +80,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     private static AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
-    private static SalesforceConfig config;
+    private String configName = SalesforceConfig.CONFIG_NAME;
     // the cached jwt token so that we can use the same token for different requests.
     private int connectTimeout;
     private int timeout;
@@ -88,7 +88,12 @@ public class SalesforceHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public SalesforceHandler() {
-        config = SalesforceConfig.load();
+        this(SalesforceConfig.CONFIG_NAME);
+    }
+
+    public SalesforceHandler(String configName) {
+        this.configName = configName;
+        SalesforceConfig config = SalesforceConfig.load(configName);
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
 
         connectTimeout = config.getConnectTimeout();
@@ -96,7 +101,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
-        if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
+        if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded with {}.", configName);
     }
 
     @Override
@@ -113,7 +118,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return SalesforceConfig.load(configName).isEnabled();
     }
 
     @Override
@@ -121,27 +126,20 @@ public class SalesforceHandler implements MiddlewareHandler {
         // As certPassword is in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
-        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(configName, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), masks);
     }
 
+
     @Override
-    public void reload() {
-        config.reload();
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest starts.");
+        SalesforceConfig config = SalesforceConfig.load(configName);
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         connectTimeout = config.getConnectTimeout();
         if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
         timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
-        List<String> masks = new ArrayList<>();
-        masks.add("certPassword");
-        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
-        if(logger.isInfoEnabled()) logger.info("SalesforceHandler is reloaded.");
-    }
-
-    @Override
-    public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
@@ -176,11 +174,11 @@ public class SalesforceHandler implements MiddlewareHandler {
                     Result<TokenResponse> result;
                     if(logger.isTraceEnabled()) logger.trace("grant type = " + pathPrefixAuth.getGrantType());
                     if("password".equals(pathPrefixAuth.getGrantType())) {
-                        result = getPasswordToken(pathPrefixAuth);
+                        result = getPasswordToken(pathPrefixAuth, config);
                     } else {
                         // jwt
-                        String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience());
-                        result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
+                        String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), config);
+                        result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt, config);
                     }
                     if(result.isSuccess()) {
                         pathPrefixAuth.setExpiration(System.currentTimeMillis() + pathPrefixAuth.getTokenTtl() * 1000); // tokenTtl is the seconds the token is cached.
@@ -191,7 +189,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                         return;
                     }
                 }
-                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime, endpoint);
+                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime, endpoint, config);
                 if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
                 return;
             }
@@ -201,7 +199,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private String createJwt(String issuer, String subject, String audience) throws Exception {
+    private String createJwt(String issuer, String subject, String audience, SalesforceConfig config) throws Exception {
         String certFileName = config.getCertFilename();
         String certPassword = config.getCertPassword();
 
@@ -243,7 +241,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         return token.toString();
     }
 
-    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth) throws Exception {
+    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth, SalesforceConfig config) throws Exception {
         TokenResponse tokenResponse = null;
         if(client == null) {
             try {
@@ -313,7 +311,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
+    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt, SalesforceConfig config) throws Exception {
         TokenResponse tokenResponse = null;
         if(client == null) {
             try {
@@ -385,7 +383,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath, long startTime, String endpoint) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath, long startTime, String endpoint, SalesforceConfig config) throws Exception {
         // call the Salesforce API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();

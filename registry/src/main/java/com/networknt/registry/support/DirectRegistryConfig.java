@@ -55,7 +55,7 @@ public class DirectRegistryConfig {
 
     public DirectRegistryConfig() {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
         setMap();
     }
 
@@ -66,21 +66,16 @@ public class DirectRegistryConfig {
      */
     public DirectRegistryConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setMap();
     }
 
-    static DirectRegistryConfig load() {
+    public static DirectRegistryConfig load() {
         return new DirectRegistryConfig();
     }
 
-    static DirectRegistryConfig load(String configName) {
+    public static DirectRegistryConfig load(String configName) {
         return new DirectRegistryConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setMap();
     }
 
     public Map<String, Object> getMappedConfig() {

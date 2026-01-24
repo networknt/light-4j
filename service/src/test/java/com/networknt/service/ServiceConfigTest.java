@@ -31,7 +31,7 @@ public class ServiceConfigTest {
     @Test
     public void testServiceConfig() {
 
-        ServiceConfig serviceConfig = (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
+        ServiceConfig serviceConfig = ServiceConfig.load();
         List<Map<String, Object>> singletons = serviceConfig.getSingletons();
         Assert.assertTrue(singletons.size() > 0);
     }

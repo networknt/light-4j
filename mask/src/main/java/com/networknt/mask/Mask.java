@@ -47,12 +47,6 @@ public class Mask {
     public static final String MASK_TYPE_JSON = "json";
 
     static final Logger logger = LoggerFactory.getLogger(Mask.class);
-    private static final Map<String, Object> config;
-
-    static {
-        config = Config.getInstance().getJsonMapConfigNoCache(MASK_CONFIG);
-        ModuleRegistry.registerModule(MASK_CONFIG, Mask.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MASK_CONFIG), null);
-    }
 
     /**
      * Mask the input string with a list of patterns indexed by key in string section in mask.json
@@ -66,13 +60,13 @@ public class Mask {
         if(input == null)
             return null;
         String output = input;
-        Map<String, Object> stringConfig = (Map<String, Object>) config.get(MASK_TYPE_STRING);
-        if (stringConfig != null) {
-            Map<String, Object> keyConfig = (Map<String, Object>) stringConfig.get(key);
+        MaskConfig config = MaskConfig.load();
+        if (config.getString() != null) {
+            Map<String, String> keyConfig = config.getString().get(key);
             if (keyConfig != null) {
                 Set<String> patterns = keyConfig.keySet();
                 for (String pattern : patterns) {
-                    output = output.replaceAll(pattern, (String) keyConfig.get(pattern));
+                    output = output.replaceAll(pattern, keyConfig.get(pattern));
                 }
             }
         }
@@ -89,11 +83,11 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskRegex(String input, String key, String name) {
-        Map<String, Object> regexConfig = (Map<String, Object>) config.get(MASK_TYPE_REGEX);
-        if (regexConfig != null) {
-            Map<String, Object> keyConfig = (Map<String, Object>) regexConfig.get(key);
+        MaskConfig config = MaskConfig.load();
+        if (config.getRegex() != null) {
+            Map<String, String> keyConfig = config.getRegex().get(key);
             if (keyConfig != null) {
-                String regex = (String) keyConfig.get(name);
+                String regex = keyConfig.get(name);
                 if (regex != null && regex.length() > 0) {
                     return replaceWithMask(input, MASK_REPLACEMENT_CHAR.charAt(0), regex);
                 }
@@ -176,9 +170,9 @@ public class Mask {
     public static String maskJson(DocumentContext ctx, String key) {
         if(ctx == null)
             return null;
-        Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
-        if (jsonConfig != null) {
-            Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
+        MaskConfig config = MaskConfig.load();
+        if (config.getJson() != null) {
+            Map<String, String> patternMap = config.getJson().get(key);
             if (patternMap != null) {
                 JsonNode configNode = Config.getInstance().getMapper().valueToTree(patternMap);
                 Iterator<Map.Entry<String, JsonNode>> iterator = configNode.fields();

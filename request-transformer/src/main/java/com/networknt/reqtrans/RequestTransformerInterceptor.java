@@ -41,12 +41,10 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     static final String REQUEST_TRANSFORM = "req-tra";
     static final String GENERIC_EXCEPTION = "ERR10014";
 
-    private final RequestTransformerConfig config;
     private volatile HttpHandler next;
 
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
-        config = RequestTransformerConfig.load();
         ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
@@ -64,7 +62,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return RequestTransformerConfig.load().isEnabled();
     }
 
     @Override
@@ -74,7 +72,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void reload() {
-        config.reload();
         ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
 
@@ -82,6 +79,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        RequestTransformerConfig config = RequestTransformerConfig.load();
         if(logger.isDebugEnabled()) logger.trace("RequestTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null) {
@@ -291,7 +289,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public boolean isRequiredContent() {
-        return config.isRequiredContent();
+        return RequestTransformerConfig.load().isRequiredContent();
     }
 
     public PooledByteBuffer[] getBuffer(HttpServerExchange exchange) {

@@ -23,8 +23,7 @@ import org.junit.Test;
 public class RequestDecodeConfigTest {
     @Test
     public void loadConfig() {
-        RequestDecodeConfig config =
-                (RequestDecodeConfig) Config.getInstance().getJsonObjectConfig(RequestDecodeConfig.CONFIG_NAME, RequestDecodeConfig.class);
+        RequestDecodeConfig config = RequestDecodeConfig.load();
         Assert.assertEquals(config.getDecoders().size(), 2);
     }
 }

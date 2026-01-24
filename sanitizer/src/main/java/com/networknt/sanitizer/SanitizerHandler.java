@@ -40,29 +40,26 @@ import java.util.*;
  * @author Steve Hu
  */
 public class SanitizerHandler implements MiddlewareHandler {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SanitizerHandler.class);
 
-    static SanitizerConfig config;
-
-    EncoderWrapper bodyEncoder;
-    EncoderWrapper headerEncoder;
     private volatile HttpHandler next;
+    private String configName = null; // for test purposes only
 
     public SanitizerHandler() {
-        config = SanitizerConfig.load();
-        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
-        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
     // integration test purpose only.
     @Deprecated
     public SanitizerHandler(String configName) {
-        config = SanitizerConfig.load(configName);
-        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
-        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
+        this.configName = configName;
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        SanitizerConfig config = (configName != null) ? SanitizerConfig.load(configName) : SanitizerConfig.load();
+        EncoderWrapper bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        EncoderWrapper headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
+        
         if (logger.isDebugEnabled()) logger.trace("SanitizerHandler.handleRequest starts.");
         String method = exchange.getRequestMethod().toString();
         if (config.isHeaderEnabled()) {
@@ -130,7 +127,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return SanitizerConfig.load().isEnabled();
     }
 
     @Override
@@ -140,7 +137,6 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = SanitizerConfig.load();
         ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 

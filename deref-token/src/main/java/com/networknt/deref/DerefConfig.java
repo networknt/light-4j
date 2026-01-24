@@ -16,9 +16,12 @@
 
 package com.networknt.deref;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+
+import java.util.Map;
 
 /**
  * The config class that maps to deref.yml
@@ -36,6 +39,37 @@ public class DerefConfig {
         defaultValue = "false"
     )
     boolean enabled;
+    private final Config config;
+    private Map<String, Object> mappedConfig;
+
+    private DerefConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        setConfigData();
+    }
+
+    private DerefConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static DerefConfig load() {
+        return new DerefConfig();
+    }
+
+    public static DerefConfig load(String configName) {
+        return new DerefConfig(configName);
+    }
+
+    public void setConfigData() {
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get("enabled");
+            if(object != null) enabled = Config.loadBooleanValue("enabled", object);
+        }
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
 
     public boolean isEnabled() {
         return enabled;

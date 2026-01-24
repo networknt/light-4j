@@ -67,9 +67,6 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
     protected static final String ENV_COMMON_TAG = "env";
     protected static final String ADDR_COMMON_TAG = "addr";
 
-    // The metrics.yml configuration that supports reload.
-    public static MetricsConfig config;
-    static Pattern pattern;
     // The structure that collect all the metrics entries. Even others will be using this structure to inject.
     public static final MetricRegistry registry = new MetricRegistry();
     public Map<String, String> commonTags = new HashMap<>();
@@ -81,12 +78,12 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return MetricsConfig.load().isEnabled();
     }
 
-    protected abstract void createMetricsReporter(final TimeSeriesDbSender sender);
+    protected abstract void createMetricsReporter(final TimeSeriesDbSender sender, MetricsConfig config);
 
-    public void createJVMMetricsReporter(final TimeSeriesDbSender sender) {
+    public void createJVMMetricsReporter(final TimeSeriesDbSender sender, MetricsConfig config) {
         try (JVMMetricsDbReporter jvmReporter = new JVMMetricsDbReporter(
                 new MetricRegistry(),
                 sender,
@@ -170,7 +167,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param tags the map that contains the tags to be set for anonymous metrics.
      * @param endpoint the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
      */
-    private void injectAnonymousMetrics(final Map<String, String> tags, final String endpoint) {
+    private void injectAnonymousMetrics(final Map<String, String> tags, final String endpoint, MetricsConfig config) {
         // for MRAS and Salesforce handlers that do not have auditInfo in the exchange as they may be called anonymously.
         tags.put(Constants.ENDPOINT_STRING, Objects.requireNonNullElse(endpoint, UNKNOWN_TAG_VALUE));
 
@@ -193,7 +190,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param auditInfo the map that contains the audit information to be used for metrics.
      * @param endpoint the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
      */
-    private void injectAuditInfoMetrics(final Map<String, String> tags, final Map<String, Object> auditInfo, final String endpoint) {
+    private void injectAuditInfoMetrics(final Map<String, String> tags, final Map<String, Object> auditInfo, final String endpoint, MetricsConfig config) {
         // for external handlers, the endpoint must be unknown in the auditInfo. If that is the case, use the endpoint passed in.
         if (endpoint != null) {
             logger.trace("Using endpoint argument {}", endpoint);
@@ -217,7 +214,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         }
 
         if (config.isSendIssuer()) {
-            AbstractMetricsHandler.addIssuerRegex(tags, auditInfo);
+            AbstractMetricsHandler.addIssuerRegex(tags, auditInfo, config);
         }
     }
 
@@ -227,10 +224,11 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param tags the map that contains the tags to be set for the issuer.
      * @param auditInfo the map that contains the audit information to be used for metrics.
      */
-    protected static void addIssuerRegex(final Map<String, String> tags, final Map<String, Object> auditInfo) {
+    protected static void addIssuerRegex(final Map<String, String> tags, final Map<String, Object> auditInfo, MetricsConfig config) {
         if (auditInfo.get(Constants.ISSUER_CLAIMS) instanceof String issuer) {
             // we need to send issuer as a tag. Do we need to apply regex to extract only a part of the issuer?
             if (config.getIssuerRegex() != null) {
+                Pattern pattern = Pattern.compile(config.getIssuerRegex());
                 Matcher matcher = pattern.matcher(issuer);
                 if (matcher.find() && matcher.groupCount() > 0) {
                     String iss = matcher.group(1);
@@ -253,16 +251,16 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param endpoint the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
      */
     public void injectMetrics(HttpServerExchange httpServerExchange, long startTime, final String metricsName, final String endpoint) {
-
+        MetricsConfig config = MetricsConfig.load();
         final Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         logger.trace("auditInfo = {}", auditInfo);
 
         final Map<String, String> tags = new HashMap<>();
 
         if (auditInfo != null) {
-            this.injectAuditInfoMetrics(tags, auditInfo, endpoint);
+            this.injectAuditInfoMetrics(tags, auditInfo, endpoint, config);
         } else {
-            this.injectAnonymousMetrics(tags, endpoint);
+            this.injectAnonymousMetrics(tags, endpoint, config);
         }
 
         MetricName metricName = new MetricName(metricsName);
@@ -292,10 +290,12 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
 
         private final Map<String, String> commonTags;
         private final long startTime;
+        private final MetricsConfig config;
 
-        public MetricsExchangeCompletionListener(final Map<String, String> commonTags, final long startTime) {
+        public MetricsExchangeCompletionListener(final Map<String, String> commonTags, final long startTime, MetricsConfig config) {
             this.commonTags = Objects.requireNonNull(commonTags, "commonTags cannot be null");
             this.startTime = startTime;
+            this.config = config;
         }
 
         @Override
@@ -317,7 +317,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
                     }
 
                     if (config.isSendIssuer()) {
-                        AbstractMetricsHandler.addIssuerRegex(tags, auditInfo);
+                        AbstractMetricsHandler.addIssuerRegex(tags, auditInfo, config);
                     }
 
                     MetricName metricName = new MetricName("response_time");

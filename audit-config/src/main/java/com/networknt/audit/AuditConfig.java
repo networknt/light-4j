@@ -184,17 +184,14 @@ public class AuditConfig {
     private int responseBodyMaxSize;
 
 
-    private AuditConfig() {
-        this(CONFIG_NAME);
-    }
-
     private AuditConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-
-        setLists();
-        setLogLevel();
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
+    }
+
+    private AuditConfig() {
+        this(CONFIG_NAME);
     }
 
     public static AuditConfig load() {
@@ -203,14 +200,6 @@ public class AuditConfig {
 
     public static AuditConfig load(String configName) {
         return new AuditConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-
-        setLists();
-        setLogLevel();
-        setConfigData();
     }
 
     public List<String> getHeaderList() {
@@ -325,22 +314,26 @@ public class AuditConfig {
     }
 
     private void setConfigData() {
-        Object object = getMappedConfig().get(STATUS_CODE);
-        if (object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
-        object = getMappedConfig().get(RESPONSE_TIME);
-        if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
-        object = getMappedConfig().get(AUDIT_ON_ERROR);
-        if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
-        object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
-        if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
-        object = getMappedConfig().get(MASK);
-        if (object != null) mask = Config.loadBooleanValue(MASK, object);
-        object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
-        if (object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
-        object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
-        if (object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
-        object = getMappedConfig().get(ENABLED);
-        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        timestampFormat = (String) getMappedConfig().get(TIMESTAMP_FORMAT);
+        if (mappedConfig != null) {
+            Object object = getMappedConfig().get(STATUS_CODE);
+            if (object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
+            object = getMappedConfig().get(RESPONSE_TIME);
+            if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
+            object = getMappedConfig().get(AUDIT_ON_ERROR);
+            if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
+            object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
+            if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
+            object = getMappedConfig().get(MASK);
+            if (object != null) mask = Config.loadBooleanValue(MASK, object);
+            object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
+            if (object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
+            object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
+            if (object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
+            object = getMappedConfig().get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            timestampFormat = (String) getMappedConfig().get(TIMESTAMP_FORMAT);
+            setLists();
+            setLogLevel();
+        }
     }
 }

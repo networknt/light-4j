@@ -56,7 +56,41 @@ public class PrometheusConfig {
     @JsonIgnore
     String description;
 
-    public PrometheusConfig() {
+    private final com.networknt.config.Config config;
+    private java.util.Map<String, Object> mappedConfig;
+
+    private PrometheusConfig(String configName) {
+        config = com.networknt.config.Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
+    }
+
+    private PrometheusConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static PrometheusConfig load() {
+        return new PrometheusConfig();
+    }
+
+    public static PrometheusConfig load(String configName) {
+        return new PrometheusConfig(configName);
+    }
+
+
+
+    private void setConfigData() {
+        if (mappedConfig.containsKey("enabled")) {
+            enabled = com.networknt.config.Config.loadBooleanValue("enabled", mappedConfig.get("enabled"));
+        }
+        if (mappedConfig.containsKey("enableHotspot")) {
+            enableHotspot = com.networknt.config.Config.loadBooleanValue("enableHotspot", mappedConfig.get("enableHotspot"));
+        }
+        if (mappedConfig.containsKey("description")) {
+            description = (String) mappedConfig.get("description");
+        }
     }
 
     public boolean isEnabled() {

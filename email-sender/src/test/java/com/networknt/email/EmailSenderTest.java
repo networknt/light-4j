@@ -49,7 +49,7 @@ public class EmailSenderTest {
 
     @Test
     public void testConfigPassword() {
-        EmailConfig config = (EmailConfig)Config.getInstance().getJsonObjectConfig(EmailConfig.CONFIG_NAME, EmailConfig.class);
-        System.out.println("password = " + config.pass);
+        EmailConfig config = EmailConfig.load();
+        System.out.println("password = " + config.getPass());
     }
 }

@@ -50,16 +50,15 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
     public static final String ROUTER_CONFIG_NAME = "router";
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
-    public static SidecarConfig sidecarConfig;
     public static ServerConfig serverConfig = ServerConfig.getInstance();
 
     public SidecarRouterHandler() {
         super();
-        sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler is constructed");
     }
 
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        SidecarConfig sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
@@ -110,7 +109,6 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
 
     @Override
     public void reload() {
-        sidecarConfig.reload();
         ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
     }

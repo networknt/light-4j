@@ -56,13 +56,12 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
 
     private volatile HttpHandler next;
-    private final TokenLimitConfig config;
     private List<Pattern> patterns;
 
     CacheManager cacheManager = CacheManager.getInstance();
 
     public TokenLimitHandler() throws Exception{
-        config = TokenLimitConfig.load();
+        TokenLimitConfig config = TokenLimitConfig.load();
         List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
@@ -79,8 +78,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
      */
     @Deprecated
     public TokenLimitHandler(TokenLimitConfig cfg) throws Exception{
-        config = cfg;
-        List<String> tokenPathTemplates = config.getTokenPathTemplates();
+        List<String> tokenPathTemplates = cfg.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }
@@ -101,7 +99,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();    }
+        return TokenLimitConfig.load().isEnabled();    }
 
     @Override
     public void register() {
@@ -111,7 +109,11 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config.reload();
+        TokenLimitConfig config = TokenLimitConfig.load();
+        List<String> tokenPathTemplates = config.getTokenPathTemplates();
+        if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
+            patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
+        }
         // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
         ModuleRegistry.registerModule(TokenLimitConfig.CONFIG_NAME, TokenLimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenLimitConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("TokenLimitHandler is reloaded.");
@@ -119,6 +121,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        TokenLimitConfig config = TokenLimitConfig.load();
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest starts.");
         String key = null;
         String grantType = null;

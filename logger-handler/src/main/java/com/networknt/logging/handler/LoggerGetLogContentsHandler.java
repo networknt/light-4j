@@ -43,7 +43,7 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws IOException, ParseException {
-        LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
+        LoggerConfig config = LoggerConfig.load();
         long requestTimeRangeStart = System.currentTimeMillis()- config.getLogStart();
         long requestTimeRangeEnd = System.currentTimeMillis();
         int limit = DEFAULT_LIMIT;

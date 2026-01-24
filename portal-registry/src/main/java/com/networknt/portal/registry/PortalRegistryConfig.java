@@ -16,11 +16,44 @@
 
 package com.networknt.portal.registry;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 
 @ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
+
+    private static final String PORTAL_URL = "portalUrl";
+    private static final String PORTAL_TOKEN = "portalToken";
+    private static final String MAX_REQ_PER_CONN = "maxReqPerConn";
+    private static final String DEREGISTER_AFTER = "deregisterAfter";
+    private static final String CHECK_INTERVAL = "checkInterval";
+    private static final String HTTP_CHECK = "httpCheck";
+    private static final String TTL_CHECK = "ttlCheck";
+    private static final String HEALTH_PATH = "healthPath";
+
+    private final Config config;
+    private java.util.Map<String, Object> mappedConfig;
+
+    private PortalRegistryConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
+    }
+
+    private PortalRegistryConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static PortalRegistryConfig load() {
+        return new PortalRegistryConfig();
+    }
+
+    public static PortalRegistryConfig load(String configName) {
+        return new PortalRegistryConfig(configName);
+    }
 
     @StringField(
             configFieldName = "portalUrl",
@@ -165,5 +198,24 @@ public class PortalRegistryConfig {
 
     public void setHealthPath(String healthPath) {
         this.healthPath = healthPath;
+    }
+
+    private void setConfigData() {
+        Object object = mappedConfig.get(PORTAL_URL);
+        if (object != null) portalUrl = (String) object;
+        object = mappedConfig.get(PORTAL_TOKEN);
+        if (object != null) portalToken = (String) object;
+        object = mappedConfig.get(MAX_REQ_PER_CONN);
+        if (object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
+        object = mappedConfig.get(DEREGISTER_AFTER);
+        if (object != null) deregisterAfter = Config.loadIntegerValue(DEREGISTER_AFTER, object);
+        object = mappedConfig.get(CHECK_INTERVAL);
+        if (object != null) checkInterval = Config.loadIntegerValue(CHECK_INTERVAL, object);
+        object = mappedConfig.get(HTTP_CHECK);
+        if (object != null) httpCheck = Config.loadBooleanValue(HTTP_CHECK, object);
+        object = mappedConfig.get(TTL_CHECK);
+        if (object != null) ttlCheck = Config.loadBooleanValue(TTL_CHECK, object);
+        object = mappedConfig.get(HEALTH_PATH);
+        if (object != null) healthPath = (String) object;
     }
 }

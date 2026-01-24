@@ -47,7 +47,7 @@ public class SidecarConfig {
     }
     private SidecarConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -59,15 +59,7 @@ public class SidecarConfig {
         return new SidecarConfig();
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
 
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-    }
 
     public String getEgressIngressIndicator() {
         return egressIngressIndicator;

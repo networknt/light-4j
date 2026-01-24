@@ -23,7 +23,7 @@ public interface CacheManager {
             synchronized (Holder.class) {
                 if (!Holder.initialized) {
                     CacheConfig config = CacheConfig.load();
-                    ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CacheConfig.CONFIG_NAME), null);
+                    ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(CacheConfig.CONFIG_NAME), null);
                     List<CacheItem> caches = config.getCaches();
                     if (caches != null && !caches.isEmpty()) {
                         CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);

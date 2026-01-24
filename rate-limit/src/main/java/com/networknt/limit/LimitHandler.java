@@ -40,35 +40,31 @@ public class LimitHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
-    private static RateLimiter rateLimiter;
-    private final LimitConfig config;
+    private RateLimiter rateLimiter;
+    private String configName;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
-    public LimitHandler() throws Exception{
-        config = LimitConfig.load();
-        logger.info("RateLimit started with key type {}", config.getKey().name());
-        rateLimiter = new RateLimiter(config);
+    public LimitHandler() {
+        this(LimitConfig.CONFIG_NAME);
     }
 
-    /**
-     * This is a constructor for test cases only. Please don't use it.
-     *
-     * @param cfg limit config
-     * @throws Exception thrown when config is wrong.
-     *
-     */
-    @Deprecated
-    public LimitHandler(LimitConfig cfg) throws Exception{
-        config = cfg;
+    public LimitHandler(String configName) {
+        this.configName = configName;
+        LimitConfig config = LimitConfig.load(configName);
+        try {
+            rateLimiter = new RateLimiter(config);
+        } catch (Exception e) {
+            logger.error("Exception in constructing RateLimiter", e);
+        }
         logger.info("RateLimit started with key type {}", config.getKey().name());
-        rateLimiter = new RateLimiter(cfg);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest starts.");
-        RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
+        LimitConfig config = LimitConfig.load(configName);
+        RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config);
         if (rateLimitResponse.allow) {
             if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends.");
             // limit is not reached, return the limit, remaining and reset headers for client to manage the request flow.
@@ -107,24 +103,11 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return LimitConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LimitConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        try {
-            rateLimiter = new RateLimiter(config);
-        } catch (Exception e) {
-            logger.error("Failed to recreate RateLimiter with reloaded config.", e);
-        }
-        // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
-        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LimitConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("LimitHandler is reloaded.");
+        ModuleRegistry.registerModule(configName, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
 }

@@ -109,7 +109,7 @@ public class UnifiedSecurityConfig {
      */
     private UnifiedSecurityConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -121,11 +121,7 @@ public class UnifiedSecurityConfig {
         return new UnifiedSecurityConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-    }
+
 
     public boolean isEnabled() {
         return enabled;

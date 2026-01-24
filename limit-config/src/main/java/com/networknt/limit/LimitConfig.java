@@ -236,7 +236,7 @@ public class LimitConfig {
      */
     private LimitConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setRateLimitConfig();
     }
@@ -247,12 +247,6 @@ public class LimitConfig {
 
     public static LimitConfig load(String configName) {
         return new LimitConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setRateLimitConfig();
     }
 
     public boolean isEnabled() {

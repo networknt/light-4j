@@ -81,7 +81,7 @@ public class ResponseTransformerConfig {
 
     private ResponseTransformerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -93,13 +93,6 @@ public class ResponseTransformerConfig {
 
     public static ResponseTransformerConfig load(String configName) {
         return new ResponseTransformerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
     }
 
 

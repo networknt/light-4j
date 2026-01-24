@@ -215,7 +215,7 @@ public class MetricsConfig {
      */
     private MetricsConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -225,11 +225,6 @@ public class MetricsConfig {
 
     public static MetricsConfig load(String configName) {
         return new MetricsConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public boolean isEnabled() {

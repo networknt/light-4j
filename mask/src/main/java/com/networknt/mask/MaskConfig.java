@@ -6,6 +6,8 @@ import com.networknt.config.schema.OutputFormat;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @ConfigSchema(
         configName = "mask",
         configKey = "mask",
@@ -15,7 +17,14 @@ import java.util.Map;
                 "make sure that this entry is not removed. The metrics module is using it."
 
 )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MaskConfig {
+
+    public static MaskConfig load() {
+        return (MaskConfig) com.networknt.config.Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MaskConfig.class);
+    }
+
+    public static final String CONFIG_NAME = "mask";
 
     public static final String STRING = "string";
     public static final String REGEX = "regex";
@@ -53,5 +62,17 @@ public class MaskConfig {
 
     public Map<String, Map<String, String>> getJson() {
         return json;
+    }
+
+    public void setString(Map<String, Map<String, String>> string) {
+        this.string = string;
+    }
+
+    public void setRegex(Map<String, Map<String, String>> regex) {
+        this.regex = regex;
+    }
+
+    public void setJson(Map<String, Map<String, String>> json) {
+        this.json = json;
     }
 }

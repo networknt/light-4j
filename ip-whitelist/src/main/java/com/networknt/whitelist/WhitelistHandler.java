@@ -37,24 +37,18 @@ public class WhitelistHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(WhitelistHandler.class);
     private static final String INVALID_IP_FOR_PATH = "ERR10049";
 
-    public static WhitelistConfig config;
+    private String configName;
 
     private volatile HttpHandler next;
 
-    /**
-     * This is the constructor that is not supposed to be used. It should only be called by the test cases
-     * to load different configuration for testing.
-     * @param configName configuration file name
-     */
-    @Deprecated
     public WhitelistHandler(String configName) {
+        this.configName = configName;
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
-        config = WhitelistConfig.load(configName);
     }
 
     public WhitelistHandler() {
+        this(WhitelistConfig.CONFIG_NAME);
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
-        config = WhitelistConfig.load();
     }
 
     @Override
@@ -63,7 +57,8 @@ public class WhitelistHandler implements MiddlewareHandler {
         InetSocketAddress peer = exchange.getSourceAddress();
         String reqPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("IP = {} request path = {}", peer.toString(), reqPath);
-        if (!isAllowed(peer.getAddress(), reqPath)) {
+        WhitelistConfig config = WhitelistConfig.load(configName);
+        if (!isAllowed(peer.getAddress(), reqPath, config)) {
             if(logger.isTraceEnabled()) logger.trace("Invalid IP for the path");
             setExchangeStatus(exchange, INVALID_IP_FOR_PATH, peer.toString(), reqPath);
             exchange.endExchange();
@@ -87,22 +82,15 @@ public class WhitelistHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return WhitelistConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(WhitelistConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, WhitelistHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(WhitelistConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("WhitelistHandler is reloaded.");
-    }
-
-    IpAcl findIpAcl(String reqPath) {
+    IpAcl findIpAcl(String reqPath, WhitelistConfig config) {
         for(Map.Entry<String, IpAcl> entry: config.getPrefixAcl().entrySet()) {
             if(reqPath.startsWith(entry.getKey())) {
                 return entry.getValue();
@@ -110,10 +98,10 @@ public class WhitelistHandler implements MiddlewareHandler {
         }
         return null;
     }
-    boolean isAllowed(InetAddress address, String reqPath) {
+    boolean isAllowed(InetAddress address, String reqPath, WhitelistConfig config) {
         boolean isWhitelisted = false;
         if(address instanceof Inet4Address) {
-            IpAcl ipAcl = findIpAcl(reqPath);
+            IpAcl ipAcl = findIpAcl(reqPath, config);
             if(ipAcl != null) {
                 if(logger.isTraceEnabled()) logger.trace("IPv4 address and found a prefix entry for the request path");
                 for (PeerMatch rule : ipAcl.getIpv4acl()) {
@@ -126,7 +114,7 @@ public class WhitelistHandler implements MiddlewareHandler {
                 return !config.defaultAllow;
             }
         } else if(address instanceof Inet6Address) {
-            IpAcl ipAcl = findIpAcl(reqPath);
+            IpAcl ipAcl = findIpAcl(reqPath, config);
             if(ipAcl != null) {
                 if(logger.isTraceEnabled()) logger.trace("IPv6 address {} and found a prefix entry for the request path {}", address, reqPath);
                 for (PeerMatch rule : ipAcl.getIpv6acl()) {

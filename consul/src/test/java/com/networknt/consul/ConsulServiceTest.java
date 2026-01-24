@@ -26,7 +26,7 @@ import java.util.List;
 import static com.networknt.consul.ConsulConstants.CONFIG_NAME;
 
 public class ConsulServiceTest {
-    static ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConsulConfig.class);
+    private static final ConsulConfig config = ConsulConfig.load();
     @Test
     public void testToStringSingleTag() {
         ConsulService service = new ConsulService();

@@ -68,7 +68,7 @@ public class ConsulRegistryIT {
         Integer port = consul.getFirstMappedPort();
         valueConfig.put("container.port", port);
         Config.getInstance().putInConfigCache("values", valueConfig);
-        consulConfig = (ConsulConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConsulConfig.class);
+        consulConfig = ConsulConfig.load();
         serverConfig = ServerConfig.getInstance();
         serverConfig.setEnableRegistry(true);
         consulConfig.setConsulUrl("http://localhost:" + port);

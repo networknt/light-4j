@@ -16,9 +16,12 @@
 
 package com.networknt.email;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+
+import java.util.Map;
 
 /**
  * Email Configuration
@@ -84,6 +87,26 @@ public class EmailConfig {
     )
     String auth;
 
+    private final Config config;
+    private Map<String, Object> mappedConfig;
+
+    private EmailConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        setConfigData();
+    }
+    private EmailConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static EmailConfig load(String configName) {
+        return new EmailConfig(configName);
+    }
+
+    public static EmailConfig load() {
+        return new EmailConfig();
+    }
+
     public String getHost() {
         return host;
     }
@@ -130,5 +153,30 @@ public class EmailConfig {
 
     public void setAuth(String auth) {
         this.auth = auth;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get("host");
+            if(object != null) host = (String)object;
+            object = mappedConfig.get("port");
+            if(object != null) port = String.valueOf(object);
+            object = mappedConfig.get("user");
+            if(object != null) user = (String)object;
+            object = mappedConfig.get("pass");
+            if(object != null) pass = (String)object;
+            object = mappedConfig.get("debug");
+            if(object != null) debug = String.valueOf(object);
+            object = mappedConfig.get("auth");
+            if(object != null) auth = String.valueOf(object);
+        }
     }
 }

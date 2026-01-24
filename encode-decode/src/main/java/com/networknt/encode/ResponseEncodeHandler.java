@@ -38,8 +38,7 @@ import java.util.List;
  * @author Steve Hu
  */
 public class ResponseEncodeHandler implements MiddlewareHandler {
-    public static ResponseEncodeConfig config =
-        (ResponseEncodeConfig)Config.getInstance().getJsonObjectConfig(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeConfig.class);
+    private String configName = ResponseEncodeConfig.CONFIG_NAME;
 
     static final String NO_ENCODING_HANDLER = "ERR10050";
     private final ContentEncodingRepository contentEncodingRepository;
@@ -48,18 +47,27 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
 
     public ResponseEncodeHandler() {
+        this(ResponseEncodeConfig.CONFIG_NAME);
+    }
+
+    public ResponseEncodeHandler(String configName) {
+        this.configName = configName;
+        ResponseEncodeConfig config = ResponseEncodeConfig.load(configName);
         contentEncodingRepository = new ContentEncodingRepository();
         List<String> encoders = config.getEncoders();
-        for(int i = 0; i < encoders.size(); i++) {
-            String encoder = encoders.get(i);
-            if(Constants.ENCODE_GZIP.equals(encoder)) {
-                contentEncodingRepository.addEncodingHandler(encoder, new GzipEncodingProvider(), 100);
-            } else if(Constants.ENCODE_DEFLATE.equals(encoder)) {
-                contentEncodingRepository.addEncodingHandler(encoder, new DeflateEncodingProvider(), 10);
-            } else {
-                throw new RuntimeException("Invalid encoder " + encoder + " for ResponseEncodeHandler.");
+        if(encoders != null) {
+            for (int i = 0; i < encoders.size(); i++) {
+                String encoder = encoders.get(i);
+                if (Constants.ENCODE_GZIP.equals(encoder)) {
+                    contentEncodingRepository.addEncodingHandler(encoder, new GzipEncodingProvider(), 100);
+                } else if (Constants.ENCODE_DEFLATE.equals(encoder)) {
+                    contentEncodingRepository.addEncodingHandler(encoder, new DeflateEncodingProvider(), 10);
+                } else {
+                    throw new RuntimeException("Invalid encoder " + encoder + " for ResponseEncodeHandler.");
+                }
             }
         }
+        if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is constructed with {}.", configName);
     }
 
     @Override
@@ -76,12 +84,12 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ResponseEncodeConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
     @Override
@@ -99,10 +107,4 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
         }
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is reloaded.");
-    }
 }

@@ -52,7 +52,6 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     // shared rule map with ruleId as the key and Rule object as the value.
     public static Map<String, Object> endpointRules;
     public static Map<String, Rule> rules;
-    private static RuleLoaderConfig config = RuleLoaderConfig.load();
     static Http2Client client = Http2Client.getInstance();
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String DEFAULT_HOST = "lightapi.net";
@@ -61,7 +60,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
 
     @Override
     public void onStartup() {
-        config = RuleLoaderConfig.load();
+        RuleLoaderConfig config = RuleLoaderConfig.load();
         List<String> masks = List.of(MASK_PORTAL_TOKEN);
         ModuleRegistry.registerModule(RuleLoaderConfig.CONFIG_NAME, RuleLoaderStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
         if(config.isEnabled()) {
@@ -204,7 +203,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + config.getPortalToken());
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -234,7 +233,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + config.getPortalToken());
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

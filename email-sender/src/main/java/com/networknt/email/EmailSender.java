@@ -39,11 +39,14 @@ import java.util.regex.Pattern;
  */
 public class EmailSender {
     private static final Logger logger = LoggerFactory.getLogger(EmailSender.class);
-    public static final String CONFIG_EMAIL = "email";
-
-    static final EmailConfig emailConfig = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
+    private EmailConfig config;
 
     public EmailSender() {
+        this.config = EmailConfig.load();
+    }
+
+    public EmailSender(String configName) {
+        this.config = EmailConfig.load(configName);
     }
 
     /**
@@ -56,22 +59,22 @@ public class EmailSender {
      */
     public void sendMail (String to, String subject, String content) throws MessagingException {
         Properties props = new Properties();
-        props.put("mail.smtp.user", emailConfig.getUser());
-        props.put("mail.smtp.host", emailConfig.getHost());
-        props.put("mail.smtp.port", emailConfig.getPort());
+        props.put("mail.smtp.user", config.getUser());
+        props.put("mail.smtp.host", config.getHost());
+        props.put("mail.smtp.port", config.getPort());
         props.put("mail.smtp.starttls.enable","true");
-        props.put("mail.smtp.debug", emailConfig.getDebug());
-        props.put("mail.smtp.auth", emailConfig.getAuth());
-        props.put("mail.smtp.ssl.trust", emailConfig.host);
+        props.put("mail.smtp.debug", config.getDebug());
+        props.put("mail.smtp.auth", config.getAuth());
+        props.put("mail.smtp.ssl.trust", config.getHost());
 
-        String pass = emailConfig.getPass();
+        String pass = config.getPass();
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfig.getUser(), pass);
+        SMTPAuthenticator auth = new SMTPAuthenticator(config.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
 
-        message.setFrom(new InternetAddress(emailConfig.getUser()));
+        message.setFrom(new InternetAddress(config.getUser()));
         message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
         message.setSubject(subject);
@@ -94,22 +97,22 @@ public class EmailSender {
      */
     public void sendMailWithAttachment (String to, String subject, String content, String filename) throws MessagingException{
         Properties props = new Properties();
-        props.put("mail.smtp.user", emailConfig.getUser());
-        props.put("mail.smtp.host", emailConfig.getHost());
-        props.put("mail.smtp.port", emailConfig.getPort());
+        props.put("mail.smtp.user", config.getUser());
+        props.put("mail.smtp.host", config.getHost());
+        props.put("mail.smtp.port", config.getPort());
         props.put("mail.smtp.starttls.enable","true");
-        props.put("mail.smtp.debug", emailConfig.getDebug());
-        props.put("mail.smtp.auth", emailConfig.getAuth());
-        props.put("mail.smtp.ssl.trust", emailConfig.host);
+        props.put("mail.smtp.debug", config.getDebug());
+        props.put("mail.smtp.auth", config.getAuth());
+        props.put("mail.smtp.ssl.trust", config.getHost());
 
-        String pass = emailConfig.getPass();
+        String pass = config.getPass();
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfig.getUser(), pass);
+        SMTPAuthenticator auth = new SMTPAuthenticator(config.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
 
-        message.setFrom(new InternetAddress(emailConfig.getUser()));
+        message.setFrom(new InternetAddress(config.getUser()));
         message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
         message.setSubject(subject);
 

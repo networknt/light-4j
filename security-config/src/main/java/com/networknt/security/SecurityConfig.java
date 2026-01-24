@@ -286,7 +286,7 @@ public class SecurityConfig {
 
     private SecurityConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setCertificate();
         setConfigData();
         setSkipPathPrefixes();
@@ -307,22 +307,7 @@ public class SecurityConfig {
         return new SecurityConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
-    }
 
-    @Deprecated
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
-    }
 
     public SecurityJwtConfig getJwt() { return jwt; }
     public Map<String, Object> getCertificate() {

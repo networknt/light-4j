@@ -101,7 +101,7 @@ public class HealthConfig {
 
     private HealthConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
     private HealthConfig() {
@@ -114,16 +114,6 @@ public class HealthConfig {
 
     public static HealthConfig load() {
         return new HealthConfig();
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
     }
 
     public boolean isEnabled() {

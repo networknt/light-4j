@@ -61,7 +61,7 @@ public class ResponseEncodeConfig {
 
     private ResponseEncodeConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -75,18 +75,6 @@ public class ResponseEncodeConfig {
 
     public static ResponseEncodeConfig load() {
         return new ResponseEncodeConfig();
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {

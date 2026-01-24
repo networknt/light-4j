@@ -22,16 +22,16 @@ import org.slf4j.LoggerFactory;
 public class SidecarPathPrefixServiceHandler extends PathPrefixServiceHandler {
     private static final Logger logger = LoggerFactory.getLogger(SidecarPathPrefixServiceHandler.class);
 
-    private static SidecarConfig sidecarConfig;
+
 
     public SidecarPathPrefixServiceHandler() {
         logger.info("SidecarPathPrefixServiceHandler is constructed");
         config = PathPrefixServiceConfig.load();
-        sidecarConfig = SidecarConfig.load();
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SidecarConfig sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarPathPrefixServiceHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             if(logger.isTraceEnabled()) logger.trace("Outgoing request calls PathPrefixServiceHandler with header indicator");

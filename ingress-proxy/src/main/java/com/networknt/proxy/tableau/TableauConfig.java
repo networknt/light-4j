@@ -51,7 +51,7 @@ public class TableauConfig {
      */
     private TableauConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -61,11 +61,6 @@ public class TableauConfig {
 
     public static TableauConfig load(String configName) {
         return new TableauConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public Map<String, Object> getMappedConfig() {

@@ -29,24 +29,17 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     private ResponseInterceptor[] interceptors = null;
     private volatile HttpHandler next;
-    private static ResponseInjectionConfig config;
+    private String configName = ResponseInjectionConfig.CONFIG_NAME;
 
     public ResponseInterceptorInjectionHandler() throws Exception {
-        config = ResponseInjectionConfig.load();
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         LOG.info("SinkConduitInjectorHandler is loaded!");
     }
 
-    /**
-     * This is a constructor for test cases only. Please don't use it.
-     *
-     * @param cfg limit config
-     * @throws Exception thrown when config is wrong.
-     */
-    @Deprecated
-    public ResponseInterceptorInjectionHandler(ResponseInjectionConfig cfg) throws Exception {
-        config = cfg;
-        LOG.info("SinkConduitInjectorHandler is loaded!");
+    public ResponseInterceptorInjectionHandler(String configName) throws Exception {
+        this.configName = configName;
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
+        LOG.info("SinkConduitInjectorHandler is loaded with {}!", configName);
     }
 
     @Override
@@ -63,21 +56,14 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ResponseInjectionConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseInjectionConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        if (LOG.isTraceEnabled())
-            LOG.trace("response-injection.yml is reloaded");
-        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseInjectionConfig.CONFIG_NAME), null);
-    }
 
     /**
      * if the ModifiableContentSinkConduit is set, set the Accept-Encoding
@@ -111,11 +97,11 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-
+        ResponseInjectionConfig config = ResponseInjectionConfig.load(configName);
         // of the response buffering it if any interceptor resolvers the request
         // and requires the content from the backend
         exchange.addResponseWrapper((ConduitFactory<StreamSinkConduit> factory, HttpServerExchange currentExchange) -> {
-            if (this.requiresContentSinkConduit(exchange)) {
+            if (this.requiresContentSinkConduit(exchange, config)) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), currentExchange);
 
                 if (LOG.isTraceEnabled())
@@ -142,18 +128,18 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         return false;
     }
 
-    private boolean requiresContentSinkConduit(final HttpServerExchange exchange) {
+    private boolean requiresContentSinkConduit(final HttpServerExchange exchange, ResponseInjectionConfig config) {
         if(logger.isTraceEnabled()) {
             logger.trace("requiresContentSinkConduit: requiredContent {}, pathPrefix {} and isNotCompressed {}", this.interceptorsRequireContent()
-                    , isAppliedBodyInjectionPathPrefix(exchange.getRequestPath())
+                    , isAppliedBodyInjectionPathPrefix(exchange.getRequestPath(), config)
                     , !isCompressed(exchange));
         }
         return this.interceptorsRequireContent()
-                && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath())
+                && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath(), config)
                 && !isCompressed(exchange);
     }
 
-    private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
+    private boolean isAppliedBodyInjectionPathPrefix(String requestPath, ResponseInjectionConfig config) {
         return config.getAppliedBodyInjectionPathPrefixes() != null
                 && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
     }

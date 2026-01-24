@@ -61,14 +61,18 @@ public class LightProxyHandler implements HttpHandler {
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
-    static ProxyConfig config;
-
-    static ProxyHandler proxyHandler;
-    static AbstractMetricsHandler metricsHandler;
+    private String configName = ProxyConfig.CONFIG_NAME;
+    private ProxyHandler proxyHandler;
+    private AbstractMetricsHandler metricsHandler;
 
     public LightProxyHandler() {
-        config = ProxyConfig.load();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
+        this(ProxyConfig.CONFIG_NAME);
+    }
+
+    public LightProxyHandler(String configName) {
+        this.configName = configName;
+        ProxyConfig config = ProxyConfig.load(configName);
+        ModuleRegistry.registerModule(configName, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tlsMap = clientConfig.getTlsConfig();
         // disable the hostname verification based on the config. We need to do it here as the LoadBalancingProxyClient uses the Undertow HttpClient.
@@ -117,6 +121,7 @@ public class LightProxyHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
+        ProxyConfig config = ProxyConfig.load(configName);
         long startTime = System.nanoTime();
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = exchange.getRequestHeaders();
@@ -164,45 +169,4 @@ public class LightProxyHandler implements HttpHandler {
 
     }
 
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
-        List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
-        if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
-        LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
-                .setConnectionsPerThread(config.getConnectionsPerThread());
-        // we want to duplicate the host to double if there is only one host in the configuration.
-        if(hosts.size() == 1) {
-            hosts.add(hosts.get(0));
-        }
-        for(String host: hosts) {
-            try {
-                URI uri = new URI(host);
-                switch (uri.getScheme()) {
-                    case "http":
-                        loadBalancer.addHost(new URI(host));
-                        break;
-                    case "https":
-                        loadBalancer.addHost(new URI(host), Http2Client.getInstance().getDefaultXnioSsl());
-                        break;
-                    default:
-                        logger.error("Incorrect schema " + uri.getScheme());
-                }
-            } catch (URISyntaxException e) {
-                logger.error("Exception for host " + host, e);
-                throw new RuntimeException(e);
-            }
-        }
-        proxyHandler = ProxyHandler.builder()
-                .setProxyClient(loadBalancer)
-                .setMaxConnectionRetries(config.getMaxConnectionRetries())
-                .setMaxQueueSize(config.getMaxQueueSize())
-                .setMaxRequestTime(config.getMaxRequestTime())
-                .setReuseXForwarded(config.isReuseXForwarded())
-                .setRewriteHostHeader(config.isRewriteHostHeader())
-                .setNext(ResponseCodeHandler.HANDLE_404)
-                .build();
-        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
-        if(logger.isInfoEnabled()) logger.info("LightProxyHandler is reloaded.");
-    }
 }

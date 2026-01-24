@@ -144,7 +144,7 @@ public class WhitelistConfig {
      */
     private WhitelistConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigMap();
     }
@@ -154,12 +154,6 @@ public class WhitelistConfig {
 
     public static WhitelistConfig load(String configName) {
         return new WhitelistConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigMap();
     }
 
     public boolean isEnabled() {

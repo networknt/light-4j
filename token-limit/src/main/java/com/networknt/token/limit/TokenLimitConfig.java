@@ -108,7 +108,7 @@ public class TokenLimitConfig {
      */
     private TokenLimitConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setTokenPathTemplatesList();
         setLegacyClientList();
@@ -122,12 +122,7 @@ public class TokenLimitConfig {
         return new TokenLimitConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setTokenPathTemplatesList();
-        setLegacyClientList();
-    }
+
 
     public Boolean isEnabled() {
         return enabled;

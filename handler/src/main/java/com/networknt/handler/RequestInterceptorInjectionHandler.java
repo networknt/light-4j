@@ -33,17 +33,21 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     public static final String PAYLOAD_TOO_LARGE = "ERR10068";
     private static final Logger LOG = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
     private volatile HttpHandler next;
-    private static RequestInjectionConfig config;
+    private String configName = RequestInjectionConfig.CONFIG_NAME;
     private RequestInterceptor[] interceptors = null;
 
     public RequestInterceptorInjectionHandler() {
-        config = RequestInjectionConfig.load();
         LOG.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
+    public RequestInterceptorInjectionHandler(String configName) {
+        this.configName = configName;
+        LOG.info("RequestInterceptorInjectionHandler is loaded with {}!", configName);
+        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
+    }
+
     public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
-        config = cfg;
         LOG.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
@@ -62,22 +66,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return this.config.isEnabled();
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-
-        if (LOG.isTraceEnabled())
-            LOG.trace("request-injection.yml is reloaded");
-
-        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestInjectionConfig.CONFIG_NAME), null);
+        return RequestInjectionConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestInjectionConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
     @Override
@@ -87,10 +81,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
         this.next = Handler.getNext(httpServerExchange);
 
+        RequestInjectionConfig config = RequestInjectionConfig.load(configName);
         if(logger.isTraceEnabled())
-            logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath()), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
+            logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath(), config), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
 
-        if (this.shouldReadBody(httpServerExchange)) {
+        if (this.shouldReadBody(httpServerExchange, config)) {
             if(logger.isTraceEnabled()) logger.trace("Trying to read body");
             final var channel = httpServerExchange.getRequestChannel();
             final var bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
@@ -109,7 +104,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                         break;
 
                     } else if (r == 0) {
-                        this.setChannelRead(channel, buffer, readBuffers, bufferedData, httpServerExchange);
+                        this.setChannelRead(channel, buffer, readBuffers, bufferedData, httpServerExchange, config);
                         channel.resumeReads();
                         return;
 
@@ -151,13 +146,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     }
 
-    private boolean shouldReadBody(final HttpServerExchange ex) {
+    private boolean shouldReadBody(final HttpServerExchange ex, RequestInjectionConfig config) {
         var headers = ex.getRequestHeaders();
         var requestMethod = ex.getRequestMethod().toString();
         var requestPath = ex.getRequestPath();
-
+ 
         return this.injectorContentRequired()
-                && this.isAppliedBodyInjectionPathPrefix(requestPath)
+                && this.isAppliedBodyInjectionPathPrefix(requestPath, config)
                 && this.hasContent(requestMethod)
                 && !ex.isRequestComplete()
                 && !HttpContinue.requiresContinueResponse(headers);
@@ -186,7 +181,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @param bufferedData       - total buffered data.
      * @param ex - current exchange.
      */
-    private void setChannelRead(final StreamSourceChannel c, final PooledByteBuffer cPooledBuffer, final int cRead, final PooledByteBuffer[] bufferedData, final HttpServerExchange ex) {
+    private void setChannelRead(final StreamSourceChannel c, final PooledByteBuffer cPooledBuffer, final int cRead, final PooledByteBuffer[] bufferedData, final HttpServerExchange ex, RequestInjectionConfig config) {
         c.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
             PooledByteBuffer buffer = cPooledBuffer;
             int readBuffers = cRead;
@@ -327,7 +322,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         }
     }
 
-    private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
+    private boolean isAppliedBodyInjectionPathPrefix(String requestPath, RequestInjectionConfig config) {
         return config.getAppliedBodyInjectionPathPrefixes() != null && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
     }
 }

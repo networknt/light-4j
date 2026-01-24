@@ -32,22 +32,31 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
     public static final String HEALTH_RESULT_OK = "OK";
     public static final String HEALTH_RESULT_ERROR = "ERROR";
     static final Logger logger = LoggerFactory.getLogger(ProxyHealthGetHandler.class);
-    static final HealthConfig config = HealthConfig.load();
+    private String configName = HealthConfig.CONFIG_NAME;
+
     static final Http2Client client = Http2Client.getInstance();
     // cached connection to the backend API to speed up the downstream check.
     static ClientConnection connection = null;
 
     public ProxyHealthGetHandler() {
         if(logger.isTraceEnabled()) logger.trace("ProxyHealthGetHandler is constructed.");
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, ProxyHealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, ProxyHealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
+
+    public ProxyHealthGetHandler(String configName) {
+        this.configName = configName;
+        if(logger.isTraceEnabled()) logger.trace("ProxyHealthGetHandler is constructed with {}.", configName);
+        ModuleRegistry.registerModule(configName, ProxyHealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+    }
+
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest starts.");
         String result = HEALTH_RESULT_OK;
+        HealthConfig config = HealthConfig.load(configName);
         // if backend is not connected, then error. Check the configuration to see if it is enabled.
         if(config.isDownstreamEnabled()) {
-            result = backendHealth();
+            result = backendHealth(config);
         }
         // for security reason, we don't output the details about the error. Users can check the log for the failure.
         if(HEALTH_RESULT_ERROR.equals(result)) {
@@ -65,9 +74,10 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
      * Try to access the configurable /health endpoint on the backend API. return OK if a success response is returned.
      * Otherwise, ERROR is returned.
      *
+     * @param config HealthConfig
      * @return result String of OK or ERROR.
      */
-    private String backendHealth() {
+    private String backendHealth(HealthConfig config) {
         String result = HEALTH_RESULT_OK;
         long start = System.currentTimeMillis();
         if(connection == null || !connection.isOpen()) {

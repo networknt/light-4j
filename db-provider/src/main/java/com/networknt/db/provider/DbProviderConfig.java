@@ -71,7 +71,7 @@ public class DbProviderConfig {
      */
     private DbProviderConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
     public static DbProviderConfig load() {
@@ -82,10 +82,6 @@ public class DbProviderConfig {
         return new DbProviderConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -131,15 +127,17 @@ public class DbProviderConfig {
     }
 
     private void setConfigData() {
-        Object object = mappedConfig.get(DRIVER_CLASS_NAME);
-        if(object != null) driverClassName = (String)object;
-        object = mappedConfig.get(USERNAME);
-        if(object != null) username = (String)object;
-        object = mappedConfig.get(PASSWORD);
-        if(object != null) password = ((String)object).toCharArray();
-        object = mappedConfig.get(JDBC_URL);
-        if(object != null) jdbcUrl = (String)object;
-        object = mappedConfig.get(MAXIMUM_POOL_SIZE);
-        if(object != null) Config.loadIntegerValue(MAXIMUM_POOL_SIZE, object);
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get(DRIVER_CLASS_NAME);
+            if(object != null) driverClassName = (String)object;
+            object = mappedConfig.get(USERNAME);
+            if(object != null) username = (String)object;
+            object = mappedConfig.get(PASSWORD);
+            if(object != null) password = ((String)object).toCharArray();
+            object = mappedConfig.get(JDBC_URL);
+            if(object != null) jdbcUrl = (String)object;
+            object = mappedConfig.get(MAXIMUM_POOL_SIZE);
+            if(object != null) maximumPoolSize = Config.loadIntegerValue(MAXIMUM_POOL_SIZE, object);
+        }
     }
 }

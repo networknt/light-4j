@@ -48,8 +48,7 @@ import org.slf4j.MDC;
 public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
-    public static final String CONFIG_NAME = "exception";
-    static  ExceptionConfig config = (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
+    private String configName = ExceptionConfig.CONFIG_NAME;
 
     static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
     static final String STATUS_UNCAUGHT_EXCEPTION = "ERR10011";
@@ -57,7 +56,12 @@ public class ExceptionHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public ExceptionHandler() {
+        if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed.");
+    }
 
+    public ExceptionHandler(String configName) {
+        this.configName = configName;
+        if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed with {}.", configName);
     }
 
     @Override
@@ -137,18 +141,12 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ExceptionConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExceptionConfig.CONFIG_NAME, ExceptionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExceptionConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, ExceptionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config =  (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
-        ModuleRegistry.registerModule(ExceptionConfig.CONFIG_NAME, ExceptionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExceptionConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ExceptionHandler is reloaded.");
-    }
 }

@@ -42,19 +42,14 @@ public class CacheConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
-    private CacheConfig() {
-        this(CONFIG_NAME);
-    }
-
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
     private CacheConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigList();
+    }
+
+    private CacheConfig() {
+        this(CONFIG_NAME);
     }
 
     public static CacheConfig load() {
@@ -63,11 +58,6 @@ public class CacheConfig {
 
     public static CacheConfig load(String configName) {
         return new CacheConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigList();
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -83,7 +73,7 @@ public class CacheConfig {
     }
 
     public void setConfigList() {
-        if (mappedConfig.get(CACHES) != null) {
+        if (mappedConfig != null && mappedConfig.get(CACHES) != null) {
             Object object = mappedConfig.get(CACHES);
             caches = new ArrayList<>();
             if(object instanceof String) {

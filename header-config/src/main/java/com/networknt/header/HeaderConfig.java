@@ -70,7 +70,7 @@ public class HeaderConfig {
      */
     private HeaderConfig(String configName) {
         this.config = Config.getInstance();
-        this.mappedConfig = this.config.getJsonMapConfigNoCache(configName);
+        this.mappedConfig = this.config.getJsonMapConfig(configName);
         if (this.mappedConfig != null) {
             this.setValues();
         }
@@ -82,13 +82,6 @@ public class HeaderConfig {
 
     public static HeaderConfig load(String configName) {
         return new HeaderConfig(configName);
-    }
-
-    void reload() {
-        this.mappedConfig = this.config.getJsonMapConfigNoCache(CONFIG_NAME);
-        if (this.mappedConfig != null) {
-            this.setValues();
-        }
     }
 
     private void setValues() {

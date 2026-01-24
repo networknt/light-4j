@@ -58,7 +58,7 @@ public class LdapAuthTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // inject the BasicAuthHandler before the TestHandler for security
-            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth-ldap"));
+            BasicAuthHandler basicAuthHandler = new BasicAuthHandler("basic-auth-ldap");
             basicAuthHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")

@@ -74,7 +74,7 @@ public class SalesforceConfig {
      */
     private SalesforceConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setUrlRewriteRules();
         setConfigList();
@@ -85,13 +85,6 @@ public class SalesforceConfig {
 
     public static SalesforceConfig load(String configName) {
         return new SalesforceConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setUrlRewriteRules();
-        setConfigList();
     }
 
     public boolean isEnabled() {

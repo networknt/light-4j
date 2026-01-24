@@ -94,24 +94,14 @@ public class BasicAuthConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
-    public BasicAuthConfig() {
+    private BasicAuthConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
-        setConfigUser();
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     *
-     * @param configName String
-     */
-    public BasicAuthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigUser();
+    private BasicAuthConfig() {
+        this(CONFIG_NAME);
     }
 
     public static BasicAuthConfig load() {
@@ -120,12 +110,6 @@ public class BasicAuthConfig {
 
     public static BasicAuthConfig load(String configName) {
         return new BasicAuthConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigUser();
     }
 
     public boolean isEnabled() {
@@ -137,7 +121,7 @@ public class BasicAuthConfig {
     }
 
     public boolean isEnableAD() {
-        return enabled;
+        return enableAD;
     }
 
     public void setEnableAD(boolean enabled) {
@@ -164,15 +148,26 @@ public class BasicAuthConfig {
         return users;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(ENABLE_AD);
-        if (object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
-        object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if (object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
-        object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if (object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(ENABLE_AD);
+            if (object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
+            object = mappedConfig.get(ALLOW_ANONYMOUS);
+            if (object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
+            object = mappedConfig.get(ALLOW_BEARER_TOKEN);
+            if (object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
+            setConfigUser();
+        }
     }
 
     private void setConfigUser() {

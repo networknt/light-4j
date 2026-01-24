@@ -48,22 +48,17 @@ import java.util.Map;
 public class HeaderHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(HeaderHandler.class);
 
-    private static HeaderConfig config;
+    private String configName = HeaderConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
     public HeaderHandler() {
-        config = HeaderConfig.load();
+        if(logger.isInfoEnabled()) logger.info("HeaderHandler is loaded.");
     }
 
-    /**
-     * Please don't use this constructor. It is used by test case only to inject config object.
-     *
-     * @param cfg HeaderConfig
-     * @deprecated
-     */
-    public HeaderHandler(HeaderConfig cfg) {
-        config = cfg;
+    public HeaderHandler(String configName) {
+        this.configName = configName;
+        if(logger.isInfoEnabled()) logger.info("HeaderHandler is loaded with {}.", configName);
     }
 
     /**
@@ -77,6 +72,7 @@ public class HeaderHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.debug("HeaderHandler.handleRequest starts.");
 
+        HeaderConfig config = HeaderConfig.load(configName);
         // handle all request header
         List<String> requestHeaderRemove = config.getRequestRemoveList();
         if (requestHeaderRemove != null) {
@@ -183,18 +179,12 @@ public class HeaderHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return HeaderConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME), null);
-        if (logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
-    }
 }

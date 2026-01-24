@@ -84,7 +84,7 @@ public class LdapConfig {
 
     private LdapConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData(); // Custom logic for loading string fields
     }
 
@@ -94,11 +94,6 @@ public class LdapConfig {
 
     public static LdapConfig load(String configName) {
         return new LdapConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public Map<String, Object> getMappedConfig() {

@@ -96,7 +96,7 @@ public class ServerInfoConfig {
 
     private ServerInfoConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setData();
         setList();
     }
@@ -107,12 +107,6 @@ public class ServerInfoConfig {
 
     public static ServerInfoConfig load(String configName) {
         return new ServerInfoConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setData();
-        setList();
     }
 
     public Map<String, Object> getMappedConfig() {

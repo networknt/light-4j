@@ -23,8 +23,7 @@ import org.junit.Test;
 public class ResponseEncodeConfigTest {
     @Test
     public void loadConfig() {
-        ResponseEncodeConfig config =
-                (ResponseEncodeConfig) Config.getInstance().getJsonObjectConfig(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeConfig.class);
+        ResponseEncodeConfig config = ResponseEncodeConfig.load();
         Assert.assertEquals(config.getEncoders().size(), 2);
     }
 }

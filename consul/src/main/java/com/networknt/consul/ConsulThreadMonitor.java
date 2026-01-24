@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ConsulThreadMonitor extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(ConsulThreadMonitor.class);
-    private static final ConsulConfig config =
-            (ConsulConfig) Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+    private static final ConsulConfig config = ConsulConfig.load();
     private final ConcurrentHashMap<String,Long> checkins;
 
     private boolean shutdownIfThreadFrozen = config.isShutdownIfThreadFrozen();

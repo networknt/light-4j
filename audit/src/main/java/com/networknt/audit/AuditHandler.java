@@ -89,7 +89,6 @@ public class AuditHandler implements MiddlewareHandler {
     static final String SERVICE_ID_KEY = "serviceId";
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
-    private static AuditConfig config;
 
     private volatile HttpHandler next;
 
@@ -99,41 +98,40 @@ public class AuditHandler implements MiddlewareHandler {
 
     public AuditHandler() {
         logger.info("AuditHandler is loaded.");
-        config = AuditConfig.load();
         ServerConfig serverConfig = ServerConfig.getInstance();
         if (serverConfig != null) {
             serviceId = serverConfig.getServiceId();
-        }
-        String timestampFormat = config.getTimestampFormat();
-        if (!StringUtils.isBlank(timestampFormat)) {
-            try {
-                dateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormat)
-                        .withZone(ZoneId.systemDefault());
-            } catch (IllegalArgumentException e) {
-                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
-
-            }
         }
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.debug("AuditHandler.handleRequest starts.");
+        AuditConfig config = AuditConfig.load();
         final Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         final Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
 
         // add audit timestamp
+        String timestampFormat = config.getTimestampFormat();
+        if (dateTimeFormatter == null && !StringUtils.isBlank(timestampFormat)) {
+            try {
+                dateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormat)
+                        .withZone(ZoneId.systemDefault());
+            } catch (IllegalArgumentException e) {
+                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
+            }
+        }
         auditMap.put(TIMESTAMP, dateTimeFormatter == null ? System.currentTimeMillis() : dateTimeFormatter.format(Instant.now()));
 
         // dump audit info fields according to config
         boolean needAuditData = auditInfo != null && config.hasAuditList();
         if (needAuditData) {
-            auditFields(auditInfo, auditMap);
+            auditFields(auditInfo, auditMap, config);
         }
 
         // dump request header, request body, path parameters, query parameters and request cookies according to config
-        auditRequest(exchange, auditMap);
+        auditRequest(exchange, auditMap, config);
 
         // dump serviceId from server.yml
         if (config.hasAuditList() && config.getAuditList().contains(SERVICE_ID_KEY)) {
@@ -163,9 +161,9 @@ public class AuditHandler implements MiddlewareHandler {
                     }
                     // audit the response body.
                     if (config.getAuditList() != null && config.getAuditList().contains(RESPONSE_BODY_KEY)) {
-                        AuditHandler.auditResponseBody(completedExchange, auditMap);
+                        AuditHandler.auditResponseBody(completedExchange, auditMap, config);
                     }
-                    AuditHandler.logAudit(completedExchange, auditMap);
+                    AuditHandler.logAudit(completedExchange, auditMap, config);
                 } catch (Exception e) {
                     logger.error("ExchangeListener Throwable", e);
                 } finally {
@@ -185,7 +183,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the request and response
      * @param auditMap the map containing the audit information
      */
-    private static void logAudit(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private static void logAudit(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         try {
             // audit entries only is it is an error, if auditOnError flag is set
             if (config.isAuditOnError()) {
@@ -205,7 +203,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the request headers
      * @param auditMap the map to hold the audited headers
      */
-    private static void auditHeader(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private static void auditHeader(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         for (String name : config.getHeaderList()) {
             String value = exchange.getRequestHeaders().getFirst(name);
             logger.trace("header name = {} header value = {}", name, value);
@@ -222,7 +220,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param auditInfo the map containing the audit information
      * @param auditMap the map to hold the audited fields
      */
-    private void auditFields(final Map<String, Object> auditInfo, final Map<String, Object> auditMap) {
+    private void auditFields(final Map<String, Object> auditInfo, final Map<String, Object> auditMap, AuditConfig config) {
         for (String name : config.getAuditList()) {
             final Object value = auditInfo.get(name);
             if (config.isMask() && value instanceof String stringValue)
@@ -238,9 +236,9 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the request
      * @param auditMap the map to hold the audited request data
      */
-    private void auditRequest(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private void auditRequest(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         if (config.hasHeaderList()) {
-            AuditHandler.auditHeader(exchange, auditMap);
+            AuditHandler.auditHeader(exchange, auditMap, config);
         }
         if (!config.hasAuditList()) {
             return;
@@ -248,16 +246,16 @@ public class AuditHandler implements MiddlewareHandler {
         for (String key : config.getAuditList()) {
             switch (key) {
                 case REQUEST_BODY_KEY:
-                    AuditHandler.auditRequestBody(exchange, auditMap);
+                    AuditHandler.auditRequestBody(exchange, auditMap, config);
                     break;
                 case REQUEST_COOKIES_KEY:
-                    AuditHandler.auditRequestCookies(exchange, auditMap);
+                    AuditHandler.auditRequestCookies(exchange, auditMap, config);
                     break;
                 case QUERY_PARAMETERS_KEY:
-                    AuditHandler.auditQueryParameters(exchange, auditMap);
+                    AuditHandler.auditQueryParameters(exchange, auditMap, config);
                     break;
                 case PATH_PARAMETERS_KEY:
-                    AuditHandler.auditPathParameters(exchange, auditMap);
+                    AuditHandler.auditPathParameters(exchange, auditMap, config);
                     break;
                 default:
                     logger.error("Unknown audit key {} in audit.yml", key);
@@ -272,13 +270,14 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the request body
      * @param auditMap the map to hold the audited request body
      */
-    private static void auditRequestBody(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private static void auditRequestBody(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         AuditHandler.auditBody(
                 exchange.getRequestHeaders(),
                 exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING),
                 exchange.getAttachment(AttachmentConstants.REQUEST_BODY),
                 auditMap,
-                REQUEST_BODY_KEY
+                REQUEST_BODY_KEY,
+                config
         );
     }
 
@@ -288,13 +287,14 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the response body
      * @param auditMap the map to hold the audited response body
      */
-    private static void auditResponseBody(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private static void auditResponseBody(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         AuditHandler.auditBody(
                 exchange.getResponseHeaders(),
                 exchange.getAttachment(AttachmentConstants.RESPONSE_BODY_STRING),
                 exchange.getAttachment(AttachmentConstants.RESPONSE_BODY),
                 auditMap,
-                RESPONSE_BODY_KEY
+                RESPONSE_BODY_KEY,
+                config
         );
     }
 
@@ -307,7 +307,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param auditMap the map to hold the audited body
      * @param auditKey the key to be used in the audit map
      */
-    private static void auditBody(final HeaderMap headers, final String bodyString, final Object bodyRaw, Map<String, Object> auditMap, final String auditKey) {
+    private static void auditBody(final HeaderMap headers, final String bodyString, final Object bodyRaw, Map<String, Object> auditMap, final String auditKey, AuditConfig config) {
         if (bodyString == null && bodyRaw == null) {
             logger.debug("No body present to audit for {}", auditKey);
             return;
@@ -354,8 +354,8 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the query parameters
      * @param auditMap the map to hold the audited query parameters
      */
-    private static void auditQueryParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
-        auditParameters(exchange.getQueryParameters(), auditMap, QUERY_PARAMETERS_KEY);
+    private static void auditQueryParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
+        auditParameters(exchange.getQueryParameters(), auditMap, QUERY_PARAMETERS_KEY, config);
     }
 
     /**
@@ -364,8 +364,8 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the path parameters
      * @param auditMap the map to hold the audited path parameters
      */
-    private static void auditPathParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
-        auditParameters(exchange.getPathParameters(), auditMap, PATH_PARAMETERS_KEY);
+    private static void auditPathParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
+        auditParameters(exchange.getPathParameters(), auditMap, PATH_PARAMETERS_KEY, config);
     }
 
     /**
@@ -375,7 +375,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param auditMap the map to hold the audited parameters
      * @param auditKey the key to be used in the audit map
      */
-    private static void auditParameters(Map<String, Deque<String>> parameters, Map<String, Object> auditMap, String auditKey) {
+    private static void auditParameters(Map<String, Deque<String>> parameters, Map<String, Object> auditMap, String auditKey, AuditConfig config) {
         if (parameters == null || parameters.isEmpty()) {
             return;
         }
@@ -394,7 +394,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param exchange the HttpServerExchange containing the request cookies
      * @param auditMap the map to hold the audited cookies
      */
-    private static void auditRequestCookies(final HttpServerExchange exchange, final Map<String, Object> auditMap) {
+    private static void auditRequestCookies(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         Iterable<Cookie> iterable = exchange.requestCookies();
         if (iterable == null || !iterable.iterator().hasNext()) {
             return;
@@ -429,7 +429,7 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return AuditConfig.load().isEnabled();
     }
 
     @Override
@@ -441,10 +441,4 @@ public class AuditHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(AuditConfig.CONFIG_NAME), null);
-        logger.info("AuditHandler is reloaded.");
-    }
 }

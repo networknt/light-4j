@@ -46,21 +46,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
-    private static ExternalServiceConfig config;
+    private String configName = ExternalServiceConfig.CONFIG_NAME;
     private int connectTimeout;
     private int timeout;
     private HttpClient client;
 
     public ExternalServiceHandler() {
-        config = ExternalServiceConfig.load();
-        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+        if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded.");
+    }
 
-        connectTimeout = config.getConnectTimeout();
-        if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
-        timeout = config.getTimeout();
-        if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
-
-        if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
+    public ExternalServiceHandler(String configName) {
+        this.configName = configName;
+        if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded with {}.", configName);
     }
 
     @Override
@@ -78,31 +75,25 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     @Override
 
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ExternalServiceConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
 
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
+        ExternalServiceConfig config = ExternalServiceConfig.load(configName);
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         connectTimeout = config.getConnectTimeout();
         if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
         timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
-        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
-    }
-
-    @Override
-    public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = {}", requestPath);
@@ -182,7 +173,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
 
                     if (client == null) {
-                        client = this.createJavaHttpClient();
+                        client = this.createJavaHttpClient(config);
                         if(client == null) {
                             setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
                             exchange.endExchange();
@@ -300,7 +291,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
      */
 
     @SuppressWarnings("unchecked")
-    private HttpClient createJavaHttpClient() throws IOException {
+    private HttpClient createJavaHttpClient(ExternalServiceConfig config) throws IOException {
         // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
         var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
         final var props = System.getProperties();

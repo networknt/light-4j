@@ -90,19 +90,14 @@ public class BodyConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
-    public BodyConfig() {
-        this(CONFIG_NAME);
-    }
-
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
     private BodyConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
+    }
+
+    private BodyConfig() {
+        this(CONFIG_NAME);
     }
 
     public static BodyConfig load() {
@@ -113,10 +108,6 @@ public class BodyConfig {
         return new BodyConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
@@ -138,15 +129,17 @@ public class BodyConfig {
     public boolean isLogFullResponseBody() { return logFullResponseBody; }
 
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(CACHE_REQUEST_BODY);
-        if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
-        object = mappedConfig.get(CACHE_RESPONSE_BODY);
-        if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
-        object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
-        if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
-        object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
-        if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(CACHE_REQUEST_BODY);
+            if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
+            object = mappedConfig.get(CACHE_RESPONSE_BODY);
+            if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
+            object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
+            if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
+            object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
+            if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
+        }
     }
 }

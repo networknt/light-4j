@@ -62,7 +62,7 @@ public class ResponseInjectionConfig {
 
     public ResponseInjectionConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -73,12 +73,6 @@ public class ResponseInjectionConfig {
 
     static ResponseInjectionConfig load(String configName) {
         return new ResponseInjectionConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {

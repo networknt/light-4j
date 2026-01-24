@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class PrometheusHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "prometheus";
-    public static PrometheusConfig config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
+
 
     private CollectorRegistry registry;
 
@@ -106,7 +106,8 @@ public class PrometheusHandler implements MiddlewareHandler {
                         summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
 
                         incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
-                        if (config.enableHotspot) {
+                        PrometheusConfig config = PrometheusConfig.load();
+                        if (config.isEnableHotspot()) {
                             logger.info("Prometheus hotspot monitor enabled.");
                             DefaultExports.initialize();
                         }
@@ -126,7 +127,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return PrometheusConfig.load().isEnabled();
     }
 
     @Override
@@ -136,7 +137,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
+        // config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
     }
 
     private void incCounterForStatusCode(int statusCode, List<String> labels,  List<String> labelValues) {

@@ -17,9 +17,12 @@
 package com.networknt.exception;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+
+import java.util.Map;
 
 /**
  * Config class for Exception module to control the behavior
@@ -50,7 +53,24 @@ public class ExceptionConfig {
     @JsonIgnore
     String description;
 
-    public ExceptionConfig() {
+    private Map<String, Object> mappedConfig;
+    private final Config config;
+
+    private ExceptionConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        setConfigData();
+    }
+    private ExceptionConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static ExceptionConfig load(String configName) {
+        return new ExceptionConfig(configName);
+    }
+
+    public static ExceptionConfig load() {
+        return new ExceptionConfig();
     }
 
     public boolean isEnabled() {
@@ -69,4 +89,18 @@ public class ExceptionConfig {
         this.description = description;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get("enabled");
+            if(object != null) enabled = Config.loadBooleanValue("enabled", object);
+        }
+    }
 }

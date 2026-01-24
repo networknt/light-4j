@@ -59,7 +59,7 @@ public class RequestDecodeConfig {
 
     private RequestDecodeConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -73,18 +73,6 @@ public class RequestDecodeConfig {
 
     public static RequestDecodeConfig load() {
         return new RequestDecodeConfig();
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {

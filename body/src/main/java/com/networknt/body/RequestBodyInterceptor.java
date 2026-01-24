@@ -45,16 +45,19 @@ import java.nio.charset.StandardCharsets;
 public class RequestBodyInterceptor implements RequestInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(RequestBodyInterceptor.class);
 
-    public BodyConfig config;
+    private String configName = BodyConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
     public RequestBodyInterceptor() {
-
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is loaded.");
+    }
 
-        config = BodyConfig.load();
+    public RequestBodyInterceptor(String configName) {
+        this.configName = configName;
+        if (LOG.isInfoEnabled())
+            LOG.info("RequestBodyInterceptor is loaded with {}.", configName);
     }
 
     /**
@@ -68,6 +71,8 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (LOG.isDebugEnabled())
             LOG.debug("RequestBodyInterceptor.handleRequest starts.");
+
+        BodyConfig config = BodyConfig.load(configName);
 
         if (this.shouldAttachBody(exchange.getRequestHeaders())) {
 
@@ -91,7 +96,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                     else
                         LOG.trace("contentType = " + contentType + " request body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
                 }
-                boolean attached = this.handleBody(exchange, completeBody, contentType);
+                boolean attached = this.handleBody(exchange, completeBody, contentType, config);
 
                 if (!attached && LOG.isErrorEnabled())
                     LOG.error("Failed to attach the request body to the exchange!");
@@ -108,16 +113,16 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
     }
 
-    private boolean handleBody(final HttpServerExchange ex, String body, String contentType) {
+    private boolean handleBody(final HttpServerExchange ex, String body, String contentType, BodyConfig config) {
 
         if (this.isJsonData(contentType))
-            return this.attachJsonBody(ex, body);
+            return this.attachJsonBody(ex, body, config);
 
         else if (this.isXmlData(contentType))
-            return this.attachXmlBody(ex, body);
+            return this.attachXmlBody(ex, body, config);
 
         else if (this.isFormData(contentType))
-            return this.attachFormDataBody(ex, body);
+            return this.attachFormDataBody(ex, body, config);
 
         else
             return false;
@@ -130,15 +135,15 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      * @param str - byte buffer body as a string
      * @return - true if successful
      */
-    public boolean attachJsonBody(final HttpServerExchange ex, String str) {
+    public boolean attachJsonBody(final HttpServerExchange ex, String str, BodyConfig config) {
         str = str.trim();
 
         if (str.charAt(0) == JSON_MAP_OBJECT_STARTING_CHAR) {
-            this.cacheRequestBody(ex, str);
+            this.cacheRequestBody(ex, str, config);
             return this.parseJsonMapObject(ex, AttachmentConstants.REQUEST_BODY, str);
 
         } else if (str.charAt(0) == JSON_ARRAY_OBJECT_STARTING_CHAR) {
-            this.cacheRequestBody(ex, str);
+            this.cacheRequestBody(ex, str, config);
             return this.parseJsonArrayObject(ex, AttachmentConstants.REQUEST_BODY, str);
         }
 
@@ -146,9 +151,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
         return false;
     }
 
-    public boolean attachXmlBody(HttpServerExchange exchange, String s) {
+    public boolean attachXmlBody(HttpServerExchange exchange, String s, BodyConfig config) {
         // TODO
-        this.cacheRequestBody(exchange, s);
+        this.cacheRequestBody(exchange, s, config);
         return true;
     }
 
@@ -159,14 +164,14 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      * @param s        the string of the  request body
      * @return boolean to indicate if attached.
      */
-    public boolean attachFormDataBody(final HttpServerExchange exchange, String s) {
+    public boolean attachFormDataBody(final HttpServerExchange exchange, String s, BodyConfig config) {
         // TODO
-        this.cacheRequestBody(exchange, s);
+        this.cacheRequestBody(exchange, s, config);
         return true;
     }
 
-    private void cacheRequestBody(HttpServerExchange exchange, String s) {
-        if (this.config.isCacheRequestBody())
+    private void cacheRequestBody(HttpServerExchange exchange, String s, BodyConfig config) {
+        if (config.isCacheRequestBody())
             exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, s);
     }
 
@@ -184,21 +189,14 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return BodyConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
-        if (LOG.isInfoEnabled())
-            LOG.info("RequestBodyInterceptor is reloaded.");
-    }
 
     @Override
     public boolean isRequiredContent() {

@@ -91,7 +91,7 @@ public class LoggerConfig {
 
     private LoggerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -101,11 +101,6 @@ public class LoggerConfig {
 
     public static LoggerConfig load(String configName) {
         return new LoggerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public void setConfigData() {

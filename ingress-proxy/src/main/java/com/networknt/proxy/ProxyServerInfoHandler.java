@@ -32,17 +32,26 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     private static final int UNUSUAL_STATUS_CODE = 300;
     private static OptionMap optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
     private static final String PROXY_INFO_KEY = "proxy_info";
-    static ProxyConfig proxyConfig;
-    static ServerInfoConfig serverInfoConfig;
+    private String proxyConfigName = ProxyConfig.CONFIG_NAME;
+    private String serverInfoConfigName = ServerInfoConfig.CONFIG_NAME;
 
     public ProxyServerInfoHandler() {
-        proxyConfig = ProxyConfig.load();
-        serverInfoConfig = ServerInfoConfig.load();
+    }
+
+    public ProxyServerInfoHandler(String proxyConfigName) {
+        this.proxyConfigName = proxyConfigName;
+    }
+
+    public ProxyServerInfoHandler(String proxyConfigName, String serverInfoConfigName) {
+        this.proxyConfigName = proxyConfigName;
+        this.serverInfoConfigName = serverInfoConfigName;
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ProxyServerInfoHandler.handleRequest starts.");
+        ProxyConfig proxyConfig = ProxyConfig.load(proxyConfigName);
+        ServerInfoConfig serverInfoConfig = ServerInfoConfig.load(serverInfoConfigName);
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> proxyInfo = ServerInfoUtil.getServerInfo(serverInfoConfig);
         result.put(PROXY_INFO_KEY, proxyInfo);

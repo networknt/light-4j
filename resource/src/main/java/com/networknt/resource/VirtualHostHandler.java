@@ -36,7 +36,7 @@ public class VirtualHostHandler implements HttpHandler {
     NameVirtualHostHandler virtualHostHandler;
 
     public VirtualHostHandler() {
-        VirtualHostConfig config = (VirtualHostConfig)Config.getInstance().getJsonObjectConfig(VirtualHostConfig.CONFIG_NAME, VirtualHostConfig.class);
+        VirtualHostConfig config = VirtualHostConfig.load();
         virtualHostHandler = new NameVirtualHostHandler();
         for(VirtualHost host: config.hosts) {
             virtualHostHandler.addHost(host.domain, new PathHandler().addPrefixPath(host.getPath(), new ResourceHandler((new PathResourceManager(Paths.get(host.getBase()), host.getTransferMinSize()))).setDirectoryListingEnabled(host.isDirectoryListingEnabled())));

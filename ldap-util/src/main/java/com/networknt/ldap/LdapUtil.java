@@ -22,10 +22,7 @@ public class LdapUtil {
     private final static String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
     private final static String CONFIG_LDAP = "ldap";
 
-    private final static LdapConfig config;
-
     static {
-        config = LdapConfig.load();
         ModuleRegistry.registerModule(CONFIG_LDAP, LdapUtil.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_LDAP), null);
     }
 
@@ -40,11 +37,12 @@ public class LdapUtil {
      * @return boolean true if authenticated
      */
     public static boolean authenticate(String username, String password) {
+        LdapConfig config = LdapConfig.load();
         try {
-            String dn = getUid(username);
+            String dn = getUid(username, config);
             if (dn != null) {
                 /* Found user - test password */
-                if ( testBind( dn, password ) ) {
+                if ( testBind( dn, password, config ) ) {
                     if(logger.isDebugEnabled()) logger.debug("user '" + username + "' authentication succeeded");
                     return true;
                 } else {
@@ -68,10 +66,11 @@ public class LdapUtil {
      * this method if the username has been authenticated with SPNEGO/Kerberos
      */
     public static Set<String> authorize(String username) {
+        LdapConfig config = LdapConfig.load();
         Set<String> groups = new HashSet();
         DirContext ctx = null;
         try {
-            ctx = ldapContext();
+            ctx = ldapContext(config);
             SearchControls ctrls = new SearchControls();
             ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
             String filter = String.format(config.searchFilter, username);
@@ -115,12 +114,12 @@ public class LdapUtil {
         return null;
     }
 
-    private static DirContext ldapContext () throws Exception {
+    private static DirContext ldapContext (LdapConfig config) throws Exception {
         Hashtable<String,String> env = new Hashtable <String,String>();
-        return ldapContext(env);
+        return ldapContext(env, config);
     }
 
-    private static DirContext ldapContext (Hashtable<String,String> env) throws Exception {
+    private static DirContext ldapContext (Hashtable<String,String> env, LdapConfig config) throws Exception {
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());
         if(config.getUri().toUpperCase().startsWith("LDAPS://")) {
@@ -135,8 +134,8 @@ public class LdapUtil {
         return ctx;
     }
 
-    private static String getUid (String username) throws Exception {
-        DirContext ctx = ldapContext();
+    private static String getUid (String username, LdapConfig config) throws Exception {
+        DirContext ctx = ldapContext(config);
         String filter = String.format(config.searchFilter, username);
         SearchControls ctrl = new SearchControls();
         ctrl.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -154,7 +153,7 @@ public class LdapUtil {
         return dn;
     }
 
-    private static boolean testBind (String dn, String password) throws Exception {
+    private static boolean testBind (String dn, String password, LdapConfig config) throws Exception {
         Hashtable<String,String> env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());

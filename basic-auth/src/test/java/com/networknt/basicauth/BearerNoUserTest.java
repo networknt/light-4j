@@ -60,7 +60,7 @@ public class BearerNoUserTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // inject the BasicAuthHandler before the TestHandler for security
-            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth-bearer"));
+            BasicAuthHandler basicAuthHandler = new BasicAuthHandler("basic-auth-bearer");
             basicAuthHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")

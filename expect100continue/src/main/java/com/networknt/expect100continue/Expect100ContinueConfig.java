@@ -59,18 +59,17 @@ public class Expect100ContinueConfig {
         return new Expect100ContinueConfig();
     }
 
+    public static Expect100ContinueConfig load(String configName) {
+        return new Expect100ContinueConfig(configName);
+    }
+
     private Expect100ContinueConfig() {
         this(CONFIG_NAME);
     }
 
     private Expect100ContinueConfig(String configName) {
         this.config = Config.getInstance();
-        this.mappedConfig = config.getJsonMapConfigNoCache(configName);
-        this.setConfigData();
-    }
-
-    void reload() {
-        this.mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        this.mappedConfig = config.getJsonMapConfig(configName);
         this.setConfigData();
     }
 

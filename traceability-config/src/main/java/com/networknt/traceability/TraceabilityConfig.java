@@ -37,7 +37,7 @@ public class TraceabilityConfig {
 
     private TraceabilityConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
     private TraceabilityConfig() {
@@ -52,15 +52,7 @@ public class TraceabilityConfig {
         return new TraceabilityConfig();
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
 
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-    }
 
     public boolean isEnabled() {
         return enabled;

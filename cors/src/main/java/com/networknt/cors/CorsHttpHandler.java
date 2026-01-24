@@ -46,49 +46,39 @@ import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
  */
 public class CorsHttpHandler implements MiddlewareHandler {
 
-    public static CorsConfig config;
-    private List<String> allowedOrigins;
-    private List<String> allowedMethods;
-    private boolean isNonPreflightReqAllowed = true;
-
+    private String configName = CorsConfig.CONFIG_NAME;
     private volatile HttpHandler next;
+    private boolean isNonPreflightReqAllowed = true;
     /** Default max age **/
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
     public CorsHttpHandler() {
-        config = CorsConfig.load();
-        allowedOrigins = config.getAllowedOrigins();
-        allowedMethods = config.getAllowedMethods();
         if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
     }
 
-    /**
-     * Please don't use this constructor. It is used by test case only to inject config object.
-     * @param configName config name
-     */
-    @Deprecated
     public CorsHttpHandler(String configName) {
-        config = CorsConfig.load(configName);
-        allowedOrigins = config.getAllowedOrigins();
-        allowedMethods = config.getAllowedMethods();
-        if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
+        this.configName = configName;
+        if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded with {}.", configName);
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
+        CorsConfig config = CorsConfig.load(configName);
         HeaderMap headers = exchange.getRequestHeaders();
         this.isNonPreflightReqAllowed = true;
         if (isCorsRequest(headers)) {
+            List<String> allowedOrigins = config.getAllowedOrigins();
+            List<String> allowedMethods = config.getAllowedMethods();
             // cors headers available in the request. Set the allowedOrigins and allowedMethods based on the
             // path prefix if it is configured. Otherwise, use the global configuration set in the constructor.
-            if (config.getPathPrefixAllowed() != null) {
+            if (config.pathPrefixAllowed != null) {
                 String requestPath = exchange.getRequestPath();
-                for(Map.Entry<String, Object> entry: config.getPathPrefixAllowed().entrySet()) {
+                for(Map.Entry<String, CorsPathPrefix> entry: config.pathPrefixAllowed.entrySet()) {
                     if (requestPath.startsWith(entry.getKey())) {
-                        Map endpointCorsMap = (Map) entry.getValue();
-                        allowedOrigins = (List<String>) endpointCorsMap.get(CorsConfig.ALLOWED_ORIGINS);
-                        allowedMethods = (List<String>) endpointCorsMap.get(CorsConfig.ALLOWED_METHODS);
+                        CorsPathPrefix endpointCors = entry.getValue();
+                        allowedOrigins = endpointCors.getAllowedOrigins();
+                        allowedMethods = endpointCors.getAllowedMethods();
                         break;
                     }
                 }
@@ -151,22 +141,14 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return CorsConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorsConfig.CONFIG_NAME, CorsHttpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CorsConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, CorsHttpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(CorsConfig.CONFIG_NAME, CorsHttpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CorsConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) {
-            logger.info("CorsHttpHandler is enabled.");
-        }
-    }
 
     /**
      * Match the Origin header with the allowed origins.

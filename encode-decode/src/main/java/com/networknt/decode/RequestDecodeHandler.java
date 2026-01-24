@@ -44,25 +44,33 @@ import java.util.Map;
  */
 public class RequestDecodeHandler implements MiddlewareHandler {
 
-    public static RequestDecodeConfig config =
-            (RequestDecodeConfig)Config.getInstance().getJsonObjectConfig(RequestDecodeConfig.CONFIG_NAME, RequestDecodeConfig.class);
+    private String configName = RequestDecodeConfig.CONFIG_NAME;
 
     private final Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings = new CopyOnWriteMap<>();
 
     private volatile HttpHandler next;
 
     public RequestDecodeHandler() {
+        this(RequestDecodeConfig.CONFIG_NAME);
+    }
+
+    public RequestDecodeHandler(String configName) {
+        this.configName = configName;
+        RequestDecodeConfig config = RequestDecodeConfig.load(configName);
         List<String> decoders = config.getDecoders();
-        for(int i = 0; i < decoders.size(); i++) {
-            String decoder = decoders.get(i);
-            if(Constants.ENCODE_DEFLATE.equals(decoder)) {
-                requestEncodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
-            } else if(Constants.ENCODE_GZIP.equals(decoder)) {
-                requestEncodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
-            } else {
-                throw new RuntimeException("Invalid decoder " + decoder + " for RequestDecodeHandler.");
+        if(decoders != null) {
+            for (int i = 0; i < decoders.size(); i++) {
+                String decoder = decoders.get(i);
+                if (Constants.ENCODE_DEFLATE.equals(decoder)) {
+                    requestEncodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
+                } else if (Constants.ENCODE_GZIP.equals(decoder)) {
+                    requestEncodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
+                } else {
+                    throw new RuntimeException("Invalid decoder " + decoder + " for RequestDecodeHandler.");
+                }
             }
         }
+        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is constructed with {}.", configName);
     }
 
     @Override
@@ -79,12 +87,12 @@ public class RequestDecodeHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return RequestDecodeConfig.load(configName).isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(configName, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
     @Override
@@ -99,10 +107,4 @@ public class RequestDecodeHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is reloaded.");
-    }
 }

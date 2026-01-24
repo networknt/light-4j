@@ -53,7 +53,7 @@ public interface LightHttpHandler extends HttpHandler {
 
     HandlerConfig config = HandlerConfig.load();
     // the reason we are not using the AuditConfig is to avoid the dependency on audit module.
-    Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(AUDIT_CONFIG_NAME);
+    Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfig(AUDIT_CONFIG_NAME);
     boolean auditOnError = auditConfig != null && auditConfig.get(AUDIT_ON_ERROR) != null ? Config.loadBooleanValue(AUDIT_ON_ERROR, auditConfig.get(AUDIT_ON_ERROR)) : false;
     boolean auditStackTrace = auditConfig != null && auditConfig.get(AUDIT_STACK_TRACE) != null ? Config.loadBooleanValue(AUDIT_STACK_TRACE, auditConfig.get(AUDIT_STACK_TRACE)) : false;
 

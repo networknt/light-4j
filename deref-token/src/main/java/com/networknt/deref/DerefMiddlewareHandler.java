@@ -47,8 +47,6 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
     private static final String EMPTY_TOKEN_DEREFERENCE_RESPONSE = "ERR10044";
     private static final String TOKEN_DEREFERENCE_ERROR = "ERR10045";
 
-    public static DerefConfig config =
-            (DerefConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, DerefConfig.class);
 
     private volatile HttpHandler next;
 
@@ -101,18 +99,12 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return DerefConfig.load().isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DerefConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(DerefConfig.CONFIG_NAME), null);
     }
 
-    @Override
-    public void reload() {
-        config = (DerefConfig)Config.getInstance().getJsonObjectConfigNoCache(DerefConfig.CONFIG_NAME, DerefConfig.class);
-        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("DerefMiddlewareHandler is reloaded.");
-    }
 }

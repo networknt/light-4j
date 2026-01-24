@@ -109,7 +109,7 @@ public class CorsConfig {
 
     private CorsConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -124,17 +124,6 @@ public class CorsConfig {
 
     public static CorsConfig load() {
         return new CorsConfig();
-    }
-
-    public void reload() {
-        this.reload(CONFIG_NAME);
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
     }
 
     public boolean isEnabled() {

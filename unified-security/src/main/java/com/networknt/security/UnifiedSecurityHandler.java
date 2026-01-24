@@ -37,14 +37,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
     static final String HANDLER_NOT_FOUND = "ERR11200";
     static final String MISSING_PATH_PREFIX_AUTH = "ERR10078";
-    static UnifiedSecurityConfig config;
     // make this static variable public so that it can be accessed from the server-info module
     private volatile HttpHandler next;
     public static JwtVerifier jwtVerifier;
 
     public UnifiedSecurityHandler() {
         logger.info("UnifiedSecurityHandler starts");
-        config = UnifiedSecurityConfig.load();
         jwtVerifier = new JwtVerifier(SecurityConfig.load());
     }
 
@@ -72,6 +70,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
      * @throws Exception Exception
      */
     public Status verifyUnifiedSecurity(HttpServerExchange exchange) throws Exception {
+        UnifiedSecurityConfig config = UnifiedSecurityConfig.load();
         String reqPath = exchange.getRequestPath();
         // check if the path prefix is in the anonymousPrefixes list. If yes, skip all other check and goes to next handler.
         if (config.getAnonymousPrefixes() != null && config.getAnonymousPrefixes().stream().anyMatch(reqPath::startsWith)) {
@@ -326,7 +325,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return UnifiedSecurityConfig.load().isEnabled();
     }
 
     @Override
@@ -336,7 +335,6 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config.reload();
         ModuleRegistry.registerModule(UnifiedSecurityConfig.CONFIG_NAME, UnifiedSecurityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(UnifiedSecurityConfig.CONFIG_NAME), null);
     }
 

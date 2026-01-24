@@ -173,7 +173,7 @@ public class HandlerConfig {
 
     private HandlerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -185,13 +185,6 @@ public class HandlerConfig {
 
     public static HandlerConfig load(String configName) {
         return new HandlerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
     }
 
     public boolean isEnabled() {
