@@ -17,12 +17,13 @@
 package com.networknt.config.reload.model;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -35,8 +36,9 @@ public class ConfigReloadConfig {
     public static final String CONFIG_NAME = "configReload";
 
     private static final String ENABLED = "enabled";
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
+    private static ConfigReloadConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -49,7 +51,7 @@ public class ConfigReloadConfig {
 
     private ConfigReloadConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -57,22 +59,27 @@ public class ConfigReloadConfig {
         this(CONFIG_NAME);
     }
 
-    public static ConfigReloadConfig load(String configName) {
-        return new ConfigReloadConfig(configName);
-    }
-
     public static ConfigReloadConfig load() {
-        return new ConfigReloadConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
+    public static ConfigReloadConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == config) {
+                return instance;
+            }
+            synchronized (ConfigReloadConfig.class) {
+                config = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == config) {
+                    return instance;
+                }
+                instance = new ConfigReloadConfig(configName);
+                ModuleRegistry.registerModule(configName, ConfigReloadConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new ConfigReloadConfig(configName);
     }
 
     public boolean isEnabled() {

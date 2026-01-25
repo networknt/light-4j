@@ -6,6 +6,7 @@ import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +51,12 @@ public class DirectRegistryConfig {
     )
     Map<String, List<URL>> directUrls;
 
+    private static volatile DirectRegistryConfig instance;
     private final Config config;
     private Map<String, Object> mappedConfig;
 
-    public DirectRegistryConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
-        setMap();
+    private DirectRegistryConfig() {
+        this(CONFIG_NAME);
     }
 
     /**
@@ -64,17 +64,32 @@ public class DirectRegistryConfig {
      * to test different configurations.
      * @param configName String
      */
-    public DirectRegistryConfig(String configName) {
+    private DirectRegistryConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
         setMap();
     }
 
     public static DirectRegistryConfig load() {
-        return new DirectRegistryConfig();
+        return load(CONFIG_NAME);
     }
 
     public static DirectRegistryConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DirectRegistryConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DirectRegistryConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, DirectRegistryConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new DirectRegistryConfig(configName);
     }
 

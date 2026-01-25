@@ -18,6 +18,10 @@ package com.networknt.portal.registry;
 
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.List;
+import java.util.Map;
 
 @ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class PortalRegistryConfig {
@@ -32,6 +36,7 @@ public class PortalRegistryConfig {
     private static final String TTL_CHECK = "ttlCheck";
     private static final String HEALTH_PATH = "healthPath";
 
+    private static volatile PortalRegistryConfig instance;
     private final Config config;
     private java.util.Map<String, Object> mappedConfig;
 
@@ -48,11 +53,30 @@ public class PortalRegistryConfig {
     }
 
     public static PortalRegistryConfig load() {
-        return new PortalRegistryConfig();
+        return load(CONFIG_NAME);
     }
 
     public static PortalRegistryConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (PortalRegistryConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new PortalRegistryConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, PortalRegistryConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(PORTAL_TOKEN));
+                return instance;
+            }
+        }
         return new PortalRegistryConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     @StringField(

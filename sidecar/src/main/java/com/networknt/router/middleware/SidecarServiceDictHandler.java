@@ -25,11 +25,11 @@ public class SidecarServiceDictHandler extends ServiceDictHandler {
     public SidecarServiceDictHandler() {
         logger.info("SidecarServiceDictHandler is constructed");
         config = ServiceDictConfig.load();
-        sidecarConfig = SidecarConfig.load();
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SidecarConfig sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarServiceDictHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             if(logger.isTraceEnabled()) logger.trace("Outgoing request with header indicator");

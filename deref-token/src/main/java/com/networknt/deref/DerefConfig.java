@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -42,6 +43,8 @@ public class DerefConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
+    private static volatile DerefConfig instance;
+
     private DerefConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -53,10 +56,26 @@ public class DerefConfig {
     }
 
     public static DerefConfig load() {
-        return new DerefConfig();
+        return load(CONFIG_NAME);
     }
 
     public static DerefConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DerefConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DerefConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, DerefConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new DerefConfig(configName);
     }
 

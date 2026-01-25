@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +60,8 @@ public class SecurityConfig {
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
     private static final String PASS_THROUGH_CLAIMS = "passThroughClaims";
 
-    private Map<String, Object> mappedConfig;
-
+    private static volatile SecurityConfig instance;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
@@ -287,14 +288,16 @@ public class SecurityConfig {
     private SecurityConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
+        if (mappedConfig != null) {
+            setCertificate();
+            setConfigData();
+            setSkipPathPrefixes();
+            setPassThroughClaims();
+        }
     }
 
     public static SecurityConfig load() {
-        return new SecurityConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -302,8 +305,20 @@ public class SecurityConfig {
      * @param configName String
      * @return SecurityConfig
      */
-    @Deprecated
     public static SecurityConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (SecurityConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new SecurityConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, SecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new SecurityConfig(configName);
     }
 

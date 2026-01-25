@@ -21,6 +21,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -56,6 +57,8 @@ public class ExceptionConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    private static volatile ExceptionConfig instance;
+
     private ExceptionConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -66,11 +69,27 @@ public class ExceptionConfig {
     }
 
     public static ExceptionConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ExceptionConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ExceptionConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, ExceptionConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ExceptionConfig(configName);
     }
 
     public static ExceptionConfig load() {
-        return new ExceptionConfig();
+        return load(CONFIG_NAME);
     }
 
     public boolean isEnabled() {

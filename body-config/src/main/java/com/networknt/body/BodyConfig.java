@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +90,7 @@ public class BodyConfig {
     boolean logFullResponseBody;
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static BodyConfig instance;
 
     private BodyConfig(String configName) {
         config = Config.getInstance();
@@ -101,10 +103,26 @@ public class BodyConfig {
     }
 
     public static BodyConfig load() {
-        return new BodyConfig();
+        return load(CONFIG_NAME);
     }
 
     public static BodyConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (BodyConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new BodyConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, BodyConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new BodyConfig(configName);
     }
 

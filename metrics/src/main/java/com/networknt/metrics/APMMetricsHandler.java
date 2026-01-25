@@ -4,16 +4,13 @@ package com.networknt.metrics;
 import java.net.MalformedURLException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 import com.networknt.server.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.dropwizard.metrics.broadcom.APMEPAgentSender;
 
 import io.dropwizard.metrics.Clock;
@@ -33,7 +30,6 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     public APMMetricsHandler() {
         serverConfig = ServerConfig.getInstance();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
         logger.debug("APMMetricsHandler is constructed!");
     }
 
@@ -95,13 +91,9 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        // config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
-        logger.info("APMMetricsHandler is reloaded.");
     }
 }

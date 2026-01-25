@@ -183,11 +183,11 @@ public class OAuthTokenConfig  {
         return clientCredentials;
     }
 
-    public OAuthTokenRefreshTokenConfig getRefresh_token() {
+    public OAuthTokenRefreshTokenConfig getRefreshToken() {
         return refreshToken;
     }
 
-    public OAuthTokenExchangeConfig getToken_exchange() { return tokenExchange; }
+    public OAuthTokenExchangeConfig getTokenExchange() { return tokenExchange; }
 
     public OAuthTokenKeyConfig getKey() {
         return key;

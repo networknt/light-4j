@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
 import com.networknt.utility.Constants;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,6 +185,8 @@ public class AuditConfig {
     private int responseBodyMaxSize;
 
 
+    private static AuditConfig instance;
+
     private AuditConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -195,10 +198,26 @@ public class AuditConfig {
     }
 
     public static AuditConfig load() {
-        return new AuditConfig();
+        return load(CONFIG_NAME);
     }
 
     public static AuditConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (AuditConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new AuditConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, AuditConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new AuditConfig(configName);
     }
 

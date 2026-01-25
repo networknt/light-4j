@@ -16,10 +16,8 @@
 
 package com.networknt.health;
 
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -51,13 +49,11 @@ public class HealthGetHandler implements LightHttpHandler {
     private String configName = HealthConfig.CONFIG_NAME;
 
     public HealthGetHandler(){
-        ModuleRegistry.registerModule(configName, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
         if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
     }
 
     public HealthGetHandler(String configName){
         this.configName = configName;
-        ModuleRegistry.registerModule(configName, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
         if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed with {}.", configName);
     }
 

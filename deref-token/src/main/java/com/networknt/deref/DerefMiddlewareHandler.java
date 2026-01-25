@@ -18,10 +18,8 @@ package com.networknt.deref;
 
 import com.networknt.client.oauth.DerefRequest;
 import com.networknt.client.oauth.OauthHelper;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -104,7 +102,7 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(DerefConfig.CONFIG_NAME), null);
+         // Registration is moved to DerefConfig.load()
     }
 
 }

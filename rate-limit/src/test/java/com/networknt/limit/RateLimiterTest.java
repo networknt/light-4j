@@ -24,12 +24,18 @@ public class RateLimiterTest {
 
     @Before
     public void setUp() throws Exception{
+        LimitConfig.reload();
         limitConfig = LimitConfig.load();
         rateLimiter = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.ADDRESS);
         rateLimiterAddress = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.CLIENT);
         rateLimiterClient = new RateLimiter(limitConfig);
+    }
+
+    @org.junit.After
+    public void tearDown() {
+        LimitConfig.reload();
     }
 
     @Test

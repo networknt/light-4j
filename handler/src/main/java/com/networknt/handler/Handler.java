@@ -16,11 +16,9 @@
 
 package com.networknt.handler;
 
-import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.PathChain;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.PathTemplateMatcher;
 import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
@@ -68,7 +66,6 @@ public class Handler {
         initChains();
         initPaths();
         initDefaultHandlers();
-        ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(HandlerConfig.CONFIG_NAME), null);
     }
 
     /**

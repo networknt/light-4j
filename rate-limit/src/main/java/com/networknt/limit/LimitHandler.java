@@ -22,7 +22,6 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.HttpStatus;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -40,8 +39,9 @@ public class LimitHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
-    private RateLimiter rateLimiter;
-    private String configName;
+    private volatile RateLimiter rateLimiter;
+    private volatile LimitConfig limitConfig;
+    private final String configName;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
@@ -51,19 +51,27 @@ public class LimitHandler implements MiddlewareHandler {
 
     public LimitHandler(String configName) {
         this.configName = configName;
-        LimitConfig config = LimitConfig.load(configName);
+        this.limitConfig = LimitConfig.load(configName);
         try {
-            rateLimiter = new RateLimiter(config);
+            this.rateLimiter = new RateLimiter(limitConfig);
         } catch (Exception e) {
             logger.error("Exception in constructing RateLimiter", e);
         }
-        logger.info("RateLimit started with key type {}", config.getKey().name());
+        logger.info("RateLimit started with key type {}", limitConfig.getKey().name());
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest starts.");
         LimitConfig config = LimitConfig.load(configName);
+        if (config != limitConfig) {
+            synchronized (this) {
+                if (config != limitConfig) {
+                    limitConfig = config;
+                    rateLimiter = new RateLimiter(limitConfig);
+                }
+            }
+        }
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config);
         if (rateLimitResponse.allow) {
             if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends.");
@@ -108,6 +116,5 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(configName, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
 }

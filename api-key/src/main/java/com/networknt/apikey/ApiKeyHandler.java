@@ -1,18 +1,13 @@
 package com.networknt.apikey;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.HashUtil;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * For some legacy applications to migrate from the monolithic gateway to light-gateway without changing
@@ -69,13 +64,6 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        // As apiKeys are in the config file, we need to mask them.
-        List<String> masks = new ArrayList<>();
-        // if hashEnabled, there is no need to mask in the first place.
-        if(!config.hashEnabled) {
-            masks.add("apiKey");
-        }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
     }
 
 

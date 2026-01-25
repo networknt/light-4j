@@ -20,7 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -132,12 +132,10 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 
 }

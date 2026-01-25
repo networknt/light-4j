@@ -5,6 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ public class RequestTransformerConfig {
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
     private static final String PATH_PREFIX_ENCODING = "pathPrefixEncoding";
 
+    private static volatile RequestTransformerConfig instance;
     private Map<String, Object> mappedConfig;
     private final Config config;
 
@@ -88,16 +90,31 @@ public class RequestTransformerConfig {
     private RequestTransformerConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+        if(mappedConfig != null) {
+            setConfigData();
+            setConfigList();
+            setConfigMap();
+        }
     }
 
     public static RequestTransformerConfig load() {
-        return new RequestTransformerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static RequestTransformerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (RequestTransformerConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new RequestTransformerConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, RequestTransformerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new RequestTransformerConfig(configName);
     }
 

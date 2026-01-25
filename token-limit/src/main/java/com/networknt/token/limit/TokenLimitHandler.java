@@ -5,15 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.cache.CacheManager;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.http.CachedResponseEntity;
-import com.networknt.http.ResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
-import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -103,8 +99,6 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenLimitConfig.CONFIG_NAME, TokenLimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenLimitConfig.CONFIG_NAME), null);
-
     }
 
     @Override
@@ -114,9 +108,6 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }
-        // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
-        ModuleRegistry.registerModule(TokenLimitConfig.CONFIG_NAME, TokenLimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenLimitConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("TokenLimitHandler is reloaded.");
     }
 
     @Override

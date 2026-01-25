@@ -1,11 +1,8 @@
 package com.networknt.config.reload.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.reload.model.ConfigReloadConfig;
-import com.networknt.consul.ConsulConfig;
-import com.networknt.consul.ConsulRegistry;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.IAction;
@@ -13,7 +10,7 @@ import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.server.DefaultConfigLoader;
 import com.networknt.server.IConfigLoader;
 import com.networknt.status.HttpStatus;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 
@@ -37,16 +34,13 @@ public class ConfigReloadHandler implements LightHttpHandler {
     private  static final String MODULE_DEFAULT = "ALL";
     private  static final String RELOAD_METHOD = "reload";
 
-    private static ConfigReloadConfig config;
-
     public ConfigReloadHandler() {
         if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");
-        config = ConfigReloadConfig.load();
-        ModuleRegistry.registerModule(ConfigReloadConfig.CONFIG_NAME, ConfigReloadHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ConfigReloadConfig.CONFIG_NAME),null);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        ConfigReloadConfig config = ConfigReloadConfig.load();
         if (config.isEnabled()) {
             // this modulePlugins list contains both modules and plugins.
             List<String> modulePlugins =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);

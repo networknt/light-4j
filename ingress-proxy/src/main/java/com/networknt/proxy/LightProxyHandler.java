@@ -22,11 +22,8 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import com.networknt.handler.Handler;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -62,8 +59,9 @@ public class LightProxyHandler implements HttpHandler {
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
     private String configName = ProxyConfig.CONFIG_NAME;
-    private ProxyHandler proxyHandler;
-    private AbstractMetricsHandler metricsHandler;
+    private volatile ProxyConfig config;
+    private volatile ProxyHandler proxyHandler;
+    private volatile AbstractMetricsHandler metricsHandler;
 
     public LightProxyHandler() {
         this(ProxyConfig.CONFIG_NAME);
@@ -71,8 +69,11 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler(String configName) {
         this.configName = configName;
-        ProxyConfig config = ProxyConfig.load(configName);
-        ModuleRegistry.registerModule(configName, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+        this.config = ProxyConfig.load(configName);
+        buildProxy();
+    }
+
+    private void buildProxy() {
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tlsMap = clientConfig.getTlsConfig();
         // disable the hostname verification based on the config. We need to do it here as the LoadBalancingProxyClient uses the Undertow HttpClient.
@@ -121,7 +122,16 @@ public class LightProxyHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
-        ProxyConfig config = ProxyConfig.load(configName);
+        ProxyConfig newConfig = ProxyConfig.load(configName);
+        if(newConfig != config) {
+            synchronized (this) {
+                newConfig = ProxyConfig.load(configName);
+                if(newConfig != config) {
+                    config = newConfig;
+                    buildProxy();
+                }
+            }
+        }
         long startTime = System.nanoTime();
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = exchange.getRequestHeaders();

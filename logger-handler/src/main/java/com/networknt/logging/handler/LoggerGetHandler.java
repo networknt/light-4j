@@ -30,7 +30,6 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;

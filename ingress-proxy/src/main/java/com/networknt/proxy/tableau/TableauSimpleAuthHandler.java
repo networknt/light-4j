@@ -23,7 +23,7 @@ import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;

@@ -16,10 +16,8 @@
 
 package com.networknt.header;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
@@ -184,7 +182,6 @@ public class HeaderHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(configName, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
 }

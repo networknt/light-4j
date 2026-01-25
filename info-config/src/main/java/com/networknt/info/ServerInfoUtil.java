@@ -4,7 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.server.ServerConfig;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.FingerPrintUtil;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import com.networknt.utility.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

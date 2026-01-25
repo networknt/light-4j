@@ -31,7 +31,7 @@ public class ServerConfigTest {
     public void testNullEnv() {
         config.clear();
         // ensure that env is null if it is missing in the server.yml
-        ServerConfig serverConfig = ServerConfig.getInstance("server");
+        ServerConfig serverConfig = ServerConfig.load("server");
         Assert.assertNull(serverConfig.getEnvironment());
         Assert.assertEquals("petstore", serverConfig.getServiceName());
     }
@@ -39,7 +39,7 @@ public class ServerConfigTest {
     @Test
     public void testDefaultServerOptions() {
         config.clear();
-        ServerConfig serverConfig = ServerConfig.getInstance("server");
+        ServerConfig serverConfig = ServerConfig.load("server");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assert.assertEquals(1024*16, serverConfig.getBufferSize());
         Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
@@ -52,7 +52,7 @@ public class ServerConfigTest {
     @Test
     public void testInvalidServerOptions() {
         config.clear();
-        ServerConfig serverConfig = ServerConfig.getInstance("server_invalid_option");
+        ServerConfig serverConfig = ServerConfig.load("server_invalid_option");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assert.assertEquals(1024*16, serverConfig.getBufferSize());
         Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
@@ -66,7 +66,7 @@ public class ServerConfigTest {
     @Test
     public void testValidServerOptions() {
         config.clear();
-        ServerConfig serverConfig = ServerConfig.getInstance("server_valid_option");
+        ServerConfig serverConfig = ServerConfig.load("server_valid_option");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assert.assertEquals(10000, serverConfig.getBufferSize());
         Assert.assertEquals(1, serverConfig.getIoThreads());
@@ -80,7 +80,7 @@ public class ServerConfigTest {
     @Test
     public void testMaxTransferFileSize() {
         config.clear();
-        ServerConfig serverConfig = ServerConfig.getInstance();
+        ServerConfig serverConfig = ServerConfig.load();
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(), serverConfig);
         Assert.assertEquals(1000000, serverConfig.getMaxTransferFileSize());
     }

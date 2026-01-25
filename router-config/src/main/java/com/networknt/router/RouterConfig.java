@@ -22,6 +22,7 @@ import com.networknt.config.schema.*;
 import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.server.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -311,6 +312,7 @@ public class RouterConfig {
     private Config config;
     private Map<String, Object> mappedConfig;
 
+    private static volatile RouterConfig instance;
 
     private RouterConfig() {
         this(CONFIG_NAME);
@@ -335,11 +337,23 @@ public class RouterConfig {
     }
 
     public static RouterConfig load() {
-        return new RouterConfig();
+        return load(CONFIG_NAME);
     }
 
     public static RouterConfig load(String configName) {
-        return new RouterConfig(configName);
+        RouterConfig config = instance;
+        if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+            synchronized (RouterConfig.class) {
+                config = instance;
+                if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+                    config = new RouterConfig(configName);
+                    instance = config;
+                    // Register the module with the new config
+                    ModuleRegistry.registerModule(configName, RouterConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+                }
+            }
+        }
+        return config;
     }
 
     public void reload() {

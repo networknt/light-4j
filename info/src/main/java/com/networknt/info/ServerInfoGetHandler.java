@@ -18,7 +18,6 @@ package com.networknt.info;
 
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -43,13 +42,11 @@ public class ServerInfoGetHandler implements LightHttpHandler {
 
     public ServerInfoGetHandler() {
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
-        ModuleRegistry.registerModule(configName, ServerInfoConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName),null);
     }
 
     public ServerInfoGetHandler(String configName) {
         this.configName = configName;
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed with {}", configName);
-        ModuleRegistry.registerModule(configName, ServerInfoConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName),null);
     }
 
     @Override

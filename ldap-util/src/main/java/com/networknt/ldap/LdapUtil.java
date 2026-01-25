@@ -1,7 +1,5 @@
 package com.networknt.ldap;
 
-import com.networknt.config.Config;
-import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +20,6 @@ public class LdapUtil {
     private final static String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
     private final static String CONFIG_LDAP = "ldap";
 
-    static {
-        ModuleRegistry.registerModule(CONFIG_LDAP, LdapUtil.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_LDAP), null);
-    }
 
     /**
      *

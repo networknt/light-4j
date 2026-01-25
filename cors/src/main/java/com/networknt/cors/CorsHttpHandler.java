@@ -20,10 +20,8 @@
  */
 package com.networknt.cors;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -146,7 +144,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(configName, CorsHttpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+         // Registration is moved to CorsConfig.load()
     }
 
 

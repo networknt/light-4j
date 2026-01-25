@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +91,8 @@ public class ServerInfoConfig {
     )
     String downstreamPath;
 
+    private static volatile ServerInfoConfig instance;
+
     private ServerInfoConfig() {
         this(CONFIG_NAME);
     }
@@ -102,10 +105,26 @@ public class ServerInfoConfig {
     }
 
     public static ServerInfoConfig load() {
-        return new ServerInfoConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ServerInfoConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ServerInfoConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ServerInfoConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, ServerInfoConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ServerInfoConfig(configName);
     }
 

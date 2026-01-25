@@ -7,6 +7,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,22 +57,40 @@ public class ResponseInjectionConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    private static volatile ResponseInjectionConfig instance;
+
     public ResponseInjectionConfig() {
         this(CONFIG_NAME);
     }
 
-    public ResponseInjectionConfig(String configName) {
+    private ResponseInjectionConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
-    static ResponseInjectionConfig load() {
-        return new ResponseInjectionConfig();
+    public static ResponseInjectionConfig load() {
+        return load(CONFIG_NAME);
     }
 
-    static ResponseInjectionConfig load(String configName) {
+    public static ResponseInjectionConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ResponseInjectionConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ResponseInjectionConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, ResponseInjectionConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ResponseInjectionConfig(configName);
     }
 

@@ -12,7 +12,7 @@ import com.networknt.server.Server;
 import com.networknt.server.ServerConfig;
 import com.networknt.server.StartupHookProvider;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -61,8 +61,6 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     @Override
     public void onStartup() {
         RuleLoaderConfig config = RuleLoaderConfig.load();
-        List<String> masks = List.of(MASK_PORTAL_TOKEN);
-        ModuleRegistry.registerModule(RuleLoaderConfig.CONFIG_NAME, RuleLoaderStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
         if(config.isEnabled()) {
             // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
             if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {

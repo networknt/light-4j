@@ -20,7 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -38,10 +38,12 @@ import java.util.List;
  * @author Steve Hu
  */
 public class ResponseEncodeHandler implements MiddlewareHandler {
-    private String configName = ResponseEncodeConfig.CONFIG_NAME;
+    private String configName;
 
     static final String NO_ENCODING_HANDLER = "ERR10050";
-    private final ContentEncodingRepository contentEncodingRepository;
+    private volatile ContentEncodingRepository contentEncodingRepository;
+
+    private volatile ResponseEncodeConfig config;
 
     private volatile HttpHandler next;
 
@@ -52,22 +54,26 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
     public ResponseEncodeHandler(String configName) {
         this.configName = configName;
-        ResponseEncodeConfig config = ResponseEncodeConfig.load(configName);
-        contentEncodingRepository = new ContentEncodingRepository();
+        this.config = ResponseEncodeConfig.load(configName);
+        buildRepository();
+        if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is constructed with {}.", configName);
+    }
+
+    private void buildRepository() {
+        ContentEncodingRepository repository = new ContentEncodingRepository();
         List<String> encoders = config.getEncoders();
         if(encoders != null) {
-            for (int i = 0; i < encoders.size(); i++) {
-                String encoder = encoders.get(i);
+            for (String encoder : encoders) {
                 if (Constants.ENCODE_GZIP.equals(encoder)) {
-                    contentEncodingRepository.addEncodingHandler(encoder, new GzipEncodingProvider(), 100);
+                    repository.addEncodingHandler(encoder, new GzipEncodingProvider(), 100);
                 } else if (Constants.ENCODE_DEFLATE.equals(encoder)) {
-                    contentEncodingRepository.addEncodingHandler(encoder, new DeflateEncodingProvider(), 10);
+                    repository.addEncodingHandler(encoder, new DeflateEncodingProvider(), 10);
                 } else {
                     throw new RuntimeException("Invalid encoder " + encoder + " for ResponseEncodeHandler.");
                 }
             }
         }
-        if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is constructed with {}.", configName);
+        this.contentEncodingRepository = repository;
     }
 
     @Override
@@ -84,7 +90,7 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return ResponseEncodeConfig.load(configName).isEnabled();
+        return config.isEnabled();
     }
 
     @Override
@@ -94,6 +100,17 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        ResponseEncodeConfig newConfig = ResponseEncodeConfig.load(configName);
+        if (newConfig != config) {
+            synchronized (this) {
+                newConfig = ResponseEncodeConfig.load(configName);
+                if (newConfig != config) {
+                    this.config = newConfig;
+                    buildRepository();
+                }
+            }
+        }
+
         AllowedContentEncodings encodings = contentEncodingRepository.getContentEncodings(exchange);
         if (encodings == null || !exchange.isResponseChannelAvailable()) {
             Handler.next(exchange, next);

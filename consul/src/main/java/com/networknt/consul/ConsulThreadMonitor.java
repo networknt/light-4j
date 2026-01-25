@@ -8,16 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ConsulThreadMonitor extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(ConsulThreadMonitor.class);
-    private static final ConsulConfig config = ConsulConfig.load();
     private final ConcurrentHashMap<String,Long> checkins;
 
-    private boolean shutdownIfThreadFrozen = config.isShutdownIfThreadFrozen();
-    private static final long WAIT_S = ConsulUtils.getWaitInSecond(config.getWait());
-    private static final long TIMEOUT_BUFFER_S = ConsulUtils.getTimeoutBufferInSecond(config.getTimeoutBuffer());
-    private static final long LOOKUP_INTERVAL_S = config.getLookupInterval();
     // MIN_TIME_BETWEEN_CHECKINS_MS accounts for queue-wait time to enter connection pool synchronized methods (for up to 12 queued threads)
     private static final long MIN_TIME_BETWEEN_CHECKINS_MS = 12 * 10 * 1000;
-    private static final long MAX_TIME_BETWEEN_CHECKINS_MS = Math.max(2 * 1000 * ( LOOKUP_INTERVAL_S + WAIT_S + TIMEOUT_BUFFER_S ), MIN_TIME_BETWEEN_CHECKINS_MS);
 
     public ConsulThreadMonitor(final ConcurrentHashMap<String,Long> checkins) {
         this.checkins = checkins;
@@ -27,10 +21,17 @@ public class ConsulThreadMonitor extends Thread {
         long now;
         while(true) {
             try {
-                Thread.sleep(MAX_TIME_BETWEEN_CHECKINS_MS);
+                ConsulConfig config = ConsulConfig.load();
+                boolean shutdownIfThreadFrozen = config.isShutdownIfThreadFrozen();
+                long waitS = ConsulUtils.getWaitInSecond(config.getWait());
+                long timeoutBufferS = ConsulUtils.getTimeoutBufferInSecond(config.getTimeoutBuffer());
+                long lookupIntervalS = config.getLookupInterval();
+                long maxTimeBetweenCheckinsMs = Math.max(2 * 1000 * ( lookupIntervalS + waitS + timeoutBufferS ), MIN_TIME_BETWEEN_CHECKINS_MS);
+
+                Thread.sleep(maxTimeBetweenCheckinsMs);
                 now = System.currentTimeMillis();
                 for(Map.Entry<String,Long> checkin : checkins.entrySet()) {
-                    if(now - checkin.getValue().longValue() > MAX_TIME_BETWEEN_CHECKINS_MS) {
+                    if(now - checkin.getValue().longValue() > maxTimeBetweenCheckinsMs) {
                         if(shutdownIfThreadFrozen) {
                             logger.error("Service {} has missed its check in... Shutting down host...", checkin.getKey());
                             ConsulRecoveryManager.gracefulShutdown();

@@ -16,11 +16,9 @@
 
 package com.networknt.basicauth;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.ldap.LdapUtil;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -29,7 +27,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -324,10 +321,6 @@ public class BasicAuthHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        // As passwords are in the config file, we need to mask them.
-        List<String> masks = new ArrayList<>();
-        masks.add("password");
-        ModuleRegistry.registerModule(configName, BasicAuthHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
     }
 
 }

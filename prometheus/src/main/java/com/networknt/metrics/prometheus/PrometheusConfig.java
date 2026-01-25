@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.Map;
 
 /**
  * Prometheus metrics middleware handler configuration that is mapped to all
@@ -56,6 +59,7 @@ public class PrometheusConfig {
     @JsonIgnore
     String description;
 
+    private static volatile PrometheusConfig instance;
     private final com.networknt.config.Config config;
     private java.util.Map<String, Object> mappedConfig;
 
@@ -72,11 +76,30 @@ public class PrometheusConfig {
     }
 
     public static PrometheusConfig load() {
-        return new PrometheusConfig();
+        return load(CONFIG_NAME);
     }
 
     public static PrometheusConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = com.networknt.config.Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (PrometheusConfig.class) {
+                mappedConfig = com.networknt.config.Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new PrometheusConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, PrometheusConfig.class.getName(), com.networknt.config.Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new PrometheusConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
 

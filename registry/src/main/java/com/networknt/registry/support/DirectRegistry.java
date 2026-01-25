@@ -15,14 +15,12 @@
  */
 package com.networknt.registry.support;
 
-import com.networknt.config.Config;
 import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +47,6 @@ public class DirectRegistry extends AbstractRegistry {
     public DirectRegistry(URL url) {
         super(url);
         DirectRegistryConfig config = DirectRegistryConfig.load();
-        if(config.directUrls != null) {
-            ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
-        }
         if(url.getParameters() != null && url.getParameters().size() > 0) {
             directUrls = new HashMap<>();
             // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
@@ -153,9 +148,7 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     public static void reload() {
-        // config.reload();
-        // directUrls = config.getDirectUrls();
-        if(DirectRegistryConfig.load().getDirectUrls() != null) ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
+        DirectRegistryConfig.load();
         if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
     }
 }

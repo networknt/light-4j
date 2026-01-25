@@ -16,8 +16,6 @@
 
 package com.networknt.router.middleware;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.OAuthTokenClientCredentialConfig;
@@ -30,7 +28,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -39,7 +37,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -147,16 +144,24 @@ public class TokenHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    public static Map<String, Object> buildAuthConfig(final Map<String, Object> baseMap, final OAuthTokenConfig tokenConfig) {
-        Map<String, Object> authConfig = new HashMap<>(baseMap);
-        authConfig.computeIfAbsent(ClientConfig.PROXY_HOST, k-> tokenConfig.getProxyHost());
-        authConfig.computeIfAbsent(ClientConfig.PROXY_PORT, k-> tokenConfig.getProxyPort());
-        authConfig.computeIfAbsent(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, k-> tokenConfig.getTokenRenewBeforeExpired());
-        authConfig.computeIfAbsent(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, k-> tokenConfig.getExpiredRefreshRetryDelay());
-        authConfig.computeIfAbsent(ClientConfig.EARLY_REFRESH_RETRY_DELAY, k-> tokenConfig.getEarlyRefreshRetryDelay());
-        return authConfig;
+    public static AuthServerConfig buildAuthServerConfig(final OAuthTokenConfig tokenConfig, final OAuthTokenClientCredentialConfig ccConfig) {
+        AuthServerConfig authServerConfig = new AuthServerConfig();
+        if(tokenConfig.getProxyHost() != null) authServerConfig.setProxyHost(tokenConfig.getProxyHost());
+        if(tokenConfig.getProxyPort() != null) authServerConfig.setProxyPort(tokenConfig.getProxyPort());
+        if(tokenConfig.getServerUrl() != null) authServerConfig.setServerUrl(tokenConfig.getServerUrl());
+        if(tokenConfig.isEnableHttp2() != null) authServerConfig.setEnableHttp2(tokenConfig.isEnableHttp2());
+        if(ccConfig.getScope() != null) authServerConfig.setScope(ccConfig.getScope());
+        if(ccConfig.getClientId() != null) authServerConfig.setClientId(ccConfig.getClientId());
+        if(ccConfig.getClientSecret() != null) authServerConfig.setClientSecret(ccConfig.getClientSecret());
+        if(ccConfig.getUri() != null) authServerConfig.setUri(ccConfig.getUri());
+        return authServerConfig;
     }
 
+    public static AuthServerConfig enrichAuthServerConfig(final AuthServerConfig baseConfig, final OAuthTokenConfig tokenConfig) {
+        if(tokenConfig.getProxyHost() != null) baseConfig.setProxyHost(tokenConfig.getProxyHost());
+        if(tokenConfig.getProxyPort() != null) baseConfig.setProxyPort(tokenConfig.getProxyPort());
+        return baseConfig;
+    }
     public static Result<Jwt> getJwtToken(final String serviceId) {
         ClientConfig clientConfig = ClientConfig.get();
         OAuthTokenConfig tokenConfig = clientConfig.getOAuth().getToken();
@@ -177,14 +182,9 @@ public class TokenHandler implements MiddlewareHandler {
                     throw new RuntimeException("serviceIdAuthServers property is missing in the token client credentials configuration");
                 }
                 AuthServerConfig authServerConfig = serviceIdAuthServers.get(serviceId);
-                final var authServerConfigMap = mapper.convertValue(authServerConfig, new TypeReference<Map<String, Object>>() {
-                });
-                cachedJwt.setCcConfig(buildAuthConfig(authServerConfigMap, tokenConfig));
-
+                cachedJwt.setAuthServerConfig(enrichAuthServerConfig(authServerConfig, tokenConfig));
             } else {
-                final var ccConfigMap = mapper.convertValue(ccConfig, new TypeReference<Map<String, Object>>() {
-                });
-                cachedJwt.setCcConfig(buildAuthConfig(ccConfigMap, tokenConfig));
+                cachedJwt.setAuthServerConfig(buildAuthServerConfig(tokenConfig, ccConfig));
             }
             result = OauthHelper.populateCCToken(cachedJwt);
             if (result.isSuccess()) {

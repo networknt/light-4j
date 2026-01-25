@@ -7,6 +7,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,8 +96,9 @@ public class UnifiedSecurityConfig {
     )
     List<UnifiedPathPrefixAuth> pathPrefixAuths;
 
+    private static volatile UnifiedSecurityConfig instance;
     private final Config config;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     private UnifiedSecurityConfig() {
         this(CONFIG_NAME);
@@ -110,14 +112,30 @@ public class UnifiedSecurityConfig {
     private UnifiedSecurityConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setConfigData();
-        setConfigList();
+        if (mappedConfig != null) {
+            setConfigData();
+            setConfigList();
+        }
     }
+
     public static UnifiedSecurityConfig load() {
-        return new UnifiedSecurityConfig();
+        return load(CONFIG_NAME);
     }
 
     public static UnifiedSecurityConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (UnifiedSecurityConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new UnifiedSecurityConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, UnifiedSecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new UnifiedSecurityConfig(configName);
     }
 
@@ -145,6 +163,14 @@ public class UnifiedSecurityConfig {
 
     public void setPathPrefixAuths(List<UnifiedPathPrefixAuth> pathPrefixAuths) {
         this.pathPrefixAuths = pathPrefixAuths;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
     }
 
     private void setConfigData() {

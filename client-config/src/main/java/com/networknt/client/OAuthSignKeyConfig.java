@@ -53,7 +53,7 @@ public class OAuthSignKeyConfig  {
             description = "client secret used to access the key distribution service."
     )
     @JsonProperty(ClientConfig.CLIENT_SECRET)
-    private char[] client_secret;
+    private char[] clientSecret;
 
     @BooleanField(
             configFieldName = ClientConfig.ENABLE_HTTP_2,
@@ -89,8 +89,8 @@ public class OAuthSignKeyConfig  {
         return clientId;
     }
 
-    public char[] getClient_secret() {
-        return client_secret;
+    public char[] getClientSecret() {
+        return clientSecret;
     }
 
     public Boolean isEnableHttp2() {

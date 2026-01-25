@@ -63,6 +63,41 @@ public class AuthServerConfig {
     )
     private String audience = null;
 
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public void setProxyPort(Integer proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    public void setEnableHttp2(Boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public void setClientId(char[] clientId) {
+        this.clientId = clientId;
+    }
+
+    public void setClientSecret(char[] clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    public void setScope(List<String> scope) {
+        this.scope = scope;
+    }
+
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
 
     public String getServerUrl() {
         return serverUrl;

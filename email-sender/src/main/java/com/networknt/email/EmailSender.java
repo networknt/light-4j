@@ -39,14 +39,14 @@ import java.util.regex.Pattern;
  */
 public class EmailSender {
     private static final Logger logger = LoggerFactory.getLogger(EmailSender.class);
-    private EmailConfig config;
+    private String configName;
 
     public EmailSender() {
-        this.config = EmailConfig.load();
+        this(EmailConfig.CONFIG_NAME);
     }
 
     public EmailSender(String configName) {
-        this.config = EmailConfig.load(configName);
+        this.configName = configName;
     }
 
     /**
@@ -58,6 +58,7 @@ public class EmailSender {
      * @throws MessagingException message exception
      */
     public void sendMail (String to, String subject, String content) throws MessagingException {
+        EmailConfig config = EmailConfig.load(configName);
         Properties props = new Properties();
         props.put("mail.smtp.user", config.getUser());
         props.put("mail.smtp.host", config.getHost());
@@ -96,6 +97,7 @@ public class EmailSender {
      * @throws MessagingException messaging exception
      */
     public void sendMailWithAttachment (String to, String subject, String content, String filename) throws MessagingException{
+        EmailConfig config = EmailConfig.load(configName);
         Properties props = new Properties();
         props.put("mail.smtp.user", config.getUser());
         props.put("mail.smtp.host", config.getHost());

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,6 +168,8 @@ public class HandlerConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
 
+    private static volatile HandlerConfig instance;
+
     private HandlerConfig() {
         this(CONFIG_NAME);
     }
@@ -180,10 +183,26 @@ public class HandlerConfig {
     }
 
     public static HandlerConfig load() {
-        return new HandlerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static HandlerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (HandlerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new HandlerConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, HandlerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new HandlerConfig(configName);
     }
 

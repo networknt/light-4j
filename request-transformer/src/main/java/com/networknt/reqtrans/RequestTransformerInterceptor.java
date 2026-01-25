@@ -9,7 +9,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -45,7 +44,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -67,12 +65,10 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
 
     }

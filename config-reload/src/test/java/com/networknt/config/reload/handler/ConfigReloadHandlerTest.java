@@ -74,7 +74,7 @@ public class ConfigReloadHandlerTest extends  BaseTest{
 
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(3, modules.size());
+        Assert.assertEquals(6, modules.size());
     }
 
     @Test

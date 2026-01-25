@@ -19,6 +19,7 @@ package com.networknt.limit;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -224,6 +225,8 @@ public class LimitConfig {
     private final Config config;
 
 
+    private static volatile LimitConfig instance;
+
     private LimitConfig() {
         this(CONFIG_NAME);
     }
@@ -242,11 +245,32 @@ public class LimitConfig {
     }
 
     public static LimitConfig load() {
-        return new LimitConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LimitConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (LimitConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LimitConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, LimitConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new LimitConfig(configName);
+    }
+
+    public static void reload() {
+        instance = new LimitConfig(CONFIG_NAME);
+        ModuleRegistry.registerModule(CONFIG_NAME, LimitConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     public boolean isEnabled() {

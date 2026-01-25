@@ -23,7 +23,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
-import com.networknt.decode.RequestDecodeConfig;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +59,8 @@ public class ResponseEncodeConfig {
     )
     List<String> encoders;
 
+    private static volatile ResponseEncodeConfig instance;
+
     private ResponseEncodeConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -70,11 +72,27 @@ public class ResponseEncodeConfig {
     }
 
     public static ResponseEncodeConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ResponseEncodeConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ResponseEncodeConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, ResponseEncodeConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ResponseEncodeConfig(configName);
     }
 
     public static ResponseEncodeConfig load() {
-        return new ResponseEncodeConfig();
+        return load(CONFIG_NAME);
     }
 
     public boolean isEnabled() {

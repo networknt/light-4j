@@ -6,6 +6,8 @@ import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +29,8 @@ public class RuleLoaderConfig {
     private static final String PORTAL_TOKEN = "portalToken";
     private static final String ENDPOINT_RULES = "endpointRules";
 
-    private Map<String, Object> mappedConfig;
+    private static volatile RuleLoaderConfig instance;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
@@ -82,15 +85,30 @@ public class RuleLoaderConfig {
     private RuleLoaderConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setConfigData();
-        setMapData();
+        if (mappedConfig != null) {
+            setConfigData();
+            setMapData();
+        }
     }
 
     public static RuleLoaderConfig load() {
-        return new RuleLoaderConfig();
+        return load(CONFIG_NAME);
     }
 
     public static RuleLoaderConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (RuleLoaderConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new RuleLoaderConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, RuleLoaderConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new RuleLoaderConfig(configName);
     }
 

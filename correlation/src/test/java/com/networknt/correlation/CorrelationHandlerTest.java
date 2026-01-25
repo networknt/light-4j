@@ -132,6 +132,7 @@ public class CorrelationHandlerTest {
 
     @Test
     public void testGetWithoutCid() throws Exception {
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -162,9 +163,10 @@ public class CorrelationHandlerTest {
     @Test
     public void testGetWithoutCidNoAutogen() throws Exception {
     	// reset the autogen of the correlation ID
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.AUTOGEN_CORRELATION_ID, false);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.CORRELATION_MDC_FIELD, DEFAULT_CORRELATION_MDC_FIELD);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.TRACEABILITY_MDC_FIELD, DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setAutogenCorrelationID(false);
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -188,7 +190,7 @@ public class CorrelationHandlerTest {
         }
 
         // set the autogen of the correlation ID to default value
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.AUTOGEN_CORRELATION_ID, true);
+        correlationConfig.setAutogenCorrelationID(true);
 
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -202,8 +204,10 @@ public class CorrelationHandlerTest {
     public void testGetWithTid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.CORRELATION_MDC_FIELD, DEFAULT_CORRELATION_MDC_FIELD);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.TRACEABILITY_MDC_FIELD, DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
+
         final ClientConnection connection;
         try {
             connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
@@ -238,8 +242,9 @@ public class CorrelationHandlerTest {
     public void testGetWithoutTid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.CORRELATION_MDC_FIELD, DEFAULT_CORRELATION_MDC_FIELD);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.TRACEABILITY_MDC_FIELD, DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
         final ClientConnection connection;
         try {
             connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
@@ -272,8 +277,9 @@ public class CorrelationHandlerTest {
 
     @Test
     public void testPostWithTid() throws Exception {
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.CORRELATION_MDC_FIELD, DEFAULT_CORRELATION_MDC_FIELD);
-        Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME).put(CorrelationConfig.TRACEABILITY_MDC_FIELD, DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);

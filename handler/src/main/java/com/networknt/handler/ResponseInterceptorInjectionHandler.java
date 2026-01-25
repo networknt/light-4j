@@ -1,10 +1,8 @@
 package com.networknt.handler;
 
-import com.networknt.config.Config;
 import com.networknt.handler.conduit.ContentStreamSinkConduit;
 import com.networknt.handler.conduit.ModifiableContentSinkConduit;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -61,7 +59,6 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(configName, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
 

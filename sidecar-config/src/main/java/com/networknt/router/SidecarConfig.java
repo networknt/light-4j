@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.StringField; // REQUIRED IMPORT
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +26,10 @@ public class SidecarConfig {
     public static final String CONFIG_NAME = "sidecar";
     private static final String EGRESS_INGRESS_INDICATOR = "egressIngressIndicator";
 
-    private Map<String, Object> mappedConfig;
+    private static volatile SidecarConfig instance;
     private final Config config;
+    private Map<String, Object> mappedConfig;
 
-    // --- Annotated Field ---
     @StringField(
             configFieldName = EGRESS_INGRESS_INDICATOR,
             externalizedKeyName = EGRESS_INGRESS_INDICATOR,
@@ -40,26 +41,43 @@ public class SidecarConfig {
     )
     String egressIngressIndicator;
 
-    // --- Constructor and Loading Logic ---
-
     private SidecarConfig() {
         this(CONFIG_NAME);
     }
+
     private SidecarConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setConfigData();
-    }
-
-    public static SidecarConfig load(String configName) {
-        return new SidecarConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
     }
 
     public static SidecarConfig load() {
-        return new SidecarConfig();
+        return load(CONFIG_NAME);
     }
 
+    public static SidecarConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (SidecarConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new SidecarConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, SidecarConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
+        return new SidecarConfig(configName);
+    }
 
+    public void reload() {
+        instance = new SidecarConfig(CONFIG_NAME);
+        ModuleRegistry.registerModule(CONFIG_NAME, SidecarConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
 
     public String getEgressIngressIndicator() {
         return egressIngressIndicator;

@@ -1,9 +1,7 @@
 package com.networknt.expect100continue;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.io.IoCallback;
 import io.undertow.io.Sender;
@@ -108,12 +106,6 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(
-                configName,
-                Expect100ContinueHandler.class.getName(),
-                Config.getNoneDecryptedInstance().getJsonMapConfig(configName),
-                null
-        );
     }
 
     private static final class ContinueResponseCommitListener implements ResponseCommitListener {

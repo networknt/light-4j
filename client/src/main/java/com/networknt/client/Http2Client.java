@@ -41,7 +41,6 @@ import com.networknt.monad.Result;
 import com.networknt.server.ServerConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -100,13 +99,14 @@ public class Http2Client {
             .set(Options.TCP_NODELAY, true)
             .set(Options.KEEP_ALIVE, true)
             .set(Options.WORKER_NAME, "Client").getMap();
+    private static volatile ClientConfig clientConfig = ClientConfig.get();
     public static XnioWorker WORKER;
     /**
      * @deprecated  As of release 1.6.11, replaced by {@link #getDefaultXnioSsl()}
      *              SSL is no longer statically initialized.
      */
     @Deprecated
-    public static XnioSsl SSL;
+    public static volatile XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
     public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
     public static final String HTTPS = "https";
@@ -141,29 +141,21 @@ public class Http2Client {
     private final Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
     // This is the new connection pool that is used by the new request method.
     private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
-    public static ClientConfig config = ClientConfig.get();
 
-    public static ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, config.getBufferSize() * 1024);
+    public static ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
     protected final Map<String, ClientProvider> clientProviders;
 
-    private static final Http2Client INSTANCE = new Http2Client();
+    private static volatile Http2Client INSTANCE;
 
     protected Http2Client() {
         this(Http2Client.class.getClassLoader());
     }
 
     private Http2Client(final ClassLoader classLoader) {
-        Map<String, Object> tlsMap = config.getTlsConfig();
+        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
         // disable the hostname verification based on the config.
         if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
             System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
-        }
-        boolean injectCallerId = config.isInjectCallerId();
-        if(injectCallerId) {
-            ServerConfig serverConfig = ServerConfig.getInstance();
-            if(serverConfig != null) {
-                callerId = serverConfig.getServiceId();
-            }
         }
 
         ServiceLoader<ClientProvider> providers = ServiceLoader.load(ClientProvider.class, classLoader);
@@ -180,10 +172,6 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
-
-        // register module.
-        List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
-        ModuleRegistry.registerModule(ClientConfig.CONFIG_NAME, Http2Client.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
@@ -270,10 +258,11 @@ public class Http2Client {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
             SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            ClientConfig config = ClientConfig.get();
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(config.getRequest().getConnectTimeout());
+        return pool.borrow(ClientConfig.get().getRequest().getConnectTimeout());
     }
 
     @Deprecated
@@ -305,12 +294,17 @@ public class Http2Client {
     }
 
     public XnioSsl getDefaultXnioSsl() {
-        if(SSL == null) {
-            try {
-                SSL = createXnioSsl(createSSLContext());
-            } catch (Exception e) {
-                logger.error("Exception", e);
-                throw new RuntimeException(e);
+        if(SSL == null || clientConfig != ClientConfig.get()) {
+            synchronized (Http2Client.class) {
+                if(SSL == null || clientConfig != ClientConfig.get()) {
+                    clientConfig = ClientConfig.get();
+                    try {
+                        SSL = createXnioSsl(createSSLContext());
+                    } catch (Exception e) {
+                        logger.error("Exception", e);
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         }
         return SSL;
@@ -355,10 +349,11 @@ public class Http2Client {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
             SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            ClientConfig config = ClientConfig.get();
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(config.getRequest().getConnectTimeout());
+        return pool.borrow(ClientConfig.get().getRequest().getConnectTimeout());
     }
 
     @Deprecated
@@ -531,6 +526,14 @@ public class Http2Client {
     }
 
     public static Http2Client getInstance() {
+        if (INSTANCE == null || clientConfig != ClientConfig.get()) {
+            synchronized (Http2Client.class) {
+                if (INSTANCE == null || clientConfig != ClientConfig.get()) {
+                    clientConfig = ClientConfig.get();
+                    INSTANCE = new Http2Client();
+                }
+            }
+        }
         return INSTANCE;
     }
 
@@ -701,7 +704,14 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
+        ClientConfig config = ClientConfig.get();
         if(config.isInjectCallerId()) {
+            if ("unknown".equals(callerId)) {
+                ServerConfig serverConfig = ServerConfig.getInstance();
+                if(serverConfig != null) {
+                    callerId = serverConfig.getServiceId();
+                }
+            }
             request.getRequestHeaders().put(HttpStringConstants.CALLER_ID, callerId);
         }
         return result;
@@ -767,7 +777,7 @@ public class Http2Client {
 	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = config.getTlsConfig();
+        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -874,7 +884,7 @@ public class Http2Client {
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
         Path location = null;
         String password = "changeit"; //default value for cacerts, we can override it from config
-        Map<String, Object> tlsMap = config.getTlsConfig();
+        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
         if(tlsMap != null &&  tlsMap.get(DEFAULT_CERT_PASS)!=null) {
             password = (String)tlsMap.get(DEFAULT_CERT_PASS);
         }
@@ -1344,7 +1354,7 @@ public class Http2Client {
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
-                config.getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+                ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     /**

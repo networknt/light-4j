@@ -22,7 +22,6 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.SimpleTimer;
@@ -49,8 +48,6 @@ import java.util.concurrent.ConcurrentMap;
  *
  */
 public class PrometheusHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "prometheus";
-
 
     private CollectorRegistry registry;
 
@@ -132,12 +129,10 @@ public class PrometheusHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(PrometheusConfig.CONFIG_NAME, PrometheusHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        // config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
     }
 
     private void incCounterForStatusCode(int statusCode, List<String> labels,  List<String> labelValues) {

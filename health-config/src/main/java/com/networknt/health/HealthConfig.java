@@ -17,8 +17,8 @@
 package com.networknt.health;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -44,6 +44,7 @@ public class HealthConfig {
 
     private Map<String, Object> mappedConfig;
     private final Config config;
+    private static HealthConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -103,17 +104,32 @@ public class HealthConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
+        ModuleRegistry.registerModule(configName, HealthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
     private HealthConfig() {
         this(CONFIG_NAME);
     }
 
-    public static HealthConfig load(String configName) {
-        return new HealthConfig(configName);
+    public static HealthConfig load() {
+        return load(CONFIG_NAME);
     }
 
-    public static HealthConfig load() {
-        return new HealthConfig();
+    public static HealthConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == config) {
+                return instance;
+            }
+            synchronized (HealthConfig.class) {
+                config = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == config) {
+                    return instance;
+                }
+                instance = new HealthConfig(configName);
+                return instance;
+            }
+        }
+        return new HealthConfig(configName);
     }
 
     public boolean isEnabled() {

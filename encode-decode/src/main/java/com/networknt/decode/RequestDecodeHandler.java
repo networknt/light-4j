@@ -20,7 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.conduits.GzipStreamSourceConduit;
 import io.undertow.conduits.InflatingStreamSourceConduit;
@@ -44,9 +44,10 @@ import java.util.Map;
  */
 public class RequestDecodeHandler implements MiddlewareHandler {
 
-    private String configName = RequestDecodeConfig.CONFIG_NAME;
+    private String configName;
 
-    private final Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings = new CopyOnWriteMap<>();
+    private volatile RequestDecodeConfig config;
+    private volatile Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings;
 
     private volatile HttpHandler next;
 
@@ -56,21 +57,26 @@ public class RequestDecodeHandler implements MiddlewareHandler {
 
     public RequestDecodeHandler(String configName) {
         this.configName = configName;
-        RequestDecodeConfig config = RequestDecodeConfig.load(configName);
+        this.config = RequestDecodeConfig.load(configName);
+        buildEncodings();
+        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is constructed with {}.", configName);
+    }
+
+    private void buildEncodings() {
+        Map<String, ConduitWrapper<StreamSourceConduit>> encodings = new CopyOnWriteMap<>();
         List<String> decoders = config.getDecoders();
         if(decoders != null) {
-            for (int i = 0; i < decoders.size(); i++) {
-                String decoder = decoders.get(i);
+            for (String decoder : decoders) {
                 if (Constants.ENCODE_DEFLATE.equals(decoder)) {
-                    requestEncodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
+                    encodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
                 } else if (Constants.ENCODE_GZIP.equals(decoder)) {
-                    requestEncodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
+                    encodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
                 } else {
                     throw new RuntimeException("Invalid decoder " + decoder + " for RequestDecodeHandler.");
                 }
             }
         }
-        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is constructed with {}.", configName);
+        this.requestEncodings = encodings;
     }
 
     @Override
@@ -87,7 +93,7 @@ public class RequestDecodeHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return RequestDecodeConfig.load(configName).isEnabled();
+        return config.isEnabled();
     }
 
     @Override
@@ -97,6 +103,17 @@ public class RequestDecodeHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        RequestDecodeConfig newConfig = RequestDecodeConfig.load(configName);
+        if (newConfig != config) {
+            synchronized (this) {
+                newConfig = RequestDecodeConfig.load(configName);
+                if (newConfig != config) {
+                    this.config = newConfig;
+                    buildEncodings();
+                }
+            }
+        }
+
         ConduitWrapper<StreamSourceConduit> encodings = requestEncodings.get(exchange.getRequestHeaders().getFirst(Headers.CONTENT_ENCODING));
         if (encodings != null && exchange.isRequestChannelAvailable()) {
             exchange.addRequestWrapper(encodings);

@@ -1,8 +1,6 @@
 package com.networknt.cache;
 
-import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,31 +12,33 @@ public interface CacheManager {
 
     // Holder class for lazy initialization of the CacheManager instance and state
     class Holder {
-        static volatile boolean initialized = false;
+        static CacheConfig config;
         static volatile CacheManager instance = null;
     }
 
     static CacheManager getInstance() {
-        if (!Holder.initialized) {
+        CacheConfig currentConfig = CacheConfig.load();
+        if (Holder.instance == null || Holder.config != currentConfig) {
             synchronized (Holder.class) {
-                if (!Holder.initialized) {
-                    CacheConfig config = CacheConfig.load();
-                    ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(CacheConfig.CONFIG_NAME), null);
-                    List<CacheItem> caches = config.getCaches();
+                if (Holder.instance == null || Holder.config != currentConfig) {
+                    List<CacheItem> caches = currentConfig.getCaches();
                     if (caches != null && !caches.isEmpty()) {
-                        CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);
+                        CacheManager cacheManager = Holder.instance;
+                        if (cacheManager == null) {
+                            cacheManager = SingletonServiceFactory.getBean(CacheManager.class);
+                        }
                         if (cacheManager != null) {
                             for (CacheItem cacheItem : caches) {
                                 cacheManager.addCache(cacheItem.getCacheName(), cacheItem.getMaxSize(), cacheItem.getExpiryInMinutes());
                             }
                             Holder.instance = cacheManager;
+                            Holder.config = currentConfig;
                         } else {
                             logger.error("CacheManager implementation is not found in the service.yml");
                         }
                     } else {
                         logger.error("No cache is configured in cache.yml");
                     }
-                    Holder.initialized = true;
                 }
             }
         }

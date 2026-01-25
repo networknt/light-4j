@@ -1,9 +1,7 @@
 package com.networknt.handler;
 
-import com.networknt.config.Config;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.Connectors;
@@ -71,7 +69,6 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(configName, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
     }
 
     @Override

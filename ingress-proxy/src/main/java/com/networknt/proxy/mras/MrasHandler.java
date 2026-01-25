@@ -20,7 +20,7 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

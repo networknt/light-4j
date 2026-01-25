@@ -16,11 +16,11 @@
 package com.networknt.correlation;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +76,8 @@ public class CorrelationConfig {
     )
     String traceabilityMdcField;
 
+    private static volatile CorrelationConfig instance;
+
     private CorrelationConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -86,12 +88,28 @@ public class CorrelationConfig {
         this(CONFIG_NAME);
     }
 
-    public static CorrelationConfig load(String configName) {
-        return new CorrelationConfig(configName);
+    public static CorrelationConfig load() {
+        return load(CONFIG_NAME);
     }
 
-    public static CorrelationConfig load() {
-        return new CorrelationConfig();
+    public static CorrelationConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CorrelationConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CorrelationConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, CorrelationConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new CorrelationConfig(configName);
     }
 
     public boolean isEnabled() {

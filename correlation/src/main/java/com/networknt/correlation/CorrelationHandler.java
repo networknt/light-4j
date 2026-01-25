@@ -16,13 +16,9 @@
 
 package com.networknt.correlation;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.Util;
 import com.networknt.utility.UuidUtil;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -31,8 +27,6 @@ import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import java.util.HashMap;
 
 /**
  * This is a handler that checks if X-Correlation-Id exists in request header and put it into
@@ -69,7 +63,7 @@ public class CorrelationHandler implements MiddlewareHandler {
             this.addHandlerMDCContext(exchange, config.getTraceabilityMdcField(), tid);
             MDC.put(config.getTraceabilityMdcField(), tid);
 
-        } else if (MDC.get(config.traceabilityMdcField) != null) {
+        } else if (MDC.get(config.getTraceabilityMdcField()) != null) {
             MDC.remove(config.getTraceabilityMdcField());
         }
 
@@ -130,6 +124,5 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfig(CorrelationConfig.CONFIG_NAME), null);
     }
 }

@@ -15,12 +15,12 @@ public class SidecarSAMLTokenHandler extends SAMLTokenHandler {
 
     public SidecarSAMLTokenHandler() {
         super();
-        sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarSAMLTokenHandler is constructed");
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SidecarConfig sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarSAMLTokenHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);

@@ -18,11 +18,11 @@ public class SidecarTokenHandler extends TokenHandler{
 
     public SidecarTokenHandler() {
         super();
-        sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarTokenHandler is constructed");
     }
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SidecarConfig sidecarConfig = SidecarConfig.load();
         if(logger.isTraceEnabled()) logger.trace("SidecarTokenHandler.handleRequest starts with indicator {}.", sidecarConfig.getEgressIngressIndicator());
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);

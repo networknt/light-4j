@@ -20,7 +20,7 @@ import com.networknt.proxy.MultiPartBodyPublisher;
 import com.networknt.config.PathPrefixAuth;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

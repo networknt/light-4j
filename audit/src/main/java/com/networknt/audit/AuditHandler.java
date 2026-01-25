@@ -24,7 +24,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.server.ServerConfig;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -91,10 +90,9 @@ public class AuditHandler implements MiddlewareHandler {
 
 
     private volatile HttpHandler next;
-
-    private String serviceId;
-
-    private DateTimeFormatter dateTimeFormatter;
+    private volatile AuditConfig config;
+    private volatile String serviceId;
+    private volatile DateTimeFormatter dateTimeFormatter;
 
     public AuditHandler() {
         logger.info("AuditHandler is loaded.");
@@ -106,22 +104,36 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        logger.debug("AuditHandler.handleRequest starts.");
-        AuditConfig config = AuditConfig.load();
+        if (logger.isDebugEnabled()) logger.debug("AuditHandler.handleRequest starts.");
+        AuditConfig currentConfig = AuditConfig.load();
+        if (currentConfig != config) {
+            synchronized (this) {
+                if (currentConfig != config) {
+                    config = currentConfig;
+                    ServerConfig serverConfig = ServerConfig.getInstance();
+                    if (serverConfig != null) {
+                        serviceId = serverConfig.getServiceId();
+                    }
+                    String timestampFormat = config.getTimestampFormat();
+                    if (!StringUtils.isBlank(timestampFormat)) {
+                        try {
+                            dateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormat)
+                                    .withZone(ZoneId.systemDefault());
+                        } catch (IllegalArgumentException e) {
+                            logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
+                            dateTimeFormatter = null;
+                        }
+                    } else {
+                        dateTimeFormatter = null;
+                    }
+                }
+            }
+        }
         final Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         final Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
 
         // add audit timestamp
-        String timestampFormat = config.getTimestampFormat();
-        if (dateTimeFormatter == null && !StringUtils.isBlank(timestampFormat)) {
-            try {
-                dateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormat)
-                        .withZone(ZoneId.systemDefault());
-            } catch (IllegalArgumentException e) {
-                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
-            }
-        }
         auditMap.put(TIMESTAMP, dateTimeFormatter == null ? System.currentTimeMillis() : dateTimeFormatter.format(Instant.now()));
 
         // dump audit info fields according to config
@@ -434,7 +446,7 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(AuditConfig.CONFIG_NAME), null);
+        // Registration is moved to AuditConfig.load()
     }
 
     protected void next(HttpServerExchange exchange) throws Exception {

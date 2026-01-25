@@ -16,6 +16,9 @@
 
 package com.networknt.resource;
 import com.networknt.config.Config;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.Map;
 
 public class PathResourceConfig {
     public static final String CONFIG_NAME = "path-resource";
@@ -26,6 +29,7 @@ public class PathResourceConfig {
     int transferMinSize;
     boolean directoryListingEnabled;
 
+    private static volatile PathResourceConfig instance;
     private final Config config;
     private java.util.Map<String, Object> mappedConfig;
 
@@ -42,11 +46,28 @@ public class PathResourceConfig {
     }
 
     public static PathResourceConfig load() {
-        return new PathResourceConfig();
+        return load(CONFIG_NAME);
     }
 
     public static PathResourceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (PathResourceConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new PathResourceConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, PathResourceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new PathResourceConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     private void setConfigData() {

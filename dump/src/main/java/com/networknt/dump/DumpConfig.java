@@ -19,6 +19,7 @@ package com.networknt.dump;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,6 +143,8 @@ public class DumpConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
+    private static volatile DumpConfig instance;
+
     private DumpConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
@@ -153,10 +156,26 @@ public class DumpConfig {
     }
 
     public static DumpConfig load() {
-        return new DumpConfig();
+        return load(CONFIG_NAME);
     }
 
     public static DumpConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DumpConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DumpConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, DumpConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new DumpConfig(configName);
     }
 
@@ -299,6 +318,10 @@ public class DumpConfig {
 
     public boolean isResponseBodyEnabled() {
         return response.isBody();
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public void setConfigData() {

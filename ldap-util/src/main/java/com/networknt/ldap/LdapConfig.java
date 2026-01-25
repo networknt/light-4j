@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.StringField; // REQUIRED IMPORT
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,8 @@ public class LdapConfig {
 
     // --- Constructor and Loading Logic ---
 
+    private static volatile LdapConfig instance;
+
     private LdapConfig() {
         this(CONFIG_NAME);
     }
@@ -89,10 +92,26 @@ public class LdapConfig {
     }
 
     public static LdapConfig load() {
-        return new LdapConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LdapConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (LdapConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LdapConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, LdapConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new LdapConfig(configName);
     }
 

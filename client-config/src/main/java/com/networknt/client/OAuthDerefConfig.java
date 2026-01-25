@@ -115,7 +115,7 @@ public class OAuthDerefConfig {
         return clientId;
     }
 
-    public char[] getClient_secret() {
+    public char[] getClientSecret() {
         return clientSecret;
     }
 }

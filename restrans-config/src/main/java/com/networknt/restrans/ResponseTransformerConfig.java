@@ -5,6 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,8 @@ public class ResponseTransformerConfig {
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
     private static final String PATH_PREFIX_ENCODING = "pathPrefixEncoding";
 
-    private Map<String, Object> mappedConfig;
+    private static volatile ResponseTransformerConfig instance;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
@@ -82,16 +84,31 @@ public class ResponseTransformerConfig {
     private ResponseTransformerConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfig(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+        if (mappedConfig != null) {
+            setConfigData();
+            setConfigList();
+            setConfigMap();
+        }
     }
 
     public static ResponseTransformerConfig load() {
-        return new ResponseTransformerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ResponseTransformerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (ResponseTransformerConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new ResponseTransformerConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, ResponseTransformerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new ResponseTransformerConfig(configName);
     }
 

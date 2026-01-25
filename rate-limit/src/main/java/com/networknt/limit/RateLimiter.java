@@ -96,7 +96,7 @@ public class RateLimiter {
         } else if (LimitKey.CLIENT.equals(limitKey)) {
             String clientId = clientIdKeyResolver.resolve(exchange);
             if(clientId == null) {
-                logger.error("Failed to resolve the clientId with the clientId resolver " + addressKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
+                logger.error("Failed to resolve the clientId with the clientId resolver " + clientIdKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
                 Status status = new Status(LIMIT_KEY_NOT_FOUND, LimitKey.CLIENT, clientIdKeyResolver.getClass().getPackageName());
                 throw new FrameworkException(status);
             }

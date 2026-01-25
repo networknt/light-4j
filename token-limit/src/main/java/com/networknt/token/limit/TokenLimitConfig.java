@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+
+import com.networknt.server.ModuleRegistry;
 
 @ConfigSchema(configName = "token-limit", configKey = "token-limit", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class TokenLimitConfig {
@@ -96,6 +96,7 @@ public class TokenLimitConfig {
 
     private Map<String, Object> mappedConfig;
     private final Config config;
+    private static TokenLimitConfig instance;
 
     private TokenLimitConfig() {
         this(CONFIG_NAME);
@@ -112,13 +113,29 @@ public class TokenLimitConfig {
         setConfigData();
         setTokenPathTemplatesList();
         setLegacyClientList();
+        // Register the module with the configuration. masking the apiKey property.
+        ModuleRegistry.registerModule(configName, TokenLimitConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
 
     public static TokenLimitConfig load() {
-        return new TokenLimitConfig();
+        return load(CONFIG_NAME);
     }
 
     public static TokenLimitConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == config) {
+                return instance;
+            }
+            synchronized (TokenLimitConfig.class) {
+                config = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == config) {
+                    return instance;
+                }
+                instance = new TokenLimitConfig(configName);
+                return instance;
+            }
+        }
         return new TokenLimitConfig(configName);
     }
 

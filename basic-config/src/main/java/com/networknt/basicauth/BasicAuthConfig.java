@@ -20,7 +20,9 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +95,7 @@ public class BasicAuthConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static BasicAuthConfig instance;
 
     private BasicAuthConfig(String configName) {
         config = Config.getInstance();
@@ -105,10 +108,28 @@ public class BasicAuthConfig {
     }
 
     public static BasicAuthConfig load() {
-        return new BasicAuthConfig();
+        return load(CONFIG_NAME);
     }
 
     public static BasicAuthConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (BasicAuthConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new BasicAuthConfig(configName);
+                // Register the module with the configuration. masking the password property.
+                List<String> masks = new ArrayList<>();
+                masks.add("password");
+                ModuleRegistry.registerModule(configName, BasicAuthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new BasicAuthConfig(configName);
     }
 

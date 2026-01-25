@@ -6,6 +6,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,12 +55,29 @@ public class Expect100ContinueConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile Expect100ContinueConfig instance;
 
     public static Expect100ContinueConfig load() {
-        return new Expect100ContinueConfig();
+        return load(CONFIG_NAME);
     }
 
     public static Expect100ContinueConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (Expect100ContinueConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new Expect100ContinueConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, Expect100ContinueConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new Expect100ContinueConfig(configName);
     }
 
@@ -122,5 +140,9 @@ public class Expect100ContinueConfig {
 
     public List<String> getInPlacePathPrefixes() {
         return inPlacePathPrefixes;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 }

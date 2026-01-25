@@ -9,7 +9,7 @@ import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;

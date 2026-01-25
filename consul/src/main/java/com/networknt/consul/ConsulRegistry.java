@@ -25,7 +25,6 @@ import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.status.Status;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +38,6 @@ public class ConsulRegistry extends AbstractRegistry {
 
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
-    private long lookupInterval;
-    private long reconnectInterval;
-    private long reconnectJitter;
 
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
@@ -65,14 +61,11 @@ public class ConsulRegistry extends AbstractRegistry {
             heartbeatManager.start();
         }
 
-        lookupInterval = getConsulConfig().getLookupInterval() * 1000;
-        reconnectInterval = getConsulConfig().getReconnectInterval() * 1000;
-        reconnectJitter = getConsulConfig().getReconnectJitter() * 1000;
+
 
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
         notifyExecutor = new ThreadPoolExecutor(10, 30, 30 * 1000, TimeUnit.MILLISECONDS, workQueue);
         logger.info("ConsulRegistry init finish.");
-        ModuleRegistry.registerModule(ConsulConfig.CONFIG_NAME, ConsulRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(ConsulConfig.CONFIG_NAME), List.of(MASK_KEY_CONSUL_TOKEN));
     }
 
     public ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> getNotifyListeners() {
@@ -397,14 +390,18 @@ public class ConsulRegistry extends AbstractRegistry {
         public void run() {
             ConsulRecoveryManager consulRecovery = new ConsulRecoveryManager(serviceName, tag);
 
-            if(logger.isDebugEnabled()) logger.debug("Start Consul ServiceLookupThread thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
+            ConsulConfig config = getConsulConfig();
+            long lInterval = config.getLookupInterval() * 1000;
+            if(logger.isDebugEnabled()) logger.debug("Start Consul ServiceLookupThread thread - Lookup interval: {}ms, service {}", lInterval, serviceName);
             while (true) {
                 // check in with the recovery manager
                 consulRecovery.checkin();
 
                 try {
-                    if(logger.isDebugEnabled()) logger.debug("Consul ServiceLookupThread Thread - SLEEP: Start to sleep {}ms for service {}", lookupInterval, serviceName);
-                    sleep(lookupInterval);
+                    config = getConsulConfig();
+                    lInterval = config.getLookupInterval() * 1000;
+                    if(logger.isDebugEnabled()) logger.debug("Consul ServiceLookupThread Thread - SLEEP: Start to sleep {}ms for service {}", lInterval, serviceName);
+                    sleep(lInterval);
                     if(logger.isDebugEnabled()) logger.debug("Consul ServiceLookupThread Thread - WAKE UP: Woke up from sleep for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, tag);
 
@@ -421,8 +418,11 @@ public class ConsulRegistry extends AbstractRegistry {
                             if(!moreAttemptsPermitted)
                                 ConsulRecoveryManager.gracefulShutdown();
 
-                            long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
-                            Thread.sleep(reconnectInterval + randomJitter);
+                            config = getConsulConfig();
+                            long rInterval = config.getReconnectInterval() * 1000;
+                            long rJitter = config.getReconnectJitter() * 1000;
+                            long randomJitter = ThreadLocalRandom.current().nextLong(0, rJitter);
+                            Thread.sleep(rInterval + randomJitter);
                             serviceUrls = lookupServiceUpdate(protocol, serviceName, tag);
                         }
                         consulRecovery.exitRecoveryMode();

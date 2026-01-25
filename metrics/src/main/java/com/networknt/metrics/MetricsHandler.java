@@ -1,9 +1,7 @@
 package com.networknt.metrics;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.dropwizard.metrics.Clock;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
@@ -14,10 +12,8 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 public class MetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
@@ -77,14 +73,10 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
     }
 
     @Override
     public void reload() {
-        // config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
-        if (logger.isInfoEnabled()) logger.info("MetricsHandler is reloaded.");
     }
 
     @Override

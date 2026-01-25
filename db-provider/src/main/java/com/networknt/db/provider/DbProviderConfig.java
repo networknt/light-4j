@@ -5,7 +5,10 @@ import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @ConfigSchema(configKey = "db-provider", configName = "db-provider", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
@@ -60,6 +63,8 @@ public class DbProviderConfig {
     private final Config config;
     private Map<String, Object> mappedConfig;
 
+    private static volatile DbProviderConfig instance;
+
     private DbProviderConfig() {
         this(CONFIG_NAME);
     }
@@ -75,10 +80,28 @@ public class DbProviderConfig {
         setConfigData();
     }
     public static DbProviderConfig load() {
-        return new DbProviderConfig();
+        return load(CONFIG_NAME);
     }
 
     public static DbProviderConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DbProviderConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DbProviderConfig(configName);
+                // Register the module with the configuration.
+                List<String> masks = new ArrayList<>();
+                masks.add(PASSWORD);
+                ModuleRegistry.registerModule(configName, DbProviderConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new DbProviderConfig(configName);
     }
 

@@ -19,7 +19,6 @@ package com.networknt.mask;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.*;
 import com.networknt.config.Config;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;

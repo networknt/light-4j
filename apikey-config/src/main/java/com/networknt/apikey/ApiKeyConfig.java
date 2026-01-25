@@ -10,6 +10,8 @@ import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +72,8 @@ public class ApiKeyConfig {
     List<ApiKey> pathPrefixAuths;
 
     private final Config config;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
+    private static ApiKeyConfig instance;
 
     private ApiKeyConfig(String configName) {
         config = Config.getInstance();
@@ -83,10 +86,32 @@ public class ApiKeyConfig {
     }
 
     public static ApiKeyConfig load() {
-        return new ApiKeyConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ApiKeyConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ApiKeyConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ApiKeyConfig(configName);
+                // Register the module with the configuration. masking the apiKey property.
+                // As apiKeys are in the config file, we need to mask them.
+                List<String> masks = new ArrayList<>();
+                // if hashEnabled, there is no need to mask in the first place.
+                if(!instance.hashEnabled) {
+                    masks.add("apiKey");
+                }
+                ModuleRegistry.registerModule(configName, ApiKeyConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new ApiKeyConfig(configName);
     }
 

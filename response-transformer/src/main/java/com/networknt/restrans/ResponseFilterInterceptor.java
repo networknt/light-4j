@@ -10,7 +10,7 @@ import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

@@ -5,6 +5,7 @@ import com.networknt.config.ConfigException;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,8 @@ public class CacheConfig {
     List<CacheItem> caches;
 
     private final Config config;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
+    private static CacheConfig instance;
 
     private CacheConfig(String configName) {
         config = Config.getInstance();
@@ -53,10 +55,26 @@ public class CacheConfig {
     }
 
     public static CacheConfig load() {
-        return new CacheConfig();
+        return load(CONFIG_NAME);
     }
 
     public static CacheConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CacheConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CacheConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, "com.networknt.cache.CacheManager", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new CacheConfig(configName);
     }
 

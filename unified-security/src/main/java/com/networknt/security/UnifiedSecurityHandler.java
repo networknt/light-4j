@@ -6,7 +6,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -330,12 +330,10 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(UnifiedSecurityConfig.CONFIG_NAME, UnifiedSecurityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(UnifiedSecurityConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        ModuleRegistry.registerModule(UnifiedSecurityConfig.CONFIG_NAME, UnifiedSecurityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(UnifiedSecurityConfig.CONFIG_NAME), null);
     }
 
 }

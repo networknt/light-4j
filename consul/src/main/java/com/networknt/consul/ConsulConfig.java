@@ -18,9 +18,12 @@ package com.networknt.consul;
 
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @ConfigSchema(configKey = "consul", configName = "consul", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
@@ -46,8 +49,9 @@ public class ConsulConfig {
     private static final String MAX_ATTEMPTS_BEFORE_SHUTDOWN = "maxAttemptsBeforeShutdown";
     private static final String SHUTDOWN_IF_THREAD_FROZEN = "shutdownIfThreadFrozen";
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
+    private static ConsulConfig instance;
 
 
     @StringField(
@@ -227,11 +231,33 @@ public class ConsulConfig {
     }
 
     public static ConsulConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ConsulConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ConsulConfig(configName);
+                // Register the module with the configuration.
+                List<String> masks = new ArrayList<>();
+                masks.add("consulToken");
+                ModuleRegistry.registerModule(configName, "com.networknt.consul.ConsulRegistry", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new ConsulConfig(configName);
     }
 
     public static ConsulConfig load() {
-        return new ConsulConfig();
+        return load(CONFIG_NAME);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public String getConsulUrl() {

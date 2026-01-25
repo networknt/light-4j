@@ -23,7 +23,6 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.server.ServerConfig;
 import com.networknt.url.HttpURL;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -50,7 +49,7 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
     public static final String ROUTER_CONFIG_NAME = "router";
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
-    public static ServerConfig serverConfig = ServerConfig.getInstance();
+    public static ServerConfig serverConfig = ServerConfig.load();
 
     public SidecarRouterHandler() {
         super();
@@ -104,12 +103,12 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
+        SidecarConfig.load();
     }
 
     @Override
     public void reload() {
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
+        SidecarConfig.load().reload();
         if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
     }
 }

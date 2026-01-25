@@ -1,16 +1,11 @@
 package com.networknt.db.provider;
 
 import com.networknt.cache.CacheManager;
-import com.networknt.config.Config;
 import com.networknt.server.StartupHookProvider;
-import com.networknt.utility.ModuleRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Start up hook for the SQL provider to create the datasource and initial the cache.
@@ -38,9 +33,6 @@ public class SqlDbStartupHook implements StartupHookProvider {
         hikariConfig.setMaximumPoolSize(config.getMaximumPoolSize());
         ds = new HikariDataSource(hikariConfig);
         cacheManager = CacheManager.getInstance();
-        List<String> masks = new ArrayList<>();
-        masks.add("password");
-        ModuleRegistry.registerModule(DbProviderConfig.CONFIG_NAME, SqlDbStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(DbProviderConfig.CONFIG_NAME), masks);
         logger.info("SqlDbStartupHook ends");
     }
 }

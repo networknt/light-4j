@@ -16,13 +16,17 @@
 
 package com.networknt.resource;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.List;
+import java.util.Map;
 
 public class VirtualHostConfig {
     public static final String CONFIG_NAME = "virtual-host";
 
     List<VirtualHost> hosts;
 
+    private static volatile VirtualHostConfig instance;
     private final com.networknt.config.Config config;
     private java.util.Map<String, Object> mappedConfig;
 
@@ -39,11 +43,28 @@ public class VirtualHostConfig {
     }
 
     public static VirtualHostConfig load() {
-        return new VirtualHostConfig();
+        return load(CONFIG_NAME);
     }
 
     public static VirtualHostConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == com.networknt.config.Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (VirtualHostConfig.class) {
+                if (instance != null && instance.getMappedConfig() == com.networknt.config.Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new VirtualHostConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, VirtualHostConfig.class.getName(), com.networknt.config.Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new VirtualHostConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     private void setConfigData() {
