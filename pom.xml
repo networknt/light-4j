@@ -106,7 +106,7 @@
         <version.powermock>2.0.9</version.powermock>
         <version.undertow>2.3.22.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
-        <version.assertj>3.8.0</version.assertj>
+        <version.assertj>3.27.7</version.assertj>
         <version.hdrhistogram>2.2.2</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.yaml-rule>2.0.1</version.yaml-rule>
