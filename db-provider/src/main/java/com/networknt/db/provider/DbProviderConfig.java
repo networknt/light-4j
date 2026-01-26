@@ -60,7 +60,7 @@ public class DbProviderConfig {
     )
     int maximumPoolSize;
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile DbProviderConfig instance;
@@ -75,8 +75,7 @@ public class DbProviderConfig {
      * @param configName String
      */
     private DbProviderConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     public static DbProviderConfig load() {

@@ -130,12 +130,4 @@ public class SanitizerHandler implements MiddlewareHandler {
         return SanitizerConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-    }
-
 }

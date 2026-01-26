@@ -72,14 +72,6 @@ public class MetricsHandler extends AbstractMetricsHandler {
     }
 
     @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-    }
-
-    @Override
     public HttpHandler getNext() {
         return this.next;
     }

@@ -193,12 +193,6 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
-
-    @Override
     public boolean isRequiredContent() {
         return true;
     }

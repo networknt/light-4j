@@ -57,11 +57,6 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         return ResponseInjectionConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
-
     /**
      * if the ModifiableContentSinkConduit is set, set the Accept-Encoding
      * header to identity this is required to avoid response interceptors

@@ -318,9 +318,4 @@ public class BasicAuthHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return BasicAuthConfig.load(configName).isEnabled();
     }
-
-    @Override
-    public void register() {
-    }
-
 }

@@ -97,11 +97,6 @@ public class RequestDecodeHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         RequestDecodeConfig newConfig = RequestDecodeConfig.load(configName);
         if (newConfig != config) {

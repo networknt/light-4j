@@ -30,17 +30,25 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
     static final String STATUS_MISSING_AUTH_TOKEN = "ERR10002";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
 
-    public static SecurityConfig config;
+    public static volatile SecurityConfig config;
 
     // make this static variable public so that it can be accessed from the server-info module
-    public static JwtVerifier jwtVerifier;
+    public static volatile JwtVerifier jwtVerifier;
 
     public volatile HttpHandler next;
 
     @Override
     @SuppressWarnings("unchecked")
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-
+        SecurityConfig securityConfig = SecurityConfig.load();
+        if (securityConfig != config) {
+            synchronized (AbstractSimpleJwtVerifyHandler.class) {
+                if (securityConfig != config) {
+                    config = securityConfig;
+                    jwtVerifier = new JwtVerifier(config);
+                }
+            }
+        }
         if (logger.isDebugEnabled())
             logger.debug("SimpleJwtVerifyHandler.handleRequest starts.");
 

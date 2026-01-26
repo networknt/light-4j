@@ -85,15 +85,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         return ResponseTransformerConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-        if(logger.isTraceEnabled()) logger.trace("ResponseTransformerInterceptor is reloaded.");
-    }
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

@@ -40,7 +40,7 @@ public class CorsConfig {
     public static final String PATH_PREFIX_ALLOWED = "pathPrefixAllowed";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -110,8 +110,7 @@ public class CorsConfig {
     private static volatile CorsConfig instance;
 
     private CorsConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -184,9 +183,7 @@ public class CorsConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

@@ -79,12 +79,6 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         ExternalServiceConfig config = ExternalServiceConfig.load(configName);

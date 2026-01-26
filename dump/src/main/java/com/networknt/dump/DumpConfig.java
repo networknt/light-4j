@@ -140,14 +140,13 @@ public class DumpConfig {
     private static Boolean DEFAULT = false;
 
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile DumpConfig instance;
 
     private DumpConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

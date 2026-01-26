@@ -65,11 +65,6 @@ public class DumpHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-         // Registration is moved to DumpConfig.load()
-    }
-
-    @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (exchange.isInIoThread()) {
             exchange.dispatch(this);

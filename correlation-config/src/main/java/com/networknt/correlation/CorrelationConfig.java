@@ -42,7 +42,7 @@ public class CorrelationConfig {
     public static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
     public static final String CORRELATION_MDC_FIELD = "correlationMdcField";
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -79,8 +79,7 @@ public class CorrelationConfig {
     private static volatile CorrelationConfig instance;
 
     private CorrelationConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -147,9 +146,7 @@ public class CorrelationConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

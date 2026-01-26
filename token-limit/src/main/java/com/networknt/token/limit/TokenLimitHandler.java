@@ -97,10 +97,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return TokenLimitConfig.load().isEnabled();    }
 
-    @Override
-    public void register() {
-    }
-
+    /*
     @Override
     public void reload() {
         TokenLimitConfig config = TokenLimitConfig.load();
@@ -109,6 +106,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }
     }
+    */
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

@@ -55,7 +55,7 @@ public class ResponseInjectionConfig {
     private List<String> appliedBodyInjectionPathPrefixes;
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     private static volatile ResponseInjectionConfig instance;
 
@@ -64,8 +64,7 @@ public class ResponseInjectionConfig {
     }
 
     private ResponseInjectionConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }

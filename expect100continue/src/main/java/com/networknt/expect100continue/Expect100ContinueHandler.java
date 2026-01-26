@@ -104,10 +104,6 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
         return Expect100ContinueConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
     private static final class ContinueResponseCommitListener implements ResponseCommitListener {
 
         @Override

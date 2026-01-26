@@ -382,7 +382,6 @@ public class  ServerConfig {
     boolean maskConfigProperties;
 
     private static final List<String> masks = Arrays.asList("keystorePass", "keyPass", "truststorePass", "bootstrapStorePass");
-    private final Config config;
     private Map<String, Object> mappedConfig;
     private static volatile ServerConfig instance;
 
@@ -396,8 +395,7 @@ public class  ServerConfig {
      * @param configName String
      */
     private ServerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         if (mappedConfig != null) {
             loadData();
         }

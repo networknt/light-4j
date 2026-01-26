@@ -221,10 +221,9 @@ public class Server {
         MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
         if (middlewareHandlers != null) {
             for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
-                logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
+                logger.info("Plugin: {}", middlewareHandlers[i].getClass().getName());
                 if (middlewareHandlers[i].isEnabled()) {
                     handler = middlewareHandlers[i].setNext(handler);
-                    middlewareHandlers[i].register();
                 }
             }
         }

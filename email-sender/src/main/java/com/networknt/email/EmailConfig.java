@@ -88,14 +88,12 @@ public class EmailConfig {
     )
     String auth;
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     private static volatile EmailConfig instance;
 
     private EmailConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     private EmailConfig() {
@@ -178,9 +176,8 @@ public class EmailConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
+
 
     private void setConfigData() {
         if(mappedConfig != null) {

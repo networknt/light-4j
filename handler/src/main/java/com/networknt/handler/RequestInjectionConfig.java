@@ -60,7 +60,6 @@ public class RequestInjectionConfig {
     )
     private int maxBuffers;
     private Map<String, Object> mappedConfig;
-    private final Config config;
 
     private static volatile RequestInjectionConfig instance;
 
@@ -69,8 +68,7 @@ public class RequestInjectionConfig {
     }
 
     private RequestInjectionConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }

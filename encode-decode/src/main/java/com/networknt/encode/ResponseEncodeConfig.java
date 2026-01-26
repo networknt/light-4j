@@ -40,7 +40,7 @@ public class ResponseEncodeConfig {
     public static final String ENABLED = "enabled";
     public static final String ENCODERS = "encoders";
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -62,8 +62,7 @@ public class ResponseEncodeConfig {
     private static volatile ResponseEncodeConfig instance;
 
     private ResponseEncodeConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -115,9 +114,7 @@ public class ResponseEncodeConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if (getMappedConfig() != null) {

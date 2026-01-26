@@ -82,15 +82,4 @@ public class ServiceDictHandler implements MiddlewareHandler {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
-    }
 }

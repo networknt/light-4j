@@ -80,17 +80,6 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ResponseFilterConfig.CONFIG_NAME, ResponseFilterInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseFilterConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ResponseFilterConfig.CONFIG_NAME, ResponseFilterInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseFilterConfig.CONFIG_NAME), null);
-        if(logger.isTraceEnabled()) logger.trace("ResponseFilterInterceptor is reloaded.");
-    }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override

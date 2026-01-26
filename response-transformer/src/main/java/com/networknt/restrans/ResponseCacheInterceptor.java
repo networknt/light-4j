@@ -65,17 +65,6 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ResponseCacheConfig.CONFIG_NAME, ResponseCacheInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseCacheConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ResponseCacheConfig.CONFIG_NAME, ResponseCacheInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseCacheConfig.CONFIG_NAME), null);
-        if(logger.isTraceEnabled()) logger.trace("ResponseCacheInterceptor is reloaded.");
-    }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override

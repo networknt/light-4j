@@ -40,14 +40,13 @@ public class DerefConfig {
         defaultValue = "false"
     )
     boolean enabled;
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile DerefConfig instance;
 
     private DerefConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

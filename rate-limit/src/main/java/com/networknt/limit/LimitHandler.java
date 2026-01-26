@@ -114,7 +114,4 @@ public class LimitHandler implements MiddlewareHandler {
         return LimitConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
 }

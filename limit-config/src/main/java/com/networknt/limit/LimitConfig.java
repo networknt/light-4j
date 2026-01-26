@@ -222,7 +222,6 @@ public class LimitConfig {
     )
     String userIdKeyResolver;
     private Map<String, Object> mappedConfig;
-    private final Config config;
 
 
     private static volatile LimitConfig instance;
@@ -238,8 +237,7 @@ public class LimitConfig {
      * @param configName String
      */
     private LimitConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setRateLimitConfig();
     }

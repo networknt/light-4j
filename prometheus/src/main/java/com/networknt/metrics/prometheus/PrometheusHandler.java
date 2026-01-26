@@ -127,14 +127,6 @@ public class PrometheusHandler implements MiddlewareHandler {
         return PrometheusConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-    }
-
     private void incCounterForStatusCode(int statusCode, List<String> labels,  List<String> labelValues) {
 
         counter(REQUEST_TOTAL, labels).labels(labelValues.stream().toArray(String[]::new)).inc();

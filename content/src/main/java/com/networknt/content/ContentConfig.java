@@ -39,7 +39,7 @@ public class ContentConfig {
   private static final String ENABLED = "enabled";
   private static final String CONTENT_TYPE = "contentType";
   private Map<String, Object> mappedConfig;
-  private final Config config;
+
 
   @BooleanField(
             configFieldName = ENABLED,
@@ -61,8 +61,7 @@ public class ContentConfig {
   private static volatile ContentConfig instance;
 
   private ContentConfig(String configName) {
-    config = Config.getInstance();
-    mappedConfig = config.getJsonMapConfig(configName);
+    mappedConfig = Config.getInstance().getJsonMapConfig(configName);
     setConfigData();
   }
   private ContentConfig() {
@@ -113,9 +112,7 @@ public class ContentConfig {
     return mappedConfig;
   }
 
-  Config getConfig() {
-    return config;
-  }
+
 
   private void setConfigData() {
     if(getMappedConfig() != null) {

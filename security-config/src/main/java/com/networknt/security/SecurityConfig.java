@@ -62,7 +62,6 @@ public class SecurityConfig {
 
     private static volatile SecurityConfig instance;
     private final Map<String, Object> mappedConfig;
-    private final Config config;
 
     @BooleanField(
             configFieldName = ENABLE_VERIFY_JWT,
@@ -286,8 +285,7 @@ public class SecurityConfig {
     }
 
     private SecurityConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         if (mappedConfig != null) {
             setCertificate();
             setConfigData();
@@ -307,11 +305,11 @@ public class SecurityConfig {
      */
     public static SecurityConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+            if (instance != null) {
                 return instance;
             }
             synchronized (SecurityConfig.class) {
-                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                if (instance != null) {
                     return instance;
                 }
                 instance = new SecurityConfig(configName);
@@ -320,6 +318,13 @@ public class SecurityConfig {
             }
         }
         return new SecurityConfig(configName);
+    }
+
+    public static void reload() {
+        synchronized (SecurityConfig.class) {
+            instance = new SecurityConfig(CONFIG_NAME);
+            ModuleRegistry.registerModule(CONFIG_NAME, SecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        }
     }
 
 
@@ -398,9 +403,7 @@ public class SecurityConfig {
     public String getProviderId() {
         return providerId;
     }
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setCertificate() {
 

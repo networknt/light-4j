@@ -91,7 +91,7 @@ public final class ClientConfig {
     public static final String SUBJECT_TOKEN = "subjectToken";
     public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
 
     @ObjectField(
@@ -147,8 +147,7 @@ public final class ClientConfig {
      */
     private ClientConfig(String configName) {
         this.configName = configName;
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         if (mappedConfig != null) {
             setValues();
         }

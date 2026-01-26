@@ -74,14 +74,4 @@ public class TraceabilityHandler implements MiddlewareHandler {
         return TraceabilityConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TraceabilityConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TraceabilityConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("TraceabilityHandler is reloaded.");
-    }
 }

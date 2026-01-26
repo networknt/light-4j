@@ -53,7 +53,7 @@ public class Expect100ContinueConfig {
     )
     private List<String> inPlacePathPrefixes;
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
     private static volatile Expect100ContinueConfig instance;
 
@@ -86,8 +86,7 @@ public class Expect100ContinueConfig {
     }
 
     private Expect100ContinueConfig(String configName) {
-        this.config = Config.getInstance();
-        this.mappedConfig = config.getJsonMapConfig(configName);
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         this.setConfigData();
     }
 

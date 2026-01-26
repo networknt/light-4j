@@ -120,7 +120,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return SalesforceConfig.load(configName).isEnabled();
     }
-
+    /*
     @Override
     public void register() {
         // As certPassword is in the config file, we need to mask them.
@@ -128,7 +128,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         masks.add("certPassword");
         ModuleRegistry.registerModule(configName, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), masks);
     }
-
+    */
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

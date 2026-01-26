@@ -60,12 +60,10 @@ public class PrometheusConfig {
     String description;
 
     private static volatile PrometheusConfig instance;
-    private final com.networknt.config.Config config;
     private java.util.Map<String, Object> mappedConfig;
 
     private PrometheusConfig(String configName) {
-        config = com.networknt.config.Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = com.networknt.config.Config.getInstance().getJsonMapConfig(configName);
         if (mappedConfig != null) {
             setConfigData();
         }

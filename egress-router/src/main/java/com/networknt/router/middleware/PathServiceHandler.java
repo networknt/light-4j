@@ -112,16 +112,4 @@ public class PathServiceHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return config.isEnabled();
     }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("PathServiceHandler is reloaded.");
-    }
 }

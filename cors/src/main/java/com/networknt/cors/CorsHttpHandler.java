@@ -142,12 +142,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
         return CorsConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-         // Registration is moved to CorsConfig.load()
-    }
-
-
     /**
      * Match the Origin header with the allowed origins.
      * If it doesn't match then a 403 response code is set on the response and it returns null.

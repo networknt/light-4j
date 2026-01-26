@@ -95,7 +95,6 @@ public class TokenLimitConfig {
     String expireKey = "expires_in";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
     private static TokenLimitConfig instance;
 
     private TokenLimitConfig() {
@@ -108,8 +107,7 @@ public class TokenLimitConfig {
      * @param configName String
      */
     private TokenLimitConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setTokenPathTemplatesList();
         setLegacyClientList();

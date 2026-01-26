@@ -101,14 +101,4 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
         return true;
     }
 
-    @Override
-    public void register() {
-        SidecarConfig.load();
-    }
-
-    @Override
-    public void reload() {
-        SidecarConfig.load().reload();
-        if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
-    }
 }

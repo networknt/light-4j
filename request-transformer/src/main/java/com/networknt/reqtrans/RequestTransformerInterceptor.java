@@ -64,16 +64,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     }
 
     @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-        if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
-
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         RequestTransformerConfig config = RequestTransformerConfig.load();
         if(logger.isDebugEnabled()) logger.trace("RequestTransformerInterceptor.handleRequest starts.");

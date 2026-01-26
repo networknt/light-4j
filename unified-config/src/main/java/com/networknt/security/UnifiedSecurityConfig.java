@@ -124,11 +124,11 @@ public class UnifiedSecurityConfig {
 
     public static UnifiedSecurityConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+            if (instance != null) {
                 return instance;
             }
             synchronized (UnifiedSecurityConfig.class) {
-                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                if (instance != null) {
                     return instance;
                 }
                 instance = new UnifiedSecurityConfig(configName);
@@ -137,6 +137,13 @@ public class UnifiedSecurityConfig {
             }
         }
         return new UnifiedSecurityConfig(configName);
+    }
+
+    public static void reload() {
+        synchronized (UnifiedSecurityConfig.class) {
+            instance = new UnifiedSecurityConfig(CONFIG_NAME);
+            ModuleRegistry.registerModule(CONFIG_NAME, UnifiedSecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        }
     }
 
 

@@ -179,9 +179,4 @@ public class HeaderHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return HeaderConfig.load(configName).isEnabled();
     }
-
-    @Override
-    public void register() {
-    }
-
 }

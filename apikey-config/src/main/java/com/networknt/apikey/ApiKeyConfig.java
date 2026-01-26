@@ -71,13 +71,12 @@ public class ApiKeyConfig {
     )
     List<ApiKey> pathPrefixAuths;
 
-    private final Config config;
+
     private final Map<String, Object> mappedConfig;
-    private static ApiKeyConfig instance;
+    private static volatile ApiKeyConfig instance;
 
     private ApiKeyConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -143,9 +142,7 @@ public class ApiKeyConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if (mappedConfig != null) {

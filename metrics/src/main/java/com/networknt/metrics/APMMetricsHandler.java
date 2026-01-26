@@ -89,11 +89,4 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         return MetricsConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
-    }
 }

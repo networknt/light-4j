@@ -121,8 +121,4 @@ public class CorrelationHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return CorrelationConfig.load().isEnabled();
     }
-
-    @Override
-    public void register() {
-    }
 }

@@ -82,7 +82,7 @@ public class LoggerConfig {
     String downstreamFramework;
 
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile LoggerConfig instance;
@@ -92,8 +92,7 @@ public class LoggerConfig {
     }
 
     private LoggerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

@@ -309,7 +309,6 @@ public class RouterConfig {
 
 
     Set httpMethods;
-    private Config config;
     private Map<String, Object> mappedConfig;
 
     private static volatile RouterConfig instance;
@@ -325,8 +324,7 @@ public class RouterConfig {
         httpMethods.add("PUT");
         httpMethods.add("PATCH");
 
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
         setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();
@@ -357,7 +355,7 @@ public class RouterConfig {
     }
 
     public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();

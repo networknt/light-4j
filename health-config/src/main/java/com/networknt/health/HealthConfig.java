@@ -43,7 +43,6 @@ public class HealthConfig {
     private static final String DOWNSTREAM_PATH = "downstreamPath";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
     private static HealthConfig instance;
 
     @BooleanField(
@@ -101,8 +100,7 @@ public class HealthConfig {
     String downstreamPath;
 
     private HealthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         ModuleRegistry.registerModule(configName, HealthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
@@ -184,9 +182,7 @@ public class HealthConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

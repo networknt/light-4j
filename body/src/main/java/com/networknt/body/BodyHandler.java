@@ -204,8 +204,4 @@ public class BodyHandler implements MiddlewareHandler {
         return BodyConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
 }

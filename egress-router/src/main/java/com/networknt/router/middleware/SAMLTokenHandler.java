@@ -137,17 +137,6 @@ public class SAMLTokenHandler implements MiddlewareHandler {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
-    }
-
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {
         SAMLBearerRequest tokenRequest = new SAMLBearerRequest(samlAssertion , jwtAssertion);
         Result<TokenResponse> tokenResponse = OauthHelper.getTokenFromSamlResult(tokenRequest);

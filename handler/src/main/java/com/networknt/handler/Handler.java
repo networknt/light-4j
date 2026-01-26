@@ -416,21 +416,6 @@ public class Handler {
     }
 
     /**
-     * Detect if the handler is a MiddlewareHandler instance. If yes, then register it.
-     *
-     * @param handler
-     */
-    private static void registerMiddlewareHandler(Object handler) {
-
-        if (handler instanceof MiddlewareHandler) {
-
-            // register the middleware handler if it is enabled.
-            if (((MiddlewareHandler) handler).isEnabled())
-                ((MiddlewareHandler) handler).register();
-        }
-    }
-
-    /**
      * Helper method for generating the instance of a handler from its string
      * definition in config. Ie. No mapped values for setters, or list of
      * constructor fields. To note: It could either implement HttpHandler, or
@@ -467,7 +452,6 @@ public class Handler {
 
         else throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 
-        registerMiddlewareHandler(resolvedHandler);
         handlers.put(namedClass.first, resolvedHandler);
         handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
     }

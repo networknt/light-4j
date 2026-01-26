@@ -201,8 +201,7 @@ public class MetricsConfig {
     )
     String issuerRegex;
 
-    private Map<String, Object> mappedConfig;
-    private final Config config;
+    private final Map<String, Object> mappedConfig;
 
 
     private static final String MASK_KEY_SERVER_PASS = "serverPass";
@@ -218,8 +217,7 @@ public class MetricsConfig {
      * @param configName String
      */
     private MetricsConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

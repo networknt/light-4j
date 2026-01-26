@@ -193,11 +193,6 @@ public class APMAgentReporterTest {
         }
 
         @Override
-        public void register() {
-            // nothing
-        }
-
-        @Override
         public void handleRequest(HttpServerExchange exchange) throws Exception {
             final var testCounter = new MetricName("testCounter");
             final var testTimer = new MetricName("testTimer");

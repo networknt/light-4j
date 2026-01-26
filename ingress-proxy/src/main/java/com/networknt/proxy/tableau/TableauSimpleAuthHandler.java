@@ -185,9 +185,4 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, TableauSimpleAuthHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
 }

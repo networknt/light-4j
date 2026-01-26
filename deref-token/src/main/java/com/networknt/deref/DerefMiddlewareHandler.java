@@ -100,9 +100,4 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
         return DerefConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-         // Registration is moved to DerefConfig.load()
-    }
-
 }

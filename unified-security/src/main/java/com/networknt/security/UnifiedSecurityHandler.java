@@ -6,7 +6,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
-import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -39,7 +38,8 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     static final String MISSING_PATH_PREFIX_AUTH = "ERR10078";
     // make this static variable public so that it can be accessed from the server-info module
     private volatile HttpHandler next;
-    public static JwtVerifier jwtVerifier;
+    public static volatile JwtVerifier jwtVerifier;
+    private static volatile SecurityConfig securityConfig;
 
     public UnifiedSecurityHandler() {
         logger.info("UnifiedSecurityHandler starts");
@@ -50,6 +50,15 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug("UnifiedSecurityHandler.handleRequest starts.");
+        SecurityConfig config = SecurityConfig.load();
+        if (config != securityConfig) {
+            synchronized (UnifiedSecurityHandler.class) {
+                if (config != securityConfig) {
+                    securityConfig = config;
+                    jwtVerifier = new JwtVerifier(securityConfig);
+                }
+            }
+        }
         Status status = verifyUnifiedSecurity(exchange);
         if (status != null) {
             if (logger.isDebugEnabled())
@@ -326,14 +335,6 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     @Override
     public boolean isEnabled() {
         return UnifiedSecurityConfig.load().isEnabled();
-    }
-
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void reload() {
     }
 
 }

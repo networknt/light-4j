@@ -57,7 +57,7 @@ public class HeaderConfig {
     )
     Map<String, HeaderPathPrefixConfig> pathPrefixHeader;
 
-    private Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile HeaderConfig instance;
@@ -72,8 +72,7 @@ public class HeaderConfig {
      * @param configName String
      */
     private HeaderConfig(String configName) {
-        this.config = Config.getInstance();
-        this.mappedConfig = this.config.getJsonMapConfig(configName);
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         if (this.mappedConfig != null) {
             this.setValues();
         }

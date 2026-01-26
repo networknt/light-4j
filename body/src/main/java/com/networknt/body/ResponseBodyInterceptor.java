@@ -50,12 +50,6 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, ResponseBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
-
-    @Override
     public boolean isRequiredContent() {
         return true;
     }

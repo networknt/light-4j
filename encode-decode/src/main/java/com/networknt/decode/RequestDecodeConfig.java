@@ -39,7 +39,7 @@ public class RequestDecodeConfig {
     public static final String ENABLED = "enabled";
     public static final String DECODERS = "decoders";
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -61,8 +61,7 @@ public class RequestDecodeConfig {
     private static volatile RequestDecodeConfig instance;
 
     private RequestDecodeConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
@@ -114,9 +113,7 @@ public class RequestDecodeConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if (getMappedConfig() != null) {

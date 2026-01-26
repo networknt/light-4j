@@ -183,7 +183,7 @@ public class AuditHandler implements MiddlewareHandler {
                 }
             });
         } else {
-            config.getAuditFunc().accept(config.getConfig().getMapper().writeValueAsString(auditMap));
+            config.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
         }
         logger.debug("AuditHandler.handleRequest ends.");
         next(exchange);
@@ -442,11 +442,6 @@ public class AuditHandler implements MiddlewareHandler {
     @Override
     public boolean isEnabled() {
         return AuditConfig.load().isEnabled();
-    }
-
-    @Override
-    public void register() {
-        // Registration is moved to AuditConfig.load()
     }
 
     protected void next(HttpServerExchange exchange) throws Exception {

@@ -119,16 +119,4 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return config.isEnabled();
     }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathPrefixServiceConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathPrefixServiceConfig.CONFIG_NAME), null);
-        if (logger.isInfoEnabled()) logger.info("PathPrefixServiceHandler is reloaded.");
-    }
 }

@@ -83,10 +83,6 @@ public class WhitelistHandler implements MiddlewareHandler {
         return WhitelistConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-    }
-
     IpAcl findIpAcl(String reqPath, WhitelistConfig config) {
         for(Map.Entry<String, IpAcl> entry: config.getPrefixAcl().entrySet()) {
             if(reqPath.startsWith(entry.getKey())) {

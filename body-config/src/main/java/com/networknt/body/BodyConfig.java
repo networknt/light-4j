@@ -88,13 +88,12 @@ public class BodyConfig {
                           "for production. The default value is false and only 16K of the response body will be logged."
     )
     boolean logFullResponseBody;
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
-    private static BodyConfig instance;
+    private static volatile BodyConfig instance;
 
     private BodyConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

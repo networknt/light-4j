@@ -94,11 +94,6 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(configName, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         ResponseEncodeConfig newConfig = ResponseEncodeConfig.load(configName);
         if (newConfig != config) {

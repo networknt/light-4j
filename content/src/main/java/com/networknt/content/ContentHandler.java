@@ -66,11 +66,6 @@ public class ContentHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-        // Registration is moved to ContentConfig.load()
-    }
-
-    @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ContentConfig config = ContentConfig.load(configName);
         if (exchange.getRequestHeaders().contains(Headers.CONTENT_TYPE)) {

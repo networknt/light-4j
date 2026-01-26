@@ -37,7 +37,7 @@ public class ConfigReloadConfig {
 
     private static final String ENABLED = "enabled";
     private final Map<String, Object> mappedConfig;
-    private final Config config;
+
     private static ConfigReloadConfig instance;
 
     @BooleanField(
@@ -50,8 +50,7 @@ public class ConfigReloadConfig {
     boolean enabled;
 
     private ConfigReloadConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -94,9 +93,7 @@ public class ConfigReloadConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

@@ -131,7 +131,7 @@ public class WhitelistConfig {
             valueTypeOneOf = {List.class, String.class}
     )
     Map<String, IpAcl> prefixAcl = new HashMap<>();
-    private Config config;
+
     private Map<String, Object> mappedConfig;
 
     private static volatile WhitelistConfig instance;
@@ -146,8 +146,7 @@ public class WhitelistConfig {
      * @param configName String
      */
     private WhitelistConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigMap();
     }

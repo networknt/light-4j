@@ -138,9 +138,4 @@ public class ExceptionHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return ExceptionConfig.load(configName).isEnabled();
     }
-
-    @Override
-    public void register() {
-    }
-
 }

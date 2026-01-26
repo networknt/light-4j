@@ -68,10 +68,6 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
 
         var method = httpServerExchange.getRequestMethod().toString();

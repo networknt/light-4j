@@ -115,11 +115,11 @@ public class JwtConfig {
 
     public static JwtConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+            if (instance != null) {
                 return instance;
             }
             synchronized (JwtConfig.class) {
-                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                if (instance != null) {
                     return instance;
                 }
                 instance = new JwtConfig(configName);
@@ -130,13 +130,11 @@ public class JwtConfig {
         return new JwtConfig(configName);
     }
 
-    public void reload() {
-        reload(CONFIG_NAME);
-    }
-
-    public void reload(String configName) {
-        instance = new JwtConfig(configName);
-        ModuleRegistry.registerModule(CONFIG_NAME, JwtConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    public static void reload() {
+        synchronized (JwtConfig.class) {
+            instance = new JwtConfig(CONFIG_NAME);
+            ModuleRegistry.registerModule(CONFIG_NAME, JwtConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        }
     }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;

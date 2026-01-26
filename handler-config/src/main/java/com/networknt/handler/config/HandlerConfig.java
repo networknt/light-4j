@@ -166,7 +166,6 @@ public class HandlerConfig {
     )
     private List<String> defaultHandlers;
     private Map<String, Object> mappedConfig;
-    private final Config config;
 
     private static volatile HandlerConfig instance;
 
@@ -175,8 +174,7 @@ public class HandlerConfig {
     }
 
     private HandlerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();

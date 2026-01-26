@@ -40,13 +40,12 @@ public class CacheConfig {
     )
     List<CacheItem> caches;
 
-    private final Config config;
+
     private final Map<String, Object> mappedConfig;
-    private static CacheConfig instance;
+    private static volatile CacheConfig instance;
 
     private CacheConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigList();
     }
 

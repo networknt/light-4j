@@ -44,7 +44,7 @@ public class ServerInfoConfig {
     private static final String DOWNSTREAM_HOST = "downstreamHost";
     private static final String DOWNSTREAM_PATH = "downstreamPath";
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLE_SERVER_INFO,
@@ -98,8 +98,7 @@ public class ServerInfoConfig {
     }
 
     private ServerInfoConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setData();
         setList();
     }
@@ -132,9 +131,7 @@ public class ServerInfoConfig {
         return mappedConfig;
     }
 
-    public Config getConfig() {
-        return config;
-    }
+
 
     public List<String> getKeysToNotSort() {
         return keysToNotSort;

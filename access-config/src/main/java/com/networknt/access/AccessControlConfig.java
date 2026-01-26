@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class AccessControlConfig {
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
 
     private final Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -94,32 +95,42 @@ public class AccessControlConfig {
     )
     private List<String> skipPathPrefixes;
 
+    private static volatile AccessControlConfig instance;
+
     private AccessControlConfig() {
         this(CONFIG_NAME);
     }
+
     private AccessControlConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
-    /**
-     * Loads the configuration with the default config name.
-     * @return AccessControlConfig object
-     */
     public static AccessControlConfig load() {
-        return new AccessControlConfig(CONFIG_NAME);
+        return load(CONFIG_NAME);
     }
 
-    /**
-     * Loads the configuration with a specific config name.
-     * @param configName name of the configuration file
-     * @return AccessControlConfig object
-     */
     public static AccessControlConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (AccessControlConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new AccessControlConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, AccessControlConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new AccessControlConfig(configName);
     }
+
+
 
     /**
      * Checks if the access control is enabled.
@@ -192,9 +203,7 @@ public class AccessControlConfig {
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

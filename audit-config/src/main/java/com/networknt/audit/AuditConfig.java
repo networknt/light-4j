@@ -59,7 +59,7 @@ public class AuditConfig {
     private static final String REQUEST_BODY_MAX_SIZE = "requestBodyMaxSize";
     private static final String RESPONSE_BODY_MAX_SIZE = "responseBodyMaxSize";
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
 
     @BooleanField(
@@ -94,7 +94,6 @@ public class AuditConfig {
     )
     private boolean responseTime;
 
-    private final Config config;
     // A customized logger appender defined in default logback.xml
     private Consumer<String> auditFunc;
 
@@ -188,8 +187,7 @@ public class AuditConfig {
     private static AuditConfig instance;
 
     private AuditConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -277,10 +275,6 @@ public class AuditConfig {
 
     public int getResponseBodyMaxSize() {
         return responseBodyMaxSize;
-    }
-
-    Config getConfig() {
-        return config;
     }
 
     private void setLogLevel() {

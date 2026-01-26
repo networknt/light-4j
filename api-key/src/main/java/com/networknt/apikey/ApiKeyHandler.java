@@ -63,11 +63,6 @@ public class ApiKeyHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-    }
-
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();

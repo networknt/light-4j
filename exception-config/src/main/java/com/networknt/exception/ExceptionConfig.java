@@ -55,13 +55,12 @@ public class ExceptionConfig {
     String description;
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     private static volatile ExceptionConfig instance;
 
     private ExceptionConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     private ExceptionConfig() {
@@ -112,9 +111,7 @@ public class ExceptionConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

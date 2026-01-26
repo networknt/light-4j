@@ -93,13 +93,12 @@ public class BasicAuthConfig {
     )
     Map<String, UserAuth> users;  // the key is the username to locate the object
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
-    private static BasicAuthConfig instance;
+    private static volatile BasicAuthConfig instance;
 
     private BasicAuthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -132,6 +131,8 @@ public class BasicAuthConfig {
         }
         return new BasicAuthConfig(configName);
     }
+
+
 
     public boolean isEnabled() {
         return enabled;
@@ -173,9 +174,7 @@ public class BasicAuthConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if (mappedConfig != null) {

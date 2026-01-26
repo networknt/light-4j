@@ -50,8 +50,7 @@ public class ConsulConfig {
     private static final String SHUTDOWN_IF_THREAD_FROZEN = "shutdownIfThreadFrozen";
 
     private final Map<String, Object> mappedConfig;
-    private final Config config;
-    private static ConsulConfig instance;
+    private static volatile ConsulConfig instance;
 
 
     @StringField(
@@ -222,8 +221,7 @@ public class ConsulConfig {
 
 
     private ConsulConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     private ConsulConfig() {

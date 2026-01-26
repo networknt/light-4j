@@ -119,6 +119,7 @@ public class MrasHandler implements MiddlewareHandler {
         return MrasConfig.load(configName).isEnabled();
     }
 
+    /*
     @Override
     public void register() {
         // As certPassword is in the config file, we need to mask them.
@@ -130,7 +131,7 @@ public class MrasHandler implements MiddlewareHandler {
         // use a new no cache instance to avoid the default config to be overwritten.
         ModuleRegistry.registerModule(configName, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), masks);
     }
-
+    */
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
