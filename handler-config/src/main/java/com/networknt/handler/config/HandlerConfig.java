@@ -165,9 +165,9 @@ public class HandlerConfig {
             items = String.class
     )
     private List<String> defaultHandlers;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
-    private static volatile HandlerConfig instance;
+    private static HandlerConfig instance;
 
     private HandlerConfig() {
         this(CONFIG_NAME);

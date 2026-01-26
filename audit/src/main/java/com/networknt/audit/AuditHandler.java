@@ -96,20 +96,33 @@ public class AuditHandler implements MiddlewareHandler {
 
     public AuditHandler() {
         logger.info("AuditHandler is loaded.");
-        ServerConfig serverConfig = ServerConfig.getInstance();
+        ServerConfig serverConfig = ServerConfig.load();
         if (serverConfig != null) {
             serviceId = serverConfig.getServiceId();
+        }
+        config = AuditConfig.load();
+        String timestampFormat = config.getTimestampFormat();
+        if (!StringUtils.isBlank(timestampFormat)) {
+            try {
+                dateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormat)
+                        .withZone(ZoneId.systemDefault());
+            } catch (IllegalArgumentException e) {
+                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
+                dateTimeFormatter = null;
+            }
+        } else {
+            dateTimeFormatter = null;
         }
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled()) logger.debug("AuditHandler.handleRequest starts.");
-        AuditConfig currentConfig = AuditConfig.load();
-        if (currentConfig != config) {
+        AuditConfig newConfig = AuditConfig.load();
+        if (newConfig != config) {
             synchronized (this) {
-                if (currentConfig != config) {
-                    config = currentConfig;
+                if (newConfig != config) {
+                    config = newConfig;
                     ServerConfig serverConfig = ServerConfig.getInstance();
                     if (serverConfig != null) {
                         serviceId = serverConfig.getServiceId();

@@ -21,7 +21,6 @@ import io.undertow.server.HttpServerExchange;
 
 public class APMMetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(APMMetricsHandler.class);
-    public static ServerConfig serverConfig;
 
     // this is the indicator to start the reporter and construct the common tags. It cannot be static as
     // the currentPort and currentAddress are not available during the handler initialization.
@@ -29,7 +28,6 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
     private volatile HttpHandler next;
 
     public APMMetricsHandler() {
-        serverConfig = ServerConfig.getInstance();
         logger.debug("APMMetricsHandler is constructed!");
     }
 
@@ -48,6 +46,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         MetricsConfig config = MetricsConfig.load();
+        ServerConfig serverConfig = ServerConfig.load();
         if (this.firstTime.compareAndSet(true, false)) {
             logger.debug("First request received, initializing APMMetricsHandler.");
             AbstractMetricsHandler.addCommonTags(commonTags);
@@ -82,11 +81,6 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         Handlers.handlerNotNull(next);
         this.next = next;
         return this;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return MetricsConfig.load().isEnabled();
     }
 
 }

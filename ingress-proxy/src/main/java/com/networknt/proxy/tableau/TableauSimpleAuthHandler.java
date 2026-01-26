@@ -88,7 +88,6 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
 
     public TableauSimpleAuthHandler(String configName) {
         this.configName = configName;
-        TableauConfig config = TableauConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("TableauSimpleAuthHandler is loaded with {}.", configName);
     }
 
@@ -182,7 +181,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return TableauConfig.load(configName).isEnabled();
     }
 
 }

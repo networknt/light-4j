@@ -83,7 +83,7 @@ public class LoggerConfig {
 
 
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     private static volatile LoggerConfig instance;
 

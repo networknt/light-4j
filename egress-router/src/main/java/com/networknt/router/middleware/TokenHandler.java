@@ -36,6 +36,7 @@ import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.tokens.Token;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +74,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TokenHandler implements MiddlewareHandler {
     private static final String HANDLER_DEPENDENCY_ERROR = "ERR10074";
 
-    private static TokenConfig config;
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
 
@@ -82,7 +82,6 @@ public class TokenHandler implements MiddlewareHandler {
 
     public TokenHandler() {
         logger.info("TokenHandler is loaded.");
-        config = TokenConfig.load();
     }
 
     @Override
@@ -91,6 +90,7 @@ public class TokenHandler implements MiddlewareHandler {
         // This handler must be put after the prefix or dict handler so that the serviceId is
         // readily available in the header resolved by the path or the endpoint from the request.
         logger.debug("TokenHandler.handleRequest starts.");
+        TokenConfig config = TokenConfig.load();
         String requestPath = exchange.getRequestPath();
 
         // this handler will only work with a list of applied path prefixes in the token.yml config file.
@@ -212,7 +212,7 @@ public class TokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return TokenConfig.load().isEnabled();
     }
 
 }
