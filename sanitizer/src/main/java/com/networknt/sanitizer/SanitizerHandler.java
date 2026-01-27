@@ -64,7 +64,7 @@ public class SanitizerHandler implements MiddlewareHandler {
         SanitizerConfig config = SanitizerConfig.load(configName);
         EncoderWrapper bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
         EncoderWrapper headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
-        
+
         if (logger.isDebugEnabled()) logger.trace("SanitizerHandler.handleRequest starts.");
         String method = exchange.getRequestMethod().toString();
         if (config.isHeaderEnabled()) {
