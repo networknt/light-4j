@@ -140,7 +140,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         var headers = ex.getRequestHeaders();
         var requestMethod = ex.getRequestMethod().toString();
         var requestPath = ex.getRequestPath();
- 
+
         return this.injectorContentRequired()
                 && this.isAppliedBodyInjectionPathPrefix(requestPath, config)
                 && this.hasContent(requestMethod)

@@ -30,7 +30,7 @@ public class ModuleRegistry {
     private static final Map<String, Object> moduleRegistry = new HashMap<>();
     private static final Map<String, Object> pluginRegistry = new HashMap<>();
     private static final List<Map<String, Object>> plugins = new ArrayList<>();
-    
+
     // An identity cache to store the config object reference. The key is the configName + moduleClass
     // The value is the config object reference.
     private static final Map<String, Object> registryCache = new HashMap<>();

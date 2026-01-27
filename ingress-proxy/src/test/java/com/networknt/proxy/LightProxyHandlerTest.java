@@ -10,17 +10,17 @@ public class LightProxyHandlerTest {
     public void testReload() throws Exception {
         // Ensure config is loaded initially
         ProxyConfig.load();
-        
+
         LightProxyHandler handler = new LightProxyHandler();
-        
+
         // Get initial proxyHandler
         Field proxyHandlerField = LightProxyHandler.class.getDeclaredField("proxyHandler");
         proxyHandlerField.setAccessible(true);
         Object initialProxyHandler = proxyHandlerField.get(handler);
-        
+
         // Force config reload by clearing cache
         Config.getInstance().clear();
-        
+
         // Trigger handleRequest to check for reload
         try {
             handler.handleRequest(null);
@@ -33,10 +33,10 @@ public class LightProxyHandlerTest {
         } catch (Exception e) {
             // Ignore other exceptions
         }
-        
+
         // Get new proxyHandler
         Object newProxyHandler = proxyHandlerField.get(handler);
-        
+
         Assert.assertNotEquals("ProxyHandler should have been rebuilt after config reload", initialProxyHandler, newProxyHandler);
     }
 }
