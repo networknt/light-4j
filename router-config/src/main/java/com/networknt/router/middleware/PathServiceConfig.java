@@ -79,12 +79,6 @@ public class PathServiceConfig {
         return new PathServiceConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setMap();
-        setConfigData();
-    }
-
     public Map<String, String> getMapping() {
         return mapping;
     }

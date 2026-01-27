@@ -67,11 +67,6 @@ public class TokenConfig {
         return new TokenConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigList();
-        setConfigData();
-    }
     public void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
         if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);

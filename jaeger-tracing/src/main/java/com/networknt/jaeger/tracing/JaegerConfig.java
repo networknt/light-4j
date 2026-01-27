@@ -57,11 +57,6 @@ public class JaegerConfig {
         return new JaegerConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

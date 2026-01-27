@@ -53,12 +53,13 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private List<Pattern> patterns;
-    private String configName = TokenLimitConfig.CONFIG_NAME;
+    private volatile TokenLimitConfig config;
+    private volatile String configName = TokenLimitConfig.CONFIG_NAME;
 
     CacheManager cacheManager = CacheManager.getInstance();
 
     public TokenLimitHandler() throws Exception{
-        TokenLimitConfig config = TokenLimitConfig.load();
+        config = TokenLimitConfig.load(configName);
         List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
@@ -76,12 +77,12 @@ public class TokenLimitHandler implements MiddlewareHandler {
     @Deprecated
     public TokenLimitHandler(String configName) throws Exception{
         this.configName = configName;
-        TokenLimitConfig config = TokenLimitConfig.load();
+        TokenLimitConfig config = TokenLimitConfig.load(configName);
         List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }
-        logger.info("TokenLimitHandler constructed.");
+        logger.info("TokenLimitHandler constructed with config {}.", configName);
     }
 
     @Override
@@ -100,20 +101,21 @@ public class TokenLimitHandler implements MiddlewareHandler {
     public boolean isEnabled() {
         return TokenLimitConfig.load().isEnabled();    }
 
-    /*
-    @Override
-    public void reload() {
-        TokenLimitConfig config = TokenLimitConfig.load();
-        List<String> tokenPathTemplates = config.getTokenPathTemplates();
-        if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
-            patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
-        }
-    }
-    */
-
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        TokenLimitConfig config = TokenLimitConfig.load();
+        TokenLimitConfig newConfig = TokenLimitConfig.load();
+        if(newConfig != config) {
+            synchronized (this) {
+                if(newConfig != config) {
+                    config = newConfig;
+                    List<String> tokenPathTemplates = config.getTokenPathTemplates();
+                    if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
+                        patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
+                    }
+                }
+            }
+        }
+
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest starts.");
         String key = null;
         String grantType = null;

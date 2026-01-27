@@ -73,12 +73,6 @@ public class ResponseCacheConfig {
         return new ResponseCacheConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-
     // --- Getters and Setters (Original Methods) ---
 
     public boolean isEnabled() {

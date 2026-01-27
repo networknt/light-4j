@@ -131,12 +131,6 @@ public class JwtConfig {
         return new JwtConfig(configName);
     }
 
-    public static void reload() {
-        synchronized (JwtConfig.class) {
-            instance = new JwtConfig(CONFIG_NAME);
-            ModuleRegistry.registerModule(CONFIG_NAME, JwtConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-        }
-    }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

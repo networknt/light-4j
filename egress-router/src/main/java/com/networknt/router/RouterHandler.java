@@ -113,9 +113,4 @@ public class RouterHandler implements HttpHandler {
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
     }
 
-    public void reload() {
-        // reload logic is now handled in handleRequest with hot reload
-        config = RouterConfig.load();
-        buildProxy();
-    }
 }

@@ -321,15 +321,6 @@ public class SecurityConfig {
         return new SecurityConfig(configName);
     }
 
-    public static void reload() {
-        synchronized (SecurityConfig.class) {
-            instance = new SecurityConfig(CONFIG_NAME);
-            ModuleRegistry.registerModule(CONFIG_NAME, SecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-        }
-    }
-
-
-
     public SecurityJwtConfig getJwt() { return jwt; }
     public Map<String, Object> getCertificate() {
         return jwt.getCertificate();

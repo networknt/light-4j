@@ -74,11 +74,6 @@ public class SidecarConfig {
         return new SidecarConfig(configName);
     }
 
-    public void reload() {
-        instance = new SidecarConfig(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, SidecarConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-    }
-
     public String getEgressIngressIndicator() {
         return egressIngressIndicator;
     }

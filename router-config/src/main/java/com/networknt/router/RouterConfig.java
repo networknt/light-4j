@@ -354,16 +354,6 @@ public class RouterConfig {
         return config;
     }
 
-    public void reload() {
-        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setHostWhitelist();
-        setUrlRewriteRules();
-        setMethodRewriteRules();
-        setQueryParamRewriteRules();
-        setHeaderRewriteRules();
-        setPathPrefixMaxRequestTime();
-    }
     public void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
         if(object != null) http2Enabled = Config.loadBooleanValue(HTTP2_ENABLED, object);

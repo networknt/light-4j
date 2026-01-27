@@ -74,13 +74,6 @@ public class ResponseFilterConfig {
         return new ResponseFilterConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-    }
-
-
     // --- Getters and Setters (Original Methods) ---
 
     public boolean isEnabled() {

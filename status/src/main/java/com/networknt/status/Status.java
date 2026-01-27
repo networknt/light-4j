@@ -301,11 +301,6 @@ public class Status {
         return sb.toString();
     }
 
-    public static void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-    }
-
     /**
      * This static method is very important for any customized status wrapper to get the light-4j
      * status before customizing it. There are several organizations that have their own customized

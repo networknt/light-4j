@@ -147,8 +147,4 @@ public class DirectRegistry extends AbstractRegistry {
         // do nothing
     }
 
-    public static void reload() {
-        DirectRegistryConfig.load();
-        if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
-    }
 }

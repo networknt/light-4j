@@ -427,11 +427,6 @@ public class  ServerConfig {
         return new ServerConfig(configName);
     }
 
-    public void reload() {
-        instance = new ServerConfig(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
-    }
-
     private void loadData() {
         if(mappedConfig != null) {
             Object object = mappedConfig.get(IP);

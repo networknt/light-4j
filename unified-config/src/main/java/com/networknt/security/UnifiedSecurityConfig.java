@@ -140,15 +140,6 @@ public class UnifiedSecurityConfig {
         return new UnifiedSecurityConfig(configName);
     }
 
-    public static void reload() {
-        synchronized (UnifiedSecurityConfig.class) {
-            instance = new UnifiedSecurityConfig(CONFIG_NAME);
-            ModuleRegistry.registerModule(CONFIG_NAME, UnifiedSecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-        }
-    }
-
-
-
     public boolean isEnabled() {
         return enabled;
     }
