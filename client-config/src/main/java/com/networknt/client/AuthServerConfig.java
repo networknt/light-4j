@@ -63,6 +63,12 @@ public class AuthServerConfig {
     )
     private String audience = null;
 
+    private Integer tokenRenewBeforeExpired = 60000;
+
+    private Integer expiredRefreshRetryDelay = 2000;
+
+    private Integer earlyRefreshRetryDelay = 4000;
+
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
@@ -133,5 +139,29 @@ public class AuthServerConfig {
 
     public Integer getProxyPort() {
         return proxyPort;
+    }
+
+    public Integer getTokenRenewBeforeExpired() {
+        return tokenRenewBeforeExpired;
+    }
+
+    public void setTokenRenewBeforeExpired(Integer tokenRenewBeforeExpired) {
+        this.tokenRenewBeforeExpired = tokenRenewBeforeExpired;
+    }
+
+    public Integer getExpiredRefreshRetryDelay() {
+        return expiredRefreshRetryDelay;
+    }
+
+    public void setExpiredRefreshRetryDelay(Integer expiredRefreshRetryDelay) {
+        this.expiredRefreshRetryDelay = expiredRefreshRetryDelay;
+    }
+
+    public Integer getEarlyRefreshRetryDelay() {
+        return earlyRefreshRetryDelay;
+    }
+
+    public void setEarlyRefreshRetryDelay(Integer earlyRefreshRetryDelay) {
+        this.earlyRefreshRetryDelay = earlyRefreshRetryDelay;
     }
 }
