@@ -92,7 +92,7 @@ public final class ClientConfig {
     public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     @ObjectField(
             configFieldName = ClientConfig.TLS,
@@ -132,7 +132,7 @@ public final class ClientConfig {
     @JsonProperty(ClientConfig.REQUEST)
     private RequestConfig request = null;
 
-    private final String configName;
+    private static String configName = ClientConfig.CONFIG_NAME;
 
     private static volatile ClientConfig instance;
 
@@ -170,8 +170,7 @@ public final class ClientConfig {
     }
 
     public static ClientConfig get() {
-        if(instance != null) return instance;
-        else return get(CONFIG_NAME);
+        return get(configName);
     }
 
     public static ClientConfig get(String configName) {
@@ -212,6 +211,10 @@ public final class ClientConfig {
 
     public RequestConfig getRequest() {
         return this.request;
+    }
+
+    public TlsConfig  getTls() {
+        return this.tls;
     }
 
     public Map<String, String> getPathPrefixServices() { return this.pathPrefixServices; }

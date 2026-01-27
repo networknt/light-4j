@@ -124,11 +124,12 @@ public class UnifiedSecurityConfig {
 
     public static UnifiedSecurityConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            if (instance != null) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
                 return instance;
             }
             synchronized (UnifiedSecurityConfig.class) {
-                if (instance != null) {
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
                     return instance;
                 }
                 instance = new UnifiedSecurityConfig(configName);

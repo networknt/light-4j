@@ -305,11 +305,12 @@ public class SecurityConfig {
      */
     public static SecurityConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            if (instance != null) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
                 return instance;
             }
             synchronized (SecurityConfig.class) {
-                if (instance != null) {
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
                     return instance;
                 }
                 instance = new SecurityConfig(configName);

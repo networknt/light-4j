@@ -151,6 +151,9 @@ public class TokenHandler implements MiddlewareHandler {
         if(tokenConfig.getProxyPort() != null) authServerConfig.setProxyPort(tokenConfig.getProxyPort());
         if(tokenConfig.getServerUrl() != null) authServerConfig.setServerUrl(tokenConfig.getServerUrl());
         if(tokenConfig.isEnableHttp2() != null) authServerConfig.setEnableHttp2(tokenConfig.isEnableHttp2());
+        if(tokenConfig.getTokenRenewBeforeExpired() != null) authServerConfig.setTokenRenewBeforeExpired(tokenConfig.getTokenRenewBeforeExpired());
+        if(tokenConfig.getEarlyRefreshRetryDelay() != null) authServerConfig.setEarlyRefreshRetryDelay(tokenConfig.getEarlyRefreshRetryDelay());
+        if(tokenConfig.getExpiredRefreshRetryDelay() != null) authServerConfig.setExpiredRefreshRetryDelay(tokenConfig.getExpiredRefreshRetryDelay());
         if(ccConfig.getScope() != null) authServerConfig.setScope(ccConfig.getScope());
         if(ccConfig.getClientId() != null) authServerConfig.setClientId(ccConfig.getClientId());
         if(ccConfig.getClientSecret() != null) authServerConfig.setClientSecret(ccConfig.getClientSecret());
@@ -159,8 +162,13 @@ public class TokenHandler implements MiddlewareHandler {
     }
 
     public static AuthServerConfig enrichAuthServerConfig(final AuthServerConfig baseConfig, final OAuthTokenConfig tokenConfig) {
-        if(tokenConfig.getProxyHost() != null) baseConfig.setProxyHost(tokenConfig.getProxyHost());
-        if(tokenConfig.getProxyPort() != null) baseConfig.setProxyPort(tokenConfig.getProxyPort());
+        if(baseConfig.getProxyHost() == null && tokenConfig.getProxyHost() != null) baseConfig.setProxyHost(tokenConfig.getProxyHost());
+        if(baseConfig.getProxyPort() == null && tokenConfig.getProxyPort() != null) baseConfig.setProxyPort(tokenConfig.getProxyPort());
+        if(baseConfig.getServerUrl() == null && tokenConfig.getServerUrl() != null) baseConfig.setServerUrl(tokenConfig.getServerUrl());
+        if(baseConfig.isEnableHttp2() == null && tokenConfig.isEnableHttp2() != null) baseConfig.setEnableHttp2(tokenConfig.isEnableHttp2());
+        if(tokenConfig.getTokenRenewBeforeExpired() != null) baseConfig.setTokenRenewBeforeExpired(tokenConfig.getTokenRenewBeforeExpired());
+        if(tokenConfig.getEarlyRefreshRetryDelay() != null) baseConfig.setEarlyRefreshRetryDelay(tokenConfig.getEarlyRefreshRetryDelay());
+        if(tokenConfig.getExpiredRefreshRetryDelay() != null) baseConfig.setExpiredRefreshRetryDelay(tokenConfig.getExpiredRefreshRetryDelay());
         return baseConfig;
     }
     public static Result<Jwt> getJwtToken(final String serviceId) {

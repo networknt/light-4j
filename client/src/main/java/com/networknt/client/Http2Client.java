@@ -157,6 +157,13 @@ public class Http2Client {
         if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
             System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
         }
+        boolean injectCallerId = ClientConfig.get().getRequest().isInjectCallerId();
+        if(injectCallerId) {
+            ServerConfig serverConfig = ServerConfig.load();
+            if(serverConfig != null) {
+                callerId = serverConfig.getServiceId();
+            }
+        }
 
         ServiceLoader<ClientProvider> providers = ServiceLoader.load(ClientProvider.class, classLoader);
         final Map<String, ClientProvider> map = new HashMap<>();
@@ -884,9 +891,9 @@ public class Http2Client {
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
         Path location = null;
         String password = "changeit"; //default value for cacerts, we can override it from config
-        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
-        if(tlsMap != null &&  tlsMap.get(DEFAULT_CERT_PASS)!=null) {
-            password = (String)tlsMap.get(DEFAULT_CERT_PASS);
+        TlsConfig tlsConfig = ClientConfig.get().getTls();
+        if(tlsConfig != null &&  tlsConfig.getDefaultCertPassword() != null) {
+            password = String.valueOf(tlsConfig.getDefaultCertPassword());
         }
         String locationProperty = System.getProperty(TRUST_STORE_PROPERTY);
         if (!StringUtils.isEmpty(locationProperty)) {
