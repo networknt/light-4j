@@ -60,11 +60,10 @@ import org.slf4j.LoggerFactory;
 public class PathPrefixServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathPrefixServiceHandler.class);
     protected volatile HttpHandler next;
-    protected static PathPrefixServiceConfig config;
 
     public PathPrefixServiceHandler() {
         logger.info("PathServiceHandler is constructed");
-        config = PathPrefixServiceConfig.load();
+        PathPrefixServiceConfig.load();
     }
 
     @Override
@@ -76,6 +75,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     }
 
     protected void pathPrefixService(HttpServerExchange exchange) throws Exception {
+        PathPrefixServiceConfig config = PathPrefixServiceConfig.load();
         String requestPath = exchange.getRequestURI();
         String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
 
@@ -117,6 +117,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return PathPrefixServiceConfig.load().isEnabled();
     }
 }

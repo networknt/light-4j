@@ -38,7 +38,7 @@ public class ApiKeyHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // need to pass in the config from the test resources folder here.
-            ApiKeyHandler apiKeyHandler = new ApiKeyHandler(ApiKeyConfig.load("apikey"));
+            ApiKeyHandler apiKeyHandler = new ApiKeyHandler("apikey");
             apiKeyHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")

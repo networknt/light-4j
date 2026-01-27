@@ -30,12 +30,14 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     private String configName = ResponseInjectionConfig.CONFIG_NAME;
 
     public ResponseInterceptorInjectionHandler() throws Exception {
+        ResponseInjectionConfig.load(configName);
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         LOG.info("SinkConduitInjectorHandler is loaded!");
     }
 
     public ResponseInterceptorInjectionHandler(String configName) throws Exception {
         this.configName = configName;
+        ResponseInjectionConfig.load(configName);
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         LOG.info("SinkConduitInjectorHandler is loaded with {}!", configName);
     }

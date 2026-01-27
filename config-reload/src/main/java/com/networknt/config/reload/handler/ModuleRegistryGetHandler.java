@@ -25,7 +25,8 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
     private static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
 
     public ModuleRegistryGetHandler() {
-
+        ConfigReloadConfig.load();
+        if(logger.isDebugEnabled()) logger.debug("ModuleRegistryGetHandler is constructed");
     }
 
     @Override

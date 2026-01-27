@@ -52,11 +52,13 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public ExternalServiceHandler() {
+        ExternalServiceConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded.");
     }
 
     public ExternalServiceHandler(String configName) {
         this.configName = configName;
+        ExternalServiceConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded with {}.", configName);
     }
 

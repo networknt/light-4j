@@ -41,7 +41,7 @@ public class DerefConfig {
     )
     boolean enabled;
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     private static volatile DerefConfig instance;
 

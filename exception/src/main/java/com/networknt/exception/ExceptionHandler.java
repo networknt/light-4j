@@ -51,11 +51,13 @@ public class ExceptionHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public ExceptionHandler() {
+        ExceptionConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed.");
     }
 
     public ExceptionHandler(String configName) {
         this.configName = configName;
+        ExceptionConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed with {}.", configName);
     }
 

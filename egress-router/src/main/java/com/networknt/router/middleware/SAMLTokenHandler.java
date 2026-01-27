@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 public class SAMLTokenHandler implements MiddlewareHandler {
     public static final String CLIENT_CONFIG_NAME = "client";
     public static final String CONFIG_SECURITY = "security";
-    static final TokenConfig config = TokenConfig.load();
     static Logger logger = LoggerFactory.getLogger(SAMLTokenHandler.class);
     protected volatile HttpHandler next;
 
@@ -134,7 +133,7 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return TokenConfig.load().isEnabled();
     }
 
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {

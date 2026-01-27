@@ -20,21 +20,19 @@ import org.slf4j.LoggerFactory;
 public class SidecarServiceDictHandler extends ServiceDictHandler {
     private static final Logger logger = LoggerFactory.getLogger(SidecarServiceDictHandler.class);
 
-    private static SidecarConfig sidecarConfig;
-
     public SidecarServiceDictHandler() {
         logger.info("SidecarServiceDictHandler is constructed");
-        config = ServiceDictConfig.load();
+        SidecarConfig.load();
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        SidecarConfig sidecarConfig = SidecarConfig.load();
+        SidecarConfig config = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarServiceDictHandler.handleRequest starts.");
-        if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
+        if (Constants.HEADER.equalsIgnoreCase(config.getEgressIngressIndicator())) {
             if(logger.isTraceEnabled()) logger.trace("Outgoing request with header indicator");
             serviceDict(exchange);
-        } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
+        } else if (Constants.PROTOCOL.equalsIgnoreCase(config.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
             if(logger.isTraceEnabled()) logger.trace("Outgoing request with protocol indicator and http protocol");
             serviceDict(exchange);
         } else {

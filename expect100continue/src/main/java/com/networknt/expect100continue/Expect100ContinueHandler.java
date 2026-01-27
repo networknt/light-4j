@@ -28,11 +28,13 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
     private static final ContinueResponseCommitListener CONTINUE_RESPONSE_COMMIT_LISTENER = new ContinueResponseCommitListener();
 
     public Expect100ContinueHandler() {
+        Expect100ContinueConfig.load(configName);
         if (LOG.isInfoEnabled()) LOG.info("Expect100ContinueHandler is loaded.");
     }
 
     public Expect100ContinueHandler(String configName) {
         this.configName = configName;
+        Expect100ContinueConfig.load(configName);
         if (LOG.isInfoEnabled()) LOG.info("Expect100ContinueHandler is loaded with {}.", configName);
     }
 

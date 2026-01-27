@@ -51,11 +51,13 @@ public class HeaderHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public HeaderHandler() {
+        HeaderConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("HeaderHandler is loaded.");
     }
 
     public HeaderHandler(String configName) {
         this.configName = configName;
+        HeaderConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("HeaderHandler is loaded with {}.", configName);
     }
 

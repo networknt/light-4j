@@ -81,6 +81,7 @@ public class TokenHandler implements MiddlewareHandler {
     public final static Map<String, Jwt> cache = new ConcurrentHashMap<>();
 
     public TokenHandler() {
+        TokenConfig.load();
         logger.info("TokenHandler is loaded.");
     }
 

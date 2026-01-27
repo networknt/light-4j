@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 public class DerefMiddlewareHandler implements MiddlewareHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DerefMiddlewareHandler.class);
-    private static final String CONFIG_NAME = "deref";
     private static final String MISSING_AUTH_TOKEN = "ERR10002";
     private static final String EMPTY_TOKEN_DEREFERENCE_RESPONSE = "ERR10044";
     private static final String TOKEN_DEREFERENCE_ERROR = "ERR10045";
@@ -49,6 +48,7 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public DerefMiddlewareHandler() {
+        DerefConfig.load();
         if(logger.isInfoEnabled()) logger.info("DerefMiddlewareHandler is constructed.");
     }
 

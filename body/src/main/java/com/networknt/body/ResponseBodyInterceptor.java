@@ -22,12 +22,14 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
     private volatile HttpHandler next;
 
     public ResponseBodyInterceptor() {
+        BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("ResponseBodyInterceptor is loaded");
     }
 
     public ResponseBodyInterceptor(String configName) {
         this.configName = configName;
+        BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("ResponseBodyInterceptor is loaded with {}.", configName);
     }

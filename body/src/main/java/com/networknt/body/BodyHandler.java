@@ -68,6 +68,7 @@ public class BodyHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BodyHandler() {
+        BodyConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
     }
 
@@ -78,6 +79,7 @@ public class BodyHandler implements MiddlewareHandler {
      */
     public BodyHandler(String configName) {
         this.configName = configName;
+        BodyConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded with {}.", configName);
     }
 

@@ -50,12 +50,14 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     private volatile HttpHandler next;
 
     public RequestBodyInterceptor() {
+        BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is loaded.");
     }
 
     public RequestBodyInterceptor(String configName) {
         this.configName = configName;
+        BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is loaded with {}.", configName);
     }

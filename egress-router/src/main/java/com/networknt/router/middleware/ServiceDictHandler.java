@@ -26,11 +26,10 @@ import org.slf4j.LoggerFactory;
 public class ServiceDictHandler implements MiddlewareHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ServiceDictHandler.class);
     protected volatile HttpHandler next;
-    protected static ServiceDictConfig config;
 
     public ServiceDictHandler() {
+        ServiceDictConfig.load();
         logger.info("ServiceDictHandler is constructed");
-        config = ServiceDictConfig.load();
     }
 
 	@Override
@@ -42,6 +41,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	}
 
     protected void serviceDict(HttpServerExchange exchange) throws Exception {
+        ServiceDictConfig config = ServiceDictConfig.load();
         String requestPath = exchange.getRequestURI();
         String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
         String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
@@ -79,7 +79,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ServiceDictConfig.load().isEnabled();
     }
 
 }

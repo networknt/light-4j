@@ -35,19 +35,16 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     private RequestInterceptor[] interceptors = null;
 
     public RequestInterceptorInjectionHandler() {
-        LOG.info("RequestInterceptorInjectionHandler is loaded!");
+        RequestInjectionConfig.load(configName);
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
+        LOG.info("RequestInterceptorInjectionHandler is loaded!");
     }
 
     public RequestInterceptorInjectionHandler(String configName) {
         this.configName = configName;
+        RequestInjectionConfig.load(configName);
+        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
         LOG.info("RequestInterceptorInjectionHandler is loaded with {}!", configName);
-        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
-    }
-
-    public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
-        LOG.info("RequestInterceptorInjectionHandler is loaded!");
-        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
     @Override

@@ -53,6 +53,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private List<Pattern> patterns;
+    private String configName = TokenLimitConfig.CONFIG_NAME;
 
     CacheManager cacheManager = CacheManager.getInstance();
 
@@ -68,13 +69,15 @@ public class TokenLimitHandler implements MiddlewareHandler {
     /**
      * This is a constructor for test cases only. Please don't use it.
      *
-     * @param cfg token limit config
+     * @param configName String
      * @throws Exception thrown when config is wrong.
      *
      */
     @Deprecated
-    public TokenLimitHandler(TokenLimitConfig cfg) throws Exception{
-        List<String> tokenPathTemplates = cfg.getTokenPathTemplates();
+    public TokenLimitHandler(String configName) throws Exception{
+        this.configName = configName;
+        TokenLimitConfig config = TokenLimitConfig.load();
+        List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }

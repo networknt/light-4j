@@ -58,11 +58,13 @@ public class BasicAuthHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BasicAuthHandler() {
+        BasicAuthConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
     }
 
     public BasicAuthHandler(String configName) {
         this.configName = configName;
+        BasicAuthConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded with {}.", configName);
     }
 

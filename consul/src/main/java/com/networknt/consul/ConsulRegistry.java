@@ -36,20 +36,20 @@ public class ConsulRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
-    private ConsulClient client;
+    private final ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
 
     // service local cache. key: serviceName, value: <service url list>
-    private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
+    private final ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
     // keep all subscribe urls, so that it won't double subscribe.
-    private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
+    private static final Set<URL> subscribedSet = new ConcurrentHashSet<>();
     // record lookup service thread, ensure each serviceName start only one thread, <serviceName, tag, lastConsulIndexId>
-    private ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
+    private final ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
 
     // TODO: 2016/6/17 clientUrl support multiple listener
     // record subscribers service callback listeners, listener was called when corresponding service changes
-    private ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> notifyListeners = new ConcurrentHashMap<>();
-    private ThreadPoolExecutor notifyExecutor;
+    private final ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> notifyListeners = new ConcurrentHashMap<>();
+    private final ThreadPoolExecutor notifyExecutor;
 
     static String MASK_KEY_CONSUL_TOKEN = "consulToken";
 

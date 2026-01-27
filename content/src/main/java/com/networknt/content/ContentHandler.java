@@ -38,11 +38,13 @@ public class ContentHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public ContentHandler() {
+        ContentConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("ContentHandler is loaded.");
     }
 
     public ContentHandler(String configName) {
         this.configName = configName;
+        ContentConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("ContentHandler is loaded with {}.", configName);
     }
 

@@ -43,20 +43,25 @@ public class SanitizerHandler implements MiddlewareHandler {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SanitizerHandler.class);
 
     private volatile HttpHandler next;
-    private String configName = null; // for test purposes only
+    private String configName = SanitizerConfig.CONFIG_NAME;
 
     public SanitizerHandler() {
+        SanitizerConfig.load(configName);
+        if(logger.isInfoEnabled()) logger.info("SanitizerHandler is loaded.");
     }
 
     // integration test purpose only.
     @Deprecated
     public SanitizerHandler(String configName) {
         this.configName = configName;
+        SanitizerConfig.load(configName);
+        if(logger.isInfoEnabled()) logger.info("SanitizerHandler is loaded with config {}.", configName);
+
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        SanitizerConfig config = (configName != null) ? SanitizerConfig.load(configName) : SanitizerConfig.load();
+        SanitizerConfig config = SanitizerConfig.load(configName);
         EncoderWrapper bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
         EncoderWrapper headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
         

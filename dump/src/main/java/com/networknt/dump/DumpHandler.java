@@ -39,11 +39,13 @@ public class DumpHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public DumpHandler() {
+        DumpConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("DumpHandler is constructed.");
     }
 
     public DumpHandler(String configName) {
         this.configName = configName;
+        DumpConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("DumpHandler is constructed with {}.", configName);
     }
 

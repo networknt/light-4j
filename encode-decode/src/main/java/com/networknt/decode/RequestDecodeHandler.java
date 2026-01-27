@@ -44,7 +44,7 @@ import java.util.Map;
  */
 public class RequestDecodeHandler implements MiddlewareHandler {
 
-    private String configName;
+    private String configName = RequestDecodeConfig.CONFIG_NAME;
 
     private volatile RequestDecodeConfig config;
     private volatile Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings;
@@ -58,11 +58,11 @@ public class RequestDecodeHandler implements MiddlewareHandler {
     public RequestDecodeHandler(String configName) {
         this.configName = configName;
         this.config = RequestDecodeConfig.load(configName);
-        buildEncodings();
+        buildEncodings(config);
         if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is constructed with {}.", configName);
     }
 
-    private void buildEncodings() {
+    private void buildEncodings(RequestDecodeConfig config) {
         Map<String, ConduitWrapper<StreamSourceConduit>> encodings = new CopyOnWriteMap<>();
         List<String> decoders = config.getDecoders();
         if(decoders != null) {
@@ -104,7 +104,7 @@ public class RequestDecodeHandler implements MiddlewareHandler {
                 newConfig = RequestDecodeConfig.load(configName);
                 if (newConfig != config) {
                     this.config = newConfig;
-                    buildEncodings();
+                    buildEncodings(config);
                 }
             }
         }

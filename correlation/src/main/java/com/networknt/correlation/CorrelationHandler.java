@@ -48,6 +48,7 @@ public class CorrelationHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public CorrelationHandler() {
+        CorrelationConfig.load();
         logger.info("CorrelationHandler is loaded.");
     }
 

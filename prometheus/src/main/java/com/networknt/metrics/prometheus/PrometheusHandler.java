@@ -67,6 +67,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
 
     public PrometheusHandler() {
+        PrometheusConfig.load();
         registry=  CollectorRegistry.defaultRegistry;
     }
 

@@ -35,17 +35,19 @@ public class WhitelistHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(WhitelistHandler.class);
     private static final String INVALID_IP_FOR_PATH = "ERR10049";
 
-    private String configName;
+    private String configName = WhitelistConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
     public WhitelistHandler(String configName) {
         this.configName = configName;
-        if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
+        WhitelistConfig.load(configName);
+        if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed with config {}.", configName);
     }
 
     public WhitelistHandler() {
         this(WhitelistConfig.CONFIG_NAME);
+        WhitelistConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
     }
 

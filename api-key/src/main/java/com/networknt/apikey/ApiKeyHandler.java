@@ -27,21 +27,25 @@ import org.slf4j.LoggerFactory;
 public class ApiKeyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyHandler.class);
     static final String API_KEY_MISMATCH = "ERR10075";
-    static ApiKeyConfig config;
 
     private volatile HttpHandler next;
+    private volatile String configName = ApiKeyConfig.CONFIG_NAME;
 
     public ApiKeyHandler() {
+        // Force to load the config and register it during the server startup, and force to load the test resource.
+        ApiKeyConfig.load(configName);
         if(logger.isTraceEnabled()) logger.trace("ApiKeyHandler is loaded.");
     }
 
     /**
      * This is a constructor for test cases only. Please don't use it.
-     * @param cfg BasicAuthConfig
+     * @param configName String
      */
     @Deprecated
-    public ApiKeyHandler(ApiKeyConfig cfg) {
-        config = cfg;
+    public ApiKeyHandler(String configName) {
+        this.configName = configName;
+        // Force to load the config and register it during the server startup, and force to load the test resource.
+        ApiKeyConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is loaded.");
     }
 
@@ -59,7 +63,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return ApiKeyConfig.load().isEnabled();
+        return ApiKeyConfig.load(configName).isEnabled();
     }
 
     @Override
@@ -75,7 +79,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     public boolean handleApiKey(HttpServerExchange exchange, String requestPath) {
         if(logger.isTraceEnabled()) logger.trace("requestPath = {}", requestPath);
-        ApiKeyConfig config = ApiKeyConfig.load();
+        ApiKeyConfig config = ApiKeyConfig.load(configName);
         if (config.getPathPrefixAuths() != null) {
             boolean matched = false;
             boolean found = false;
@@ -90,7 +94,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
                         try {
                             matched = HashUtil.validatePassword(k.toCharArray(), apiKey.getApiKey());
                             if(matched) {
-                                if (logger.isTraceEnabled()) logger.trace("Found valid apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Found valid apiKey with prefix = {} headerName = {}", apiKey.getPathPrefix(), apiKey.getHeaderName());
                                 break;
                             }
                         } catch (Exception e) {
@@ -100,7 +105,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
                     } else {
                         // if not hash enabled, then compare the apiKey directly.
                         if(apiKey.getApiKey().equals(k)) {
-                            if (logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                            if (logger.isTraceEnabled())
+                                logger.trace("Found matched apiKey with prefix = {} headerName = {}", apiKey.getPathPrefix(), apiKey.getHeaderName());
                             matched = true;
                             break;
                         }
@@ -113,7 +119,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
             }
             if(!matched) {
                 // at this moment, if not matched, then return an error message.
-                logger.error("Could not find matched APIKEY for request path " + requestPath);
+                logger.error("Could not find matched APIKEY for request path {}", requestPath);
                 setExchangeStatus(exchange, API_KEY_MISMATCH, requestPath);
                 if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends with an error.");
                 exchange.endExchange();

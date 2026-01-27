@@ -38,7 +38,7 @@ import java.util.List;
  * @author Steve Hu
  */
 public class ResponseEncodeHandler implements MiddlewareHandler {
-    private String configName;
+    private String configName = ResponseEncodeConfig.CONFIG_NAME;
 
     static final String NO_ENCODING_HANDLER = "ERR10050";
     private volatile ContentEncodingRepository contentEncodingRepository;
@@ -55,11 +55,11 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
     public ResponseEncodeHandler(String configName) {
         this.configName = configName;
         this.config = ResponseEncodeConfig.load(configName);
-        buildRepository();
+        buildRepository(config);
         if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is constructed with {}.", configName);
     }
 
-    private void buildRepository() {
+    private void buildRepository(ResponseEncodeConfig config) {
         ContentEncodingRepository repository = new ContentEncodingRepository();
         List<String> encoders = config.getEncoders();
         if(encoders != null) {
@@ -101,7 +101,7 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
                 newConfig = ResponseEncodeConfig.load(configName);
                 if (newConfig != config) {
                     this.config = newConfig;
-                    buildRepository();
+                    buildRepository(config);
                 }
             }
         }

@@ -47,6 +47,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public TraceabilityHandler() {
+        TraceabilityConfig.load();
     }
 
     @Override

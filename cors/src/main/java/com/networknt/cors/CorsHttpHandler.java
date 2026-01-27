@@ -51,11 +51,13 @@ public class CorsHttpHandler implements MiddlewareHandler {
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
     public CorsHttpHandler() {
+        CorsConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
     }
 
     public CorsHttpHandler(String configName) {
         this.configName = configName;
+        CorsConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded with {}.", configName);
     }
 

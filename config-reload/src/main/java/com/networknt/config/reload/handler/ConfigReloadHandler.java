@@ -2,6 +2,7 @@ package com.networknt.config.reload.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigLoader;
 import com.networknt.config.reload.model.ConfigReloadConfig;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -35,6 +36,7 @@ public class ConfigReloadHandler implements LightHttpHandler {
     private  static final String RELOAD_METHOD = "reload";
 
     public ConfigReloadHandler() {
+        ConfigReloadConfig.load();
         if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");
     }
 

@@ -74,7 +74,7 @@ public class MrasHandler implements MiddlewareHandler {
     private AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
-    private String configName = MrasConfig.CONFIG_NAME;
+    private String configName =  MrasConfig.CONFIG_NAME;
     // the cached jwt token so that we can use the same token for different requests.
     private String accessToken;
     private String microsoft;
