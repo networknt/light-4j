@@ -1,6 +1,5 @@
 package com.networknt.client;
 
-import ch.qos.logback.core.net.server.Client;
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.JsonMapper;
 import org.junit.BeforeClass;
