@@ -40,7 +40,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private volatile RateLimiter rateLimiter;
-    private volatile LimitConfig limitConfig;
+    private volatile LimitConfig config;
     private final String configName;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
@@ -51,24 +51,24 @@ public class LimitHandler implements MiddlewareHandler {
 
     public LimitHandler(String configName) {
         this.configName = configName;
-        this.limitConfig = LimitConfig.load(configName);
+        this.config = LimitConfig.load(configName);
         try {
-            this.rateLimiter = new RateLimiter(limitConfig);
+            this.rateLimiter = new RateLimiter(config);
         } catch (Exception e) {
             logger.error("Exception in constructing RateLimiter", e);
         }
-        logger.info("RateLimit started with key type {}", limitConfig.getKey().name());
+        logger.info("RateLimit started with key type {}", config.getKey().name());
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest starts.");
-        LimitConfig config = LimitConfig.load(configName);
-        if (config != limitConfig) {
+        LimitConfig newConfig = LimitConfig.load(configName);
+        if (newConfig != config) {
             synchronized (this) {
-                if (config != limitConfig) {
-                    limitConfig = config;
-                    rateLimiter = new RateLimiter(limitConfig);
+                if (newConfig != config) {
+                    config = newConfig;
+                    rateLimiter = new RateLimiter(config);
                 }
             }
         }

@@ -38,8 +38,8 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     static final String MISSING_PATH_PREFIX_AUTH = "ERR10078";
     // make this static variable public so that it can be accessed from the server-info module
     private volatile HttpHandler next;
-    public static volatile JwtVerifier jwtVerifier;
-    private static volatile SecurityConfig securityConfig;
+    private volatile JwtVerifier jwtVerifier;
+    private volatile SecurityConfig config;
 
     public UnifiedSecurityHandler() {
         logger.info("UnifiedSecurityHandler starts");
@@ -50,12 +50,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug("UnifiedSecurityHandler.handleRequest starts.");
-        SecurityConfig config = SecurityConfig.load();
-        if (config != securityConfig) {
+        SecurityConfig newConfig = SecurityConfig.load();
+        if (newConfig != config) {
             synchronized (UnifiedSecurityHandler.class) {
-                if (config != securityConfig) {
-                    securityConfig = config;
-                    jwtVerifier = new JwtVerifier(securityConfig);
+                if (newConfig != config) {
+                    config = newConfig;
+                    jwtVerifier = new JwtVerifier(config);
                 }
             }
         }
@@ -309,12 +309,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
             }
             if(!found) {
                 // cannot find the prefix auth entry for request path.
-                logger.error("Cannot find prefix entry in pathPrefixAuths for " + reqPath);
+                logger.error("Cannot find prefix entry in pathPrefixAuths for {}", reqPath);
                 return new Status(MISSING_PATH_PREFIX_AUTH, reqPath);
             }
         } else {
             // pathPrefixAuths is not defined in the values.yml
-            logger.error("Cannot find pathPrefixAuths definition for " + reqPath);
+            logger.error("Cannot find pathPrefixAuths definition for {}", reqPath);
             return new Status(MISSING_PATH_PREFIX_AUTH, reqPath);
         }
         return null;

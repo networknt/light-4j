@@ -16,10 +16,8 @@
 
 package com.networknt.sanitizer;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
