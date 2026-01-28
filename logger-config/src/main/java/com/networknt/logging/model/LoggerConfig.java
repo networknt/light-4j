@@ -17,8 +17,8 @@
 package com.networknt.logging.model;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -82,30 +82,42 @@ public class LoggerConfig {
     String downstreamFramework;
 
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+
+    private final Map<String, Object> mappedConfig;
+
+    private static volatile LoggerConfig instance;
 
     private LoggerConfig() {
         this(CONFIG_NAME);
     }
 
     private LoggerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static LoggerConfig load() {
-        return new LoggerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LoggerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (LoggerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LoggerConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, LoggerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new LoggerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public void setConfigData() {

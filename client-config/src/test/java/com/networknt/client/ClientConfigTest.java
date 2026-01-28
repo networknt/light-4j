@@ -79,12 +79,11 @@ public class ClientConfigTest {
     @Test
     public void testServiceIdAuthServers() {
         ClientConfig clientConfig = ClientConfig.get();
-        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-        Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
-        if (clientConfig.isMultipleAuthServers()) {
+        OAuthTokenConfig tokenConfig = clientConfig.getOAuth().getToken();
+        OAuthTokenClientCredentialConfig ccConfig = tokenConfig.getClientCredentials();
+        if (clientConfig.getOAuth().isMultipleAuthServers()) {
             // iterate all the configured auth server to get JWK.
-            Object object = ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(object);
+            Map<String, AuthServerConfig> serviceIdAuthServers = ccConfig.getServiceIdAuthServers();
             assertEquals(2, serviceIdAuthServers.size());
         }
     }

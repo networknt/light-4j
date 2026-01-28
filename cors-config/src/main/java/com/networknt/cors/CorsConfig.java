@@ -19,8 +19,8 @@ package com.networknt.cors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class CorsConfig {
     public static final String PATH_PREFIX_ALLOWED = "pathPrefixAllowed";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -107,9 +107,10 @@ public class CorsConfig {
     )
     Map<String, CorsPathPrefix> pathPrefixAllowed;
 
+    private static volatile CorsConfig instance;
+
     private CorsConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -118,23 +119,28 @@ public class CorsConfig {
         this(CONFIG_NAME);
     }
 
-    public static CorsConfig load(String configName) {
-        return new CorsConfig(configName);
-    }
-
     public static CorsConfig load() {
-        return new CorsConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        this.reload(CONFIG_NAME);
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+    public static CorsConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CorsConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CorsConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, CorsConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new CorsConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -177,9 +183,7 @@ public class CorsConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

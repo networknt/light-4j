@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.utility;
-
-import com.networknt.server.ServerConfig;
+package com.networknt.server;
 
 import java.util.*;
 
@@ -33,24 +31,41 @@ public class ModuleRegistry {
     private static final Map<String, Object> pluginRegistry = new HashMap<>();
     private static final List<Map<String, Object>> plugins = new ArrayList<>();
 
+    // An identity cache to store the config object reference. The key is the configName + moduleClass
+    // The value is the config object reference.
+    private static final Map<String, Object> registryCache = new HashMap<>();
+
     // cache for the module classes
     private static final List<String> moduleClasses = new ArrayList<>();
     // cache for the plugin classes
     private static final List<String> pluginClasses = new ArrayList<>();
 
     public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
-        // use module name as key for the config map will make api-certification parses this object easily.
-        if(config != null) {
-            // loader to load the config without decryption for the registry.
-            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
+        String key = configName + ":" + moduleClass;
+        // Optimization: Check identity. If it is the same object, then return immediately.
+        // This is to prevent the repetitive registration from the per-request config loading.
+        if (config != null && registryCache.get(key) == config) {
+            return;
+        }
+
+        if (config != null) {
+            // New or updated config object. Deep copy the map to avoid modifying the original config.
+            Map<String, Object> maskedConfig = new HashMap<>(config); // This is shallow, need deep copy helper if nested
+            // For now, we assume simple masking on top level or need a recursive copier if masking is nested.
+            // Wait, standard Mask logic modifies the map in place?
+            // "maskNode" modifies the map passed to it. So we MUST deep copy first.
+            maskedConfig = deepCopy(config);
+
+            if (ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
                 for (String mask : masks) {
-                    maskNode(config, mask);
+                    maskNode(maskedConfig, mask);
                 }
             }
-            moduleRegistry.put(configName + ":" + moduleClass, config);
+            moduleRegistry.put(key, maskedConfig);
+            registryCache.put(key, config); // Store original ref for identity check
         } else {
-            // we don't have any module without config, but we cannot guarantee user created modules
-            moduleRegistry.put(configName + ":" + moduleClass, new HashMap<String, Object>());
+            moduleRegistry.put(key, new HashMap<String, Object>());
+            registryCache.remove(key);
         }
         if(!moduleClasses.contains(moduleClass)) {
             moduleClasses.add(moduleClass);
@@ -126,5 +141,35 @@ public class ModuleRegistry {
                 maskList((List) list.get(i), mask);
             }
         }
+    }
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> deepCopy(Map<String, Object> original) {
+        Map<String, Object> copy = new HashMap<>();
+        for (Map.Entry<String, Object> entry : original.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                copy.put(entry.getKey(), deepCopy((Map<String, Object>) value));
+            } else if (value instanceof List) {
+                copy.put(entry.getKey(), deepCopyList((List<Object>) value));
+            } else {
+                copy.put(entry.getKey(), value);
+            }
+        }
+        return copy;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Object> deepCopyList(List<Object> original) {
+        List<Object> copy = new ArrayList<>(original.size());
+        for (Object item : original) {
+            if (item instanceof Map) {
+                copy.add(deepCopy((Map<String, Object>) item));
+            } else if (item instanceof List) {
+                copy.add(deepCopyList((List<Object>) item));
+            } else {
+                copy.add(item);
+            }
+        }
+        return copy;
     }
 }

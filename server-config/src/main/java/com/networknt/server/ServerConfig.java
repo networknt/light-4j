@@ -21,6 +21,8 @@ import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -379,14 +381,12 @@ public class  ServerConfig {
     )
     boolean maskConfigProperties;
 
-    private final Config config;
-    private final Map<String, Object> mappedConfig;
+    private static final List<String> masks = Arrays.asList("keystorePass", "keyPass", "truststorePass", "bootstrapStorePass");
+    private Map<String, Object> mappedConfig;
     private static volatile ServerConfig instance;
 
     private ServerConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
-        load();
+        this(CONFIG_NAME);
     }
 
     /**
@@ -395,13 +395,39 @@ public class  ServerConfig {
      * @param configName String
      */
     private ServerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        load();
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            loadData();
+        }
     }
 
+    public static ServerConfig load() {
+        return load(CONFIG_NAME);
+    }
 
-    private void load() {
+    /**
+     * This method is only for testing. Please use load() instead.
+     * @param configName String
+     * @return ServerConfig
+     */
+    public static ServerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (ServerConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new ServerConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+                return instance;
+            }
+        }
+        return new ServerConfig(configName);
+    }
+
+    private void loadData() {
         if(mappedConfig != null) {
             Object object = mappedConfig.get(IP);
             if(object != null) ip = (String)object;
@@ -474,20 +500,14 @@ public class  ServerConfig {
         }
     }
 
+    @Deprecated
     public static ServerConfig getInstance() {
-        if (instance == null) {
-            synchronized (ServerConfig.class) {
-                if (instance == null) {
-                    instance = new ServerConfig();
-                }
-            }
-        }
-        return instance;
+        return load();
     }
 
+    @Deprecated
     public static ServerConfig getInstance(String configName) {
-        instance = new ServerConfig(configName);
-        return instance;
+        return load(configName);
     }
 
     /**
@@ -495,9 +515,9 @@ public class  ServerConfig {
      * @param configName String
      * @return ServerConfig object
      */
+    @Deprecated
     public static ServerConfig get(String configName) {
-        instance = new ServerConfig(configName);
-        return instance;
+        return load(configName);
     }
 
     public Map<String, Object> getMappedConfig() {

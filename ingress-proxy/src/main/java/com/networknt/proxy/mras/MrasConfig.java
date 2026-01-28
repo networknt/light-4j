@@ -88,7 +88,7 @@ public class MrasConfig {
      */
     private MrasConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setUrlRewriteRules();
         setConfigMap();
@@ -100,13 +100,6 @@ public class MrasConfig {
 
     public static MrasConfig load(String configName) {
         return new MrasConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setUrlRewriteRules();
-        setConfigMap();
     }
 
     public Map<String, Object> getMappedConfig() {

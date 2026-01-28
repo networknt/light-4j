@@ -34,17 +34,25 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
 
-    public static SecurityConfig config;
+    public static volatile SecurityConfig config;
 
     // make this static variable public so that it can be accessed from the server-info module
-    public static JwtVerifier jwtVerifier;
+    public static volatile JwtVerifier jwtVerifier;
 
     public volatile HttpHandler next;
 
     @Override
     @SuppressWarnings("unchecked")
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-
+        SecurityConfig securityConfig = SecurityConfig.load();
+        if (securityConfig != config) {
+            synchronized (AbstractJwtVerifyHandler.class) {
+                if (securityConfig != config) {
+                    config = securityConfig;
+                    jwtVerifier = new JwtVerifier(config);
+                }
+            }
+        }
         if (logger.isDebugEnabled())
             logger.debug("JwtVerifyHandler.handleRequest starts.");
 

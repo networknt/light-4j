@@ -9,6 +9,8 @@ import com.networknt.config.schema.StringField; // REQUIRED IMPORT
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.Map;
 
 /**
@@ -155,27 +157,38 @@ public class ProxyConfig {
 
     // --- Constructor and Loading Logic ---
 
+    private static volatile ProxyConfig instance;
+
+    // --- Constructor and Loading Logic ---
+
     private ProxyConfig() {
         this(CONFIG_NAME);
     }
 
     private ProxyConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static ProxyConfig load() {
-        return new ProxyConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ProxyConfig load(String configName) {
-        return new ProxyConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
+        ProxyConfig config = instance;
+        if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+            synchronized (ProxyConfig.class) {
+                config = instance;
+                if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+                    config = new ProxyConfig(configName);
+                    instance = config;
+                    // Register the module with the new config
+                    ModuleRegistry.registerModule(configName, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+                }
+            }
+        }
+        return config;
     }
 
     public Map<String, Object> getMappedConfig() {

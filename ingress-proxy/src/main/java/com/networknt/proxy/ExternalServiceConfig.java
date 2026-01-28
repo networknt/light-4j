@@ -150,7 +150,7 @@ public class ExternalServiceConfig {
 
     private ExternalServiceConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData(); // Load annotated fields first
         setUrlRewriteRules(); // Load and convert rewrite rules
         setConfigList(); // Load and convert pathHostMappings
@@ -162,13 +162,6 @@ public class ExternalServiceConfig {
 
     public static ExternalServiceConfig load(String configName) {
         return new ExternalServiceConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setUrlRewriteRules();
-        setConfigList();
     }
 
     // --- Private Setters for Annotated Fields ---

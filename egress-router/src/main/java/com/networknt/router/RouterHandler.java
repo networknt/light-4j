@@ -20,12 +20,9 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
-import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -48,48 +45,31 @@ import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_
  */
 public class RouterHandler implements HttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(RouterHandler.class);
-    private static RouterConfig config;
+    private RouterConfig config;
 
-    protected static ProxyHandler proxyHandler;
-    protected static AbstractMetricsHandler metricsHandler;
+    protected volatile ProxyHandler proxyHandler;
+    protected volatile AbstractMetricsHandler metricsHandler;
+
     public RouterHandler() {
         config = RouterConfig.load();
-        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
-        ClientConfig clientConfig = ClientConfig.get();
-        Map<String, Object> tlsMap = clientConfig.getTlsConfig();
-        // disable the hostname verification based on the config. We need to do it here as the LoadBalancingRouterProxyClient uses the Undertow HttpClient.
-        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
-            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
-        }
-        // As we are building a client side router for the light platform, the assumption is the server will
-        // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
-        LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
-        if(config.httpsEnabled) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
-        if(config.http2Enabled) {
-            client.setOptionMap(OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
-        } else {
-            client.setOptionMap(OptionMap.EMPTY);
-        }
-        proxyHandler = ProxyHandler.builder()
-                .setProxyClient(client)
-                .setMaxConnectionRetries(config.maxConnectionRetries)
-                .setMaxQueueSize(config.maxQueueSize)
-                .setMaxRequestTime(config.maxRequestTime)
-                .setPathPrefixMaxRequestTime(config.pathPrefixMaxRequestTime)
-                .setReuseXForwarded(config.reuseXForwarded)
-                .setRewriteHostHeader(config.rewriteHostHeader)
-                .setUrlRewriteRules(config.urlRewriteRules)
-                .setMethodRewriteRules(config.methodRewriteRules)
-                .setQueryParamRewriteRules(config.queryParamRewriteRules)
-                .setHeaderRewriteRules(config.headerRewriteRules)
-                .setNext(ResponseCodeHandler.HANDLE_404)
-                .build();
-        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+        buildProxy();
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
+        RouterConfig newConfig = RouterConfig.load();
+        if(newConfig != config) {
+            synchronized (this) {
+                newConfig = RouterConfig.load();
+                if(newConfig != config) {
+                    config = newConfig;
+                    buildProxy();
+                    if(logger.isInfoEnabled()) logger.info("RouterHandler is reloaded.");
+                }
+            }
+        }
+
         if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(metricsHandler != null) {
             exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, metricsHandler);
@@ -100,31 +80,37 @@ public class RouterHandler implements HttpHandler {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
+    private void buildProxy() {
+        ClientConfig clientConfig = ClientConfig.get();
+        Map<String, Object> tlsMap = clientConfig.getTlsConfig();
+        // disable the hostname verification based on the config. We need to do it here as the LoadBalancingRouterProxyClient uses the Undertow HttpClient.
+        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
+        // As we are building a client side router for the light platform, the assumption is the server will
+        // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
-        if(config.httpsEnabled) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
-        if(config.http2Enabled) {
+        if(config.isHttpsEnabled()) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
+        if(config.isHttp2Enabled()) {
             client.setOptionMap(OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         } else {
             client.setOptionMap(OptionMap.EMPTY);
         }
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(client)
-                .setMaxConnectionRetries(config.maxConnectionRetries)
-                .setMaxQueueSize(config.maxQueueSize)
-                .setMaxRequestTime(config.maxRequestTime)
-                .setPathPrefixMaxRequestTime(config.pathPrefixMaxRequestTime)
-                .setReuseXForwarded(config.reuseXForwarded)
-                .setRewriteHostHeader(config.rewriteHostHeader)
-                .setUrlRewriteRules(config.urlRewriteRules)
-                .setMethodRewriteRules(config.methodRewriteRules)
-                .setQueryParamRewriteRules(config.queryParamRewriteRules)
-                .setHeaderRewriteRules(config.headerRewriteRules)
+                .setMaxConnectionRetries(config.getMaxConnectionRetries())
+                .setMaxQueueSize(config.getMaxQueueSize())
+                .setMaxRequestTime(config.getMaxRequestTime())
+                .setPathPrefixMaxRequestTime(config.getPathPrefixMaxRequestTime())
+                .setReuseXForwarded(config.isReuseXForwarded())
+                .setRewriteHostHeader(config.isRewriteHostHeader())
+                .setUrlRewriteRules(config.getUrlRewriteRules())
+                .setMethodRewriteRules(config.getMethodRewriteRules())
+                .setQueryParamRewriteRules(config.getQueryParamRewriteRules())
+                .setHeaderRewriteRules(config.getHeaderRewriteRules())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
-        if(logger.isInfoEnabled()) logger.info("RouterHandler is reloaded.");
     }
+
 }

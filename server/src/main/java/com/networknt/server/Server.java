@@ -30,7 +30,6 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -120,14 +119,6 @@ public class Server {
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
 
-            // register the module to /server/info
-            List<String> masks = new ArrayList<>();
-            masks.add("keystorePass");
-            masks.add("keyPass");
-            masks.add("truststorePass");
-            masks.add("bootstrapStorePass");
-            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
-
             // start the server
             start();
         } catch (RuntimeException e) {
@@ -185,7 +176,7 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        ServerConfig serverConfig = ServerConfig.getInstance();
+        ServerConfig serverConfig = ServerConfig.load();
         if (serverConfig.dynamicPort) {
             if (serverConfig.minPort > serverConfig.maxPort) {
                 String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
@@ -230,10 +221,9 @@ public class Server {
         MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
         if (middlewareHandlers != null) {
             for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
-                logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
+                logger.info("Plugin: {}", middlewareHandlers[i].getClass().getName());
                 if (middlewareHandlers[i].isEnabled()) {
                     handler = middlewareHandlers[i].setNext(handler);
-                    middlewareHandlers[i].register();
                 }
             }
         }
@@ -245,11 +235,11 @@ public class Server {
      * load it into the server configuration, otherwise use the default value
      */
     private static void serverOptionInit() {
-        ServerOption.serverOptionInit(ServerConfig.getInstance().getMappedConfig(), ServerConfig.getInstance());
+        ServerOption.serverOptionInit(ServerConfig.load().getMappedConfig(), ServerConfig.load());
     }
 
     static private boolean bind(HttpHandler handler, int port) {
-        ServerConfig serverConfig = ServerConfig.getInstance();
+        ServerConfig serverConfig = ServerConfig.load();
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
@@ -362,7 +352,7 @@ public class Server {
     static public void shutdown() {
 
         // need to unregister the service
-        if (ServerConfig.getInstance().enableRegistry && registry != null && serviceUrls != null) {
+        if (ServerConfig.load().enableRegistry && registry != null && serviceUrls != null) {
             for(URL serviceUrl: serviceUrls) {
                 registry.unregister(serviceUrl);
                 // Please don't remove the following line. When server is killed, the logback won't work anymore.
@@ -377,7 +367,7 @@ public class Server {
             logger.info("Starting graceful shutdown.");
             gracefulShutdownHandler.shutdown();
             try {
-                gracefulShutdownHandler.awaitShutdown(ServerConfig.getInstance().getShutdownGracefulPeriod());
+                gracefulShutdownHandler.awaitShutdown(ServerConfig.load().getShutdownGracefulPeriod());
             } catch (InterruptedException e) {
                 logger.error("Error occurred while waiting for pending requests to complete.", e);
             }
@@ -402,8 +392,8 @@ public class Server {
     }
 
     protected static KeyStore loadKeyStore() {
-        String name = ServerConfig.getInstance().getKeystoreName();
-        String pass = ServerConfig.getInstance().getKeystorePass();
+        String name = ServerConfig.load().getKeystoreName();
+        String pass = ServerConfig.load().getKeystorePass();
         if(pass == null) {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS);
@@ -412,8 +402,8 @@ public class Server {
     }
 
     protected static KeyStore loadTrustStore() {
-        String name = ServerConfig.getInstance().getTruststoreName();
-        String pass = ServerConfig.getInstance().getTruststorePass();
+        String name = ServerConfig.load().getTruststoreName();
+        String pass = ServerConfig.load().getTruststorePass();
         if(pass == null) {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
@@ -457,14 +447,14 @@ public class Server {
     private static SSLContext createSSLContext() throws RuntimeException {
 
         try {
-            String keyPass = ServerConfig.getInstance().getKeyPass();
+            String keyPass = ServerConfig.load().getKeyPass();
             if(keyPass == null) {
                 Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
                 keyPass = (String) secretConfig.get(SecretConstants.SERVER_KEY_PASS);
             }
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), keyPass.toCharArray());
             TrustManager[] trustManagers;
-            if (ServerConfig.getInstance().isEnableTwoWayTls()) {
+            if (ServerConfig.load().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
             } else {
                 trustManagers = buildTrustManagers(null);
@@ -505,7 +495,7 @@ public class Server {
      */
     @Deprecated
     public static ServerConfig getServerConfig(){
-        return ServerConfig.getInstance();
+        return ServerConfig.load();
     }
 
     /**
@@ -521,7 +511,7 @@ public class Server {
             registry = SingletonServiceFactory.getBean(Registry.class);
             if (registry == null)
                 throw new RuntimeException("Could not find registry instance in service map");
-            ServerConfig serverConfig = ServerConfig.getInstance();
+            ServerConfig serverConfig = ServerConfig.load();
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
@@ -532,7 +522,7 @@ public class Server {
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
-            if(ServerConfig.getInstance().startOnRegistryFailure) {
+            if(ServerConfig.load().startOnRegistryFailure) {
                 System.out.println("Failed to register service, start the server without registry. ");
                 System.out.println(status.toString());
                 e.printStackTrace();

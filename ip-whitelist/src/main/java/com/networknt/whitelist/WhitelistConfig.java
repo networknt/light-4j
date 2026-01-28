@@ -23,6 +23,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Bits;
@@ -130,8 +131,10 @@ public class WhitelistConfig {
             valueTypeOneOf = {List.class, String.class}
     )
     Map<String, IpAcl> prefixAcl = new HashMap<>();
-    private Config config;
+
     private Map<String, Object> mappedConfig;
+
+    private static volatile WhitelistConfig instance;
 
     private WhitelistConfig() {
         this(CONFIG_NAME);
@@ -143,23 +146,32 @@ public class WhitelistConfig {
      * @param configName String
      */
     private WhitelistConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigMap();
     }
     public static WhitelistConfig load() {
-        return new WhitelistConfig();
+        return load(CONFIG_NAME);
     }
 
     public static WhitelistConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (WhitelistConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new WhitelistConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, WhitelistConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new WhitelistConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigMap();
     }
 
     public boolean isEnabled() {

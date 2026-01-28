@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.io.IOException;
 import java.util.*;
@@ -56,8 +57,10 @@ public class HeaderConfig {
     )
     Map<String, HeaderPathPrefixConfig> pathPrefixHeader;
 
-    private Config config;
+
     private Map<String, Object> mappedConfig;
+
+    private static volatile HeaderConfig instance;
 
     private HeaderConfig() {
         this(CONFIG_NAME);
@@ -69,26 +72,34 @@ public class HeaderConfig {
      * @param configName String
      */
     private HeaderConfig(String configName) {
-        this.config = Config.getInstance();
-        this.mappedConfig = this.config.getJsonMapConfigNoCache(configName);
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         if (this.mappedConfig != null) {
             this.setValues();
         }
     }
 
     public static HeaderConfig load() {
-        return new HeaderConfig();
+        return load(CONFIG_NAME);
     }
 
     public static HeaderConfig load(String configName) {
-        return new HeaderConfig(configName);
-    }
-
-    void reload() {
-        this.mappedConfig = this.config.getJsonMapConfigNoCache(CONFIG_NAME);
-        if (this.mappedConfig != null) {
-            this.setValues();
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (HeaderConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new HeaderConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, HeaderConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
         }
+        return new HeaderConfig(configName);
     }
 
     private void setValues() {

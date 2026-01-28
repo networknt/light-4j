@@ -19,7 +19,7 @@ package com.networknt.status;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,11 +299,6 @@ public class Status {
         sb.append("\"}");
 
         return sb.toString();
-    }
-
-    public static void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     /**

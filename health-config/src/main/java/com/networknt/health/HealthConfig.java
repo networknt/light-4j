@@ -17,8 +17,8 @@
 package com.networknt.health;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -43,7 +43,7 @@ public class HealthConfig {
     private static final String DOWNSTREAM_PATH = "downstreamPath";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+    private static HealthConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -100,30 +100,34 @@ public class HealthConfig {
     String downstreamPath;
 
     private HealthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
+        ModuleRegistry.registerModule(configName, HealthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
     private HealthConfig() {
         this(CONFIG_NAME);
     }
 
-    public static HealthConfig load(String configName) {
-        return new HealthConfig(configName);
-    }
-
     public static HealthConfig load() {
-        return new HealthConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
+    public static HealthConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == config) {
+                return instance;
+            }
+            synchronized (HealthConfig.class) {
+                config = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == config) {
+                    return instance;
+                }
+                instance = new HealthConfig(configName);
+                return instance;
+            }
+        }
+        return new HealthConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -178,9 +182,7 @@ public class HealthConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

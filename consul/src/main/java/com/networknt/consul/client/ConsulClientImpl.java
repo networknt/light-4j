@@ -80,7 +80,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
-			logger.error("Invalid URI " + consulUrl, e);
+            logger.error("Invalid URI {}", consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 	}

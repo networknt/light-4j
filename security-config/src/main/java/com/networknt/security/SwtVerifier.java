@@ -1,5 +1,6 @@
 package com.networknt.security;
 
+import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.TokenInfo;
 import com.networknt.client.oauth.TokenIntrospectionRequest;
@@ -30,7 +31,7 @@ public class SwtVerifier extends TokenVerifier {
     static SecurityConfig config;
 
     public SwtVerifier(SecurityConfig config) {
-        this.config = config;
+        SwtVerifier.config = config;
         if(logger.isInfoEnabled()) logger.info("SwtVerifier is constructed.");
     }
 
@@ -65,13 +66,13 @@ public class SwtVerifier extends TokenVerifier {
         }
         ClientConfig clientConfig = ClientConfig.get();
         Result<TokenInfo> result = null;
-        Map<String, Object> config;
+        AuthServerConfig authServerConfig;
 
-        if (requestPathOrSwtServiceIds != null && clientConfig.isMultipleAuthServers()) {
+        if (requestPathOrSwtServiceIds != null && clientConfig.getOAuth().isMultipleAuthServers()) {
             if(requestPathOrSwtServiceIds instanceof String) {
                 String requestPath = (String)requestPathOrSwtServiceIds;
                 Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
-                if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
+                if (pathPrefixServices == null || pathPrefixServices.isEmpty()) {
                     throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
                 }
                 // lookup the serviceId based on the full path and the prefix mapping by iteration here.
@@ -84,25 +85,25 @@ public class SwtVerifier extends TokenVerifier {
                 if (serviceId == null) {
                     throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
                 }
-                config = getJwkConfig(clientConfig, serviceId);
+                authServerConfig = getJwkConfig(clientConfig, serviceId);
                 // overwrite the clientId and clientSecret from the exchange headers.
-                if(config != null && clientId != null && clientSecret != null) {
-                    config.put(ClientConfig.CLIENT_ID, clientId);
-                    config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+                if(authServerConfig != null && clientId != null && clientSecret != null) {
+                    authServerConfig.setClientId(clientId.toCharArray());
+                    authServerConfig.setClientSecret(clientSecret.toCharArray());
                 }
-                result = inspectToken(swt, config);
+                result = inspectToken(swt, authServerConfig);
             } else if (requestPathOrSwtServiceIds instanceof List) {
                 // for this particular path prefix, there are two OAuth servers set up to inspect the token. Which one is success
                 // with active true will be used. Here we just return the one entry with active equal to true.
                 List<String> swtServiceIds = (List<String>)requestPathOrSwtServiceIds;
                 for(String serviceId: swtServiceIds) {
-                    config = getJwkConfig(clientConfig, serviceId);
+                    authServerConfig = getJwkConfig(clientConfig, serviceId);
                     // overwrite the clientId and clientSecret from the exchange headers.
-                    if(config != null && clientId != null && clientSecret != null) {
-                        config.put(ClientConfig.CLIENT_ID, clientId);
-                        config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+                    if(authServerConfig != null && clientId != null && clientSecret != null) {
+                        authServerConfig.setClientId(clientId.toCharArray());
+                        authServerConfig.setClientSecret(clientSecret.toCharArray());
                     }
-                    result  = inspectToken(swt, config);
+                    result  = inspectToken(swt, authServerConfig);
                     if(result.isSuccess()) {
                         // find the first success, we need to break the loop.
                         break;
@@ -114,22 +115,22 @@ public class SwtVerifier extends TokenVerifier {
             }
         } else {
             // get the token introspection config from the key section in the client.yml token key, but overwrite the clientId and clientSecret.
-            config = new HashMap<>();
+            authServerConfig = new AuthServerConfig();
             if(clientId != null && clientSecret != null) {
-                config.put(ClientConfig.CLIENT_ID, clientId);
-                config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+                authServerConfig.setClientId(clientId.toCharArray());
+                authServerConfig.setClientSecret(clientSecret.toCharArray());
             }
-            result = inspectToken(swt, config);
+            result = inspectToken(swt, authServerConfig);
         }
         return result;
     }
 
-    private Result<TokenInfo> inspectToken(String swt, Map<String, Object> config) {
+    private Result<TokenInfo> inspectToken(String swt, AuthServerConfig authServerConfig) {
         // get the token info with the swt token and config map.
-        if (logger.isTraceEnabled() && config != null)
-            logger.trace("OAuth token info introspection config = " + JsonMapper.toJson(config));
+        if (logger.isTraceEnabled() && authServerConfig != null)
+            logger.trace("OAuth token info introspection config = {}", JsonMapper.toJson(authServerConfig));
         // config is not null if isMultipleAuthServers is true. If it is null, then the key section is used from the client.yml
-        TokenIntrospectionRequest introspectionRequest = new TokenIntrospectionRequest(swt, config);
+        TokenIntrospectionRequest introspectionRequest = new TokenIntrospectionRequest(swt, authServerConfig);
 
         try {
             if (logger.isTraceEnabled())

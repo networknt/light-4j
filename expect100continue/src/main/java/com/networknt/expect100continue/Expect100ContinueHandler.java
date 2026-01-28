@@ -1,9 +1,7 @@
 package com.networknt.expect100continue;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.io.IoCallback;
 import io.undertow.io.Sender;
@@ -25,18 +23,30 @@ import java.util.concurrent.TimeUnit;
 
 public class Expect100ContinueHandler implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(Expect100ContinueHandler.class);
-    private static final Expect100ContinueConfig CONFIG = Expect100ContinueConfig.load();
+    private String configName = Expect100ContinueConfig.CONFIG_NAME;
     private volatile HttpHandler next;
     private static final ContinueResponseCommitListener CONTINUE_RESPONSE_COMMIT_LISTENER = new ContinueResponseCommitListener();
+
+    public Expect100ContinueHandler() {
+        Expect100ContinueConfig.load(configName);
+        if (LOG.isInfoEnabled()) LOG.info("Expect100ContinueHandler is loaded.");
+    }
+
+    public Expect100ContinueHandler(String configName) {
+        this.configName = configName;
+        Expect100ContinueConfig.load(configName);
+        if (LOG.isInfoEnabled()) LOG.info("Expect100ContinueHandler is loaded with {}.", configName);
+    }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         LOG.trace("Expect100ContinueHandler starts.");
 
         if (HttpContinue.requiresContinueResponse(exchange)) {
+            Expect100ContinueConfig config = Expect100ContinueConfig.load(configName);
             LOG.debug("Expect header detected in request.");
-            final var shouldIgnore100Continue = this.shouldIgnore100Continue(exchange);
-            final var shouldRespondInPlace = this.shouldRespondInPlace(exchange);
+            final var shouldIgnore100Continue = this.shouldIgnore100Continue(exchange, config);
+            final var shouldRespondInPlace = this.shouldRespondInPlace(exchange, config);
 
             if (!shouldIgnore100Continue && !shouldRespondInPlace) {
                 LOG.debug("Expect header detected in request. Adding request wrapper and response commit listener.");
@@ -70,19 +80,14 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
         Handler.next(exchange, this.next);
     }
 
-    private boolean shouldRespondInPlace(final HttpServerExchange exchange) {
-        return CONFIG.getInPlacePathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
+    private boolean shouldRespondInPlace(final HttpServerExchange exchange, Expect100ContinueConfig config) {
+        return config.getInPlacePathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
     }
 
-    private boolean shouldIgnore100Continue(final HttpServerExchange exchange) {
-        return CONFIG.getIgnoredPathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
+    private boolean shouldIgnore100Continue(final HttpServerExchange exchange, Expect100ContinueConfig config) {
+        return config.getIgnoredPathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
     }
 
-    @Override
-    public void reload() {
-        CONFIG.reload();
-        this.register();
-    }
 
     @Override
     public HttpHandler getNext() {
@@ -98,17 +103,7 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return CONFIG.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(
-                Expect100ContinueConfig.CONFIG_NAME,
-                Expect100ContinueHandler.class.getName(),
-                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(Expect100ContinueConfig.CONFIG_NAME),
-                null
-        );
+        return Expect100ContinueConfig.load(configName).isEnabled();
     }
 
     private static final class ContinueResponseCommitListener implements ResponseCommitListener {

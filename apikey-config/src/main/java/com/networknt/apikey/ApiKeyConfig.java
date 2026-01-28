@@ -10,6 +10,8 @@ import com.networknt.config.schema.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,36 +71,47 @@ public class ApiKeyConfig {
     )
     List<ApiKey> pathPrefixAuths;
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+
+    private final Map<String, Object> mappedConfig;
+    private static volatile ApiKeyConfig instance;
+
+    private ApiKeyConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
 
     private ApiKeyConfig() {
         this(CONFIG_NAME);
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
-    private ApiKeyConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-    }
     public static ApiKeyConfig load() {
-        return new ApiKeyConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ApiKeyConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ApiKeyConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ApiKeyConfig(configName);
+                // Register the module with the configuration. masking the apiKey property.
+                // As apiKeys are in the config file, we need to mask them.
+                List<String> masks = new ArrayList<>();
+                // if hashEnabled, there is no need to mask in the first place.
+                if(!instance.hashEnabled) {
+                    masks.add("apiKey");
+                }
+                ModuleRegistry.registerModule(configName, ApiKeyConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new ApiKeyConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {
@@ -125,11 +138,20 @@ public class ApiKeyConfig {
         this.pathPrefixAuths = pathPrefixAuths;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+
+
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(HASH_ENABLED);
-        if(object != null) hashEnabled = Config.loadBooleanValue(HASH_ENABLED, object);
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(HASH_ENABLED);
+            if (object != null) hashEnabled = Config.loadBooleanValue(HASH_ENABLED, object);
+            setConfigList();
+        }
     }
 
     private void setConfigList() {
@@ -167,11 +189,11 @@ public class ApiKeyConfig {
 
     public static List<ApiKey> populatePathPrefixAuths(List<Map<String, Object>> values) {
         List<ApiKey> pathPrefixAuths = new ArrayList<>();
-        for(Map<String, Object> value: values) {
+        for (Map<String, Object> value : values) {
             ApiKey apiKey = new ApiKey();
-            apiKey.setPathPrefix((String)value.get(PATH_PREFIX));
-            apiKey.setHeaderName((String)value.get(HEADER_NAME));
-            apiKey.setApiKey((String)value.get(API_KEY));
+            apiKey.setPathPrefix((String) value.get(PATH_PREFIX));
+            apiKey.setHeaderName((String) value.get(HEADER_NAME));
+            apiKey.setApiKey((String) value.get(API_KEY));
             pathPrefixAuths.add(apiKey);
         }
         return pathPrefixAuths;

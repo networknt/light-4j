@@ -63,6 +63,47 @@ public class AuthServerConfig {
     )
     private String audience = null;
 
+    private Integer tokenRenewBeforeExpired = 60000;
+
+    private Integer expiredRefreshRetryDelay = 2000;
+
+    private Integer earlyRefreshRetryDelay = 4000;
+
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public void setProxyPort(Integer proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    public void setEnableHttp2(Boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public void setClientId(char[] clientId) {
+        this.clientId = clientId;
+    }
+
+    public void setClientSecret(char[] clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    public void setScope(List<String> scope) {
+        this.scope = scope;
+    }
+
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
 
     public String getServerUrl() {
         return serverUrl;
@@ -98,5 +139,29 @@ public class AuthServerConfig {
 
     public Integer getProxyPort() {
         return proxyPort;
+    }
+
+    public Integer getTokenRenewBeforeExpired() {
+        return tokenRenewBeforeExpired;
+    }
+
+    public void setTokenRenewBeforeExpired(Integer tokenRenewBeforeExpired) {
+        this.tokenRenewBeforeExpired = tokenRenewBeforeExpired;
+    }
+
+    public Integer getExpiredRefreshRetryDelay() {
+        return expiredRefreshRetryDelay;
+    }
+
+    public void setExpiredRefreshRetryDelay(Integer expiredRefreshRetryDelay) {
+        this.expiredRefreshRetryDelay = expiredRefreshRetryDelay;
+    }
+
+    public Integer getEarlyRefreshRetryDelay() {
+        return earlyRefreshRetryDelay;
+    }
+
+    public void setEarlyRefreshRetryDelay(Integer earlyRefreshRetryDelay) {
+        this.earlyRefreshRetryDelay = earlyRefreshRetryDelay;
     }
 }

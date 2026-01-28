@@ -2,7 +2,7 @@ package com.networknt.config.reload.handler;
 
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;

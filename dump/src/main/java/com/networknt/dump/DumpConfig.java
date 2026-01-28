@@ -19,6 +19,7 @@ package com.networknt.dump;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,6 +140,44 @@ public class DumpConfig {
     private static Boolean DEFAULT = false;
 
 
+
+    private Map<String, Object> mappedConfig;
+
+    private static volatile DumpConfig instance;
+
+    private DumpConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+
+    private DumpConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static DumpConfig load() {
+        return load(CONFIG_NAME);
+    }
+
+    public static DumpConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DumpConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DumpConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, DumpConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new DumpConfig(configName);
+    }
+
     public void setResponse(Map<String, Object> response) {
         final var mapper = Config.getInstance().getMapper();
         this.response = mapper.convertValue(response, new TypeReference<>() {
@@ -165,11 +204,11 @@ public class DumpConfig {
     }
 
     public boolean isRequestEnabled() {
-        return isEnabled() && !this.requestEnabled;
+        return isEnabled() && requestEnabled;
     }
 
     public boolean isResponseEnabled() {
-        return isEnabled() && !this.responseEnabled;
+        return isEnabled() && responseEnabled;
     }
 
     //auto-generated
@@ -278,5 +317,37 @@ public class DumpConfig {
 
     public boolean isResponseBodyEnabled() {
         return response.isBody();
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    public void setConfigData() {
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get("enabled");
+            if (object != null) enabled = Config.loadBooleanValue("enabled", object);
+            object = mappedConfig.get("mask");
+            if (object != null) mask = Config.loadBooleanValue("mask", object);
+            object = mappedConfig.get("logLevel");
+            if (object != null) logLevel = (String) object;
+            object = mappedConfig.get("indentSize");
+            if (object != null) indentSize = Config.loadIntegerValue("indentSize", object);
+            object = mappedConfig.get("useJson");
+            if (object != null) useJson = Config.loadBooleanValue("useJson", object);
+            object = mappedConfig.get("requestEnabled");
+            if (object != null) requestEnabled = Config.loadBooleanValue("requestEnabled", object);
+            object = mappedConfig.get("responseEnabled");
+            if (object != null) responseEnabled = Config.loadBooleanValue("responseEnabled", object);
+
+            object = mappedConfig.get("request");
+            if (object != null) {
+                request = Config.getInstance().getMapper().convertValue(object, DumpRequestConfig.class);
+            }
+            object = mappedConfig.get("response");
+            if (object != null) {
+                response = Config.getInstance().getMapper().convertValue(object, DumpResponseConfig.class);
+            }
+        }
     }
 }

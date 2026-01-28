@@ -23,7 +23,6 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.server.ServerConfig;
 import com.networknt.url.HttpURL;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -47,21 +46,17 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
     private static final Logger logger = LoggerFactory.getLogger(SidecarRouterHandler.class);
 
     private volatile HttpHandler next;
-    public static final String ROUTER_CONFIG_NAME = "router";
-
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
-    public static SidecarConfig sidecarConfig;
-    public static ServerConfig serverConfig = ServerConfig.getInstance();
 
     public SidecarRouterHandler() {
         super();
-        sidecarConfig = SidecarConfig.load();
+        SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler is constructed");
     }
 
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest starts.");
-        if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
+        SidecarConfig config = SidecarConfig.load();
+        if (Constants.HEADER.equalsIgnoreCase(config.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             String serviceUrl = httpServerExchange.getRequestHeaders().getFirst(HttpStringConstants.SERVICE_URL);
@@ -70,14 +65,14 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
                 if(logger.isTraceEnabled()) logger.trace("SidecarRouterHandler.handleRequest ends with calling RouterHandler");
                 proxyHandler.handleRequest(httpServerExchange);
                 // get the serviceId and put it into the request as callerId for metrics
-                if(serverConfig != null) {
-                    httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, serverConfig.getServiceId());
+                if(ServerConfig.load() != null) {
+                    httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, ServerConfig.load().getServiceId());
                 }
             } else {
                 if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest ends with skipping RouterHandler.");
                 Handler.next(httpServerExchange, next);
             }
-        } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
+        } else if (Constants.PROTOCOL.equalsIgnoreCase(config.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
             if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest ends with calling RouterHandler.");
             proxyHandler.handleRequest(httpServerExchange);
         } else {
@@ -103,15 +98,4 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
         return true;
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        sidecarConfig.reload();
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
-    }
 }

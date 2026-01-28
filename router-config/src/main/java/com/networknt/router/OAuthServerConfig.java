@@ -92,13 +92,6 @@ public class OAuthServerConfig {
         return new OAuthServerConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-    }
-
-
     public boolean isEnabled() {
         return enabled;
     }

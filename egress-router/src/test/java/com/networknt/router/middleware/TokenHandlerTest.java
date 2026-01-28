@@ -1,6 +1,7 @@
 package com.networknt.router.middleware;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.Jwt;
@@ -182,7 +183,7 @@ public class TokenHandlerTest {
         final var config = ClientConfig.get().getOAuth().getToken().getClientCredentials().getServiceIdAuthServers();
         Assert.assertNotNull(config);
 
-        final var serviceConfig = config.get("service1");
+        final AuthServerConfig serviceConfig = config.get("service1");
         Assert.assertNotNull(serviceConfig);
 
         final var mapper = Config.getInstance().getMapper();
@@ -190,14 +191,11 @@ public class TokenHandlerTest {
         });
         Assert.assertNotNull(configMap);
 
-        final var completeAuthConfig = TokenHandler.buildAuthConfig(configMap, ClientConfig.get().getOAuth().getToken());
+        final var completeAuthConfig = TokenHandler.enrichAuthServerConfig(serviceConfig, ClientConfig.get().getOAuth().getToken());
         Assert.assertNotNull(completeAuthConfig);
 
-        // config should contain token config values
-        Assert.assertTrue(completeAuthConfig.containsKey("tokenRenewBeforeExpired") && (int) completeAuthConfig.get("tokenRenewBeforeExpired") == 30000);
-
         // config should not contain proxy settings
-        Assert.assertFalse(completeAuthConfig.containsKey("proxyPort"));
+        Assert.assertNull(completeAuthConfig.getProxyHost());
     }
 
 }

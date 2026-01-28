@@ -81,12 +81,6 @@ public class ServiceDictConfig {
         return new ServiceDictConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setMap();
-        setConfigData();
-    }
-
     public Map<String, String> getMapping() {
         return mapping;
     }

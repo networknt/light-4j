@@ -16,9 +16,13 @@
 
 package com.networknt.deref;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.Map;
 
 /**
  * The config class that maps to deref.yml
@@ -36,6 +40,54 @@ public class DerefConfig {
         defaultValue = "false"
     )
     boolean enabled;
+
+    private final Map<String, Object> mappedConfig;
+
+    private static volatile DerefConfig instance;
+
+    private DerefConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+
+    private DerefConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static DerefConfig load() {
+        return load(CONFIG_NAME);
+    }
+
+    public static DerefConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DerefConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DerefConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, DerefConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new DerefConfig(configName);
+    }
+
+    public void setConfigData() {
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get("enabled");
+            if(object != null) enabled = Config.loadBooleanValue("enabled", object);
+        }
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
 
     public boolean isEnabled() {
         return enabled;

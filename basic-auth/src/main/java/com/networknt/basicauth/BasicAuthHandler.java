@@ -16,11 +16,9 @@
 
 package com.networknt.basicauth;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.ldap.LdapUtil;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -29,7 +27,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -49,7 +46,6 @@ public class BasicAuthHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthHandler.class);
     static final String BEARER_PREFIX = "BEARER";
     static final String BASIC_PREFIX = "BASIC";
-    static BasicAuthConfig config;
 
     static final String MISSING_AUTH_TOKEN = "ERR10002";
     static final String INVALID_BASIC_HEADER = "ERR10046";
@@ -58,23 +54,20 @@ public class BasicAuthHandler implements MiddlewareHandler {
     static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
     static final String BEARER_USER_NOT_FOUND = "ERR10072";
 
+    private String configName = BasicAuthConfig.CONFIG_NAME;
     private volatile HttpHandler next;
 
     public BasicAuthHandler() {
-        config = BasicAuthConfig.load();
+        BasicAuthConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
     }
 
-    /**
-     * This is a constructor for test cases only. Please don't use it.
-     *
-     * @param cfg BasicAuthConfig
-     */
-    @Deprecated
-    public BasicAuthHandler(BasicAuthConfig cfg) {
-        config = cfg;
-        if (logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
+    public BasicAuthHandler(String configName) {
+        this.configName = configName;
+        BasicAuthConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded with {}.", configName);
     }
+
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -82,9 +75,10 @@ public class BasicAuthHandler implements MiddlewareHandler {
         String auth = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
         String requestPath = exchange.getRequestPath();
 
+        BasicAuthConfig config = BasicAuthConfig.load(configName);
         /* no auth header */
         if (auth == null || auth.trim().length() == 0) {
-            boolean b = this.handleAnonymousAuth(exchange, requestPath);
+            boolean b = this.handleAnonymousAuth(exchange, requestPath, config);
             // if the return value is false, we need to stop the handler and return immediately.
             if(!b) return;
         /* contains auth header */
@@ -103,7 +97,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     if(!b) return;
                 }
             } else if (BEARER_PREFIX.equalsIgnoreCase(auth.substring(0, 6))) {
-                boolean b = this.handleBearerToken(exchange, requestPath, auth);
+                boolean b = this.handleBearerToken(exchange, requestPath, auth, config);
                 if(!b) return;
             } else {
                 logger.error("Invalid/Unsupported authorization header {}", auth.substring(0, 10));
@@ -125,7 +119,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @param requestPath - path for current request.
      * @return true if there is no error. Otherwise, there is an error and need to return the handler instead of calling the next.
      */
-    private boolean handleAnonymousAuth(HttpServerExchange exchange, String requestPath) {
+    private boolean handleAnonymousAuth(HttpServerExchange exchange, String requestPath, BasicAuthConfig config) {
         if (config.isAllowAnonymous() && config.getUsers().containsKey(BasicAuthConfig.ANONYMOUS)) {
             List<String> paths = config.getUsers().get(BasicAuthConfig.ANONYMOUS).getPaths();
             boolean match = false;
@@ -174,7 +168,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
         if (pos == -1) {
             credentials = new String(org.apache.commons.codec.binary.Base64.decodeBase64(credentials), UTF_8);
         }
-
+        BasicAuthConfig config = BasicAuthConfig.load(configName);
         pos = credentials.indexOf(':');
         if (pos != -1) {
             String username = credentials.substring(0, pos);
@@ -268,7 +262,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @param auth - auth string
      * @return boolean to indicate if an error or success.
      */
-    private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, String auth) {
+    private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, String auth, BasicAuthConfig config) {
         // not basic token. check if the OAuth 2.0 bearer token is allowed.
         if (!config.allowBearerToken) {
             logger.error("Not a basic authentication header, and bearer token is not allowed.");
@@ -324,23 +318,6 @@ public class BasicAuthHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        // As passwords are in the config file, we need to mask them.
-        List<String> masks = new ArrayList<>();
-        masks.add("password");
-        ModuleRegistry.registerModule(BasicAuthConfig.CONFIG_NAME, BasicAuthHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        List<String> masks = new ArrayList<>();
-        masks.add("password");
-        ModuleRegistry.registerModule(BasicAuthConfig.CONFIG_NAME, BasicAuthHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
-        if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is reloaded.");
+        return BasicAuthConfig.load(configName).isEnabled();
     }
 }

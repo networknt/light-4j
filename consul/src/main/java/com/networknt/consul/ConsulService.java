@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import static com.networknt.consul.ConsulConstants.CONFIG_NAME;
 
 public class ConsulService {
-	static ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConsulConfig.class);
 
 	private String id;
 
@@ -77,6 +76,7 @@ public class ConsulService {
 	public void setPort(Integer port) { this.port = port; }
 
 	public ConsulService() {
+                ConsulConfig config = ConsulConfig.load();
 		if(config.tcpCheck) {
 			checkString = ",\"Check\":{\"CheckID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TCP\":\"%s:%s\",\"Interval\":\"" + config.checkInterval + "\"}}";
 		} else if(config.httpCheck) {

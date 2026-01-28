@@ -98,6 +98,8 @@ public abstract class Config {
 
     public abstract void clear();
 
+    public abstract void clearConfigCache(String configName);
+
     public abstract void setClassLoader(ClassLoader urlClassLoader);
 
     public abstract void putInConfigCache(String configName, Object config);
@@ -146,6 +148,11 @@ public abstract class Config {
         @Override
         public void clear() {
             configCache.clear();
+        }
+
+        @Override
+        public void clearConfigCache(String configName) {
+            configCache.remove(configName);
         }
 
         @Override

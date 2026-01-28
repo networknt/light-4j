@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,31 +60,41 @@ public class RequestInjectionConfig {
     )
     private int maxBuffers;
     private Map<String, Object> mappedConfig;
-    private final Config config;
 
-    public RequestInjectionConfig() {
+    private static volatile RequestInjectionConfig instance;
+
+    private RequestInjectionConfig() {
         this(CONFIG_NAME);
     }
 
-    public RequestInjectionConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+    private RequestInjectionConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
-    static RequestInjectionConfig load() {
-        return new RequestInjectionConfig();
+    public static RequestInjectionConfig load() {
+        return load(CONFIG_NAME);
     }
 
-    static RequestInjectionConfig load(String configName) {
+    public static RequestInjectionConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (RequestInjectionConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new RequestInjectionConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, RequestInjectionConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new RequestInjectionConfig(configName);
-    }
-
-    void reload() {
-        this.mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {

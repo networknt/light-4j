@@ -16,10 +16,8 @@
 
 package com.networknt.content;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -36,11 +34,18 @@ import io.undertow.util.Headers;
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
 public class ContentHandler implements MiddlewareHandler {
-    public static ContentConfig config;
+    private String configName = ContentConfig.CONFIG_NAME;
     private volatile HttpHandler next;
 
     public ContentHandler() {
-        config = ContentConfig.load();
+        ContentConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("ContentHandler is loaded.");
+    }
+
+    public ContentHandler(String configName) {
+        this.configName = configName;
+        ContentConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("ContentHandler is loaded with {}.", configName);
     }
 
     @Override
@@ -59,16 +64,12 @@ public class ContentHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ContentConfig.CONFIG_NAME), null);
+        return ContentConfig.load(configName).isEnabled();
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        ContentConfig config = ContentConfig.load(configName);
         if (exchange.getRequestHeaders().contains(Headers.CONTENT_TYPE)) {
             exchange
                     .getResponseHeaders()
@@ -81,12 +82,4 @@ public class ContentHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ContentConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) {
-            logger.info("ContentHandler is enabled.");
-        }
-    }
 }

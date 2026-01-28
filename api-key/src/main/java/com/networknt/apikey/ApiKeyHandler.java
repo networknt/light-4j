@@ -1,18 +1,13 @@
 package com.networknt.apikey;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.HashUtil;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * For some legacy applications to migrate from the monolithic gateway to light-gateway without changing
@@ -32,22 +27,25 @@ import java.util.List;
 public class ApiKeyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyHandler.class);
     static final String API_KEY_MISMATCH = "ERR10075";
-    static ApiKeyConfig config;
 
     private volatile HttpHandler next;
+    private volatile String configName = ApiKeyConfig.CONFIG_NAME;
 
     public ApiKeyHandler() {
+        // Force to load the config and register it during the server startup, and force to load the test resource.
+        ApiKeyConfig.load(configName);
         if(logger.isTraceEnabled()) logger.trace("ApiKeyHandler is loaded.");
-        config = ApiKeyConfig.load();
     }
 
     /**
      * This is a constructor for test cases only. Please don't use it.
-     * @param cfg BasicAuthConfig
+     * @param configName String
      */
     @Deprecated
-    public ApiKeyHandler(ApiKeyConfig cfg) {
-        config = cfg;
+    public ApiKeyHandler(String configName) {
+        this.configName = configName;
+        // Force to load the config and register it during the server startup, and force to load the test resource.
+        ApiKeyConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is loaded.");
     }
 
@@ -65,29 +63,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        // As apiKeys are in the config file, we need to mask them.
-        List<String> masks = new ArrayList<>();
-        // if hashEnabled, there is no need to mask in the first place.
-        if(!config.hashEnabled) {
-            masks.add("apiKey");
-        }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        List<String> masks = new ArrayList<>();
-        if(!config.hashEnabled) {
-            masks.add("apiKey");
-        }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
-        if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is reloaded.");
+        return ApiKeyConfig.load(configName).isEnabled();
     }
 
     @Override
@@ -102,7 +78,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
     }
 
     public boolean handleApiKey(HttpServerExchange exchange, String requestPath) {
-        if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+        if(logger.isTraceEnabled()) logger.trace("requestPath = {}", requestPath);
+        ApiKeyConfig config = ApiKeyConfig.load(configName);
         if (config.getPathPrefixAuths() != null) {
             boolean matched = false;
             boolean found = false;
@@ -117,7 +94,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
                         try {
                             matched = HashUtil.validatePassword(k.toCharArray(), apiKey.getApiKey());
                             if(matched) {
-                                if (logger.isTraceEnabled()) logger.trace("Found valid apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Found valid apiKey with prefix = {} headerName = {}", apiKey.getPathPrefix(), apiKey.getHeaderName());
                                 break;
                             }
                         } catch (Exception e) {
@@ -127,7 +105,8 @@ public class ApiKeyHandler implements MiddlewareHandler {
                     } else {
                         // if not hash enabled, then compare the apiKey directly.
                         if(apiKey.getApiKey().equals(k)) {
-                            if (logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                            if (logger.isTraceEnabled())
+                                logger.trace("Found matched apiKey with prefix = {} headerName = {}", apiKey.getPathPrefix(), apiKey.getHeaderName());
                             matched = true;
                             break;
                         }
@@ -140,7 +119,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
             }
             if(!matched) {
                 // at this moment, if not matched, then return an error message.
-                logger.error("Could not find matched APIKEY for request path " + requestPath);
+                logger.error("Could not find matched APIKEY for request path {}", requestPath);
                 setExchangeStatus(exchange, API_KEY_MISMATCH, requestPath);
                 if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends with an error.");
                 exchange.endExchange();

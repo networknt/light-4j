@@ -18,9 +18,12 @@ package com.networknt.consul;
 
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @ConfigSchema(configKey = "consul", configName = "consul", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
@@ -46,8 +49,8 @@ public class ConsulConfig {
     private static final String MAX_ATTEMPTS_BEFORE_SHUTDOWN = "maxAttemptsBeforeShutdown";
     private static final String SHUTDOWN_IF_THREAD_FROZEN = "shutdownIfThreadFrozen";
 
-    private Map<String, Object> mappedConfig;
-    private final Config config;
+    private final Map<String, Object> mappedConfig;
+    private static volatile ConsulConfig instance;
 
 
     @StringField(
@@ -218,8 +221,7 @@ public class ConsulConfig {
 
 
     private ConsulConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     private ConsulConfig() {
@@ -227,21 +229,33 @@ public class ConsulConfig {
     }
 
     public static ConsulConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ConsulConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ConsulConfig(configName);
+                // Register the module with the configuration.
+                List<String> masks = new ArrayList<>();
+                masks.add("consulToken");
+                ModuleRegistry.registerModule(configName, "com.networknt.consul.ConsulRegistry", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new ConsulConfig(configName);
     }
 
     public static ConsulConfig load() {
-        return new ConsulConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public String getConsulUrl() {
@@ -338,50 +352,56 @@ public class ConsulConfig {
     public boolean isShutdownIfThreadFrozen() { return shutdownIfThreadFrozen; }
 
     private void setConfigData() {
-        Object object = mappedConfig.get(CONSUL_URL);
-        if(object != null) {
-            consulUrl = (String)object;
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get(CONSUL_URL);
+            if(object != null) {
+                consulUrl = (String)object;
+            }
+            object = mappedConfig.get(CONSUL_TOKEN);
+            if(object != null) {
+                consulToken = (String)object;
+            }
+            object = mappedConfig.get(MAX_REQ_PER_CONN);
+            if(object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
+            object = mappedConfig.get(DEREGISTER_AFTER);
+            if(object != null) {
+                deregisterAfter = (String)object;
+            }
+            object = mappedConfig.get(CHECK_INTERVAL);
+            if(object != null) {
+                checkInterval = (String)object;
+            }
+            object = mappedConfig.get(TCP_CHECK);
+            if(object != null) tcpCheck = Config.loadBooleanValue(TCP_CHECK, object);
+            object = mappedConfig.get(HTTP_CHECK);
+            if(object != null) httpCheck = Config.loadBooleanValue(HTTP_CHECK, object);
+            object = mappedConfig.get(TTL_CHECK);
+            if(object != null) ttlCheck = Config.loadBooleanValue(TTL_CHECK, object);
+            object = mappedConfig.get(WAIT);
+            if(object != null) {
+                wait = (String)object;
+            }
+            object = mappedConfig.get(TIMEOUT_BUFFER);
+            if(object != null) {
+                timeoutBuffer = (String)object;
+            }
+            object = mappedConfig.get(ENABLE_HTTP2);
+            if(object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
+            object = mappedConfig.get(CONNECTION_TIMEOUT);
+            if(object != null) connectionTimeout = Config.loadIntegerValue(CONNECTION_TIMEOUT, object);
+            object = mappedConfig.get(REQUEST_TIMEOUT);
+            if(object != null) requestTimeout = Config.loadIntegerValue(REQUEST_TIMEOUT, object);
+            object = mappedConfig.get(RECONNECT_INTERVAL);
+            if(object != null) reconnectInterval = Config.loadIntegerValue(RECONNECT_INTERVAL, object);
+            object = mappedConfig.get(RECONNECT_JITTER);
+            if(object != null) reconnectJitter = Config.loadIntegerValue(RECONNECT_JITTER, object);
+            object = mappedConfig.get(LOOKUP_INTERVAL);
+            if(object != null) lookupInterval = Config.loadIntegerValue(LOOKUP_INTERVAL, object);
+            object = mappedConfig.get(MAX_ATTEMPTS_BEFORE_SHUTDOWN);
+            if(object != null) maxAttemptsBeforeShutdown = Config.loadIntegerValue(MAX_ATTEMPTS_BEFORE_SHUTDOWN, object);
+            object = mappedConfig.get(SHUTDOWN_IF_THREAD_FROZEN);
+            if(object != null) shutdownIfThreadFrozen = Config.loadBooleanValue(SHUTDOWN_IF_THREAD_FROZEN, object);
         }
-        object = mappedConfig.get(CONSUL_TOKEN);
-        if(object != null) {
-            consulToken = (String)object;
-        }
-        object = mappedConfig.get(MAX_REQ_PER_CONN);
-        if(object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
-        object = mappedConfig.get(CHECK_INTERVAL);
-        if(object != null) {
-            checkInterval = (String)object;
-        }
-        object = mappedConfig.get(TCP_CHECK);
-        if(object != null) tcpCheck = Config.loadBooleanValue(TCP_CHECK, object);
-        object = mappedConfig.get(HTTP_CHECK);
-        if(object != null) httpCheck = Config.loadBooleanValue(HTTP_CHECK, object);
-        object = mappedConfig.get(TTL_CHECK);
-        if(object != null) ttlCheck = Config.loadBooleanValue(TTL_CHECK, object);
-        object = mappedConfig.get(WAIT);
-        if(object != null) {
-            wait = (String)object;
-        }
-        object = mappedConfig.get(TIMEOUT_BUFFER);
-        if(object != null) {
-            timeoutBuffer = (String)object;
-        }
-        object = mappedConfig.get(ENABLE_HTTP2);
-        if(object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
-        object = mappedConfig.get(CONNECTION_TIMEOUT);
-        if(object != null) connectionTimeout = Config.loadIntegerValue(CONNECTION_TIMEOUT, object);
-        object = mappedConfig.get(REQUEST_TIMEOUT);
-        if(object != null) requestTimeout = Config.loadIntegerValue(REQUEST_TIMEOUT, object);
-        object = mappedConfig.get(RECONNECT_INTERVAL);
-        if(object != null) reconnectInterval = Config.loadIntegerValue(RECONNECT_INTERVAL, object);
-        object = mappedConfig.get(RECONNECT_JITTER);
-        if(object != null) reconnectJitter = Config.loadIntegerValue(RECONNECT_JITTER, object);
-        object = mappedConfig.get(LOOKUP_INTERVAL);
-        if(object != null) lookupInterval = Config.loadIntegerValue(LOOKUP_INTERVAL, object);
-        object = mappedConfig.get(MAX_ATTEMPTS_BEFORE_SHUTDOWN);
-        if(object != null) maxAttemptsBeforeShutdown = Config.loadIntegerValue(MAX_ATTEMPTS_BEFORE_SHUTDOWN, object);
-        object = mappedConfig.get(SHUTDOWN_IF_THREAD_FROZEN);
-        if(object != null) shutdownIfThreadFrozen = Config.loadBooleanValue(SHUTDOWN_IF_THREAD_FROZEN, object);
     }
 
 }

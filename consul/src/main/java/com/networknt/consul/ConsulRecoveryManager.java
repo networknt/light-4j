@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsulRecoveryManager {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRecoveryManager.class);
-    private static final ConsulConfig config =
-            (ConsulConfig) Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
     private static final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private static final AtomicBoolean monitorThreadStarted = new AtomicBoolean(false);
@@ -57,6 +55,7 @@ public class ConsulRecoveryManager {
         isRecoveryMode = true;
         ++recoveryAttempts;
         logger.error("Recovery mode: Fixing Consul Connection for service {} tag {} - attempt {}...", serviceName, tag, recoveryAttempts);
+        ConsulConfig config = ConsulConfig.load();
         if(config.getMaxAttemptsBeforeShutdown() == -1) return true;
         return config.getMaxAttemptsBeforeShutdown() >= recoveryAttempts;
     }

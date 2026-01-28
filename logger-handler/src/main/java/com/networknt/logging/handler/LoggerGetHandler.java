@@ -30,7 +30,6 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -60,16 +59,13 @@ public class LoggerGetHandler implements LightHttpHandler {
     static final String API_ERROR_RESPONSE = "ERR10083";
     static final String DOWNSTREAM_ADMIN_DISABLED = "ERR10084";
 
-    protected static LoggerConfig config;
-
     public LoggerGetHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerGetHandler is constructed.");
-        config = LoggerConfig.load();
-        ModuleRegistry.registerModule(LoggerConfig.CONFIG_NAME, LoggerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LoggerConfig.CONFIG_NAME),null);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        LoggerConfig config = LoggerConfig.load();
         if(!config.isEnabled()) {
             if(logger.isDebugEnabled()) logger.debug("logging is disabled");
             setExchangeStatus(exchange, LOGGER_INFO_DISABLED);
@@ -82,7 +78,7 @@ public class LoggerGetHandler implements LightHttpHandler {
         if(passThroughObject != null && passThroughObject.getFirst().equals("true")) {
             if(logger.isDebugEnabled()) logger.debug("pass through is true");
             if(config.isDownstreamEnabled()) {
-                Result<List<LoggerInfo>> loggersResult = getBackendLogger();
+                Result<List<LoggerInfo>> loggersResult = getBackendLogger(config);
                 if(loggersResult.isSuccess()) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
                     exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(loggersResult.getResult()));
@@ -116,7 +112,7 @@ public class LoggerGetHandler implements LightHttpHandler {
      *
      * @return result String of loggers or status error.
      */
-    private Result<List<LoggerInfo>> getBackendLogger() {
+    private Result<List<LoggerInfo>> getBackendLogger(LoggerConfig config) {
         long start = System.currentTimeMillis();
         Result<List<LoggerInfo>> result = null;
         SimpleConnectionHolder.ConnectionToken connectionToken = null;
@@ -130,7 +126,7 @@ public class LoggerGetHandler implements LightHttpHandler {
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
-            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(getRequestPath());
+            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(getRequestPath(config));
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, Http2Client.getInstance().createClientCallback(reference, latch));
             latch.await();
@@ -143,7 +139,8 @@ public class LoggerGetHandler implements LightHttpHandler {
             }
             long responseTime = System.currentTimeMillis() - start;
             if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
-            return Success.of(getFrameworkLoggers(body));
+            if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
+            return Success.of(getFrameworkLoggers(body, config));
         } catch (Exception ex) {
             logger.error("Could not create connection to the backend: " + config.getDownstreamHost() + ":", ex);
             Status status = new Status(GENERIC_EXCEPTION, ex.getMessage());
@@ -153,7 +150,7 @@ public class LoggerGetHandler implements LightHttpHandler {
         }
     }
 
-    private static String getRequestPath() {
+    private static String getRequestPath(LoggerConfig config) {
         String framework = config.getDownstreamFramework();
         switch (framework) {
             case Constants.SPRING_BOOT:
@@ -163,7 +160,7 @@ public class LoggerGetHandler implements LightHttpHandler {
         }
     }
 
-    private static List<LoggerInfo> getFrameworkLoggers(String responseBody) throws Exception {
+    private static List<LoggerInfo> getFrameworkLoggers(String responseBody, LoggerConfig config) throws Exception {
         String framework = config.getDownstreamFramework();
         switch (framework) {
             case Constants.SPRING_BOOT:
@@ -190,42 +187,7 @@ public class LoggerGetHandler implements LightHttpHandler {
      *
      * @return result String of loggers or status error.
      */
-    private Result<List<LoggerInfo>> postBackendLogger() {
-        long start = System.currentTimeMillis();
-        Result<List<LoggerInfo>> result = null;
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
-        try {
-            if(config.getDownstreamHost().startsWith(Constants.HTTPS)) {
-                connectionToken = Http2Client.getInstance().borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.getInstance().getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
-            } else {
-                connectionToken = Http2Client.getInstance().borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
-            }
-            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
-            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(getRequestPath());
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, Http2Client.getInstance().createClientCallback(reference, latch));
-            latch.await();
-            int statusCode = reference.get().getResponseCode();
-            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            if(logger.isDebugEnabled()) logger.debug("statusCode = " + statusCode + " body  = " + body);
-            if(statusCode >= 400) {
-                // error response from the backend API.
-                return Failure.of(new Status(API_ERROR_RESPONSE, statusCode));
-            }
-            long responseTime = System.currentTimeMillis() - start;
-            if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
-            return Success.of(getFrameworkLoggers(body));
-        } catch (Exception ex) {
-            logger.error("Could not create connection to the backend: " + config.getDownstreamHost() + ":", ex);
-            Status status = new Status(GENERIC_EXCEPTION, ex.getMessage());
-            return Failure.of(status);
-        } finally {
-            Http2Client.getInstance().restore(connectionToken);
-        }
-    }
 
 
 }

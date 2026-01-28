@@ -7,7 +7,7 @@ import com.networknt.handler.config.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -26,11 +26,10 @@ import org.slf4j.LoggerFactory;
 public class ServiceDictHandler implements MiddlewareHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ServiceDictHandler.class);
     protected volatile HttpHandler next;
-    protected static ServiceDictConfig config;
 
     public ServiceDictHandler() {
+        ServiceDictConfig.load();
         logger.info("ServiceDictHandler is constructed");
-        config = ServiceDictConfig.load();
     }
 
 	@Override
@@ -42,6 +41,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	}
 
     protected void serviceDict(HttpServerExchange exchange) throws Exception {
+        ServiceDictConfig config = ServiceDictConfig.load();
         String requestPath = exchange.getRequestURI();
         String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
         String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
@@ -79,18 +79,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return ServiceDictConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
-    }
 }

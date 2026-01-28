@@ -5,15 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.cache.CacheManager;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.http.CachedResponseEntity;
-import com.networknt.http.ResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
-import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -56,13 +52,14 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
 
     private volatile HttpHandler next;
-    private final TokenLimitConfig config;
     private List<Pattern> patterns;
+    private volatile TokenLimitConfig config;
+    private volatile String configName = TokenLimitConfig.CONFIG_NAME;
 
     CacheManager cacheManager = CacheManager.getInstance();
 
     public TokenLimitHandler() throws Exception{
-        config = TokenLimitConfig.load();
+        config = TokenLimitConfig.load(configName);
         List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
@@ -73,18 +70,19 @@ public class TokenLimitHandler implements MiddlewareHandler {
     /**
      * This is a constructor for test cases only. Please don't use it.
      *
-     * @param cfg token limit config
+     * @param configName String
      * @throws Exception thrown when config is wrong.
      *
      */
     @Deprecated
-    public TokenLimitHandler(TokenLimitConfig cfg) throws Exception{
-        config = cfg;
+    public TokenLimitHandler(String configName) throws Exception{
+        this.configName = configName;
+        TokenLimitConfig config = TokenLimitConfig.load(configName);
         List<String> tokenPathTemplates = config.getTokenPathTemplates();
         if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
             patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
         }
-        logger.info("TokenLimitHandler constructed.");
+        logger.info("TokenLimitHandler constructed with config {}.", configName);
     }
 
     @Override
@@ -101,24 +99,23 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TokenLimitConfig.CONFIG_NAME, TokenLimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenLimitConfig.CONFIG_NAME), null);
-
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
-        ModuleRegistry.registerModule(TokenLimitConfig.CONFIG_NAME, TokenLimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenLimitConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("TokenLimitHandler is reloaded.");
-    }
+        return TokenLimitConfig.load().isEnabled();    }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        TokenLimitConfig newConfig = TokenLimitConfig.load();
+        if(newConfig != config) {
+            synchronized (this) {
+                if(newConfig != config) {
+                    config = newConfig;
+                    List<String> tokenPathTemplates = config.getTokenPathTemplates();
+                    if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
+                        patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
+                    }
+                }
+            }
+        }
+
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest starts.");
         String key = null;
         String grantType = null;

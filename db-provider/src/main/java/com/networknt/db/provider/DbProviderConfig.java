@@ -5,7 +5,10 @@ import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @ConfigSchema(configKey = "db-provider", configName = "db-provider", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
@@ -57,8 +60,10 @@ public class DbProviderConfig {
     )
     int maximumPoolSize;
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
+
+    private static volatile DbProviderConfig instance;
 
     private DbProviderConfig() {
         this(CONFIG_NAME);
@@ -70,22 +75,35 @@ public class DbProviderConfig {
      * @param configName String
      */
     private DbProviderConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
     public static DbProviderConfig load() {
-        return new DbProviderConfig();
+        return load(CONFIG_NAME);
     }
 
     public static DbProviderConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DbProviderConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DbProviderConfig(configName);
+                // Register the module with the configuration.
+                List<String> masks = new ArrayList<>();
+                masks.add(PASSWORD);
+                ModuleRegistry.registerModule(configName, DbProviderConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new DbProviderConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -131,15 +149,17 @@ public class DbProviderConfig {
     }
 
     private void setConfigData() {
-        Object object = mappedConfig.get(DRIVER_CLASS_NAME);
-        if(object != null) driverClassName = (String)object;
-        object = mappedConfig.get(USERNAME);
-        if(object != null) username = (String)object;
-        object = mappedConfig.get(PASSWORD);
-        if(object != null) password = ((String)object).toCharArray();
-        object = mappedConfig.get(JDBC_URL);
-        if(object != null) jdbcUrl = (String)object;
-        object = mappedConfig.get(MAXIMUM_POOL_SIZE);
-        if(object != null) Config.loadIntegerValue(MAXIMUM_POOL_SIZE, object);
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get(DRIVER_CLASS_NAME);
+            if(object != null) driverClassName = (String)object;
+            object = mappedConfig.get(USERNAME);
+            if(object != null) username = (String)object;
+            object = mappedConfig.get(PASSWORD);
+            if(object != null) password = ((String)object).toCharArray();
+            object = mappedConfig.get(JDBC_URL);
+            if(object != null) jdbcUrl = (String)object;
+            object = mappedConfig.get(MAXIMUM_POOL_SIZE);
+            if(object != null) maximumPoolSize = Config.loadIntegerValue(MAXIMUM_POOL_SIZE, object);
+        }
     }
 }

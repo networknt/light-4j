@@ -11,18 +11,17 @@ import io.undertow.util.HeaderValues;
 
 public class SidecarSAMLTokenHandler extends SAMLTokenHandler {
 
-    public static SidecarConfig sidecarConfig;
-
     public SidecarSAMLTokenHandler() {
         super();
-        sidecarConfig = SidecarConfig.load();
+        SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarSAMLTokenHandler is constructed");
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SidecarConfig config = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarSAMLTokenHandler.handleRequest starts.");
-        if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
+        if (Constants.HEADER.equalsIgnoreCase(config.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             String serviceUrl = exchange.getRequestHeaders().getFirst(HttpStringConstants.SERVICE_URL);
@@ -33,7 +32,7 @@ public class SidecarSAMLTokenHandler extends SAMLTokenHandler {
             } else {
                 Handler.next(exchange, next);
             }
-        } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
+        } else if (Constants.PROTOCOL.equalsIgnoreCase(config.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
             super.handleRequest(exchange);
         } else {
             Handler.next(exchange, next);

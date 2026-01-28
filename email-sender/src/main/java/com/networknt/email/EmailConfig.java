@@ -16,9 +16,13 @@
 
 package com.networknt.email;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.Map;
 
 /**
  * Email Configuration
@@ -84,6 +88,42 @@ public class EmailConfig {
     )
     String auth;
 
+    private final Map<String, Object> mappedConfig;
+
+    private static volatile EmailConfig instance;
+
+    private EmailConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+    private EmailConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static EmailConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (EmailConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new EmailConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, EmailConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new EmailConfig(configName);
+    }
+
+    public static EmailConfig load() {
+        return load(CONFIG_NAME);
+    }
+
     public String getHost() {
         return host;
     }
@@ -130,5 +170,29 @@ public class EmailConfig {
 
     public void setAuth(String auth) {
         this.auth = auth;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+
+
+
+    private void setConfigData() {
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get("host");
+            if(object != null) host = (String)object;
+            object = mappedConfig.get("port");
+            if(object != null) port = String.valueOf(object);
+            object = mappedConfig.get("user");
+            if(object != null) user = (String)object;
+            object = mappedConfig.get("pass");
+            if(object != null) pass = (String)object;
+            object = mappedConfig.get("debug");
+            if(object != null) debug = String.valueOf(object);
+            object = mappedConfig.get("auth");
+            if(object != null) auth = String.valueOf(object);
+        }
     }
 }

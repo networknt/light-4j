@@ -46,16 +46,17 @@ public class MultipleAuthServerTest {
     @Test
     public void testKeyConfig() {
         ClientConfig clientConfig = ClientConfig.get();
-        if (clientConfig.isMultipleAuthServers()) {
+        if (clientConfig.getOAuth().isMultipleAuthServers()) {
             // iterate all the configured auth server to get JWK.
-            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-            Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
+            OAuthTokenConfig tokenConfig = clientConfig.getOAuth().getToken();
+            OAuthTokenKeyConfig keyConfig = tokenConfig.getKey();
+            Map<String, AuthServerConfig> serviceIdAuthServers = keyConfig.getServiceIdAuthServers();
             if (serviceIdAuthServers == null) {
                 throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
             }
-            for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
-                Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
+            for (Map.Entry<String, AuthServerConfig> entry : serviceIdAuthServers.entrySet()) {
+                AuthServerConfig authServerConfig = entry.getValue();
+                System.out.println(JsonMapper.toJson(authServerConfig));
                 TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
                 System.out.println("keyRequest = " + JsonMapper.toJson(keyRequest));
             }

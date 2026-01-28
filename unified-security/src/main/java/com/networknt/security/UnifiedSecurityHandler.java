@@ -6,7 +6,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -37,14 +36,13 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
     static final String HANDLER_NOT_FOUND = "ERR11200";
     static final String MISSING_PATH_PREFIX_AUTH = "ERR10078";
-    static UnifiedSecurityConfig config;
     // make this static variable public so that it can be accessed from the server-info module
     private volatile HttpHandler next;
-    public static JwtVerifier jwtVerifier;
+    private volatile JwtVerifier jwtVerifier;
+    private volatile SecurityConfig config;
 
     public UnifiedSecurityHandler() {
         logger.info("UnifiedSecurityHandler starts");
-        config = UnifiedSecurityConfig.load();
         jwtVerifier = new JwtVerifier(SecurityConfig.load());
     }
 
@@ -52,6 +50,15 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug("UnifiedSecurityHandler.handleRequest starts.");
+        SecurityConfig newConfig = SecurityConfig.load();
+        if (newConfig != config) {
+            synchronized (UnifiedSecurityHandler.class) {
+                if (newConfig != config) {
+                    config = newConfig;
+                    jwtVerifier = new JwtVerifier(config);
+                }
+            }
+        }
         Status status = verifyUnifiedSecurity(exchange);
         if (status != null) {
             if (logger.isDebugEnabled())
@@ -72,6 +79,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
      * @throws Exception Exception
      */
     public Status verifyUnifiedSecurity(HttpServerExchange exchange) throws Exception {
+        UnifiedSecurityConfig config = UnifiedSecurityConfig.load();
         String reqPath = exchange.getRequestPath();
         // check if the path prefix is in the anonymousPrefixes list. If yes, skip all other check and goes to next handler.
         if (config.getAnonymousPrefixes() != null && config.getAnonymousPrefixes().stream().anyMatch(reqPath::startsWith)) {
@@ -301,12 +309,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
             }
             if(!found) {
                 // cannot find the prefix auth entry for request path.
-                logger.error("Cannot find prefix entry in pathPrefixAuths for " + reqPath);
+                logger.error("Cannot find prefix entry in pathPrefixAuths for {}", reqPath);
                 return new Status(MISSING_PATH_PREFIX_AUTH, reqPath);
             }
         } else {
             // pathPrefixAuths is not defined in the values.yml
-            logger.error("Cannot find pathPrefixAuths definition for " + reqPath);
+            logger.error("Cannot find pathPrefixAuths definition for {}", reqPath);
             return new Status(MISSING_PATH_PREFIX_AUTH, reqPath);
         }
         return null;
@@ -326,18 +334,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(UnifiedSecurityConfig.CONFIG_NAME, UnifiedSecurityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(UnifiedSecurityConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(UnifiedSecurityConfig.CONFIG_NAME, UnifiedSecurityHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(UnifiedSecurityConfig.CONFIG_NAME), null);
+        return UnifiedSecurityConfig.load().isEnabled();
     }
 
 }

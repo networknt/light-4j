@@ -20,7 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.conduits.GzipStreamSourceConduit;
 import io.undertow.conduits.InflatingStreamSourceConduit;
@@ -44,25 +44,39 @@ import java.util.Map;
  */
 public class RequestDecodeHandler implements MiddlewareHandler {
 
-    public static RequestDecodeConfig config =
-            (RequestDecodeConfig)Config.getInstance().getJsonObjectConfig(RequestDecodeConfig.CONFIG_NAME, RequestDecodeConfig.class);
+    private String configName = RequestDecodeConfig.CONFIG_NAME;
 
-    private final Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings = new CopyOnWriteMap<>();
+    private volatile RequestDecodeConfig config;
+    private volatile Map<String, ConduitWrapper<StreamSourceConduit>> requestEncodings;
 
     private volatile HttpHandler next;
 
     public RequestDecodeHandler() {
+        this(RequestDecodeConfig.CONFIG_NAME);
+    }
+
+    public RequestDecodeHandler(String configName) {
+        this.configName = configName;
+        this.config = RequestDecodeConfig.load(configName);
+        buildEncodings(config);
+        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is constructed with {}.", configName);
+    }
+
+    private void buildEncodings(RequestDecodeConfig config) {
+        Map<String, ConduitWrapper<StreamSourceConduit>> encodings = new CopyOnWriteMap<>();
         List<String> decoders = config.getDecoders();
-        for(int i = 0; i < decoders.size(); i++) {
-            String decoder = decoders.get(i);
-            if(Constants.ENCODE_DEFLATE.equals(decoder)) {
-                requestEncodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
-            } else if(Constants.ENCODE_GZIP.equals(decoder)) {
-                requestEncodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
-            } else {
-                throw new RuntimeException("Invalid decoder " + decoder + " for RequestDecodeHandler.");
+        if(decoders != null) {
+            for (String decoder : decoders) {
+                if (Constants.ENCODE_DEFLATE.equals(decoder)) {
+                    encodings.put(decoder, InflatingStreamSourceConduit.WRAPPER);
+                } else if (Constants.ENCODE_GZIP.equals(decoder)) {
+                    encodings.put(decoder, GzipStreamSourceConduit.WRAPPER);
+                } else {
+                    throw new RuntimeException("Invalid decoder " + decoder + " for RequestDecodeHandler.");
+                }
             }
         }
+        this.requestEncodings = encodings;
     }
 
     @Override
@@ -83,12 +97,18 @@ public class RequestDecodeHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        RequestDecodeConfig newConfig = RequestDecodeConfig.load(configName);
+        if (newConfig != config) {
+            synchronized (this) {
+                newConfig = RequestDecodeConfig.load(configName);
+                if (newConfig != config) {
+                    this.config = newConfig;
+                    buildEncodings(config);
+                }
+            }
+        }
+
         ConduitWrapper<StreamSourceConduit> encodings = requestEncodings.get(exchange.getRequestHeaders().getFirst(Headers.CONTENT_ENCODING));
         if (encodings != null && exchange.isRequestChannelAvailable()) {
             exchange.addRequestWrapper(encodings);
@@ -99,10 +119,4 @@ public class RequestDecodeHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is reloaded.");
-    }
 }

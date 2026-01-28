@@ -15,6 +15,10 @@
  */
 
 package com.networknt.resource;
+import com.networknt.config.Config;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.Map;
 
 public class PathResourceConfig {
     public static final String CONFIG_NAME = "path-resource";
@@ -25,7 +29,63 @@ public class PathResourceConfig {
     int transferMinSize;
     boolean directoryListingEnabled;
 
-    public PathResourceConfig() {
+    private static volatile PathResourceConfig instance;
+    private final Config config;
+    private java.util.Map<String, Object> mappedConfig;
+
+    private PathResourceConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
+    }
+
+    private PathResourceConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static PathResourceConfig load() {
+        return load(CONFIG_NAME);
+    }
+
+    public static PathResourceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (PathResourceConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new PathResourceConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, PathResourceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
+        return new PathResourceConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    private void setConfigData() {
+        if (mappedConfig.containsKey("path")) {
+            path = (String) mappedConfig.get("path");
+        }
+        if (mappedConfig.containsKey("base")) {
+            base = (String) mappedConfig.get("base");
+        }
+        if (mappedConfig.containsKey("prefix")) {
+            prefix = Config.loadBooleanValue("prefix", mappedConfig.get("prefix"));
+        }
+        if (mappedConfig.containsKey("transferMinSize")) {
+            transferMinSize = Config.loadIntegerValue("transferMinSize", mappedConfig.get("transferMinSize"));
+        }
+        if (mappedConfig.containsKey("directoryListingEnabled")) {
+            directoryListingEnabled = Config.loadBooleanValue("directoryListingEnabled", mappedConfig.get("directoryListingEnabled"));
+        }
     }
 
     public String getPath() {

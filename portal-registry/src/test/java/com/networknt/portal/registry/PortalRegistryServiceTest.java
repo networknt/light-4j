@@ -23,7 +23,7 @@ import org.junit.Test;
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistryServiceTest {
-    static PortalRegistryConfig config = (PortalRegistryConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
+    static PortalRegistryConfig config = PortalRegistryConfig.load();
     @Test
     public void testToString() {
         PortalRegistryService service = new PortalRegistryService();

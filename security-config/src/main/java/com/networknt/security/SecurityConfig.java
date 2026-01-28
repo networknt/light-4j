@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +60,8 @@ public class SecurityConfig {
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
     private static final String PASS_THROUGH_CLAIMS = "passThroughClaims";
 
-    private Map<String, Object> mappedConfig;
-
-    private final Config config;
+    private static volatile SecurityConfig instance;
+    private final Map<String, Object> mappedConfig;
 
     @BooleanField(
             configFieldName = ENABLE_VERIFY_JWT,
@@ -285,16 +285,17 @@ public class SecurityConfig {
     }
 
     private SecurityConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setCertificate();
+            setConfigData();
+            setSkipPathPrefixes();
+            setPassThroughClaims();
+        }
     }
 
     public static SecurityConfig load() {
-        return new SecurityConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -302,26 +303,22 @@ public class SecurityConfig {
      * @param configName String
      * @return SecurityConfig
      */
-    @Deprecated
     public static SecurityConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (SecurityConfig.class) {
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new SecurityConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, SecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new SecurityConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
-    }
-
-    @Deprecated
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setCertificate();
-        setConfigData();
-        setSkipPathPrefixes();
-        setPassThroughClaims();
     }
 
     public SecurityJwtConfig getJwt() { return jwt; }
@@ -398,9 +395,7 @@ public class SecurityConfig {
     public String getProviderId() {
         return providerId;
     }
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setCertificate() {
 

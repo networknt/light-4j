@@ -331,8 +331,8 @@ public class UrlConfigLoader implements IConfigLoader {
 		String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
 		String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
 		if (truststorePassword == null && truststoreLocation == null) {
-			truststorePassword = ServerConfig.getInstance().getBootstrapStorePass();
-			truststoreLocation = ServerConfig.getInstance().getBootstrapStoreName();
+			truststorePassword = ServerConfig.load().getBootstrapStorePass();
+			truststoreLocation = ServerConfig.load().getBootstrapStoreName();
 		}
 		if (StringUtils.isBlank(truststoreLocation)) {
 			return null;

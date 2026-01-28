@@ -49,7 +49,7 @@ public class LoggerGetNameHandler implements LightHttpHandler {
 
         Map<String, Deque<String>> parameters = exchange.getQueryParameters();
         String loggerName = parameters.get(LOGGER_NAME).getFirst();
-        LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
+        LoggerConfig config = LoggerConfig.load();
 
         if (config.isEnabled()) {
             ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName);

@@ -16,11 +16,11 @@
 package com.networknt.correlation;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +37,12 @@ import java.util.Map;
 )
 public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";
-    private static final String ENABLED = "enabled";
-    private static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
-    private static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
-    private static final String CORRELATION_MDC_FIELD = "correlationMdcField";
+    public static final String ENABLED = "enabled";
+    public static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
+    public static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
+    public static final String CORRELATION_MDC_FIELD = "correlationMdcField";
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -76,31 +76,39 @@ public class CorrelationConfig {
     )
     String traceabilityMdcField;
 
+    private static volatile CorrelationConfig instance;
+
     private CorrelationConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
+
     private CorrelationConfig() {
         this(CONFIG_NAME);
     }
 
-    public static CorrelationConfig load(String configName) {
-        return new CorrelationConfig(configName);
-    }
-
     public static CorrelationConfig load() {
-        return new CorrelationConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
+    public static CorrelationConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CorrelationConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CorrelationConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, CorrelationConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new CorrelationConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -138,9 +146,7 @@ public class CorrelationConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

@@ -20,10 +20,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -144,20 +144,35 @@ public class SanitizerConfig {
     private List<String> headerAttributesToIgnore;
 
 
+    private static volatile SanitizerConfig instance;
     private final Map<String, Object> mappedConfig;
 
     private SanitizerConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-        setConfigList();
-        setConfigData();
+        if (mappedConfig != null) {
+            setConfigList();
+            setConfigData();
+        }
     }
 
     public static SanitizerConfig load() {
-        return new SanitizerConfig(CONFIG_NAME);
+        return load(CONFIG_NAME);
     }
 
-    @Deprecated
     public static SanitizerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (SanitizerConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new SanitizerConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, SanitizerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new SanitizerConfig(configName);
     }
 

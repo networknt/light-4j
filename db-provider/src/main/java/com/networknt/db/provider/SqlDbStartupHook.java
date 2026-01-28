@@ -1,16 +1,11 @@
 package com.networknt.db.provider;
 
 import com.networknt.cache.CacheManager;
-import com.networknt.config.Config;
 import com.networknt.server.StartupHookProvider;
-import com.networknt.utility.ModuleRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Start up hook for the SQL provider to create the datasource and initial the cache.
@@ -21,7 +16,6 @@ import java.util.List;
 public class SqlDbStartupHook implements StartupHookProvider {
     private static final Logger logger = LoggerFactory.getLogger(SqlDbStartupHook.class);
 
-    static DbProviderConfig config = (DbProviderConfig) Config.getInstance().getJsonObjectConfig(DbProviderConfig.CONFIG_NAME, DbProviderConfig.class);
     public static HikariDataSource ds;
     // key and json cache for the dropdowns.
     public static CacheManager cacheManager;
@@ -29,6 +23,7 @@ public class SqlDbStartupHook implements StartupHookProvider {
     @Override
     public void onStartup() {
         logger.info("SqlDbStartupHook begins");
+        DbProviderConfig config = DbProviderConfig.load();
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setDriverClassName(config.getDriverClassName());
         hikariConfig.setUsername(config.getUsername());
@@ -38,9 +33,6 @@ public class SqlDbStartupHook implements StartupHookProvider {
         hikariConfig.setMaximumPoolSize(config.getMaximumPoolSize());
         ds = new HikariDataSource(hikariConfig);
         cacheManager = CacheManager.getInstance();
-        List<String> masks = new ArrayList<>();
-        masks.add("password");
-        ModuleRegistry.registerModule(DbProviderConfig.CONFIG_NAME, SqlDbStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DbProviderConfig.CONFIG_NAME), masks);
         logger.info("SqlDbStartupHook ends");
     }
 }

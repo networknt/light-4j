@@ -15,14 +15,12 @@
  */
 package com.networknt.registry.support;
 
-import com.networknt.config.Config;
 import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,16 +42,13 @@ public class DirectRegistry extends AbstractRegistry {
     private final static Logger logger = LoggerFactory.getLogger(DirectRegistry.class);
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
-    private static Map<String, List<URL>> directUrls = new HashMap();
-    private static DirectRegistryConfig config;
+    private Map<String, List<URL>> directUrls;
 
     public DirectRegistry(URL url) {
         super(url);
-        config = DirectRegistryConfig.load();
-        if(config.directUrls != null) {
-            ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
-        }
+        DirectRegistryConfig config = DirectRegistryConfig.load();
         if(url.getParameters() != null && url.getParameters().size() > 0) {
+            directUrls = new HashMap<>();
             // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
             for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
                 String tag = null;
@@ -90,9 +85,6 @@ public class DirectRegistry extends AbstractRegistry {
                     throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
                 }
             }
-        } else {
-            // load from the direct-registry.yml file for the directUrls.
-            directUrls = config.getDirectUrls();
         }
     }
 
@@ -138,7 +130,11 @@ public class DirectRegistry extends AbstractRegistry {
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
         String serviceId = subscribeUrl.getPath();
         String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
-        return directUrls.get(serviceKey(serviceId, tag));
+        if(directUrls != null) {
+            return directUrls.get(serviceKey(serviceId, tag));
+        } else {
+            return DirectRegistryConfig.load().getDirectUrls().get(serviceKey(serviceId, tag));
+        }
     }
 
     @Override
@@ -151,10 +147,4 @@ public class DirectRegistry extends AbstractRegistry {
         // do nothing
     }
 
-    public static void reload() {
-        config.reload();
-        directUrls = config.getDirectUrls();
-        if(directUrls != null) ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
-        if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
-    }
 }

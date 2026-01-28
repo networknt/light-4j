@@ -8,7 +8,7 @@ import com.networknt.handler.ResponseInterceptor;
 import com.networknt.http.CachedResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -18,8 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.networknt.utility.Constants.ERROR_MESSAGE;
 
 /**
  * This is a generic response interceptor for caching the downstream response to save the external API calls on the
@@ -67,17 +65,6 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
         return config.isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ResponseCacheConfig.CONFIG_NAME, ResponseCacheInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseCacheConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(ResponseCacheConfig.CONFIG_NAME, ResponseCacheInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseCacheConfig.CONFIG_NAME), null);
-        if(logger.isTraceEnabled()) logger.trace("ResponseCacheInterceptor is reloaded.");
-    }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override

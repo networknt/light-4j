@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -90,8 +91,8 @@ public final class ClientConfig {
     public static final String SUBJECT_TOKEN = "subjectToken";
     public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+
+    private final Map<String, Object> mappedConfig;
 
     @ObjectField(
             configFieldName = ClientConfig.TLS,
@@ -131,12 +132,12 @@ public final class ClientConfig {
     @JsonProperty(ClientConfig.REQUEST)
     private RequestConfig request = null;
 
+    private static String configName = ClientConfig.CONFIG_NAME;
+
     private static volatile ClientConfig instance;
 
     private ClientConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
-        load();
+        this(CONFIG_NAME);
     }
 
     /**
@@ -145,24 +146,14 @@ public final class ClientConfig {
      * @param configName String
      */
     private ClientConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        load();
-    }
-
-
-    private void load() {
-        if(mappedConfig != null) {
-            this.setValues();
+        this.configName = configName;
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setValues();
         }
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        if(mappedConfig != null) {
-            this.setValues();
-        }
-    }
+
 
     private void setValues() {
         final var mapper = Config.getInstance().getMapper();
@@ -179,46 +170,39 @@ public final class ClientConfig {
     }
 
     public static ClientConfig get() {
-        if (instance == null) {
-            synchronized (ClientConfig.class) {
-                if (instance == null) {
-                    instance = new ClientConfig();
-                }
-            }
-        }
-        return instance;
+        return get(configName);
     }
 
-    /**
-     * This method is not supposed to be used in production but only in testing.
-     * @param configName String
-     * @return ClientConfig object
-     */
     public static ClientConfig get(String configName) {
-        instance = new ClientConfig(configName);
-        return instance;
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ClientConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ClientConfig(configName);
+                // Register the module with the configuration.
+                List<String> masks = new ArrayList<>();
+                masks.add("client_secret");
+                masks.add("trustStorePass");
+                masks.add("keyStorePass");
+                masks.add("keyPass");
+                masks.add("defaultCertPassword");
+                ModuleRegistry.registerModule(configName, "com.networknt.client.Http2Client", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        } else {
+            instance = new ClientConfig(configName);
+            return instance;
+        }
     }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
-    }
-
-    public static Map<String, Object> getServiceIdAuthServers(Object object) {
-        Map<String, Object> serviceIdAuthServers = new HashMap<>();
-        if (object instanceof Map) {
-            serviceIdAuthServers = (Map) object;
-        } else if (object instanceof String) {
-            String s = (String) object;
-            s = s.trim();
-            if (s.startsWith("{")) {
-                serviceIdAuthServers = JsonMapper.string2Map(s);
-            } else {
-                logger.error("The serviceIdAuthServers in client.yml is not a map or a JSON string.");
-            }
-        } else {
-            logger.error("The serviceIdAuthServers in client.yml is not a map or a JSON string.");
-        }
-        return serviceIdAuthServers;
     }
 
     public OAuthConfig getOAuth() {
@@ -227,6 +211,10 @@ public final class ClientConfig {
 
     public RequestConfig getRequest() {
         return this.request;
+    }
+
+    public TlsConfig  getTls() {
+        return this.tls;
     }
 
     public Map<String, String> getPathPrefixServices() { return this.pathPrefixServices; }

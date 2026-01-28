@@ -16,8 +16,6 @@
 
 package com.networknt.router.middleware;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.OAuthTokenClientCredentialConfig;
@@ -30,7 +28,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -38,8 +36,8 @@ import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.tokens.Token;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,7 +74,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TokenHandler implements MiddlewareHandler {
     private static final String HANDLER_DEPENDENCY_ERROR = "ERR10074";
 
-    private static TokenConfig config;
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
 
@@ -84,8 +81,8 @@ public class TokenHandler implements MiddlewareHandler {
     public final static Map<String, Jwt> cache = new ConcurrentHashMap<>();
 
     public TokenHandler() {
+        TokenConfig.load();
         logger.info("TokenHandler is loaded.");
-        config = TokenConfig.load();
     }
 
     @Override
@@ -94,6 +91,7 @@ public class TokenHandler implements MiddlewareHandler {
         // This handler must be put after the prefix or dict handler so that the serviceId is
         // readily available in the header resolved by the path or the endpoint from the request.
         logger.debug("TokenHandler.handleRequest starts.");
+        TokenConfig config = TokenConfig.load();
         String requestPath = exchange.getRequestPath();
 
         // this handler will only work with a list of applied path prefixes in the token.yml config file.
@@ -147,16 +145,32 @@ public class TokenHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    public static Map<String, Object> buildAuthConfig(final Map<String, Object> baseMap, final OAuthTokenConfig tokenConfig) {
-        Map<String, Object> authConfig = new HashMap<>(baseMap);
-        authConfig.computeIfAbsent(ClientConfig.PROXY_HOST, k-> tokenConfig.getProxyHost());
-        authConfig.computeIfAbsent(ClientConfig.PROXY_PORT, k-> tokenConfig.getProxyPort());
-        authConfig.computeIfAbsent(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, k-> tokenConfig.getTokenRenewBeforeExpired());
-        authConfig.computeIfAbsent(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, k-> tokenConfig.getExpiredRefreshRetryDelay());
-        authConfig.computeIfAbsent(ClientConfig.EARLY_REFRESH_RETRY_DELAY, k-> tokenConfig.getEarlyRefreshRetryDelay());
-        return authConfig;
+    public static AuthServerConfig buildAuthServerConfig(final OAuthTokenConfig tokenConfig, final OAuthTokenClientCredentialConfig ccConfig) {
+        AuthServerConfig authServerConfig = new AuthServerConfig();
+        if(tokenConfig.getProxyHost() != null) authServerConfig.setProxyHost(tokenConfig.getProxyHost());
+        if(tokenConfig.getProxyPort() != null) authServerConfig.setProxyPort(tokenConfig.getProxyPort());
+        if(tokenConfig.getServerUrl() != null) authServerConfig.setServerUrl(tokenConfig.getServerUrl());
+        if(tokenConfig.isEnableHttp2() != null) authServerConfig.setEnableHttp2(tokenConfig.isEnableHttp2());
+        if(tokenConfig.getTokenRenewBeforeExpired() != null) authServerConfig.setTokenRenewBeforeExpired(tokenConfig.getTokenRenewBeforeExpired());
+        if(tokenConfig.getEarlyRefreshRetryDelay() != null) authServerConfig.setEarlyRefreshRetryDelay(tokenConfig.getEarlyRefreshRetryDelay());
+        if(tokenConfig.getExpiredRefreshRetryDelay() != null) authServerConfig.setExpiredRefreshRetryDelay(tokenConfig.getExpiredRefreshRetryDelay());
+        if(ccConfig.getScope() != null) authServerConfig.setScope(ccConfig.getScope());
+        if(ccConfig.getClientId() != null) authServerConfig.setClientId(ccConfig.getClientId());
+        if(ccConfig.getClientSecret() != null) authServerConfig.setClientSecret(ccConfig.getClientSecret());
+        if(ccConfig.getUri() != null) authServerConfig.setUri(ccConfig.getUri());
+        return authServerConfig;
     }
 
+    public static AuthServerConfig enrichAuthServerConfig(final AuthServerConfig baseConfig, final OAuthTokenConfig tokenConfig) {
+        if(baseConfig.getProxyHost() == null && tokenConfig.getProxyHost() != null) baseConfig.setProxyHost(tokenConfig.getProxyHost());
+        if(baseConfig.getProxyPort() == null && tokenConfig.getProxyPort() != null) baseConfig.setProxyPort(tokenConfig.getProxyPort());
+        if(baseConfig.getServerUrl() == null && tokenConfig.getServerUrl() != null) baseConfig.setServerUrl(tokenConfig.getServerUrl());
+        if(baseConfig.isEnableHttp2() == null && tokenConfig.isEnableHttp2() != null) baseConfig.setEnableHttp2(tokenConfig.isEnableHttp2());
+        if(tokenConfig.getTokenRenewBeforeExpired() != null) baseConfig.setTokenRenewBeforeExpired(tokenConfig.getTokenRenewBeforeExpired());
+        if(tokenConfig.getEarlyRefreshRetryDelay() != null) baseConfig.setEarlyRefreshRetryDelay(tokenConfig.getEarlyRefreshRetryDelay());
+        if(tokenConfig.getExpiredRefreshRetryDelay() != null) baseConfig.setExpiredRefreshRetryDelay(tokenConfig.getExpiredRefreshRetryDelay());
+        return baseConfig;
+    }
     public static Result<Jwt> getJwtToken(final String serviceId) {
         ClientConfig clientConfig = ClientConfig.get();
         OAuthTokenConfig tokenConfig = clientConfig.getOAuth().getToken();
@@ -177,14 +191,9 @@ public class TokenHandler implements MiddlewareHandler {
                     throw new RuntimeException("serviceIdAuthServers property is missing in the token client credentials configuration");
                 }
                 AuthServerConfig authServerConfig = serviceIdAuthServers.get(serviceId);
-                final var authServerConfigMap = mapper.convertValue(authServerConfig, new TypeReference<Map<String, Object>>() {
-                });
-                cachedJwt.setCcConfig(buildAuthConfig(authServerConfigMap, tokenConfig));
-
+                cachedJwt.setAuthServerConfig(enrichAuthServerConfig(authServerConfig, tokenConfig));
             } else {
-                final var ccConfigMap = mapper.convertValue(ccConfig, new TypeReference<Map<String, Object>>() {
-                });
-                cachedJwt.setCcConfig(buildAuthConfig(ccConfigMap, tokenConfig));
+                cachedJwt.setAuthServerConfig(buildAuthServerConfig(tokenConfig, ccConfig));
             }
             result = OauthHelper.populateCCToken(cachedJwt);
             if (result.isSuccess()) {
@@ -212,18 +221,7 @@ public class TokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return TokenConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
-        if (logger.isInfoEnabled()) logger.info("TokenHandler is reloaded.");
-    }
 }

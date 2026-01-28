@@ -59,15 +59,13 @@ public class LoggerPostHandler implements LightHttpHandler {
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String API_ERROR_RESPONSE = "ERR10083";
     static final String DOWNSTREAM_ADMIN_DISABLED = "ERR10084";
-    protected static LoggerConfig config;
-
     public LoggerPostHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerPostHandler is constructed.");
-        config = LoggerConfig.load();
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        LoggerConfig config = LoggerConfig.load();
         if(!config.isEnabled()) {
             if(logger.isDebugEnabled()) logger.debug("logging is disabled");
             setExchangeStatus(exchange, LOGGER_INFO_DISABLED);
@@ -81,7 +79,7 @@ public class LoggerPostHandler implements LightHttpHandler {
         if(passThroughObject != null && passThroughObject.getFirst().equals("true")) {
             if(logger.isDebugEnabled()) logger.debug("pass through is true");
             if(config.isDownstreamEnabled()) {
-                Result<List<LoggerInfo>> loggersResult = postBackendLogger(loggers);
+                Result<List<LoggerInfo>> loggersResult = postBackendLogger(loggers, config);
                 if(loggersResult.isSuccess()) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
                     exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(loggersResult.getResult()));
@@ -119,7 +117,7 @@ public class LoggerPostHandler implements LightHttpHandler {
      *
      * @return result String of loggers or status error.
      */
-    private Result<List<LoggerInfo>> postBackendLogger(List loggers) {
+    private Result<List<LoggerInfo>> postBackendLogger(List loggers, LoggerConfig config) {
         long start = System.currentTimeMillis();
         Result<List<LoggerInfo>> result = null;
         String framework = config.getDownstreamFramework();
@@ -131,7 +129,7 @@ public class LoggerPostHandler implements LightHttpHandler {
                     Map<String, String> map = (Map<String, String>) object;
                     String name = map.get("name");
                     String level = map.get("level");
-                    boolean r = postSpringBootLogger(name, level);
+                    boolean r = postSpringBootLogger(name, level, config);
                     if(r) {
                         LoggerInfo loggerInfo = new LoggerInfo();
                         loggerInfo.setName(name);
@@ -143,14 +141,14 @@ public class LoggerPostHandler implements LightHttpHandler {
                 break;
             default:
                 // light-4j response will be used directly.
-                result = postLight4jLogger(loggers);
+                result = postLight4jLogger(loggers, config);
         }
         long responseTime = System.currentTimeMillis() - start;
         if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
         return result;
     }
 
-    private Result<List<LoggerInfo>> postLight4jLogger(List<LoggerInfo> loggers) {
+    private Result<List<LoggerInfo>> postLight4jLogger(List<LoggerInfo> loggers, LoggerConfig config) {
         String requestPath = "/adm/logger";
         long start = System.currentTimeMillis();
         SimpleConnectionHolder.ConnectionToken connectionToken = null;
@@ -177,7 +175,8 @@ public class LoggerPostHandler implements LightHttpHandler {
             }
             long responseTime = System.currentTimeMillis() - start;
             if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
-            return Success.of(getFrameworkLoggers(body));
+            if(logger.isDebugEnabled()) logger.debug("Downstream health check response time = " + responseTime);
+            return Success.of(getFrameworkLoggers(body, config));
         } catch (Exception ex) {
             logger.error("Could not create connection to the backend: " + config.getDownstreamHost() + ":", ex);
             Status status = new Status(GENERIC_EXCEPTION, ex.getMessage());
@@ -187,7 +186,7 @@ public class LoggerPostHandler implements LightHttpHandler {
         }
     }
 
-    private Boolean postSpringBootLogger(String loggerName, String level) {
+    private Boolean postSpringBootLogger(String loggerName, String level, LoggerConfig config) {
         long start = System.currentTimeMillis();
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("configuredLevel", level);
@@ -223,7 +222,7 @@ public class LoggerPostHandler implements LightHttpHandler {
         }
     }
 
-    private static List<LoggerInfo> getFrameworkLoggers(String responseBody) throws Exception {
+    private static List<LoggerInfo> getFrameworkLoggers(String responseBody, LoggerConfig config) throws Exception {
         String framework = config.getDownstreamFramework();
         switch (framework) {
             case Constants.SPRING_BOOT:

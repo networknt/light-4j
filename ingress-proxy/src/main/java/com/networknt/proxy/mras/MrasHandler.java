@@ -20,7 +20,7 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -71,10 +71,10 @@ public class MrasHandler implements MiddlewareHandler {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
-    private static AbstractMetricsHandler metricsHandler;
+    private AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
-    private static MrasConfig config;
+    private String configName =  MrasConfig.CONFIG_NAME;
     // the cached jwt token so that we can use the same token for different requests.
     private String accessToken;
     private String microsoft;
@@ -86,7 +86,12 @@ public class MrasHandler implements MiddlewareHandler {
     private HttpClient clientMicrosoft;
 
     public MrasHandler() {
-        config = MrasConfig.load();
+        this(MrasConfig.CONFIG_NAME);
+    }
+
+    public MrasHandler(String configName) {
+        this.configName = configName;
+        MrasConfig config = MrasConfig.load(configName);
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
 
         connectTimeout = config.getConnectTimeout();
@@ -94,7 +99,7 @@ public class MrasHandler implements MiddlewareHandler {
         timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
-        if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
+        if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded with {}.", configName);
     }
 
     @Override
@@ -111,9 +116,10 @@ public class MrasHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return MrasConfig.load(configName).isEnabled();
     }
 
+    /*
     @Override
     public void register() {
         // As certPassword is in the config file, we need to mask them.
@@ -123,32 +129,20 @@ public class MrasHandler implements MiddlewareHandler {
         masks.add("trustStorePass");
         masks.add("password");
         // use a new no cache instance to avoid the default config to be overwritten.
-        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(configName, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), masks);
     }
+    */
 
     @Override
-    public void reload() {
-        config.reload();
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
+        MrasConfig config = MrasConfig.load(configName);
         if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
-
         connectTimeout = config.getConnectTimeout();
         if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
         timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
-        List<String> masks = new ArrayList<>();
-        masks.add("keyStorePass");
-        masks.add("keyPass");
-        masks.add("trustStorePass");
-        masks.add("password");
-        // use a new no cache instance to avoid the default config to be overwritten.
-        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
-        if(logger.isInfoEnabled()) logger.info("MrasHandler is reloaded.");
-    }
-
-    @Override
-    public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = {}", requestPath);
@@ -181,7 +175,7 @@ public class MrasHandler implements MiddlewareHandler {
                     if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
                         if(logger.isTraceEnabled())
                             logger.trace("accessToken is about or already expired. current time = {} expiration = {}", System.currentTimeMillis(), accessTokenExpiration);
-                        Result<TokenResponse> result = getAccessToken();
+                        Result<TokenResponse> result = getAccessToken(config);
                         if(result.isSuccess()) {
                             accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
                             accessToken = result.getResult().getAccessToken();
@@ -195,24 +189,24 @@ public class MrasHandler implements MiddlewareHandler {
                     // Audit log the endpoint info
                     AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime, endpoint);
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime, endpoint);
+                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
                     if(System.currentTimeMillis() >= (microsoftExpiration - 50000)) { // leave 50 seconds room.
                         if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
-                        Result<TokenResponse> result = getMicrosoftToken();
+                        Result<TokenResponse> result = getMicrosoftToken(config);
                         if(result.isSuccess()) {
                             microsoftExpiration = System.currentTimeMillis() + result.getResult().getExpiresIn() * 1000;
                             microsoft = result.getResult().getAccessToken();
@@ -222,7 +216,7 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime, endpoint);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
@@ -234,7 +228,7 @@ public class MrasHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime, String endpoint) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime, String endpoint, MrasConfig config) throws Exception {
         // call the MRAS API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -316,7 +310,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .connectTimeout(Duration.ofMillis(connectTimeout))
                     // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                    .sslContext(createSSLContext());
+                    .sslContext(createSSLContext(config));
             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
             if (config.isEnableHttp2()) {
                 clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -361,7 +355,7 @@ public class MrasHandler implements MiddlewareHandler {
         }
     }
 
-    private Result<TokenResponse> getAccessToken() throws Exception {
+    private Result<TokenResponse> getAccessToken(MrasConfig config) throws Exception {
         TokenResponse tokenResponse = null;
         HttpClient client;
         try {
@@ -369,7 +363,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .connectTimeout(Duration.ofMillis(connectTimeout))
                     // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                    .sslContext(createSSLContext());
+                    .sslContext(createSSLContext(config));
             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
             if (config.isEnableHttp2()) {
                 clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -436,7 +430,7 @@ public class MrasHandler implements MiddlewareHandler {
         }
     }
 
-    private Result<TokenResponse> getMicrosoftToken() throws Exception {
+    private Result<TokenResponse> getMicrosoftToken(MrasConfig config) throws Exception {
         TokenResponse tokenResponse = null;
         if(clientMicrosoft == null) {
         if(logger.isTraceEnabled()) logger.trace("clientMicrosoft is null. Creating new HTTP2Client with sslContext for MRAS Microsoft.");
@@ -533,7 +527,7 @@ public class MrasHandler implements MiddlewareHandler {
         return encodeCredentialsFullFormat(username, password, ":");
     }
 
-    private SSLContext createSSLContext() throws IOException {
+    private SSLContext createSSLContext(MrasConfig config) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         try {

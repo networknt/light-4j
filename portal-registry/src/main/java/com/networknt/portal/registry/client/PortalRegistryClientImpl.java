@@ -32,7 +32,6 @@ import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistryClientImpl implements PortalRegistryClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryClientImpl.class);
-    private static final PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
     private static final int UNUSUAL_STATUS_CODE = 300;
     private Http2Client client = Http2Client.getInstance();
 
@@ -44,6 +43,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
      * just for backward compatibility.
      */
     public PortalRegistryClientImpl() {
+        PortalRegistryConfig config = PortalRegistryConfig.load();
         String portalUrl = config.getPortalUrl().toLowerCase();
         optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
         logger.debug("url = {}", portalUrl);
@@ -63,7 +63,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         Map<String, Object> map = new HashMap<>();
         map.put("id", checkId);
         map.put("pass", true);
-        map.put("checkInterval", config.getCheckInterval());
+        map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
         String path = "/services/check";
         ClientConnection connection = null;
         try {
@@ -88,7 +88,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         Map<String, Object> map = new HashMap<>();
         map.put("id", checkId);
         map.put("pass", false);
-        map.put("checkInterval", config.getCheckInterval());
+        map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
         String path = "/services/check";
         ClientConnection connection = null;
         try {
@@ -129,7 +129,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     @Override
     public void unregisterService(PortalRegistryService service, String token) {
-        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort() + "&checkInterval=" + config.getCheckInterval();
+        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort() + "&checkInterval=" + PortalRegistryConfig.load().getCheckInterval();
         if(service.getTag() != null) path = path + "&tag=" + service.getTag();
         System.out.println("de-register path = " + path);
         ClientConnection connection = null;

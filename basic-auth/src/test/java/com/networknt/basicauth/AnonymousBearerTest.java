@@ -59,7 +59,7 @@ public class AnonymousBearerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // inject the BasicAuthHandler before the TestHandler for security
-            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth-anonymous"));
+            BasicAuthHandler basicAuthHandler = new BasicAuthHandler("basic-auth-anonymous");
             basicAuthHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")

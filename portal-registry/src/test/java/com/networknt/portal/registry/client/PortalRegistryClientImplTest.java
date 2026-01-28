@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 public class PortalRegistryClientImplTest {
 
-    private static final PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
+    private static final PortalRegistryConfig config = PortalRegistryConfig.load();
 
    @Test
     public void testWaitProperty() {

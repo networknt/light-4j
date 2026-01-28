@@ -17,9 +17,10 @@
 package com.networknt.metrics;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -200,9 +201,11 @@ public class MetricsConfig {
     )
     String issuerRegex;
 
-    private Map<String, Object> mappedConfig;
-    private final Config config;
+    private final Map<String, Object> mappedConfig;
 
+
+    private static final String MASK_KEY_SERVER_PASS = "serverPass";
+    private static volatile MetricsConfig instance;
 
     private MetricsConfig() {
         this(CONFIG_NAME);
@@ -214,22 +217,31 @@ public class MetricsConfig {
      * @param configName String
      */
     private MetricsConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static MetricsConfig load() {
-        return new MetricsConfig();
+        return load(CONFIG_NAME);
     }
 
     public static MetricsConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (MetricsConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new MetricsConfig(configName);
+                ModuleRegistry.registerModule(configName, MetricsConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), List.of(MASK_KEY_SERVER_PASS));
+                return instance;
+            }
+        }
         return new MetricsConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public boolean isEnabled() {

@@ -5,6 +5,7 @@ import com.networknt.config.ConfigException;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,35 +40,41 @@ public class CacheConfig {
     )
     List<CacheItem> caches;
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+
+    private final Map<String, Object> mappedConfig;
+    private static volatile CacheConfig instance;
+
+    private CacheConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigList();
+    }
 
     private CacheConfig() {
         this(CONFIG_NAME);
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
-    private CacheConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigList();
-    }
-
     public static CacheConfig load() {
-        return new CacheConfig();
+        return load(CONFIG_NAME);
     }
 
     public static CacheConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CacheConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CacheConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, "com.networknt.cache.CacheManager", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new CacheConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigList();
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -83,7 +90,7 @@ public class CacheConfig {
     }
 
     public void setConfigList() {
-        if (mappedConfig.get(CACHES) != null) {
+        if (mappedConfig != null && mappedConfig.get(CACHES) != null) {
             Object object = mappedConfig.get(CACHES);
             caches = new ArrayList<>();
             if(object instanceof String) {

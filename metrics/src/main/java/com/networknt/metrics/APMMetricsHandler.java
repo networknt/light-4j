@@ -4,16 +4,13 @@ package com.networknt.metrics;
 import java.net.MalformedURLException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 import com.networknt.server.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.dropwizard.metrics.broadcom.APMEPAgentSender;
 
 import io.dropwizard.metrics.Clock;
@@ -24,7 +21,6 @@ import io.undertow.server.HttpServerExchange;
 
 public class APMMetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(APMMetricsHandler.class);
-    public static ServerConfig serverConfig;
 
     // this is the indicator to start the reporter and construct the common tags. It cannot be static as
     // the currentPort and currentAddress are not available during the handler initialization.
@@ -32,17 +28,11 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
     private volatile HttpHandler next;
 
     public APMMetricsHandler() {
-        config = MetricsConfig.load();
-        if (config.getIssuerRegex() != null) {
-            pattern = Pattern.compile(config.getIssuerRegex());
-        }
-        serverConfig = ServerConfig.getInstance();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
         logger.debug("APMMetricsHandler is constructed!");
     }
 
     @Override
-    protected void createMetricsReporter(TimeSeriesDbSender sender) {
+    protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) {
         APMAgentReporter reporter = APMAgentReporter
                 .forRegistry(registry)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -55,6 +45,8 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        MetricsConfig config = MetricsConfig.load();
+        ServerConfig serverConfig = ServerConfig.load();
         if (this.firstTime.compareAndSet(true, false)) {
             logger.debug("First request received, initializing APMMetricsHandler.");
             AbstractMetricsHandler.addCommonTags(commonTags);
@@ -67,13 +59,13 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                         serverConfig.getServiceId(),
                         config.getProductName()
                 );
-                this.createMetricsReporter(sender);
+                this.createMetricsReporter(sender, config);
             } catch (MalformedURLException e) {
                 logger.error("apmmetrics has failed to initialize APMEPAgentSender", e);
             }
         }
         long startTime = Clock.defaultClock().getTick();
-        final var exchangeCompletionListener = new MetricsExchangeCompletionListener(commonTags, startTime);
+        final var exchangeCompletionListener = new MetricsExchangeCompletionListener(commonTags, startTime, config);
         exchange.addExchangeCompleteListener(exchangeCompletionListener);
         Handler.next(exchange, next);
 
@@ -91,20 +83,4 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         return this;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
-        logger.info("APMMetricsHandler is reloaded.");
-    }
 }
