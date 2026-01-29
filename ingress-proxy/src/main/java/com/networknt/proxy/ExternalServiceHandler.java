@@ -99,7 +99,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
         if (config.getPathPrefixes() != null && !config.getPathPrefixes().isEmpty()) {
             for (PathPrefix pp : config.getPathPrefixes()) {
-                if (requestPath.startsWith(pp.getPathPrefix())) {
+                if (pp.getPathPrefix() != null && pp.getHost() != null && requestPath.startsWith(pp.getPathPrefix())) {
                     matchedPathPrefix = pp.getPathPrefix();
                     requestHost = pp.getHost();
                     if (pp.getTimeout() > 0) {
