@@ -41,6 +41,10 @@ import java.util.regex.Matcher;
  * @author Steve Hu
  */
 public class ExternalServiceHandler implements MiddlewareHandler {
+    static {
+        System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host,connection");
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
@@ -51,11 +55,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private int timeout;
     private HttpClient client;
 
+    /**
+     * Construct ExternalServiceHandler with default config name
+     */
     public ExternalServiceHandler() {
         ExternalServiceConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded.");
     }
 
+    /**
+     * Construct ExternalServiceHandler with config name
+     * @param configName config name
+     */
     public ExternalServiceHandler(String configName) {
         this.configName = configName;
         ExternalServiceConfig.load(configName);
@@ -291,8 +302,16 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         while (f != -1L) {
             values = headerMap.fiCurrent(f);
             try {
-                builder.setHeader(values.getHeaderName().toString(), values.getFirst());
-                if(logger.isTraceEnabled()) logger.trace("Copy header key = " + values.getHeaderName().toString() + " value = " + values.getFirst());
+                String key = values.getHeaderName().toString();
+                // skip restricted headers
+                if (!key.equalsIgnoreCase("Host")
+                        && !key.equalsIgnoreCase("Connection")
+                        && !key.equalsIgnoreCase("Content-Length")
+                        && !key.equalsIgnoreCase("Transfer-Encoding")
+                        && !key.equalsIgnoreCase("Upgrade")) {
+                    builder.setHeader(key, values.getFirst());
+                    if(logger.isTraceEnabled()) logger.trace("Copy header key = {} value = {}", key, values.getFirst());
+                }
             } catch (Exception e) {
                 // for some headers, they cannot be modified.
                 if(logger.isTraceEnabled()) logger.trace("Ignore the exception:", e);
@@ -313,8 +332,6 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
         var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
         final var props = System.getProperties();
-        props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
-        props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection"); // this essentially overwrites the above JVM arg value "Host"
 
         var clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)

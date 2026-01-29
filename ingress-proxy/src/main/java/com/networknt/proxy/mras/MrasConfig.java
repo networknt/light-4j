@@ -9,39 +9,69 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * Config class for MrasHandler
+ *
+ * @author Steve Hu
+ */
 @Deprecated
 public class MrasConfig {
     private static final Logger logger = LoggerFactory.getLogger(MrasConfig.class);
+    /** Config Name */
     public static final String CONFIG_NAME = "mras";
+    /** Enabled */
     public static final String ENABLED = "enabled";
 
+    /** Access Token */
     public static final String ACCESS_TOKEN = "accessToken";
 
+    /** Basic Auth */
     public static final String BASIC_AUTH = "basicAuth";
 
+    /** Anonymous */
     public static final String ANONYMOUS = "anonymous";
 
+    /** Microsoft */
     public static final String MICROSOFT = "microsoft";
 
+    /** Token URL */
     public static final String TOKEN_URL = "tokenUrl";
+    /** Username */
     public static final String USERNAME = "username";
+    /** Password */
     public static final String PASSWORD = "password";
+    /** Client ID */
     public static final String CLIENT_ID = "clientId";
+    /** Client Secret */
     public static final String CLIENT_SECRET = "clientSecret";
+    /** Resource */
     public static final String RESOURCE = "resource";
+    /** Cache Enabled */
     public static final String CACHE_ENABLED = "cacheEnabled";
+    /** Mem Key */
     public static final String MEM_KEY = "memKey";
+    /** Grace Period */
     public static final String GRACE_PERIOD = "gracePeriod";
+    /** Service Host */
     public static final String SERVICE_HOST = "serviceHost";
 
+    /** Key Store Name */
     public static final String KEY_STORE_NAME = "keyStoreName";
+    /** Key Store Pass */
     public static final String KEY_STORE_PASS = "keyStorePass";
+    /** Key Pass */
     public static final String KEY_PASS = "keyPass";
+    /** Trust Store Name */
     public static final String TRUST_STORE_NAME = "trustStoreName";
+    /** Trust Store Pass */
     public static final String TRUST_STORE_PASS = "trustStorePass";
+    /** Proxy Host */
     public static final String PROXY_HOST = "proxyHost";
+    /** Proxy Port */
     public static final String PROXY_PORT = "proxyPort";
+    /** Enable HTTP2 */
     public static final String ENABLE_HTTP2 = "enableHttp2";
+    /** Path Prefix Auth */
     public static final String PATH_PREFIX_AUTH = "pathPrefixAuth";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
@@ -94,51 +124,126 @@ public class MrasConfig {
         setConfigMap();
     }
 
+    /**
+     * Load config
+     * @return MrasConfig
+     */
     public static MrasConfig load() {
         return new MrasConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return MrasConfig
+     */
     public static MrasConfig load(String configName) {
         return new MrasConfig(configName);
     }
 
+    /**
+     * get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
+
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
+
+    /**
+     * get key store name
+     * @return String
+     */
     public String getKeyStoreName() {
         return keyStoreName;
     }
+
+    /**
+     * get key store pass
+     * @return String
+     */
     public String getKeyStorePass() {
         return keyStorePass;
     }
+
+    /**
+     * get key pass
+     * @return String
+     */
     public String getKeyPass() {
         return keyPass;
     }
+
+    /**
+     * get proxy host
+     * @return String
+     */
     public String getProxyHost() {
         return proxyHost;
     }
+
+    /**
+     * get proxy port
+     * @return int
+     */
     public int getProxyPort() {
         return proxyPort;
     }
+
+    /**
+     * get connect timeout
+     * @return int
+     */
     public int getConnectTimeout() {
         return connectTimeout;
     }
+
+    /**
+     * get timeout
+     * @return int
+     */
     public int getTimeout() {
         return timeout;
     }
+
+    /**
+     * is enable http2
+     * @return boolean
+     */
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
+
+    /**
+     * is metrics injection
+     * @return boolean
+     */
     public boolean isMetricsInjection() { return metricsInjection; }
+
+    /**
+     * get metrics name
+     * @return String
+     */
     public String getMetricsName() { return metricsName; }
 
+    /**
+     * get url rewrite rules
+     * @return List
+     */
     public List<UrlRewriteRule> getUrlRewriteRules() {
         return urlRewriteRules;
     }
 
+    /**
+     * set url rewrite rules
+     */
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
         if (mappedConfig.get("urlRewriteRules") != null) {
@@ -163,6 +268,11 @@ public class MrasConfig {
            }
         }
     }
+
+    /**
+     * set url rewrite rules
+     * @param urlRewriteRules List
+     */
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
     }
@@ -198,21 +308,46 @@ public class MrasConfig {
         if(object != null ) metricsName = (String)object;
     }
 
+    /**
+     * get path prefix auth
+     * @return Map
+     */
     public Map<String, Object> getPathPrefixAuth() {
         return pathPrefixAuth;
     }
 
+    /**
+     * set path prefix auth
+     * @param pathPrefixAuth Map
+     */
     public void setPathPrefixAuth(Map<String, Object> pathPrefixAuth) {
         this.pathPrefixAuth = pathPrefixAuth;
     }
 
+    /**
+     * get access token
+     * @return Map
+     */
     public Map<String, Object> getAccessToken() {
         return accessToken;
     }
+
+    /**
+     * get basic auth
+     * @return Map
+     */
     public Map<String, Object> getBasicAuth() { return basicAuth; }
 
+    /**
+     * get anonymous
+     * @return Map
+     */
     public Map<String, Object> getAnonymous() { return anonymous; }
 
+    /**
+     * get microsoft
+     * @return Map
+     */
     public Map<String, Object> getMicrosoft() { return microsoft; }
 
     private void setConfigMap() {

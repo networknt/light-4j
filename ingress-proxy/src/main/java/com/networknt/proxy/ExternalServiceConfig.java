@@ -18,14 +18,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Config class for ExternalServiceHandler
+ *
+ * @author Steve Hu
+ */
 @ConfigSchema(
         configKey = "externalService",
         configName = "external-service",
         configDescription = "Configuration for external service handler to access third party services through proxy/gateway.",
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
-)
+    )
 public class ExternalServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceConfig.class);
+    /** Config Name */
     public static final String CONFIG_NAME = "external-service";
     private static final String ENABLED = "enabled";
     private static final String PROXY_HOST = "proxyHost";
@@ -165,6 +171,9 @@ public class ExternalServiceConfig {
 
     // --- Constructor and Loading Logic ---
 
+    /**
+     * Construct ExternalServiceConfig with default config name
+     */
     public ExternalServiceConfig() {
         this(CONFIG_NAME);
     }
@@ -177,10 +186,19 @@ public class ExternalServiceConfig {
         setConfigList(); // Load and convert pathHostMappings
     }
 
+    /**
+     * Load config
+     * @return ExternalServiceConfig
+     */
     public static ExternalServiceConfig load() {
         return new ExternalServiceConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return ExternalServiceConfig
+     */
     public static ExternalServiceConfig load(String configName) {
         return new ExternalServiceConfig(configName);
     }
@@ -263,6 +281,9 @@ public class ExternalServiceConfig {
         }
     }
 
+    /**
+     * set url rewrite rules
+     */
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
         if(mappedConfig.get(URL_REWRITE_RULES) != null) {
@@ -360,75 +381,160 @@ public class ExternalServiceConfig {
 
     // --- Getters and Setters (Original Methods) ---
 
+    /**
+     * Get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * set enabled
+     * @param enabled boolean
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * get proxy host
+     * @return String
+     */
     public String getProxyHost() {
         return proxyHost;
     }
 
+    /**
+     * set proxy host
+     * @param proxyHost String
+     */
     public void setProxyHost(String proxyHost) {
         this.proxyHost = proxyHost;
     }
 
+    /**
+     * get proxy port
+     * @return int
+     */
     public int getProxyPort() {
         return proxyPort;
     }
 
+    /**
+     * get connect timeout
+     * @return int
+     */
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
+    /**
+     * get timeout
+     * @return int
+     */
     public int getTimeout() { return timeout; }
 
+    /**
+     * get max connection retries
+     * @return int
+     */
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
+    /**
+     * set max connection retries
+     * @param maxConnectionRetries int
+     */
     public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
 
+    /**
+     * set proxy port
+     * @param proxyPort int
+     */
     public void setProxyPort(int proxyPort) {
         this.proxyPort = proxyPort;
     }
 
+    /**
+     * is enable http2
+     * @return boolean
+     */
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
 
+    /**
+     * set enable http2
+     * @param enableHttp2 boolean
+     */
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
 
+    /**
+     * is metrics injection
+     * @return boolean
+     */
     public boolean isMetricsInjection() { return metricsInjection; }
+
+    /**
+     * get metrics name
+     * @return String
+     */
     public String getMetricsName() { return metricsName; }
 
+    /**
+     * get path host mappings
+     * @return List
+     */
     public List<String[]> getPathHostMappings() {
         return pathHostMappings;
     }
 
+    /**
+     * set path host mappings
+     * @param pathHostMappings List
+     */
     public void setPathHostMappings(List<String[]> pathHostMappings) {
         this.pathHostMappings = pathHostMappings;
     }
 
+    /**
+     * get url rewrite rules
+     * @return List
+     */
     public List<UrlRewriteRule> getUrlRewriteRules() {
         return urlRewriteRules;
     }
 
+    /**
+     * set url rewrite rules
+     * @param urlRewriteRules List
+     */
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
     }
 
+    /**
+     * get path prefixes
+     * @return List
+     */
     public List<PathPrefix> getPathPrefixes() {
         return pathPrefixes;
     }
 
+    /**
+     * set path prefixes
+     * @param pathPrefixes List
+     */
     public void setPathPrefixes(List<PathPrefix> pathPrefixes) {
         this.pathPrefixes = pathPrefixes;
     }

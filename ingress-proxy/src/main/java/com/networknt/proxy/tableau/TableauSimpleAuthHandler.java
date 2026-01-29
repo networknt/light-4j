@@ -82,10 +82,17 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         }
     }
 
+    /**
+     * Construct TableauSimpleAuthHandler with default config name
+     */
     public TableauSimpleAuthHandler() {
         this(TableauConfig.CONFIG_NAME);
     }
 
+    /**
+     * Construct TableauSimpleAuthHandler with config name
+     * @param configName config name
+     */
     public TableauSimpleAuthHandler(String configName) {
         this.configName = configName;
         TableauConfig.load(configName);

@@ -37,6 +37,9 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
     // cached connection to the backend API to speed up the downstream check.
     static ClientConnection connection = null;
 
+    /**
+     * Construct ProxyHealthGetHandler with default config name
+     */
     public ProxyHealthGetHandler() {
         if(logger.isTraceEnabled()) logger.trace("ProxyHealthGetHandler is constructed.");
         ModuleRegistry.registerModule(configName, ProxyHealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);

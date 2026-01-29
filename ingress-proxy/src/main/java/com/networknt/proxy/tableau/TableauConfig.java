@@ -55,10 +55,19 @@ public class TableauConfig {
         setConfigData();
     }
 
+    /**
+     * Load config
+     * @return TableauConfig
+     */
     public static TableauConfig load() {
         return new TableauConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return TableauConfig
+     */
     public static TableauConfig load(String configName) {
         return new TableauConfig(configName);
     }

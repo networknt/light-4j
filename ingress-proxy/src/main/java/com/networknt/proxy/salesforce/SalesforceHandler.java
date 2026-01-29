@@ -87,10 +87,17 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     private HttpClient client;
 
+    /**
+     * Construct SalesforceHandler with default config name
+     */
     public SalesforceHandler() {
         this(SalesforceConfig.CONFIG_NAME);
     }
 
+    /**
+     * Construct SalesforceHandler with config name
+     * @param configName config name
+     */
     public SalesforceHandler(String configName) {
         this.configName = configName;
         SalesforceConfig config = SalesforceConfig.load(configName);

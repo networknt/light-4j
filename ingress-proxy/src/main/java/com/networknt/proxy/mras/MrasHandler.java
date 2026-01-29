@@ -85,10 +85,17 @@ public class MrasHandler implements MiddlewareHandler {
     private int timeout;
     private HttpClient clientMicrosoft;
 
+    /**
+     * Construct MrasHandler with default config name
+     */
     public MrasHandler() {
         this(MrasConfig.CONFIG_NAME);
     }
 
+    /**
+     * Construct MrasHandler with config name
+     * @param configName config name
+     */
     public MrasHandler(String configName) {
         this.configName = configName;
         MrasConfig config = MrasConfig.load(configName);
