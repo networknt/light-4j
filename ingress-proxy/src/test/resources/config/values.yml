@@ -94,4 +94,4 @@ externalService.pathPrefixes: '[{"pathPrefix":"/timeout-test","host":"http://loc
 #  - /get https://postman-echo.com
 #  - /post https://postman-echo.com
 #  - /abc https://abc.com
-externalService.urlRewriteRules: "[\"/gateway/GetOKTAToken/1.0(.*)$ /oauth2/$1/v1/token\",\"/gateway/GetOKTATokenNT/1.0(.*)$ /oauth2/$1/v1/token\"]"
+externalService.urlRewriteRules: "[\"/gateway/GetOKTAToken/1.0(.*)$ /oauth2/$1/v1/token\",\"/gateway/GetOKTATokenNT/1.0(.*)$ /oauth2/$1/v1/token\",\"/timeout-test(.*)$ /internal/timeout-test$1\"]"

@@ -69,13 +69,13 @@ public class ExternalServiceHandlerTest {
                 .add(Methods.GET, "/", exchange -> {
                     exchange.getResponseSender().send("GET OK");
                 })
-                .add(Methods.GET, "/timeout-test", exchange -> {
+                .add(Methods.GET, "/internal/timeout-test", exchange -> {
                     exchange.getResponseSender().send("GET timeout-test OK");
                 })
-                .add(Methods.POST, "/timeout-test", exchange -> {
+                .add(Methods.POST, "/internal/timeout-test", exchange -> {
                     exchange.getResponseSender().send("POST timeout-test OK");
                 })
-                .add(Methods.GET, "/timeout-test/slow", exchange -> {
+                .add(Methods.GET, "/internal/timeout-test/slow", exchange -> {
                     // Simulate a slow response that exceeds the configured timeout
                     try {
                         Thread.sleep(2000);
