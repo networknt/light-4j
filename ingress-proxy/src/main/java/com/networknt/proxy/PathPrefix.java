@@ -8,17 +8,17 @@ public class PathPrefix {
             configFieldName = "pathPrefix",
             pattern = "^/.*"
     )
-    String pathPrefix;
+    private String pathPrefix;
 
     @StringField(
             configFieldName = "host"
     )
-    String host;
+    private String host;
 
     @IntegerField(
             configFieldName = "timeout"
     )
-    int timeout;
+    private int timeout;
 
     public String getPathPrefix() {
         return pathPrefix;
