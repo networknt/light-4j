@@ -35,13 +35,25 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     private String proxyConfigName = ProxyConfig.CONFIG_NAME;
     private String serverInfoConfigName = ServerInfoConfig.CONFIG_NAME;
 
+    /**
+     * Construct ProxyServerInfoHandler with default config name
+     */
     public ProxyServerInfoHandler() {
     }
 
+    /**
+     * Construct ProxyServerInfoHandler with proxy config name
+     * @param proxyConfigName proxy config name
+     */
     public ProxyServerInfoHandler(String proxyConfigName) {
         this.proxyConfigName = proxyConfigName;
     }
 
+    /**
+     * Construct ProxyServerInfoHandler with proxy and server info config name
+     * @param proxyConfigName proxy config name
+     * @param serverInfoConfigName server info config name
+     */
     public ProxyServerInfoHandler(String proxyConfigName, String serverInfoConfigName) {
         this.proxyConfigName = proxyConfigName;
         this.serverInfoConfigName = serverInfoConfigName;

@@ -55,11 +55,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private int timeout;
     private HttpClient client;
 
+    /**
+     * Construct ExternalServiceHandler with default config name
+     */
     public ExternalServiceHandler() {
         ExternalServiceConfig.load(configName);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is loaded.");
     }
 
+    /**
+     * Construct ExternalServiceHandler with config name
+     * @param configName config name
+     */
     public ExternalServiceHandler(String configName) {
         this.configName = configName;
         ExternalServiceConfig.load(configName);

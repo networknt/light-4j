@@ -171,10 +171,19 @@ public class ProxyConfig {
         setConfigData();
     }
 
+    /**
+     * Load config
+     * @return ProxyConfig
+     */
     public static ProxyConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return ProxyConfig
+     */
     public static ProxyConfig load(String configName) {
         ProxyConfig config = instance;
         if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
@@ -191,82 +200,182 @@ public class ProxyConfig {
         return config;
     }
 
+    /**
+     * get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
     // --- Getters and Setters (Original Methods) ---
 
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * set enabled
+     * @param enabled boolean
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * is http2 enabled
+     * @return boolean
+     */
     public boolean isHttp2Enabled() {
         return http2Enabled;
     }
 
+    /**
+     * set http2 enabled
+     * @param http2Enabled boolean
+     */
     public void setHttp2Enabled(boolean http2Enabled) {
         this.http2Enabled = http2Enabled;
     }
 
+    /**
+     * get hosts
+     * @return String
+     */
     public String getHosts() {
         return hosts;
     }
 
+    /**
+     * set hosts
+     * @param hosts String
+     */
     public void setHosts(String hosts) {
         this.hosts = hosts;
     }
 
+    /**
+     * get connections per thread
+     * @return int
+     */
     public int getConnectionsPerThread() {
         return connectionsPerThread;
     }
 
+    /**
+     * set connections per thread
+     * @param connectionsPerThread int
+     */
     public void setConnectionsPerThread(int connectionsPerThread) {
         this.connectionsPerThread = connectionsPerThread;
     }
 
+    /**
+     * get max request time
+     * @return int
+     */
     public int getMaxRequestTime() {
         return maxRequestTime;
     }
 
+    /**
+     * set max request time
+     * @param maxRequestTime int
+     */
     public void setMaxRequestTime(int maxRequestTime) {
         this.maxRequestTime = maxRequestTime;
     }
 
+    /**
+     * is rewrite host header
+     * @return boolean
+     */
     public boolean isRewriteHostHeader() { return rewriteHostHeader; }
 
+    /**
+     * set rewrite host header
+     * @param rewriteHostHeader boolean
+     */
     public void setRewriteHostHeader(boolean rewriteHostHeader) { this.rewriteHostHeader = rewriteHostHeader; }
 
+    /**
+     * is reuse x forwarded
+     * @return boolean
+     */
     public boolean isReuseXForwarded() { return reuseXForwarded; }
 
+    /**
+     * set reuse x forwarded
+     * @param reuseXForwarded boolean
+     */
     public void setReuseXForwarded(boolean reuseXForwarded) { this.reuseXForwarded = reuseXForwarded; }
 
+    /**
+     * get max connection retries
+     * @return int
+     */
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
+    /**
+     * set max connection retries
+     * @param maxConnectionRetries int
+     */
     public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
 
+    /**
+     * get max queue size
+     * @return int
+     */
     public int getMaxQueueSize() { return maxQueueSize; }
 
+    /**
+     * set max queue size
+     * @param maxQueueSize int
+     */
     public void setMaxQueueSize(int maxQueueSize) { this.maxQueueSize = maxQueueSize; }
 
+    /**
+     * is forward jwt claims
+     * @return boolean
+     */
     public boolean isForwardJwtClaims() {
         return forwardJwtClaims;
     }
 
+    /**
+     * set forward jwt claims
+     * @param forwardJwtClaims boolean
+     */
     public void setForwardJwtClaims(boolean forwardJwtClaims) {
         this.forwardJwtClaims = forwardJwtClaims;
     }
 
+    /**
+     * is metrics injection
+     * @return boolean
+     */
     public boolean isMetricsInjection() { return metricsInjection; }
 
+    /**
+     * set metrics injection
+     * @param metricsInjection boolean
+     */
     public void setMetricsInjection(boolean metricsInjection) { this.metricsInjection = metricsInjection; }
 
+    /**
+     * get metrics name
+     * @return String
+     */
     public String getMetricsName() { return metricsName; }
 
+    /**
+     * set metrics name
+     * @param metricsName String
+     */
     public void setMetricsName(String metricsName) { this.metricsName = metricsName; }
 
     private void setConfigData() {

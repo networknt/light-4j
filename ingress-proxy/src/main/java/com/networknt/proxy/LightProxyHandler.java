@@ -63,10 +63,17 @@ public class LightProxyHandler implements HttpHandler {
     private volatile ProxyHandler proxyHandler;
     private volatile AbstractMetricsHandler metricsHandler;
 
+    /**
+     * Construct LightProxyHandler with default config name
+     */
     public LightProxyHandler() {
         this(ProxyConfig.CONFIG_NAME);
     }
 
+    /**
+     * Construct LightProxyHandler with config name
+     * @param configName config name
+     */
     public LightProxyHandler(String configName) {
         this.configName = configName;
         this.config = ProxyConfig.load(configName);

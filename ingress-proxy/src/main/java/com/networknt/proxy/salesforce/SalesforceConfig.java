@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Config class for SalesforceHandler
+ *
+ * @author Steve Hu
+ */
 @Deprecated
 public class SalesforceConfig {
     private static final Logger logger = LoggerFactory.getLogger(SalesforceConfig.class);
@@ -79,10 +84,19 @@ public class SalesforceConfig {
         setUrlRewriteRules();
         setConfigList();
     }
+    /**
+     * Load config
+     * @return SalesforceConfig
+     */
     public static SalesforceConfig load() {
         return new SalesforceConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return SalesforceConfig
+     */
     public static SalesforceConfig load(String configName) {
         return new SalesforceConfig(configName);
     }
