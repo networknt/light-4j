@@ -335,7 +335,22 @@ public class ExternalServiceConfig {
             pathPrefix.setHost((String) value.get("host"));
             Object timeoutObj = value.get("timeout");
             if (timeoutObj != null) {
-                pathPrefix.setTimeout((Integer) timeoutObj);
+                int timeout;
+                if (timeoutObj instanceof Number) {
+                    timeout = ((Number) timeoutObj).intValue();
+                } else if (timeoutObj instanceof String) {
+                    try {
+                        timeout = Integer.parseInt((String) timeoutObj);
+                    } catch (NumberFormatException e) {
+                        throw new ConfigException("Invalid timeout value for pathPrefix '" +
+                                pathPrefix.getPathPrefix() + "': must be an integer, but was '" +
+                                timeoutObj + "'");
+                    }
+                } else {
+                    throw new ConfigException("Invalid timeout type for pathPrefix '" +
+                            pathPrefix.getPathPrefix() + "': " + timeoutObj.getClass().getName());
+                }
+                pathPrefix.setTimeout(timeout);
             }
             prefixes.add(pathPrefix);
         }
