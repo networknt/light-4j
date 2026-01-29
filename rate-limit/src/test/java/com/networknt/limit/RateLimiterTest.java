@@ -24,7 +24,7 @@ public class RateLimiterTest {
 
     @Before
     public void setUp() throws Exception{
-        LimitConfig.reload();
+        LimitConfig.load();
         limitConfig = LimitConfig.load();
         rateLimiter = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.ADDRESS);
@@ -35,7 +35,7 @@ public class RateLimiterTest {
 
     @org.junit.After
     public void tearDown() {
-        LimitConfig.reload();
+        com.networknt.config.Config.getInstance().clear();
     }
 
     @Test
