@@ -66,6 +66,21 @@ public class ExternalServiceHandlerTest {
                 })
                 .add(Methods.GET, "/", exchange -> {
                     exchange.getResponseSender().send("GET OK");
+                })
+                .add(Methods.GET, "/timeout-test", exchange -> {
+                    exchange.getResponseSender().send("GET timeout-test OK");
+                })
+                .add(Methods.POST, "/timeout-test", exchange -> {
+                    exchange.getResponseSender().send("POST timeout-test OK");
+                })
+                .add(Methods.GET, "/timeout-test/slow", exchange -> {
+                    // Simulate a slow response that exceeds the configured timeout (1000ms)
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    exchange.getResponseSender().send("This should timeout");
                 });
     }
 
@@ -162,6 +177,100 @@ public class ExternalServiceHandlerTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
         Assert.assertEquals(400, statusCode);
+    }
+
+    @Test
+    public void testPathPrefixGetRequest() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/timeout-test").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+        Assert.assertTrue(body.contains("GET timeout-test OK"));
+    }
+
+    @Test
+    public void testPathPrefixPostRequest() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        String requestBody = "{\"key\": \"value\"}";
+        try {
+            ClientRequest request = new ClientRequest().setPath("/timeout-test").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+        Assert.assertTrue(body.contains("POST timeout-test OK"));
+    }
+
+    @Test
+    public void testPathPrefixTimeout() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        boolean timeoutOccurred = false;
+        try {
+            ClientRequest request = new ClientRequest().setPath("/timeout-test/slow").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+            
+            // If we get here and the response is available, check if it's a timeout error status
+            if (reference.get() != null) {
+                int statusCode = reference.get().getResponseCode();
+                // A 504 Gateway Timeout or 408 Request Timeout would indicate the timeout was enforced
+                timeoutOccurred = (statusCode == 504 || statusCode == 408);
+            }
+        } catch (Exception e) {
+            logger.info("Expected timeout exception occurred: ", e);
+            // We expect a timeout exception here since the endpoint takes 2000ms but pathPrefix timeout is 1000ms
+            timeoutOccurred = e.getMessage() != null && e.getMessage().toLowerCase().contains("timeout") 
+                    || e instanceof java.util.concurrent.TimeoutException;
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        Assert.assertTrue("Expected timeout to occur for slow endpoint with 1000ms timeout", timeoutOccurred);
     }
 
 
