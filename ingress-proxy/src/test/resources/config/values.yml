@@ -88,6 +88,7 @@ conquest.pathPrefixAuths: [{"pathPrefix":"/conquest","authIssuer":"example","aut
 # external-service.yml
 externalService.enabled: true
 externalService.pathHostMappings: "[\"/sharepoint https://sharepoint.microsoft.com\",\"/get https://postman-echo.com\",\"/post https://postman-echo.com\",\"/abc https://abc.com\"]"
+externalService.pathPrefixes: '[{"pathPrefix":"/timeout-test","host":"http://localhost:7080","timeout":1000},{"pathPrefix":"/v1/petstore","host":"https://petstore.example.com","timeout":4000}]'
 #externalService.pathHostMappings:
 #  - /sharepoint https://sharepoint.microsoft.com
 #  - /get https://postman-echo.com

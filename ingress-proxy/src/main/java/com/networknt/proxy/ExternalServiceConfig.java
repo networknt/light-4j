@@ -38,7 +38,7 @@ public class ExternalServiceConfig {
     private static final String URL_REWRITE_RULES = "urlRewriteRules"; // Constant for rewrite rules
     private static final String CONNECT_TIMEOUT = "connectTimeout";
     private static final String TIMEOUT = "timeout";
-
+    private static final String PATH_PREFIXES = "pathPrefixes";
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
@@ -115,6 +115,27 @@ public class ExternalServiceConfig {
             items = String.class // Items are strings that will be converted to UrlRewriteRule later
     )
     List<UrlRewriteRule> urlRewriteRules; // Keep as List<UrlRewriteRule>
+
+    @ArrayField(
+            configFieldName = PATH_PREFIXES,
+            externalizedKeyName = PATH_PREFIXES,
+            description =
+            """
+            Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is at
+            a pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and
+            host for target host of the external API. If request path cannot match to one of the pathPrefixes, the request
+            will be skipped.
+            Note that this config properties will replace the pathHostMappings which is for single purpose only.
+              - pathPrefix: /sharepoint
+                timeout: 2000
+                host: https://sharepoint.microsoft.com
+              - pathPrefix: /v1/petstore
+                timeout: 4000
+                host: https://petstore.example.com
+            """,
+            items = PathPrefix.class
+    )
+    List<PathPrefix> pathPrefixes;
 
     @BooleanField(
             configFieldName = METRICS_INJECTION,
@@ -277,6 +298,48 @@ public class ExternalServiceConfig {
     private void setConfigList() {
         setPathHostMappingsList();
         setUrlRewriteRules();
+        setPathPrefixesList();
+    }
+
+    private void setPathPrefixesList() {
+        if (mappedConfig.get(PATH_PREFIXES) != null) {
+            Object object = mappedConfig.get(PATH_PREFIXES);
+            pathPrefixes = new ArrayList<>();
+            if (object instanceof String) {
+                String s = (String) object;
+                s = s.trim();
+                if (s.startsWith("[")) {
+                    try {
+                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                        pathPrefixes = populatePathPrefixes(values);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the pathPrefixes json with a list of string and object.");
+                    }
+                } else {
+                    throw new ConfigException("pathPrefixes must be a list of string object map.");
+                }
+            } else if (object instanceof List) {
+                List<Map<String, Object>> values = (List<Map<String, Object>>) object;
+                pathPrefixes = populatePathPrefixes(values);
+            } else {
+                throw new ConfigException("pathPrefixes must be a list of string object map.");
+            }
+        }
+    }
+
+    private List<PathPrefix> populatePathPrefixes(List<Map<String, Object>> values) {
+        List<PathPrefix> prefixes = new ArrayList<>();
+        for (Map<String, Object> value : values) {
+            PathPrefix pathPrefix = new PathPrefix();
+            pathPrefix.setPathPrefix((String) value.get("pathPrefix"));
+            pathPrefix.setHost((String) value.get("host"));
+            Object timeoutObj = value.get("timeout");
+            if (timeoutObj != null) {
+                pathPrefix.setTimeout((Integer) timeoutObj);
+            }
+            prefixes.add(pathPrefix);
+        }
+        return prefixes;
     }
 
 
@@ -345,5 +408,13 @@ public class ExternalServiceConfig {
 
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
+    }
+
+    public List<PathPrefix> getPathPrefixes() {
+        return pathPrefixes;
+    }
+
+    public void setPathPrefixes(List<PathPrefix> pathPrefixes) {
+        this.pathPrefixes = pathPrefixes;
     }
 }
