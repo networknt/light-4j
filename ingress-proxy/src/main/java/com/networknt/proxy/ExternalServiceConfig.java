@@ -121,7 +121,7 @@ public class ExternalServiceConfig {
             externalizedKeyName = PATH_PREFIXES,
             description =
             """
-            Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is at
+            Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is
             a pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and
             host for target host of the external API. If request path cannot match to one of the pathPrefixes, the request
             will be skipped.
