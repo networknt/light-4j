@@ -32,3 +32,15 @@ metricsInjection: ${externalService.metricsInjection:false}
 # metrics info can be categorized in a tree structure under the name. By default, it is external-response, and
 # users can change it.
 metricsName: ${externalService.metricsName:external-response}
+# Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is
+# a pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and
+# host for target host of the external API. If request path cannot match to one of the pathPrefixes, the request
+# will be skipped.
+# Note that this config properties will replace the pathHostMappings which is for single purpose only.
+#   - pathPrefix: /sharepoint
+#     timeout: 2000
+#     host: https://sharepoint.microsoft.com
+#   - pathPrefix: /v1/petstore
+#     timeout: 4000
+#     host: https://petstore.example.com
+pathPrefixes: ${externalService.pathPrefixes:}

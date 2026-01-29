@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "proxyHost", "proxyPort", "connectTimeout", "timeout", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "metricsInjection", "metricsName" ],
+  "required" : [ "enabled", "proxyHost", "proxyPort", "connectTimeout", "timeout", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "pathPrefixes", "metricsInjection", "metricsName" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -52,6 +52,26 @@
       "description" : "URL rewrite rules, each line will have two parts: the regex pattern and replace string separated\nwith a space. For details, please refer to the light-router router.yml configuration.\nTest your rules at https://www.freeformatter.com/java-regex-tester.html\n",
       "items" : {
         "type" : "string"
+      }
+    },
+    "pathPrefixes" : {
+      "type" : "array",
+      "description" : "Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is at\na pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and\nhost for target host of the external API. If request path cannot match to one of the pathPrefixes, the request\nwill be skipped.\nNote that this config properties will replace the pathHostMappings which is for single purpose only.\n  - pathPrefix: /sharepoint\n    timeout: 2000\n    host: https://sharepoint.microsoft.com\n  - pathPrefix: /v1/petstore\n    timeout: 4000\n    host: https://petstore.example.com\n",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "pathPrefix" : {
+            "type" : "string",
+            "pattern" : "^/.*"
+          },
+          "host" : {
+            "type" : "string"
+          },
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
       }
     },
     "metricsInjection" : {
