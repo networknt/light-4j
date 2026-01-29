@@ -19,24 +19,48 @@ package com.networknt.handler.config;
 import java.util.List;
 
 /**
+ * Path Handler that maps to the paths in handler.yml
+ *
  * @author Nicholas Azar
  */
 public class PathHandler {
     private String handlerName;
     private List<HandlerPath> paths;
 
+    /**
+     * Constructor
+     */
+    public PathHandler() {
+    }
+
+    /**
+     * Get the list of handler paths
+     * @return list of handler paths
+     */
     public List<HandlerPath> getPaths() {
         return paths;
     }
 
+    /**
+     * Set the list of handler paths
+     * @param paths list of handler paths
+     */
     public void setPaths(List<HandlerPath> paths) {
         this.paths = paths;
     }
 
+    /**
+     * Get the handler name
+     * @return handler name
+     */
     public String getHandlerName() {
         return handlerName;
     }
 
+    /**
+     * Set the handler name
+     * @param handlerName handler name
+     */
     public void setHandlerName(String handlerName) {
         this.handlerName = handlerName;
     }

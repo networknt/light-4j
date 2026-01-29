@@ -5,11 +5,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
 
+/**
+ * Handler Utils
+ */
 public class HandlerUtils {
 	private static final Logger logger = LoggerFactory.getLogger(HandlerUtils.class);
+    // Delimiter for the key
+    /**
+     * Delimiter for the key
+     */
     public static final String DELIMITER = "@";
+    // Internal key format
+    /**
+     * Internal key format
+     */
     protected static final String INTERNAL_KEY_FORMAT = "%s %s";
 
+    /**
+     * Constructor
+     */
+    private HandlerUtils() {
+    }
     /**
      * Looks up the appropriate serviceId for a given requestPath taken directly from exchange.
      * Returns null if the path does not map to a configured service, otherwise, an array will
@@ -45,6 +61,11 @@ public class HandlerUtils {
         return result;
     }
 
+    /**
+     * Normalise the path to have a leading slash
+     * @param requestPath request path
+     * @return normalised path
+     */
     public static String normalisePath(String requestPath) {
         if(!requestPath.startsWith("/")) {
             return "/" + requestPath;
@@ -52,6 +73,11 @@ public class HandlerUtils {
         return requestPath;
     }
 
+    /**
+     * Convert key to internal key
+     * @param key key
+     * @return internal key
+     */
     public static String toInternalKey(String key) {
         String[] tokens = StringUtils.trimToEmpty(key).split(DELIMITER);
 
@@ -63,6 +89,12 @@ public class HandlerUtils {
         return key;
     }
 
+    /**
+     * Convert method and path to internal key
+     * @param method method
+     * @param path path
+     * @return internal key
+     */
     public static String toInternalKey(String method, String path) {
         return String.format(INTERNAL_KEY_FORMAT, method, HandlerUtils.normalisePath(path));
     }

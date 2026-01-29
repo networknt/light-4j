@@ -27,11 +27,16 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
+ * Handler Configuration that maps to handler.yml
+ *
  * @author Nicholas Azar
  * @author Dan Dobrin
  */
 @ConfigSchema(configName = "handler", configKey = "handler", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class HandlerConfig {
+    /**
+     * Configuration name
+     */
     public static final String CONFIG_NAME = "handler";
     private static final Logger logger = LoggerFactory.getLogger(HandlerConfig.class);
     private static final String ENABLED = "enabled";
@@ -180,10 +185,19 @@ public class HandlerConfig {
         setConfigMap();
     }
 
+    /**
+     * Load the default configuration.
+     * @return HandlerConfig
+     */
     public static HandlerConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Load the configuration by name.
+     * @param configName config name
+     * @return HandlerConfig
+     */
     public static HandlerConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -204,95 +218,187 @@ public class HandlerConfig {
         return new HandlerConfig(configName);
     }
 
+    /**
+     * Get enabled status
+     * @return enabled
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Set enabled status
+     * @param enabled enabled
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * Get enabled handler metrics status
+     * @return enabled handler metrics
+     */
     public boolean isEnabledHandlerMetrics() {
         return enabledHandlerMetrics;
     }
 
+    /**
+     * Set enabled handler metrics status
+     * @param enabledHandlerMetrics enabled handler metrics
+     */
     public void setEnabledHandlerMetrics(boolean enabledHandlerMetrics) {
         this.enabledHandlerMetrics = enabledHandlerMetrics;
     }
 
+    /**
+     * Get handler metrics log level
+     * @return handler metrics log level
+     */
     public String getHandlerMetricsLogLevel() {
         return handlerMetricsLogLevel;
     }
 
+    /**
+     * Set handler metrics log level
+     * @param handlerMetricsLogLevel handler metrics log level
+     */
     public void setHandlerMetricsLogLevel(String handlerMetricsLogLevel) {
         this.handlerMetricsLogLevel = handlerMetricsLogLevel;
     }
 
+    /**
+     * Get handlers list
+     * @return handlers
+     */
     public List<String> getHandlers() {
         return handlers;
     }
 
+    /**
+     * Set handlers list
+     * @param handlers handlers
+     */
     public void setHandlers(List<String> handlers) {
         this.handlers = handlers;
     }
 
+    /**
+     * Get chains map
+     * @return chains
+     */
     public Map<String, List<String>> getChains() {
         return chains;
     }
 
+    /**
+     * Set chains map
+     * @param chains chains
+     */
     public void setChains(Map<String, List<String>> chains) {
         this.chains = chains;
     }
 
+    /**
+     * Get paths list
+     * @return paths
+     */
     public List<PathChain> getPaths() {
         return paths;
     }
 
+    /**
+     * Set paths list
+     * @param paths paths
+     */
     public void setPaths(List<PathChain> paths) {
         this.paths = paths;
     }
 
+    /**
+     * Get default handlers list
+     * @return default handlers
+     */
     public List<String> getDefaultHandlers() {
         return defaultHandlers;
     }
 
+    /**
+     * Set default handlers list
+     * @param defaultHandlers default handlers
+     */
     public void setDefaultHandlers(List<String> defaultHandlers) {
         this.defaultHandlers = defaultHandlers;
     }
 
+    /**
+     * Get audit on error status
+     * @return audit on error
+     */
     public boolean getAuditOnError() {
     	return auditOnError;
     }
 
+    /**
+     * Set audit on error status
+     * @param auditOnError audit on error
+     */
     public void setAuditOnError(boolean auditOnError) {
     	this.auditOnError = auditOnError;
     }
 
+    /**
+     * Get audit stack trace status
+     * @return audit stack trace
+     */
     public boolean getAuditStackTrace() {
     	return auditStackTrace;
     }
 
+    /**
+     * Set audit stack trace status
+     * @param auditStackTrace audit stack trace
+     */
     public void setAuditStackTrace(boolean auditStackTrace) {
     	this.auditStackTrace = auditStackTrace;
     }
 
 
+    /**
+     * Get base path
+     * @return base path
+     */
     public String getBasePath() {
         return basePath;
     }
 
+    /**
+     * Set base path
+     * @param basePath base path
+     */
     public void setBasePath(String basePath) {
         this.basePath = basePath;
     }
 
+    /**
+     * Check if audit on error is enabled
+     * @return true if audit on error is enabled
+     */
     public boolean isAuditOnError() {
         return auditOnError;
     }
 
+    /**
+     * Check if audit stack trace is enabled
+     * @return true if audit stack trace is enabled
+     */
     public boolean isAuditStackTrace() {
         return auditStackTrace;
     }
 
+    /**
+     * Get the mapped config object
+     * @return map of config
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
