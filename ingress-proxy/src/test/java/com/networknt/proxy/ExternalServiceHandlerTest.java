@@ -260,7 +260,7 @@ public class ExternalServiceHandlerTest {
             // Wait for response with a timeout longer than the configured pathPrefix timeout (1000ms)
             // to ensure we detect if the timeout mechanism fails
             boolean completed = latch.await(3000, TimeUnit.MILLISECONDS);
-            
+
             if (!completed) {
                 // Latch timed out - timeout may have occurred at a different level
                 timeoutOccurred = true;
@@ -273,7 +273,7 @@ public class ExternalServiceHandlerTest {
         } catch (Exception e) {
             logger.info("Expected timeout exception occurred: ", e);
             // Check if this is a timeout-related exception
-            boolean isTimeoutException = e instanceof HttpTimeoutException || 
+            boolean isTimeoutException = e instanceof HttpTimeoutException ||
                     (e.getMessage() != null && e.getMessage().toLowerCase().contains("timeout"));
             timeoutOccurred = isTimeoutException;
         } finally {
