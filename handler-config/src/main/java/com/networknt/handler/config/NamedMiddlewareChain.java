@@ -19,24 +19,48 @@ package com.networknt.handler.config;
 import java.util.List;
 
 /**
+ * Named Middleware Chain that maps to the named middleware chains in handler.yml
+ *
  * @author Nicholas Azar
  */
 public class NamedMiddlewareChain {
     private String name;
     private List<Object> middleware;
 
+    /**
+     * Constructor
+     */
+    public NamedMiddlewareChain() {
+    }
+
+    /**
+     * Get the name of the chain
+     * @return name of the chain
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Set the name of the chain
+     * @param name name of the chain
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Get the list of middleware handlers
+     * @return list of middleware handlers
+     */
     public List<Object> getMiddleware() {
         return middleware;
     }
 
+    /**
+     * Set the list of middleware handlers
+     * @param middleware list of middleware handlers
+     */
     public void setMiddleware(List<Object> middleware) {
         this.middleware = middleware;
     }

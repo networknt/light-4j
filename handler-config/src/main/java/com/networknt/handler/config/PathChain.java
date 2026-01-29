@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Path Chain that maps to the paths in handler.yml
+ *
  * @author Nicholas Azar
  */
 public class PathChain {
@@ -51,34 +53,72 @@ public class PathChain {
     )
     private List<String> exec;
 
+    /**
+     * Constructor
+     */
+    public PathChain() {
+    }
+
+    /**
+     * Get the source
+     * @return the source
+     */
     public String getSource() {
         return source;
     }
 
+    /**
+     * Set the source
+     * @param source the source
+     */
     public void setSource(String source) {
         this.source = source;
     }
 
+    /**
+     * Get the path
+     * @return the path
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * Set the path
+     * @param path the path
+     */
     public void setPath(String path) {
         this.path = path;
     }
 
+    /**
+     * Get the execution list
+     * @return list of handlers
+     */
     public List<String> getExec() {
         return exec;
     }
 
+    /**
+     * Set the execution list
+     * @param exec list of handlers
+     */
     public void setExec(List<String> exec) {
         this.exec = exec;
     }
 
+    /**
+     * Get the method
+     * @return the method
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * Set the method
+     * @param method the method
+     */
     public void setMethod(String method) {
         this.method = method;
     }
