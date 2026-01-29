@@ -266,11 +266,6 @@ public class LimitConfig {
         return new LimitConfig(configName);
     }
 
-    public static void reload() {
-        instance = new LimitConfig(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, LimitConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
