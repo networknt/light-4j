@@ -117,7 +117,7 @@ public class LimitConfigReloadTest {
             }
         }
         executor.shutdown();
-        
+
         Assert.assertTrue("Should have triggered rate limit", rateLimited);
 
 
