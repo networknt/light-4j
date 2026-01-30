@@ -51,7 +51,6 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>client</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

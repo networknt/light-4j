@@ -29,20 +29,65 @@ import java.util.concurrent.atomic.AtomicReference;
 public class McpHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(McpHandlerTest.class);
     static Undertow server = null;
+    static Undertow backendServer = null;
     static final int PORT = 7080;
+    static final int BACKEND_PORT = 7081;
 
     @BeforeClass
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
-            McpHandler mcpHandler = new McpHandler();
-            mcpHandler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));
-            
+            McpHandler handler = new McpHandler();
+            handler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));
             server = Undertow.builder()
                     .addHttpListener(PORT, "localhost")
-                    .setHandler(mcpHandler)
+                    .setHandler(handler)
                     .build();
             server.start();
+        }
+        if (backendServer == null) {
+            logger.info("starting backend server");
+            backendServer = Undertow.builder()
+                    .addHttpListener(BACKEND_PORT, "localhost")
+                    .setHandler(exchange -> {
+                        if (exchange.getRequestPath().equals("/weather")) {
+                            exchange.getResponseHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+                            exchange.getResponseSender().send("{\"temperature\": 25, \"unit\": \"C\"}");
+                        } else {
+                            exchange.setStatusCode(404);
+                        }
+                    })
+                    .build();
+            backendServer.start();
+        }
+    }
+
+    @Test
+    public void testToolCall() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection = client.connect(new URI("http://localhost:" + PORT), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"weather\", \"arguments\": {}}, \"id\": 3}";
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp/message");
+            request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            latch.await(5000, TimeUnit.MILLISECONDS);
+            int statusCode = reference.get().getResponseCode();
+            Assert.assertEquals(200, statusCode);
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            // Verify result contains weather data
+            Assert.assertTrue(body.contains("temperature"));
+            Assert.assertTrue(body.contains("25"));
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw e;
+        } finally {
+            IoUtils.safeClose(connection);
         }
     }
 
@@ -50,6 +95,9 @@ public class McpHandlerTest {
     public static void tearDown() throws Exception {
         if (server != null) {
             server.stop();
+        }
+        if (backendServer != null) {
+            backendServer.stop();
         }
     }
 
@@ -144,7 +192,14 @@ public class McpHandlerTest {
             Map<String, Object> result = (Map<String, Object>) map.get("result");
             java.util.List<Map<String, Object>> tools = (java.util.List<Map<String, Object>>) result.get("tools");
             Assert.assertFalse(tools.isEmpty());
-            Assert.assertEquals("testTool", tools.get(0).get("name"));
+            boolean testToolFound = false;
+            boolean weatherToolFound = false;
+            for(Map<String, Object> toolMap: tools) {
+                if("testTool".equals(toolMap.get("name"))) testToolFound = true;
+                if("weather".equals(toolMap.get("name"))) weatherToolFound = true;
+            }
+            Assert.assertTrue(testToolFound);
+            Assert.assertTrue(weatherToolFound);
             
         } finally {
             IoUtils.safeClose(connection);

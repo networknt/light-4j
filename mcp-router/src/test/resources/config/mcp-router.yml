@@ -1,3 +1,9 @@
 enabled: true
 ssePath: /mcp/sse
 messagePath: /mcp/message
+tools:
+  - name: weather
+    description: Get weather information
+    host: http://localhost:7081
+    path: /weather
+    method: GET

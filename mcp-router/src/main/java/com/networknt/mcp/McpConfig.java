@@ -8,6 +8,7 @@ import com.networknt.config.schema.StringField;
 import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
+import java.util.List;
 
 /**
  * Configuration class for McpHandler.
@@ -38,6 +39,11 @@ public class McpConfig {
      */
     public static final String MESSAGE_PATH = "messagePath";
 
+    /**
+     * Tools
+     */
+    public static final String TOOLS = "tools";
+    
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
@@ -61,6 +67,8 @@ public class McpConfig {
             defaultValue = "/mcp/message"
     )
     String messagePath = "/mcp/message";
+
+    private List<Map<String, Object>> tools;
 
     private final Map<String, Object> mappedConfig;
     private static volatile McpConfig instance;
@@ -94,11 +102,17 @@ public class McpConfig {
     private void setConfigData() {
         if (mappedConfig != null) {
             Object object = mappedConfig.get(ENABLED);
-            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            if(object != null && (Boolean) object) {
+                enabled = true;
+            }
             object = mappedConfig.get(SSE_PATH);
             if (object != null) ssePath = (String) object;
             object = mappedConfig.get(MESSAGE_PATH);
             if (object != null) messagePath = (String) object;
+            object = mappedConfig.get(TOOLS);
+            if(object != null && object instanceof List) {
+                tools = (List<Map<String, Object>>) object;
+            }
         }
     }
 
@@ -132,5 +146,13 @@ public class McpConfig {
      */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
+    }
+
+    /**
+     * get tools
+     * @return List
+     */
+    public List<Map<String, Object>> getTools() {
+        return tools;
     }
 }

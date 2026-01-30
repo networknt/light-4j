@@ -36,6 +36,23 @@ public class McpHandler implements MiddlewareHandler {
      * Default constructor
      */
     public McpHandler() {
+        McpConfig config = McpConfig.load();
+        List<Map<String, Object>> tools = config.getTools();
+        if (tools != null) {
+            for (Map<String, Object> toolData : tools) {
+                String name = (String) toolData.get("name");
+                String description = (String) toolData.get("description");
+                String host = (String) toolData.get("host");
+                String path = (String) toolData.get("path");
+                String method = (String) toolData.get("method");
+                if (name != null && host != null && path != null && method != null) {
+                    McpToolRegistry.registerTool(new HttpMcpTool(name, description, host, path, method));
+                    if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
+                } else {
+                    logger.error("Invalid tool configuration: {}", toolData);
+                }
+            }
+        }
         if(logger.isInfoEnabled()) logger.info("McpHandler initialized.");
     }
 
