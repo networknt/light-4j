@@ -9,6 +9,11 @@ import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
+/**
+ * Configuration class for McpHandler.
+ *
+ * @author Steve Hu
+ */
 @ConfigSchema(
         configKey = "mcp-router",
         configName = "mcp-router",
@@ -16,9 +21,21 @@ import java.util.Map;
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
 public class McpConfig {
+    /**
+     * Config name
+     */
     public static final String CONFIG_NAME = "mcp-router";
+    /**
+     * Enabled
+     */
     public static final String ENABLED = "enabled";
+    /**
+     * SSE Path
+     */
     public static final String SSE_PATH = "ssePath";
+    /**
+     * Message Path
+     */
     public static final String MESSAGE_PATH = "messagePath";
 
     @BooleanField(
@@ -49,7 +66,7 @@ public class McpConfig {
     private static volatile McpConfig instance;
 
     private McpConfig(String configName) {
-        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
         setConfigData();
     }
 
@@ -57,27 +74,20 @@ public class McpConfig {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Load config
+     * @return McpConfig
+     */
     public static McpConfig load() {
-        return load(CONFIG_NAME);
+        return new McpConfig(CONFIG_NAME);
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return McpConfig
+     */
     public static McpConfig load(String configName) {
-        if (CONFIG_NAME.equals(configName)) {
-            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-            if (instance != null && instance.getMappedConfig() == mappedConfig) {
-                return instance;
-            }
-            synchronized (McpConfig.class) {
-                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-                if (instance != null && instance.getMappedConfig() == mappedConfig) {
-                    return instance;
-                }
-                instance = new McpConfig(configName);
-                // Register the module with the configuration.
-                ModuleRegistry.registerModule(configName, McpConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
-                return instance;
-            }
-        }
         return new McpConfig(configName);
     }
 
@@ -92,18 +102,34 @@ public class McpConfig {
         }
     }
 
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * get sse path
+     * @return String
+     */
     public String getSsePath() {
         return ssePath;
     }
 
+    /**
+     * get message path
+     * @return String
+     */
     public String getMessagePath() {
         return messagePath;
     }
 
+    /**
+     * get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

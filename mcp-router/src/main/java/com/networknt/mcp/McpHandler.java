@@ -19,6 +19,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * McpHandler is the main handler for the MCP Router.
+ *
+ * @author Steve Hu
+ */
 public class McpHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(McpHandler.class);
     private static final String JSONRpc_VERSION = "2.0";
@@ -27,6 +32,9 @@ public class McpHandler implements MiddlewareHandler {
     private McpConfig config;
     private ObjectMapper mapper = Config.getInstance().getMapper();
 
+    /**
+     * Default constructor
+     */
     public McpHandler() {
         if(logger.isInfoEnabled()) logger.info("McpHandler initialized.");
     }
