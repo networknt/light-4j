@@ -1,0 +1,7 @@
+# MCP Router Configuration
+# Enable MCP Router Handler
+enabled: ${mcp-router.enabled:true}
+# Path for MCP Server-Sent Events (SSE) endpoint.
+ssePath: ${mcp-router.ssePath:/mcp/sse}
+# Path for MCP JSON-RPC message endpoint.
+messagePath: ${mcp-router.messagePath:/mcp/message}

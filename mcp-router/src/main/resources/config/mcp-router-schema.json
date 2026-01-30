@@ -1,0 +1,22 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "ssePath", "messagePath" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable MCP Router Handler",
+      "default" : true
+    },
+    "ssePath" : {
+      "type" : "string",
+      "description" : "Path for MCP Server-Sent Events (SSE) endpoint.",
+      "default" : "/mcp/sse"
+    },
+    "messagePath" : {
+      "type" : "string",
+      "description" : "Path for MCP JSON-RPC message endpoint.",
+      "default" : "/mcp/message"
+    }
+  }
+}

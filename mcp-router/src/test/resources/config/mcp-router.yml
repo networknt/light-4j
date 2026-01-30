@@ -1,0 +1,3 @@
+enabled: true
+ssePath: /mcp/sse
+messagePath: /mcp/message
