@@ -15,15 +15,29 @@
  */
 
 package com.networknt.resource;
-
+import com.networknt.config.schema.ArrayField;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
 import com.networknt.server.ModuleRegistry;
 
 import java.util.List;
 import java.util.Map;
 
+@ConfigSchema(
+        configKey = "virtual-host",
+        configName = "virtual-host",
+        configDescription = "Virtual Host Config",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
+)
 public class VirtualHostConfig {
     public static final String CONFIG_NAME = "virtual-host";
 
+    @ArrayField(
+            configFieldName = "hosts",
+            externalizedKeyName = "hosts",
+            description = "List of virtual hosts",
+            items = VirtualHost.class
+    )
     List<VirtualHost> hosts;
 
     private static volatile VirtualHostConfig instance;

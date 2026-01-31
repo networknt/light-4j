@@ -1,0 +1,3 @@
+# Virtual Host Config
+# List of virtual hosts
+hosts: ${virtual-host.hosts:}
