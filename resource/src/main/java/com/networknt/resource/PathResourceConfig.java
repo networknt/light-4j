@@ -15,18 +15,60 @@
  */
 
 package com.networknt.resource;
+
 import com.networknt.config.Config;
+import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
+@ConfigSchema(
+        configKey = "path-resource",
+        configName = "path-resource",
+        configDescription = "Path Resource Config",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
+)
 public class PathResourceConfig {
     public static final String CONFIG_NAME = "path-resource";
 
+    @StringField(
+            configFieldName = "path",
+            externalizedKeyName = "path",
+            description = "The path of the resource",
+            defaultValue = "/public"
+    )
     String path;
+
+    @StringField(
+            configFieldName = "base",
+            externalizedKeyName = "base",
+            description = "The base directory of the resource",
+            defaultValue = "/opt/light-4j/public"
+    )
     String base;
+
+    @BooleanField(
+            configFieldName = "prefix",
+            externalizedKeyName = "prefix",
+            description = "If true, the path is a prefix",
+            defaultValue = "true"
+    )
     boolean prefix;
+
+    @IntegerField(
+            configFieldName = "transferMinSize",
+            externalizedKeyName = "transferMinSize",
+            description = "The minimum size of the file to be transferred",
+            defaultValue = "1024"
+    )
     int transferMinSize;
+
+    @BooleanField(
+            configFieldName = "directoryListingEnabled",
+            externalizedKeyName = "directoryListingEnabled",
+            description = "If true, directory listing is enabled",
+            defaultValue = "false"
+    )
     boolean directoryListingEnabled;
 
     private static volatile PathResourceConfig instance;

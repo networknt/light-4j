@@ -16,11 +16,49 @@
 
 package com.networknt.resource;
 
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.IntegerField;
+import com.networknt.config.schema.StringField;
+
 public class VirtualHost {
+    @StringField(
+            configFieldName = "path",
+            externalizedKeyName = "path",
+            description = "The path of the virtual host",
+            defaultValue = "/"
+    )
     String path;
+
+    @StringField(
+            configFieldName = "domain",
+            externalizedKeyName = "domain",
+            description = "The domain of the virtual host",
+            defaultValue = "localhost"
+    )
     String domain;
+
+    @StringField(
+            configFieldName = "base",
+            externalizedKeyName = "base",
+            description = "The base directory of the virtual host",
+            defaultValue = "/opt/light-4j/public"
+    )
     String base;
+
+    @IntegerField(
+            configFieldName = "transferMinSize",
+            externalizedKeyName = "transferMinSize",
+            description = "The minimum size of the file to be transferred",
+            defaultValue = "1024"
+    )
     int transferMinSize;
+
+    @BooleanField(
+            configFieldName = "directoryListingEnabled",
+            externalizedKeyName = "directoryListingEnabled",
+            description = "If true, directory listing is enabled",
+            defaultValue = "false"
+    )
     boolean directoryListingEnabled;
 
     public VirtualHost() {
