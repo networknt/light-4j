@@ -1,5 +1,22 @@
 # Change Log
 
+## [2.3.2](https://github.com/networknt/light-4j/tree/2.3.2) (2026-02-02)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2633 Add a test case in rate-limit to test config auto reload [\#2634](https://github.com/networknt/light-4j/pull/2634) ([stevehu](https://github.com/stevehu))
+- fixes \#2631 add pathPrefixes config property to set up path prefix ba… [\#2632](https://github.com/networknt/light-4j/pull/2632) ([stevehu](https://github.com/stevehu))
+- Issue2619 [\#2629](https://github.com/networknt/light-4j/pull/2629) ([stevehu](https://github.com/stevehu))
+- Config Schema Generator Refactor [\#2625](https://github.com/networknt/light-4j/pull/2625) ([KalevGonvick](https://github.com/KalevGonvick))
+- Remaining Cloud Event Stubs [\#2624](https://github.com/networknt/light-4j/pull/2624) ([KalevGonvick](https://github.com/KalevGonvick))
+- DAAHP-1186 [\#2621](https://github.com/networknt/light-4j/pull/2621) ([stevehu](https://github.com/stevehu))
+- Cloud Event Stub Support [\#2610](https://github.com/networknt/light-4j/pull/2610) ([KalevGonvick](https://github.com/KalevGonvick))
+- ip-whitelist generation [\#2600](https://github.com/networknt/light-4j/pull/2600) ([KalevGonvick](https://github.com/KalevGonvick))
+- Limit Config Schema Generator Fix [\#2597](https://github.com/networknt/light-4j/pull/2597) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.3.1](https://github.com/networknt/light-4j/tree/2.3.1) (2025-09-19)
 
 
