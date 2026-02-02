@@ -31,13 +31,9 @@ public class McpConfig {
      */
     public static final String ENABLED = "enabled";
     /**
-     * SSE Path
+     * Path
      */
-    public static final String SSE_PATH = "ssePath";
-    /**
-     * Message Path
-     */
-    public static final String MESSAGE_PATH = "messagePath";
+    public static final String PATH = "path";
 
     /**
      * Tools
@@ -53,20 +49,12 @@ public class McpConfig {
     boolean enabled = true;
 
     @StringField(
-            configFieldName = SSE_PATH,
-            externalizedKeyName = SSE_PATH,
-            description = "Path for MCP Server-Sent Events (SSE) endpoint.",
-            defaultValue = "/mcp/sse"
+            configFieldName = PATH,
+            externalizedKeyName = PATH,
+            description = "Path for MCP endpoint (Streamable HTTP)",
+            defaultValue = "/mcp"
     )
-    String ssePath = "/mcp/sse";
-
-    @StringField(
-            configFieldName = MESSAGE_PATH,
-            externalizedKeyName = MESSAGE_PATH,
-            description = "Path for MCP JSON-RPC message endpoint.",
-            defaultValue = "/mcp/message"
-    )
-    String messagePath = "/mcp/message";
+    String path = "/mcp";
 
     private List<Map<String, Object>> tools;
 
@@ -105,10 +93,8 @@ public class McpConfig {
             if(object != null && (Boolean) object) {
                 enabled = true;
             }
-            object = mappedConfig.get(SSE_PATH);
-            if (object != null) ssePath = (String) object;
-            object = mappedConfig.get(MESSAGE_PATH);
-            if (object != null) messagePath = (String) object;
+            object = mappedConfig.get(PATH);
+            if (object != null) path = (String) object;
             object = mappedConfig.get(TOOLS);
             if(object != null && object instanceof List) {
                 tools = (List<Map<String, Object>>) object;
@@ -125,19 +111,11 @@ public class McpConfig {
     }
 
     /**
-     * get sse path
+     * get path
      * @return String
      */
-    public String getSsePath() {
-        return ssePath;
-    }
-
-    /**
-     * get message path
-     * @return String
-     */
-    public String getMessagePath() {
-        return messagePath;
+    public String getPath() {
+        return path;
     }
 
     /**

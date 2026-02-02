@@ -38,4 +38,11 @@ public class McpToolRegistry {
     public static Map<String, McpTool> getTools() {
         return Collections.unmodifiableMap(tools);
     }
+
+    /**
+     * Clear all tools (for testing/reload)
+     */
+    public static void clear() {
+        tools.clear();
+    }
 }

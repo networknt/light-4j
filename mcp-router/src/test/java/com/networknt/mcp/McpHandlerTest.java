@@ -38,6 +38,10 @@ public class McpHandlerTest {
         if (server == null) {
             logger.info("starting server");
             McpHandler handler = new McpHandler();
+            // Manually register tool for test reliability
+            McpTool weatherTool = new HttpMcpTool("weather", "Get weather information", "http://localhost:" + BACKEND_PORT, "/weather", "GET");
+            McpToolRegistry.registerTool(weatherTool);
+            
             handler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));
             server = Undertow.builder()
                     .addHttpListener(PORT, "localhost")
@@ -70,7 +74,7 @@ public class McpHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"weather\", \"arguments\": {}}, \"id\": 3}";
-            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp/message");
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
@@ -99,6 +103,10 @@ public class McpHandlerTest {
         if (backendServer != null) {
             backendServer.stop();
         }
+        // internal clear method or just rely on static? 
+        // McpToolRegistry doesn't have a clear method public exposed usually?
+        // Let's check imports. We need to import HttpMcpTool first.
+        McpToolRegistry.clear();
     }
 
     @Test
@@ -108,7 +116,7 @@ public class McpHandlerTest {
         final ClientConnection connection = client.connect(new URI("http://localhost:" + PORT), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/mcp/sse");
+            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/mcp");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.ACCEPT, "text/event-stream");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
@@ -134,7 +142,7 @@ public class McpHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             String json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {}, \"id\": 1}";
-            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp/message");
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
@@ -177,7 +185,7 @@ public class McpHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"params\": {}, \"id\": 2}";
-            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp/message");
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");

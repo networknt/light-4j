@@ -61,10 +61,15 @@ public class McpHandler implements MiddlewareHandler {
         McpConfig config = McpConfig.load();
         String path = exchange.getRequestPath();
 
-        if (config.getSsePath().equals(path) && exchange.getRequestMethod().equals(Methods.GET)) {
-            handleSse(exchange, config);
-        } else if (config.getMessagePath().equals(path) && exchange.getRequestMethod().equals(Methods.POST)) {
-            handleMessage(exchange, config);
+        if (config.getPath().equals(path)) {
+            if (exchange.getRequestMethod().equals(Methods.GET)) {
+                handleSse(exchange, config);
+            } else if (exchange.getRequestMethod().equals(Methods.POST)) {
+                handleMessage(exchange, config);
+            } else {
+                exchange.setStatusCode(405);
+                exchange.getResponseSender().send("Method Not Allowed");
+            }
         } else {
             Handler.next(exchange, next);
         }
@@ -80,7 +85,9 @@ public class McpHandler implements MiddlewareHandler {
             // Send the endpoint event as per MCP HTTP transport spec
             try {
                 // The data field contains the URI for the POST endpoint (messagePath)
-                connection.send(config.getMessagePath(), "endpoint", null, null);
+                // We append sessionId to the path so that POST requests can identify the session
+                String endpoint = config.getPath() + "?sessionId=" + id;
+                connection.send(endpoint, "endpoint", null, null);
             } catch (Exception e) {
                 logger.error("Failed to send endpoint event", e);
             }
@@ -99,6 +106,16 @@ public class McpHandler implements MiddlewareHandler {
             return;
         }
         
+        // Extract session ID from query parameter
+        String sessionId = null;
+        Deque<String> sessionIdDeque = exchange.getQueryParameters().get("sessionId");
+        if (sessionIdDeque != null && !sessionIdDeque.isEmpty()) {
+            sessionId = sessionIdDeque.getFirst();
+        }
+        
+        // Optionally valid sessionId against SseConnectionRegistry if needed for strict session checking
+        // if (sessionId != null && !SseConnectionRegistry.contains(sessionId)) { ... }
+
         exchange.getRequestReceiver().receiveFullString((exch, message) -> {
             try {
                 Map<String, Object> request = mapper.readValue(message, Map.class);
