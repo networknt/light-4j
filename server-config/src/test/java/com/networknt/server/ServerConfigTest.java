@@ -45,7 +45,7 @@ public class ServerConfigTest {
         Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
         Assert.assertEquals(200, serverConfig.getWorkerThreads());
         Assert.assertEquals(10000, serverConfig.getBacklog());
-        Assert.assertEquals(true, serverConfig.isAlwaysSetDate());
+        Assert.assertTrue(serverConfig.isAlwaysSetDate());
         Assert.assertEquals("L", serverConfig.getServerString());
     }
 

@@ -348,7 +348,7 @@ public class  ServerConfig {
             description = "The server shutdown timeout in milliseconds after which the executor will be forcefully shut down\n" +
                     "interrupting tasks which are still executing."
     )
-    int shutdownTimeout;
+    Integer shutdownTimeout;
 
     @BooleanField(
             configFieldName = ALLOW_UNESCAPED_CHARACTERS_IN_URL,
@@ -736,11 +736,11 @@ public class  ServerConfig {
         this.backlog = backlog;
     }
 
-    public int getShutdownTimeout() {
+    public Integer getShutdownTimeout() {
         return shutdownTimeout;
     }
 
-    public void setShutdownTimeout(int shutdownTimeout) {
+    public void setShutdownTimeout(Integer shutdownTimeout) {
         this.shutdownTimeout = shutdownTimeout;
     }
 
