@@ -12,6 +12,7 @@
 
     <artifactId>mcp-router</artifactId>
     <packaging>jar</packaging>
+    <name>mcp-router</name>
     <description>A router that implements Model Context Protocol (MCP) for AI agents</description>
 
     <dependencies>

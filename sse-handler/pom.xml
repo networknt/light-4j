@@ -11,6 +11,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sse-handler</artifactId>
+    <name>sse-handler</name>
+    <description>This is the sse handler to server sent event.</description>
 
     <dependencies>
         <dependency>
