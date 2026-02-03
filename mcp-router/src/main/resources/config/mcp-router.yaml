@@ -1,0 +1,5 @@
+# MCP Router Configuration
+# Enable MCP Router Handler
+enabled: ${mcp-router.enabled:true}
+# Path for MCP endpoint (Streamable HTTP)
+path: ${mcp-router.path:/mcp}

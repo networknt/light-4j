@@ -229,6 +229,8 @@
         <module>token-limit</module>
         <module>expect100continue</module>
         <module>access-config</module>
+        <module>sse-handler</module>
+        <module>mcp-router</module>
     </modules>
 
     <dependencyManagement>
@@ -652,6 +654,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>access-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>sse-handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>mcp-router</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->
