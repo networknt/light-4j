@@ -272,7 +272,6 @@ public class Server {
             server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
                     // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
-                    .setServerOption(UndertowOptions.SHUTDOWN_TIMEOUT, serverConfig.getShutdownTimeout())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
@@ -283,6 +282,8 @@ public class Server {
                     .setServerOption(UndertowOptions.MAX_ENTITY_SIZE, serverConfig.getMaxTransferFileSize())
                     .setServerOption(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE, 10*serverConfig.getMaxTransferFileSize())
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
+
+            if(serverConfig.getShutdownTimeout() != null) builder.setServerOption(UndertowOptions.SHUTDOWN_TIMEOUT, serverConfig.getShutdownTimeout());
 
             server.start();
             System.out.println("HOST IP: " + getAddress());
