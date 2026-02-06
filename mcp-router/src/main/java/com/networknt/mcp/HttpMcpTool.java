@@ -35,13 +35,15 @@ public class HttpMcpTool implements McpTool {
     private final String host;
     private final String path;
     private final String method;
+    private final String inputSchema;
 
-    public HttpMcpTool(String name, String description, String host, String path, String method) {
+    public HttpMcpTool(String name, String description, String host, String path, String method, String inputSchema) {
         this.name = name;
         this.description = description;
         this.host = host;
         this.path = path;
         this.method = method;
+        this.inputSchema = inputSchema;
     }
 
     @Override
@@ -56,6 +58,9 @@ public class HttpMcpTool implements McpTool {
 
     @Override
     public String getInputSchema() {
+        if (inputSchema != null) {
+            return inputSchema;
+        }
         // For now, return a generic schema as we don't have validation info from config yet
         return "{\"type\": \"object\"}";
     }
@@ -88,12 +93,18 @@ public class HttpMcpTool implements McpTool {
                 request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                 // Body will be sent in callback
             }
-            request.getRequestHeaders().put(Headers.HOST, uri.getHost());
+            String hostHeader = uri.getHost();
+            int port = uri.getPort();
+            if (port != -1 && port != 80 && port != 443) {
+                hostHeader += ":" + port;
+            }
+            request.getRequestHeaders().put(Headers.HOST, hostHeader);
 
             if ("GET".equalsIgnoreCase(method)) {
                  connection.sendRequest(request, client.createClientCallback(reference, latch));
             } else {
                  String jsonBody = mapper.writeValueAsString(arguments);
+                 if(logger.isDebugEnabled()) logger.debug("Transformed body: {}", jsonBody);
                  connection.sendRequest(request, client.createClientCallback(reference, latch, jsonBody));
             }
 

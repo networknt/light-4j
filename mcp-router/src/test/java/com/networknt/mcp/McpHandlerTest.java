@@ -39,7 +39,7 @@ public class McpHandlerTest {
             logger.info("starting server");
             McpHandler handler = new McpHandler();
             // Manually register tool for test reliability
-            McpTool weatherTool = new HttpMcpTool("weather", "Get weather information", "http://localhost:" + BACKEND_PORT, "/weather", "GET");
+            McpTool weatherTool = new HttpMcpTool("weather", "Get weather information", "http://localhost:" + BACKEND_PORT, "/weather", "GET", null);
             McpToolRegistry.registerTool(weatherTool);
             
             handler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));

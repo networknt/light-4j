@@ -38,6 +38,10 @@
           "method" : {
             "type" : "string",
             "description" : "Tool method"
+          },
+          "inputSchema" : {
+            "type" : "string",
+            "description" : "Tool input schema"
           }
         }
       }

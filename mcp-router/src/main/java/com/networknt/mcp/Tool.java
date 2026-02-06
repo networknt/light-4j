@@ -33,6 +33,12 @@ public class Tool {
     )
     String method;
 
+    @StringField(
+            configFieldName = "inputSchema",
+            description = "Tool input schema"
+    )
+    String inputSchema;
+
     public String getName() {
         return name;
     }
@@ -71,5 +77,13 @@ public class Tool {
 
     public void setMethod(String method) {
         this.method = method;
+    }
+
+    public String getInputSchema() {
+        return inputSchema;
+    }
+
+    public void setInputSchema(String inputSchema) {
+        this.inputSchema = inputSchema;
     }
 }

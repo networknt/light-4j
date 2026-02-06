@@ -166,6 +166,18 @@ public class McpConfig {
             tool.setHost((String) value.get("host"));
             tool.setPath((String) value.get("path"));
             tool.setMethod((String) value.get("method"));
+            Object schemaObj = value.get("inputSchema");
+            if (schemaObj != null) {
+                if (schemaObj instanceof Map) {
+                    try {
+                        tool.setInputSchema(Config.getInstance().getMapper().writeValueAsString(schemaObj));
+                    } catch (Exception e) {
+                        logger.error("Failed to serialize inputSchema for tool " + tool.getName(), e);
+                    }
+                } else if (schemaObj instanceof String) {
+                    tool.setInputSchema((String) schemaObj);
+                }
+            }
             tools.add(tool);
         }
         return tools;

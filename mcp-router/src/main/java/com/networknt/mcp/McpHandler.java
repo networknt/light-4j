@@ -45,8 +45,9 @@ public class McpHandler implements MiddlewareHandler {
                 String host = toolData.getHost();
                 String path = toolData.getPath();
                 String method = toolData.getMethod();
+                String inputSchema = toolData.getInputSchema();
                 if (name != null && host != null && path != null && method != null) {
-                    McpToolRegistry.registerTool(new HttpMcpTool(name, description, host, path, method));
+                    McpToolRegistry.registerTool(new HttpMcpTool(name, description, host, path, method, inputSchema));
                     if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
                 } else {
                     logger.error("Invalid tool configuration: {}", toolData);
@@ -117,6 +118,7 @@ public class McpHandler implements MiddlewareHandler {
         // if (sessionId != null && !SseConnectionRegistry.contains(sessionId)) { ... }
 
         exchange.getRequestReceiver().receiveFullString((exch, message) -> {
+            if(logger.isDebugEnabled()) logger.debug("JSON-RPC message: {}", message);
             try {
                 Map<String, Object> request = mapper.readValue(message, Map.class);
                 String method = (String) request.get("method");
