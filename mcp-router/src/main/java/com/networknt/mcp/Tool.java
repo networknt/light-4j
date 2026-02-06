@@ -39,6 +39,13 @@ public class Tool {
     )
     String inputSchema;
 
+    @StringField(
+            configFieldName = "protocol",
+            description = "Backend protocol (http or mcp)",
+            defaultValue = "http"
+    )
+    String protocol;
+
     public String getName() {
         return name;
     }
@@ -85,5 +92,13 @@ public class Tool {
 
     public void setInputSchema(String inputSchema) {
         this.inputSchema = inputSchema;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
     }
 }

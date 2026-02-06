@@ -75,7 +75,7 @@ public class McpConfig {
     private static volatile McpConfig instance;
 
     private McpConfig(String configName) {
-        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
@@ -98,12 +98,12 @@ public class McpConfig {
      */
     public static McpConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
-            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
             if (instance != null && instance.getMappedConfig() == mappedConfig) {
                 return instance;
             }
             synchronized (McpConfig.class) {
-                mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
                 if (instance != null && instance.getMappedConfig() == mappedConfig) {
                     return instance;
                 }
@@ -166,6 +166,7 @@ public class McpConfig {
             tool.setHost((String) value.get("host"));
             tool.setPath((String) value.get("path"));
             tool.setMethod((String) value.get("method"));
+            tool.setProtocol((String) value.get("protocol"));
             Object schemaObj = value.get("inputSchema");
             if (schemaObj != null) {
                 if (schemaObj instanceof Map) {

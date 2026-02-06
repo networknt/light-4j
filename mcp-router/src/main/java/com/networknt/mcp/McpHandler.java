@@ -46,8 +46,16 @@ public class McpHandler implements MiddlewareHandler {
                 String path = toolData.getPath();
                 String method = toolData.getMethod();
                 String inputSchema = toolData.getInputSchema();
+                String protocol = toolData.getProtocol();
+
                 if (name != null && host != null && path != null && method != null) {
-                    McpToolRegistry.registerTool(new HttpMcpTool(name, description, host, path, method, inputSchema));
+                    McpTool tool;
+                    if ("mcp".equalsIgnoreCase(protocol)) {
+                         tool = new McpProxyTool(name, description, host, path, method, inputSchema);
+                    } else {
+                         tool = new HttpMcpTool(name, description, host, path, method, inputSchema);
+                    }
+                    McpToolRegistry.registerTool(tool);
                     if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
                 } else {
                     logger.error("Invalid tool configuration: {}", toolData);

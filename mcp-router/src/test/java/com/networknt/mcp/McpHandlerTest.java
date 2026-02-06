@@ -57,6 +57,14 @@ public class McpHandlerTest {
                         if (exchange.getRequestPath().equals("/weather")) {
                             exchange.getResponseHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
                             exchange.getResponseSender().send("{\"temperature\": 25, \"unit\": \"C\"}");
+                        } else if (exchange.getRequestPath().equals("/mcp-backend")) {
+                            // Mock MCP backend behavior
+                            exchange.getRequestReceiver().receiveFullString((exch, message) -> {
+                                // Just echo back a success result
+                                String response = "{\"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"echo from mcp backend\"}]}, \"id\": " + System.currentTimeMillis() + "}";
+                                exch.getResponseHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+                                exch.getResponseSender().send(response);
+                            });
                         } else {
                             exchange.setStatusCode(404);
                         }
@@ -208,6 +216,37 @@ public class McpHandlerTest {
             }
             Assert.assertTrue(testToolFound);
             Assert.assertTrue(weatherToolFound);
+            
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
+    @Test
+    public void testMcpProxy() throws Exception {
+        // Register an MCP proxy tool
+        McpTool proxyTool = new McpProxyTool("mcpTool", "Proxy to backend MCP", "http://localhost:" + BACKEND_PORT, "/mcp-backend", "POST", null);
+        McpToolRegistry.registerTool(proxyTool);
+
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection = client.connect(new URI("http://localhost:" + PORT), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"mcpTool\", \"arguments\": {}}, \"id\": 4}";
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            latch.await(1000, TimeUnit.MILLISECONDS);
+            
+            ClientResponse response = reference.get();
+            Assert.assertEquals(200, response.getResponseCode());
+            String body = response.getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            // Verify result contains echo from backend
+            Assert.assertTrue(body.contains("echo from mcp backend"));
             
         } finally {
             IoUtils.safeClose(connection);
