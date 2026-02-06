@@ -1,22 +1,46 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "ssePath", "messagePath" ],
+  "required" : [ "enabled", "path", "tools" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
       "description" : "Enable MCP Router Handler",
       "default" : true
     },
-    "ssePath" : {
+    "path" : {
       "type" : "string",
-      "description" : "Path for MCP Server-Sent Events (SSE) endpoint.",
-      "default" : "/mcp/sse"
+      "description" : "Path for MCP endpoint (Streamable HTTP)",
+      "default" : "/mcp"
     },
-    "messagePath" : {
-      "type" : "string",
-      "description" : "Path for MCP JSON-RPC message endpoint.",
-      "default" : "/mcp/message"
+    "tools" : {
+      "type" : "array",
+      "description" : "List of tools",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "Tool name"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Tool description"
+          },
+          "host" : {
+            "type" : "string",
+            "description" : "Tool host"
+          },
+          "path" : {
+            "type" : "string",
+            "description" : "Tool path"
+          },
+          "method" : {
+            "type" : "string",
+            "description" : "Tool method"
+          }
+        }
+      }
     }
   }
 }
