@@ -89,9 +89,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkPass(String serviceId, String token) {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -101,7 +102,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -109,9 +110,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkFail(String serviceId, String token) {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -120,7 +122,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckFail request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -128,9 +130,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
-		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -140,16 +143,17 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Failed to register on Consul, Exception:", e);
 			throw new RuntimeException(e.getMessage());
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
 	@Override
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -158,7 +162,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("Failed to unregister on Consul, Exception:", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 

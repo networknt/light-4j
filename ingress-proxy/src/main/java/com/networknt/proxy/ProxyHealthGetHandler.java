@@ -1,6 +1,7 @@
 package com.networknt.proxy;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.health.HealthConfig;
@@ -84,11 +85,15 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
         long start = System.currentTimeMillis();
         if(connection == null || !connection.isOpen()) {
             try {
+                SimpleConnectionHolder.ConnectionToken token;
                 if(config.getDownstreamHost().startsWith("https")) {
-                    connection = client.borrowConnection(new URI(config.getDownstreamHost()), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+                    token = client.borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
                 } else {
-                    connection = client.borrowConnection(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+                    token = client.borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
                 }
+                connection = (ClientConnection) token.getRawConnection();
+                // Note: We're caching connection directly, so we don't restore the token
+                // This is intentional for the health check handler's static connection pattern
             } catch (Exception ex) {
                 logger.error("Could not create connection to the backend:", ex);
                 result = HEALTH_RESULT_ERROR;

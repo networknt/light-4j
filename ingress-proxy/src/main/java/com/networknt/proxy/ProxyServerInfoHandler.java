@@ -7,6 +7,7 @@ import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoGetHandler;
 import com.networknt.info.ServerInfoUtil;
 import com.networknt.utility.StringUtils;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -95,18 +96,18 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     public static String getServerInfo(String url, String token) {
 
         String res = "{}";
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         try {
             URI uri = new URI(url);
             switch(uri.getScheme()) {
                 case "http":
-                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+                    connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
                     break;
                 case "https":
-                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+                    connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
                     break;
             }
-
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.GET, "/server/info", token, null);
             if(reference != null && reference.get() != null) {
                 int statusCode = reference.get().getResponseCode();
@@ -121,7 +122,7 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
             logger.error("Server info request exception", e);
             throw new RuntimeException("exception when getting server info", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
         return res;
     }

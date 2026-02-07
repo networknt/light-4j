@@ -10,6 +10,7 @@ import com.networknt.portal.registry.PortalRegistryService;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
@@ -65,9 +66,10 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         map.put("pass", true);
         map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
         String path = "/services/check";
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         try {
-            connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, JsonMapper.toJson(map));
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
@@ -76,7 +78,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         } catch (Exception e) {
             logger.error("CheckPass request exception", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
     }
 
@@ -90,9 +92,10 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         map.put("pass", false);
         map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
         String path = "/services/check";
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         try {
-            connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, JsonMapper.toJson(map));
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
@@ -101,7 +104,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         } catch (Exception e) {
             logger.error("CheckFail request exception", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
     }
 
@@ -109,9 +112,10 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     public void registerService(PortalRegistryService service, String token) {
         String json = service.toString();
         String path = "/services";
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         try {
-            connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.POST, path, token, json);
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
@@ -123,7 +127,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             logger.error("Failed to register on portal controller json = " + json + " uri = " + uri, e);
             throw new RuntimeException(e.getMessage());
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
     }
 
@@ -132,9 +136,10 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort() + "&checkInterval=" + PortalRegistryConfig.load().getCheckInterval();
         if(service.getTag() != null) path = path + "&tag=" + service.getTag();
         System.out.println("de-register path = " + path);
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         try {
-            connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             final AtomicReference<ClientResponse> reference = send(connection, Methods.DELETE, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
@@ -144,7 +149,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         } catch (Exception e) {
             logger.error("Failed to unregister on portal controller, Exception:", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
     }
 
@@ -162,14 +167,15 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         if (StringUtils.isBlank(serviceId)) {
             return null;
         }
-        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
         String path = "/services/lookup" + "?serviceId=" + serviceId;
         if (tag != null) {
             path = path + "&tag=" + tag;
         }
         if(logger.isTraceEnabled()) logger.trace("path = {}", path);
         try {
-            connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
@@ -182,7 +188,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         } catch (Exception e) {
             logger.error("Exception:", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
         return services;
     }

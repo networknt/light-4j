@@ -17,6 +17,7 @@
 package com.networknt.token.exchange;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.monad.Result;
@@ -92,7 +93,8 @@ public class TokenExchangeHandler implements MiddlewareHandler {
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             
-            ClientConnection connection = client.borrowConnection(5000, uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            SimpleConnectionHolder.ConnectionToken token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            ClientConnection connection = (ClientConnection) token.getRawConnection();
             try {
                 ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(uri.getPath());
                 request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -129,7 +131,7 @@ public class TokenExchangeHandler implements MiddlewareHandler {
                     }
                 }
             } finally {
-                client.returnConnection(connection);
+                client.restore(token);
             }
         } catch (Exception e) {
             logger.error("Exception during token exchange", e);
