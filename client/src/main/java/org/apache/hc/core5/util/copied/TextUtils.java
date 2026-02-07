@@ -28,6 +28,8 @@
 package org.apache.hc.core5.util.copied;
 
 /**
+ * Utility class for text processing.
+ *
  * @since 4.3
  */
 public final class TextUtils {
@@ -36,6 +38,11 @@ public final class TextUtils {
         // Do not allow utility class to be instantiated.
     }
 
+    /**
+     * Checks if the given character sequence is empty.
+     * @param s the character sequence to check
+     * @return true if empty, false otherwise
+     */
     public static boolean isEmpty(final CharSequence s) {
         if (s == null) {
             return true;
@@ -43,6 +50,11 @@ public final class TextUtils {
         return s.length() == 0;
     }
 
+    /**
+     * Checks if the given character sequence is blank.
+     * @param s the character sequence to check
+     * @return true if blank, false otherwise
+     */
     public static boolean isBlank(final CharSequence s) {
         if (s == null) {
             return true;
@@ -55,6 +67,11 @@ public final class TextUtils {
         return true;
     }
 
+    /**
+     * Checks if the given character sequence contains blanks.
+     * @param s the character sequence to check
+     * @return true if contains blanks, false otherwise
+     */
     public static boolean containsBlanks(final CharSequence s) {
         if (s == null) {
             return false;
@@ -67,6 +84,11 @@ public final class TextUtils {
         return false;
     }
 
+    /**
+     * Converts a byte array to a hex string.
+     * @param bytes the byte array to convert
+     * @return hex string
+     */
     public static String toHexString(final byte[] bytes) {
         if (bytes == null) {
             return null;

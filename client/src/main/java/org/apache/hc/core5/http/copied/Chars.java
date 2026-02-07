@@ -34,9 +34,24 @@ package org.apache.hc.core5.http.copied;
  */
 public final class Chars {
 
+    /**
+     * Carriage return.
+     */
     public static final int CR = 13; // <US-ASCII CR, carriage return (13)>
+
+    /**
+     * Line feed.
+     */
     public static final int LF = 10; // <US-ASCII LF, linefeed (10)>
+
+    /**
+     * Space.
+     */
     public static final int SP = 32; // <US-ASCII SP, space (32)>
+
+    /**
+     * Horizontal tab.
+     */
     public static final int HT = 9;  // <US-ASCII HT, horizontal-tab (9)>
 
     private Chars() {

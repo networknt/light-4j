@@ -42,6 +42,12 @@ import java.security.cert.X509Certificate;
 @Contract(threading = ThreadingBehavior.STATELESS)
 public interface HttpClientHostnameVerifier extends HostnameVerifier {
 
+    /**
+     * Verifies the host name against the given X.509 certificate.
+     * @param host the host name
+     * @param cert the X.509 certificate
+     * @throws SSLException if the host name does not match the certificate
+     */
     void verify(String host, X509Certificate cert) throws SSLException;
 
 }

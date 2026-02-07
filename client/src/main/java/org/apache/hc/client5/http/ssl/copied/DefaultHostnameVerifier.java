@@ -72,10 +72,17 @@ public final class DefaultHostnameVerifier implements HttpClientHostnameVerifier
 
     private final PublicSuffixMatcher publicSuffixMatcher;
 
+    /**
+     * Constructs a DefaultHostnameVerifier with the given public suffix matcher.
+     * @param publicSuffixMatcher the public suffix matcher to use
+     */
     public DefaultHostnameVerifier(final PublicSuffixMatcher publicSuffixMatcher) {
         this.publicSuffixMatcher = publicSuffixMatcher;
     }
 
+    /**
+     * Constructs a DefaultHostnameVerifier with no public suffix matcher.
+     */
     public DefaultHostnameVerifier() {
         this(null);
     }

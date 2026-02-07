@@ -33,6 +33,19 @@ package org.apache.hc.client5.http.psl.copied;
  */
 public enum DomainType {
 
-    UNKNOWN, ICANN, PRIVATE
+    /**
+     * Unknown domain type.
+     */
+    UNKNOWN,
+
+    /**
+     * ICANN domain type.
+     */
+    ICANN,
+
+    /**
+     * Private domain type.
+     */
+    PRIVATE
 
 }

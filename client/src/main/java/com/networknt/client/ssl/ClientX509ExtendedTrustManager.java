@@ -8,9 +8,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * An implementation of {@link X509TrustManager} that uses the first X509TrustManager
+ * from a list of TrustManagers.
+ */
 public class ClientX509ExtendedTrustManager implements X509TrustManager {
     private final X509TrustManager trustManager;
 
+    /**
+     * Constructs a ClientX509ExtendedTrustManager with the given list of trust managers.
+     * @param trustManagers the list of trust managers to use
+     * @throws IllegalArgumentException if the list is null or empty
+     */
     public ClientX509ExtendedTrustManager(List<TrustManager> trustManagers) {
         if(trustManagers == null || trustManagers.size() == 0) {
             throw new IllegalArgumentException("TrustManagers must not be null or empty");

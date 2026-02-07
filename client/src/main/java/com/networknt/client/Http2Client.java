@@ -93,23 +93,51 @@ import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_
 public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
+    /**
+     * The name of the configuration for this client.
+     */
     public static final String CONFIG_NAME = "client";
+
+    /**
+     * The default options for the Xnio worker.
+     */
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
             .set(Options.KEEP_ALIVE, true)
             .set(Options.WORKER_NAME, "Client").getMap();
     private static volatile ClientConfig clientConfig = ClientConfig.get();
+
+    /**
+     * The Xnio worker used by this client.
+     */
     public static XnioWorker WORKER;
+
     /**
      * @deprecated  As of release 1.6.11, replaced by {@link #getDefaultXnioSsl()}
      *              SSL is no longer statically initialized.
      */
     @Deprecated
     public static volatile XnioSsl SSL;
+
+    /**
+     * The attachment key for the response body.
+     */
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
+
+    /**
+     * The attachment key for the response body as a ByteBuffer.
+     */
     public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
+
+    /**
+     * The scheme for secure HTTP connections.
+     */
     public static final String HTTPS = "https";
+
+    /**
+     * The scheme for TLS connections.
+     */
     public static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
@@ -142,11 +170,21 @@ public class Http2Client {
     // This is the new connection pool that is used by the new request method.
     private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
 
+    /**
+     * The buffer pool used by this client.
+     */
     public static ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
+
+    /**
+     * The client providers used by this client, keyed by scheme.
+     */
     protected final Map<String, ClientProvider> clientProviders;
 
     private static volatile Http2Client INSTANCE;
 
+    /**
+     * Constructs an Http2Client using the default class loader.
+     */
     protected Http2Client() {
         this(Http2Client.class.getClassLoader());
     }
@@ -233,21 +271,53 @@ public class Http2Client {
 
         return connection;
     }
+    /**
+     * Connects to the given URI using the given worker, buffer pool, and options.
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI and worker, specifying if it is HTTP/2.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param isHttp2 true if HTTP/2
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
         if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
         return borrowConnection(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
+    /**
+     * Borrows a connection token from the pool for the given URI and worker.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param isHttp2 true if HTTP/2 is enabled, false otherwise
+     * @return a ConnectionToken
+     */
     public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
         if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
         return borrow(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
+    /**
+     * Borrows a connection for the given URI, worker, and options.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -261,6 +331,14 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    /**
+     * Borrows a connection token from the pool for the given URI, worker, and options.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return a ConnectionToken
+     */
     public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
@@ -272,16 +350,43 @@ public class Http2Client {
         return pool.borrow(ClientConfig.get().getRequest().getConnectTimeout());
     }
 
+    /**
+     * Borrows a connection for the given URI, worker, and options, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
 
+    /**
+     * Connects to the given URI with a bind address, using the given worker, buffer pool, and options.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI and worker with a bind address.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -294,12 +399,26 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI and worker with a bind address and a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param bindAddress the local address to bind to
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, worker, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
 
+    /**
+     * Returns the default XnioSsl instance.
+     * @return the default XnioSsl instance
+     */
     public XnioSsl getDefaultXnioSsl() {
         if(SSL == null || clientConfig != ClientConfig.get()) {
             synchronized (Http2Client.class) {
@@ -316,27 +435,63 @@ public class Http2Client {
         }
         return SSL;
     }
+    /**
+     * Returns a connection to the pool.
+     * @param connection the connection to return
+     */
     @Deprecated
     public void returnConnection(ClientConnection connection) {
         http2ClientConnectionPool.resetConnectionStatus(connection);
     }
 
+    /**
+     * Restores a connection token to the pool.
+     * @param token the connection token to restore
+     */
     public void restore(SimpleConnectionHolder.ConnectionToken token) {
         if(token == null) return;
-        pools.get(token.uri()).restore(token);
+        SimpleURIConnectionPool pool = pools.get(token.uri());
+        if(pool != null) pool.restore(token);
     }
 
+    /**
+     * Connects to the given URI with SSL.
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI, worker, and SSL, specifying if it is HTTP/2.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param isHttp2 true if HTTP/2
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
         if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
         return borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
 
     }
+    /**
+     * Borrows a connection for the given URI, worker, SSL, and options.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -351,6 +506,15 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
+    /**
+     * Borrows a connection token from the pool for the given URI, worker, SSL, and options.
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return a ConnectionToken
+     */
     public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if(HTTPS.equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         SimpleURIConnectionPool pool = pools.get(uri);
@@ -363,11 +527,31 @@ public class Http2Client {
         return pool.borrow(ClientConfig.get().getRequest().getConnectTimeout());
     }
 
+    /**
+     * Borrows a connection for the given URI, worker, and SSL, specifying if it is HTTP/2, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param isHttp2 true if HTTP/2
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Borrows a connection for the given URI, worker, SSL, and options, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
@@ -393,10 +577,26 @@ public class Http2Client {
         }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
+    /**
+     * Connects to the given URI using the given IoThread, buffer pool, and options.
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI, IoThread, and options.
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -409,20 +609,56 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI, IoThread, and options, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Borrows a connection for the given URI, IoThread, and buffer pool, specifying if it is HTTP/2, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param isHttp2 true if HTTP/2
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, boolean isHttp2) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Connects to the given URI with a bind address, using the given IoThread, buffer pool, and options.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI and IoThread with a bind address.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -435,16 +671,44 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI and IoThread with a bind address and a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param bindAddress the local address to bind to
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, ioThread, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Connects to the given URI with SSL using the given IoThread.
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI, IoThread, SSL, and options.
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -458,11 +722,31 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
+    /**
+     * Borrows a connection for the given URI, IoThread, SSL, and options, with a timeout.
+     * @param timeoutSeconds timeout in seconds
+     * @param uri the URI of the service
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return ClientConnection object
+     */
     @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, ssl, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Connects to the given URI using the given IoThread, SSL, and options.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -483,15 +767,41 @@ public class Http2Client {
         }, bindAddress, uri, ioThread, ssl, bufferPool, options);
         return result.getIoFuture();
     }
+    /**
+     * Connects to the given URI with a listener, using the given worker, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, uri, worker, null, bufferPool, options);
     }
+    /**
+     * Connects to the given URI with a listener and a bind address, using the given worker, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, bindAddress, uri, worker, null, bufferPool, options);
     }
 
+    /**
+     * Connects to the given URI with a listener, using the given worker, SSL, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
@@ -499,22 +809,58 @@ public class Http2Client {
         provider.connect(listener, uri, worker, ssl, bufferPool, options);
     }
 
+    /**
+     * Connects to the given URI with a listener, using the given worker, SSL, and options.
+     * @param listener the callback to notify when the connection is established or fails
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, worker, ssl, bufferPool, options);
     }
+    /**
+     * Connects to the given URI with a listener, using the given IoThread, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, uri, ioThread, null, bufferPool, options);
     }
 
 
+    /**
+     * Connects to the given URI with a listener and a bind address, using the given IoThread, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    /**
+     * Connects to the given URI with a listener, using the given IoThread, SSL, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
@@ -532,6 +878,10 @@ public class Http2Client {
         return clientProviders.get(uri.getScheme());
     }
 
+    /**
+     * Returns the singleton instance of Http2Client.
+     * @return the singleton instance
+     */
     public static Http2Client getInstance() {
         if (INSTANCE == null || clientConfig != ClientConfig.get()) {
             synchronized (Http2Client.class) {
@@ -544,6 +894,11 @@ public class Http2Client {
         return INSTANCE;
     }
 
+    /**
+     * Returns a new instance of Http2Client with the given class loader.
+     * @param classLoader the class loader to use
+     * @return a new instance
+     */
     public static Http2Client getInstance(final ClassLoader classLoader) {
         return new Http2Client(classLoader);
     }
@@ -878,6 +1233,11 @@ public class Http2Client {
 
         return sslContext;
     }
+    /**
+     * Converts a list of TrustManagers to a list of X509TrustManagers.
+     * @param trustManagerList the list of TrustManagers
+     * @return the list of X509TrustManagers
+     */
     public static List<X509TrustManager> convertTrustManagers(List<TrustManager> trustManagerList) {
         List<X509TrustManager> x509TrustManagers = new ArrayList<>();
         for (TrustManager trustManager : trustManagerList) {
@@ -888,6 +1248,11 @@ public class Http2Client {
         return x509TrustManagers;
     }
 
+    /**
+     * Loads the default trust store.
+     * @return an array of TrustManagers
+     * @throws Exception if an error occurs during loading
+     */
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
         Path location = null;
         String password = "changeit"; //default value for cacerts, we can override it from config
@@ -936,6 +1301,12 @@ public class Http2Client {
 
     }
 
+    /**
+     * Returns a form data string from a map of parameters.
+     * @param params the parameters
+     * @return the form data string
+     * @throws UnsupportedEncodingException if UTF-8 is not supported
+     */
     public static String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
         boolean first = true;
@@ -951,6 +1322,12 @@ public class Http2Client {
         return result.toString();
     }
 
+    /**
+     * Creates a client callback for the given reference and latch.
+     * @param reference the response reference
+     * @param latch the countdown latch
+     * @return the client callback
+     */
     public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             @Override
@@ -1004,6 +1381,12 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Creates a ClientCallback for ClientExchange that buffers the response body as a ByteBuffer.
+     * @param reference the atomic reference to store the ClientResponse
+     * @param latch the latch to signal when the request is complete
+     * @return a ClientCallback for ClientExchange
+     */
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             public void completed(ClientExchange result) {
@@ -1049,6 +1432,14 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Creates a ClientCallback for ClientExchange that buffers the response body as a ByteBuffer,
+     * and sends the given request body.
+     * @param reference the atomic reference to store the ClientResponse
+     * @param latch the latch to signal when the request is complete
+     * @param requestBody the request body to send
+     * @return a ClientCallback for ClientExchange
+     */
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
         return new ClientCallback<ClientExchange>() {
             public void completed(ClientExchange result) {
@@ -1095,6 +1486,13 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Creates a client callback for the given reference, latch, and request body.
+     * @param reference the response reference
+     * @param latch the countdown latch
+     * @param requestBody the request body
+     * @return the client callback
+     */
     public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final String requestBody) {
         return new ClientCallback<ClientExchange>() {
             @Override
@@ -1138,6 +1536,12 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Creates a full callback for the given reference and latch.
+     * @param reference the response reference
+     * @param latch the countdown latch
+     * @return the client callback
+     */
     public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch) {
         final long startTime = System.currentTimeMillis();
         return new ClientCallback<ClientExchange>() {
@@ -1196,6 +1600,13 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Creates a full callback for the given reference, latch, and request body.
+     * @param reference the response reference
+     * @param latch the countdown latch
+     * @param requestBody the request body
+     * @return the client callback
+     */
     public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch, final String requestBody) {
         final long startTime = System.currentTimeMillis();
         return new ClientCallback<ClientExchange>() {
@@ -1243,10 +1654,25 @@ public class Http2Client {
         };
     }
 
+    /**
+     * Returns a circuit breaker for the given request.
+     * @param uri the URI
+     * @param request the request
+     * @param requestBody the request body
+     * @return the circuit breaker
+     */
     public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody) {
         return new CircuitBreaker(() -> callService(uri, request, requestBody));
     }
 
+    /**
+     * Returns a circuit breaker for the given request, specifying if it is HTTP/2.
+     * @param uri the URI
+     * @param request the request
+     * @param requestBody the request body
+     * @param isHttp2 true if HTTP/2
+     * @return the circuit breaker
+     */
     public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
         return new CircuitBreaker(() -> callService(uri, request, requestBody, isHttp2));
     }
@@ -1376,6 +1802,16 @@ public class Http2Client {
                 isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
+    /**
+     * Connects asynchronously to the given URI with the specified parameters.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return a CompletableFuture that will contain the ClientConnection
+     */
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();

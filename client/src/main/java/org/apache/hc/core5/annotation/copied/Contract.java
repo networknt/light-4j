@@ -36,6 +36,10 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.CLASS)
 public @interface Contract {
 
+    /**
+     * The threading behavior of the annotated class.
+     * @return the threading behavior
+     */
     ThreadingBehavior threading() default ThreadingBehavior.UNSAFE;
 
 }

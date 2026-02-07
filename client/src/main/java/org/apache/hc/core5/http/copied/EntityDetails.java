@@ -36,14 +36,34 @@ import java.util.Set;
  */
 public interface EntityDetails {
 
+    /**
+     * Returns the length of the entity content.
+     * @return the content length, or -1 if unknown
+     */
     long getContentLength();
 
+    /**
+     * Returns the content type of the entity.
+     * @return the content type, or null if unknown
+     */
     String getContentType();
 
+    /**
+     * Returns the content encoding of the entity.
+     * @return the content encoding, or null if unknown
+     */
     String getContentEncoding();
 
+    /**
+     * Returns true if the entity is chunked.
+     * @return true if chunked
+     */
     boolean isChunked();
 
+    /**
+     * Returns the trailer names of the entity.
+     * @return the trailer names
+     */
     Set<String> getTrailerNames();
 
 }

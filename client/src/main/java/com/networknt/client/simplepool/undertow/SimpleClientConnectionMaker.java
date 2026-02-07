@@ -47,12 +47,15 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
 {
     private static final Logger logger = LoggerFactory.getLogger(SimpleClientConnectionMaker.class);
     private static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
-    private static SimpleClientConnectionMaker simpleClientConnectionMaker = null;
+    private static final int DEFAULT_WORKER_IO_THREADS = 8;
+
+    // Thread-safe singleton using Holder pattern
+    private static class Holder {
+        static final SimpleClientConnectionMaker INSTANCE = new SimpleClientConnectionMaker();
+    }
 
     public static SimpleConnectionMaker instance() {
-        if(simpleClientConnectionMaker == null)
-            simpleClientConnectionMaker = new SimpleClientConnectionMaker();
-        return simpleClientConnectionMaker;
+        return Holder.INSTANCE;
     }
 
     @Override
@@ -163,7 +166,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
     private static OptionMap getWorkerOptionMap(boolean isHttp2)
     {
         OptionMap.Builder optionBuild = OptionMap.builder()
-                .set(Options.WORKER_IO_THREADS, 8)
+                .set(Options.WORKER_IO_THREADS, DEFAULT_WORKER_IO_THREADS)
                 .set(Options.TCP_NODELAY, true)
                 .set(Options.KEEP_ALIVE, true)
                 .set(Options.WORKER_NAME, isHttp2 ? "Callback-HTTP2" : "Callback-HTTP11");

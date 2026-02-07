@@ -16,6 +16,13 @@
 
 package com.networknt.client;
 
+/**
+ * This interface represents the result of an asynchronous operation.
+ * It provides methods to check if the operation succeeded or failed,
+ * and to retrieve the result or the cause of failure.
+ *
+ * @param <T> the type of the result
+ */
 public interface AsyncResult<T> {
 
     /**

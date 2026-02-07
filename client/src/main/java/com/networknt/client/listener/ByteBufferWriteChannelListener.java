@@ -19,10 +19,18 @@ public class ByteBufferWriteChannelListener implements ChannelListener<StreamSin
 
     private final ByteBuffer buffer;
 
+    /**
+     * Constructs a ByteBufferWriteChannelListener with the given body buffer.
+     * @param body the buffer containing the data to write
+     */
     public ByteBufferWriteChannelListener(ByteBuffer body) {
         this.buffer =body;
     }
 
+    /**
+     * Sets up the channel for writing.
+     * @param channel the channel to write to
+     */
     public void setup(StreamSinkChannel channel) {
         while(true) {
             try {
@@ -45,6 +53,11 @@ public class ByteBufferWriteChannelListener implements ChannelListener<StreamSin
         }
     }
 
+    /**
+     * Handles an error that occurs during writing.
+     * @param channel the channel where the error occurred
+     * @param e the exception that occurred
+     */
     protected void handleError(StreamSinkChannel channel, IOException e) {
         UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
         IoUtils.safeClose(channel);
@@ -72,10 +85,18 @@ public class ByteBufferWriteChannelListener implements ChannelListener<StreamSin
         }
     }
 
+    /**
+     * Checks if the buffer has remaining data to write.
+     * @return true if there is data remaining, false otherwise
+     */
     public boolean hasRemaining() {
         return this.buffer.hasRemaining();
     }
 
+    /**
+     * Called when the writing is finished.
+     * @param channel the channel that was written to
+     */
     protected void writeDone(final StreamSinkChannel channel) {
         try {
             channel.shutdownWrites();

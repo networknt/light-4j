@@ -84,6 +84,11 @@ public class InetAddressUtils {
         return IPV4_PATTERN.matcher(input).matches();
     }
 
+    /**
+     * Checks whether the parameter is a valid IPv4 mapped IPv6 address.
+     * @param input the address string to check for validity
+     * @return true if valid
+     */
     public static boolean isIPv4MappedIPv64Address(final String input) {
         return IPV4_MAPPED_IPV6_PATTERN.matcher(input).matches();
     }
@@ -124,6 +129,11 @@ public class InetAddressUtils {
         return isIPv6StdAddress(input) || isIPv6HexCompressedAddress(input);
     }
 
+    /**
+     * Formats the given socket address into the buffer.
+     * @param buffer the buffer to append to
+     * @param socketAddress the socket address to format
+     */
     public static void formatAddress(
             final StringBuilder buffer,
             final SocketAddress socketAddress) {
@@ -141,6 +151,10 @@ public class InetAddressUtils {
         }
     }
 
+    /**
+     * Returns the canonical local host name.
+     * @return canonical local host name
+     */
     public static String getCanonicalLocalHostName() {
         try {
             final InetAddress localHost = InetAddress.getLocalHost();

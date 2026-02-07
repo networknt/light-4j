@@ -16,6 +16,11 @@
 
 package com.networknt.client;
 
+/**
+ * A default implementation of the {@link AsyncResult} interface.
+ *
+ * @param <T> the type of the result
+ */
 public class DefaultAsyncResult<T> implements AsyncResult<T> {
 
     private Throwable cause;
@@ -32,14 +37,30 @@ public class DefaultAsyncResult<T> implements AsyncResult<T> {
         this.result = result;
     }
 
+    /**
+     * Creates a successful AsyncResult with the given result.
+     * @param <T> the type of the result
+     * @param result the result of the operation
+     * @return a successful AsyncResult
+     */
     public static <T> AsyncResult<T> succeed(T result) {
         return new DefaultAsyncResult<>(null, result);
     }
 
+    /**
+     * Creates a successful AsyncResult with a null result.
+     * @return a successful AsyncResult
+     */
     public static AsyncResult<Void> succeed() {
         return succeed(null);
     }
 
+    /**
+     * Creates a failed AsyncResult with the given cause.
+     * @param <T> the type of the result
+     * @param cause the cause of failure
+     * @return a failed AsyncResult
+     */
     public static <T> AsyncResult<T> fail(Throwable cause) {
         if (cause == null) {
             throw new IllegalArgumentException("cause argument cannot be null");
@@ -48,6 +69,12 @@ public class DefaultAsyncResult<T> implements AsyncResult<T> {
         return new DefaultAsyncResult<>(cause, null);
     }
 
+    /**
+     * Creates a failed AsyncResult using the cause from another AsyncResult.
+     * @param <T> the type of the result
+     * @param result the AsyncResult to get the cause from
+     * @return a failed AsyncResult
+     */
     public static <T> AsyncResult<T> fail(AsyncResult<?> result) {
         return fail(result.cause());
     }
