@@ -177,6 +177,10 @@ public class Http2Client {
     // Connection health checker (optional, enabled via configuration)
     private ConnectionHealthChecker healthChecker;
 
+    // Tracks ClientConnection → ConnectionToken for deprecated method redirection
+    // This allows returnConnection() to find the token for restore()
+    private final Map<ClientConnection, SimpleConnectionHolder.ConnectionToken> connectionTokenMap = new ConcurrentHashMap<>();
+
     /**
      * The buffer pool used by this client.
      */
@@ -382,11 +386,20 @@ public class Http2Client {
      * @param bufferPool the buffer pool
      * @param options the option map
      * @return ClientConnection object
+     * @deprecated Use {@link #borrow(URI, XnioWorker, ByteBufferPool, OptionMap)} instead.
+     *             This method now redirects to SimplePool internally.
+     * @see <a href="https://doc.networknt.com/concern/module/simplepool-migration">Migration Guide</a>
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
-        IoFuture<ClientConnection> future = borrowConnection(uri, worker, bufferPool, options);
-        return getFutureConnection(timeoutSeconds, future);
+        // Redirect to SimplePool
+        SimpleConnectionHolder.ConnectionToken token = borrow(uri, worker, bufferPool, options);
+        if (token != null && token.connection() != null) {
+            ClientConnection connection = (ClientConnection) token.getRawConnection();
+            connectionTokenMap.put(connection, token);  // Track for returnConnection
+            return connection;
+        }
+        return null;
     }
 
     /**
@@ -462,9 +475,24 @@ public class Http2Client {
     /**
      * Returns a connection to the pool.
      * @param connection the connection to return
+     * @deprecated Use {@link #restore(SimpleConnectionHolder.ConnectionToken)} instead.
+     *             This method now redirects to SimplePool when possible.
+     *             Will be removed in a future major version.
+     * @see <a href="https://doc.networknt.com/concern/module/simplepool-migration">Migration Guide</a>
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void returnConnection(ClientConnection connection) {
+        if (connection == null) return;
+        
+        // Check if we have a token for this connection (from redirected borrow)
+        SimpleConnectionHolder.ConnectionToken token = connectionTokenMap.remove(connection);
+        if (token != null) {
+            // Redirect to SimplePool
+            restore(token);
+            return;
+        }
+        
+        // Fallback to old pool for connections not borrowed via redirect
         http2ClientConnectionPool.resetConnectionStatus(connection);
     }
 
