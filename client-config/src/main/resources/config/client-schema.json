@@ -606,6 +606,33 @@
           "description" : "The delay time in milliseconds for each request retry. The default value is 1000.",
           "default" : 1000,
           "format" : "int32"
+        },
+        "poolMetricsEnabled" : {
+          "type" : "boolean",
+          "description" : "Whether to track connection pool metrics (active connections, borrows, restores).",
+          "default" : false
+        },
+        "poolWarmUpEnabled" : {
+          "type" : "boolean",
+          "description" : "Whether to pre-establish connections when a pool is first accessed.",
+          "default" : false
+        },
+        "poolWarmUpSize" : {
+          "type" : "integer",
+          "description" : "Number of connections to pre-establish per URI during warm-up.",
+          "default" : 1,
+          "format" : "int32"
+        },
+        "healthCheckEnabled" : {
+          "type" : "boolean",
+          "description" : "Whether to periodically validate idle connections and remove stale ones.",
+          "default" : true
+        },
+        "healthCheckIntervalMs" : {
+          "type" : "integer",
+          "description" : "Interval in milliseconds between connection health checks. Default is 30 seconds.",
+          "default" : 30000,
+          "format" : "int32"
         }
       }
     }

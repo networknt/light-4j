@@ -249,3 +249,13 @@ request:
   maxRequestRetry: ${client.maxRequestRetry:3}
   # The delay time in milliseconds for each request retry. The default value is 1000.
   requestRetryDelay: ${client.requestRetryDelay:1000}
+  # Whether to track connection pool metrics (active connections, borrows, restores).
+  poolMetricsEnabled: ${client.poolMetricsEnabled:false}
+  # Whether to pre-establish connections when a pool is first accessed.
+  poolWarmUpEnabled: ${client.poolWarmUpEnabled:false}
+  # Number of connections to pre-establish per URI during warm-up.
+  poolWarmUpSize: ${client.poolWarmUpSize:1}
+  # Whether to periodically validate idle connections and remove stale ones.
+  healthCheckEnabled: ${client.healthCheckEnabled:true}
+  # Interval in milliseconds between connection health checks. Default is 30 seconds.
+  healthCheckIntervalMs: ${client.healthCheckIntervalMs:30000}
