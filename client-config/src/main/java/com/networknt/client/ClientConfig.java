@@ -91,6 +91,13 @@ public final class ClientConfig {
     public static final String SUBJECT_TOKEN = "subjectToken";
     public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
 
+    // Pool management configuration constants
+    public static final String POOL_METRICS_ENABLED = "poolMetricsEnabled";
+    public static final String POOL_WARM_UP_ENABLED = "poolWarmUpEnabled";
+    public static final String POOL_WARM_UP_SIZE = "poolWarmUpSize";
+    public static final String HEALTH_CHECK_ENABLED = "healthCheckEnabled";
+    public static final String HEALTH_CHECK_INTERVAL_MS = "healthCheckIntervalMs";
+
 
     private final Map<String, Object> mappedConfig;
 

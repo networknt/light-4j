@@ -24,8 +24,10 @@ import com.networknt.client.listener.ByteBufferReadChannelListener;
 import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
+import com.networknt.client.simplepool.ConnectionHealthChecker;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
+import com.networknt.client.simplepool.SimplePoolMetrics;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
 import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
@@ -170,6 +172,11 @@ public class Http2Client {
     // This is the new connection pool that is used by the new request method.
     private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
 
+    // Pool metrics (optional, enabled via configuration)
+    private final SimplePoolMetrics poolMetrics;
+    // Connection health checker (optional, enabled via configuration)
+    private ConnectionHealthChecker healthChecker;
+
     /**
      * The buffer pool used by this client.
      */
@@ -216,6 +223,23 @@ public class Http2Client {
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
         } catch (Exception e) {
             logger.error("Exception: ", e);
+        }
+
+        // Initialize pool metrics if enabled
+        RequestConfig requestConfig = ClientConfig.get().getRequest();
+        if (requestConfig != null && Boolean.TRUE.equals(requestConfig.isPoolMetricsEnabled())) {
+            this.poolMetrics = new SimplePoolMetrics();
+            logger.info("SimplePool metrics enabled");
+        } else {
+            this.poolMetrics = null;
+        }
+
+        // Initialize health checker if enabled
+        if (requestConfig != null && Boolean.TRUE.equals(requestConfig.isHealthCheckEnabled())) {
+            int intervalMs = requestConfig.getHealthCheckIntervalMs();
+            this.healthChecker = new ConnectionHealthChecker(() -> pools, intervalMs);
+            this.healthChecker.start();
+            logger.info("Connection health checker started with interval {}ms", intervalMs);
         }
     }
 
@@ -452,6 +476,85 @@ public class Http2Client {
         if(token == null) return;
         SimpleURIConnectionPool pool = pools.get(token.uri());
         if(pool != null) pool.restore(token);
+    }
+
+    /**
+     * Returns the pool metrics if metrics are enabled.
+     * @return SimplePoolMetrics or null if metrics are disabled
+     */
+    public SimplePoolMetrics getPoolMetrics() {
+        return poolMetrics;
+    }
+
+    /**
+     * Warm up the connection pool for a specific URI.
+     * Pre-establishes connections to reduce latency on first request.
+     *
+     * @param uri the URI to warm up connections for
+     * @param worker the Xnio worker
+     * @param bufferPool the buffer pool
+     * @param ssl the Xnio SSL context (can be null for http)
+     * @param options the option map
+     * @return the number of connections actually created
+     */
+    public int warmUpPool(URI uri, XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        RequestConfig requestConfig = ClientConfig.get().getRequest();
+        if (requestConfig == null || !Boolean.TRUE.equals(requestConfig.isPoolWarmUpEnabled())) {
+            logger.debug("Pool warm-up is disabled");
+            return 0;
+        }
+
+        if (HTTPS.equals(uri.getScheme()) && ssl == null) {
+            ssl = getDefaultXnioSsl();
+        }
+
+        SimpleURIConnectionPool pool = pools.get(uri);
+        if (pool == null) {
+            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            ClientConfig config = ClientConfig.get();
+            pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(),
+                null, worker, bufferPool, ssl, options, undertowConnectionMaker);
+            pools.putIfAbsent(uri, pool);
+            pool = pools.get(uri);
+        }
+
+        int warmUpSize = requestConfig.getPoolWarmUpSize();
+        long connectTimeout = requestConfig.getConnectTimeout();
+        return pool.warmUp(warmUpSize, connectTimeout);
+    }
+
+    /**
+     * Simplified warm-up method using default worker and buffer pool.
+     *
+     * @param uri the URI to warm up connections for
+     * @return the number of connections actually created
+     */
+    public int warmUpPool(URI uri) {
+        XnioSsl ssl = HTTPS.equals(uri.getScheme()) ? getDefaultXnioSsl() : null;
+        OptionMap options = ClientConfig.get().getRequestEnableHttp2()
+            ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)
+            : OptionMap.EMPTY;
+        return warmUpPool(uri, WORKER, ssl, BUFFER_POOL, options);
+    }
+
+    /**
+     * Shutdown the Http2Client, stopping background threads like the health checker.
+     * Call this when the application is shutting down.
+     */
+    public void shutdown() {
+        if (healthChecker != null) {
+            healthChecker.stop();
+            logger.info("Connection health checker stopped");
+        }
+    }
+
+    /**
+     * Get the connection pool map for a specific URI.
+     * Useful for debugging and monitoring.
+     * @return unmodifiable map of URI to connection pool
+     */
+    public Map<URI, SimpleURIConnectionPool> getPools() {
+        return Collections.unmodifiableMap(pools);
     }
 
     /**

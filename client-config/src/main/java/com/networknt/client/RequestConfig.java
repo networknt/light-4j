@@ -148,6 +148,51 @@ public class RequestConfig {
     @JsonProperty(ClientConfig.REQUEST_RETRY_DELAY)
     private Integer requestRetryDelay = 1000;
 
+    @BooleanField(
+            configFieldName = ClientConfig.POOL_METRICS_ENABLED,
+            externalizedKeyName = ClientConfig.POOL_METRICS_ENABLED,
+            defaultValue = "false",
+            description = "Whether to track connection pool metrics (active connections, borrows, restores)."
+    )
+    @JsonProperty(ClientConfig.POOL_METRICS_ENABLED)
+    private Boolean poolMetricsEnabled = false;
+
+    @BooleanField(
+            configFieldName = ClientConfig.POOL_WARM_UP_ENABLED,
+            externalizedKeyName = ClientConfig.POOL_WARM_UP_ENABLED,
+            defaultValue = "false",
+            description = "Whether to pre-establish connections when a pool is first accessed."
+    )
+    @JsonProperty(ClientConfig.POOL_WARM_UP_ENABLED)
+    private Boolean poolWarmUpEnabled = false;
+
+    @IntegerField(
+            configFieldName = ClientConfig.POOL_WARM_UP_SIZE,
+            externalizedKeyName = ClientConfig.POOL_WARM_UP_SIZE,
+            defaultValue = "1",
+            description = "Number of connections to pre-establish per URI during warm-up."
+    )
+    @JsonProperty(ClientConfig.POOL_WARM_UP_SIZE)
+    private Integer poolWarmUpSize = 1;
+
+    @BooleanField(
+            configFieldName = ClientConfig.HEALTH_CHECK_ENABLED,
+            externalizedKeyName = ClientConfig.HEALTH_CHECK_ENABLED,
+            defaultValue = "true",
+            description = "Whether to periodically validate idle connections and remove stale ones."
+    )
+    @JsonProperty(ClientConfig.HEALTH_CHECK_ENABLED)
+    private Boolean healthCheckEnabled = true;
+
+    @IntegerField(
+            configFieldName = ClientConfig.HEALTH_CHECK_INTERVAL_MS,
+            externalizedKeyName = ClientConfig.HEALTH_CHECK_INTERVAL_MS,
+            defaultValue = "30000",
+            description = "Interval in milliseconds between connection health checks. Default is 30 seconds."
+    )
+    @JsonProperty(ClientConfig.HEALTH_CHECK_INTERVAL_MS)
+    private Integer healthCheckIntervalMs = 30000;
+
     public Integer getErrorThreshold() {
         return errorThreshold;
     }
@@ -206,5 +251,25 @@ public class RequestConfig {
 
     public Integer getRequestRetryDelay() {
         return requestRetryDelay;
+    }
+
+    public Boolean isPoolMetricsEnabled() {
+        return poolMetricsEnabled;
+    }
+
+    public Boolean isPoolWarmUpEnabled() {
+        return poolWarmUpEnabled;
+    }
+
+    public Integer getPoolWarmUpSize() {
+        return poolWarmUpSize;
+    }
+
+    public Boolean isHealthCheckEnabled() {
+        return healthCheckEnabled;
+    }
+
+    public Integer getHealthCheckIntervalMs() {
+        return healthCheckIntervalMs;
     }
 }

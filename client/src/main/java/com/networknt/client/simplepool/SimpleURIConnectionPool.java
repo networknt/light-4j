@@ -355,4 +355,90 @@ public final class SimpleURIConnectionPool {
         if(semiColon == - 1) return "PORT?";
         return url.substring(url.lastIndexOf(":")+1);
     }
+
+    /**
+     * Validates all connections and removes stale/closed ones.
+     * Called by the health checker to proactively clean the pool.
+     *
+     * @return the number of connections that were cleaned up
+     */
+    public synchronized int validateAndCleanConnections() {
+        long now = System.currentTimeMillis();
+        int initialSize = allKnownConnections.size();
+
+        // Trigger the standard read which cleans up closed/expired connections
+        readAllConnectionHolders(now);
+
+        int cleaned = initialSize - allKnownConnections.size();
+        if (cleaned > 0) {
+            logger.debug("validateAndCleanConnections cleaned {} connections for {}", cleaned, uri);
+        }
+        return cleaned;
+    }
+
+    /**
+     * Pre-establishes connections for pool warm-up.
+     * Creates the specified number of connections up to the pool limit.
+     *
+     * @param count number of connections to pre-establish
+     * @param createConnectionTimeout timeout for connection creation in ms
+     * @return the number of connections actually created
+     */
+    public synchronized int warmUp(int count, long createConnectionTimeout) {
+        int created = 0;
+        long now = System.currentTimeMillis();
+
+        for (int i = 0; i < count && allKnownConnections.size() < poolSize; i++) {
+            try {
+                SimpleConnectionHolder holder = new SimpleConnectionHolder(
+                    EXPIRY_TIME, createConnectionTimeout, uri, bindAddress,
+                    worker, bufferPool, ssl, options, allCreatedConnections, connectionMaker
+                );
+                allKnownConnections.add(holder);
+                readConnectionHolder(holder, now, () -> allKnownConnections.remove(holder));
+                created++;
+                logger.debug("warmUp: pre-established connection {} of {} for {}", created, count, uri);
+            } catch (Exception e) {
+                logger.warn("warmUp: failed to create connection for {}: {}", uri, e.getMessage());
+                break;
+            }
+        }
+
+        if (created > 0) {
+            logger.info("warmUp: created {} connections for {}", created, uri);
+        }
+        return created;
+    }
+
+    /**
+     * Returns the current number of active (tracked) connections.
+     * @return the number of connections in allKnownConnections
+     */
+    public synchronized int getActiveConnectionCount() {
+        return allKnownConnections.size();
+    }
+
+    /**
+     * Returns the current number of borrowable connections.
+     * @return the number of connections available to borrow
+     */
+    public synchronized int getBorrowableCount() {
+        return borrowable.size();
+    }
+
+    /**
+     * Returns the current number of borrowed connections.
+     * @return the number of connections currently borrowed
+     */
+    public synchronized int getBorrowedCount() {
+        return borrowed.size();
+    }
+
+    /**
+     * Returns the URI this pool manages.
+     * @return the URI
+     */
+    public URI getUri() {
+        return uri;
+    }
 }
