@@ -63,8 +63,8 @@ public class ConfigInjection {
     private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
     private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
-    public static Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-    public static Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    public static volatile Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    public static volatile Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
 
 
     // Method used to generate the values from environment variables or "values.yaml"

@@ -152,7 +152,10 @@ public abstract class Config {
 
         @Override
         public void clearConfigCache(String configName) {
-            configCache.remove(configName);
+            Object object =configCache.remove(configName);
+            if(object != null && logger.isInfoEnabled()) {
+                logger.info("Config file {} is removed from the cache for reloading.", configName);
+            }
         }
 
         @Override

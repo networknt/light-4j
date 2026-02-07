@@ -2,7 +2,7 @@ package com.networknt.config.reload.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
-import com.networknt.config.ConfigLoader;
+import com.networknt.config.ConfigInjection;
 import com.networknt.config.reload.model.ConfigReloadConfig;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -18,6 +18,8 @@ import io.undertow.util.HttpString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.networknt.config.ConfigInjection.CENTRALIZED_MANAGEMENT;
 
 /**
  * This is an admin endpoint used to re-load config values from config server on run-time
@@ -56,6 +58,13 @@ public class ConfigReloadHandler implements LightHttpHandler {
                 if (!modulePlugins.isEmpty()) modulePlugins.clear();
                 modulePlugins.addAll(ModuleRegistry.getModuleClasses());
                 modulePlugins.addAll(ModuleRegistry.getPluginClasses());
+            }
+
+            if(!modulePlugins.isEmpty()) {
+                // reload values.yml first to avoid conflicts
+                ConfigInjection.decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+                ConfigInjection.undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+                if (logger.isInfoEnabled()) logger.info("Centralized config values.yml is reloaded.");
             }
 
             for (String module: modulePlugins) {
