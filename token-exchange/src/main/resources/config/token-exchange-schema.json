@@ -1,0 +1,53 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "tokenExUri", "tokenExClientId", "tokenExClientSecret", "tokenExScope", "subjectTokenType", "requestedTokenType", "mappingStrategy", "clientMapping" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable Token Exchange Handler",
+      "default" : true
+    },
+    "tokenExUri" : {
+      "type" : "string",
+      "description" : "The path to the token exchange endpoint on OAuth 2.0 provider"
+    },
+    "tokenExClientId" : {
+      "type" : "string",
+      "description" : "The client ID for the token exchange"
+    },
+    "tokenExClientSecret" : {
+      "type" : "string",
+      "description" : "The client secret for the token exchange"
+    },
+    "tokenExScope" : {
+      "type" : "array",
+      "description" : "The scope of the returned token",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "subjectTokenType" : {
+      "type" : "string",
+      "description" : "The subject token type",
+      "default" : "urn:ietf:params:oauth:token-type:jwt"
+    },
+    "requestedTokenType" : {
+      "type" : "string",
+      "description" : "The requested token type",
+      "default" : "urn:ietf:params:oauth:token-type:jwt"
+    },
+    "mappingStrategy" : {
+      "type" : "string",
+      "description" : "Mapping of external client IDs to internal function IDs (database or config)",
+      "default" : "database"
+    },
+    "clientMapping" : {
+      "type" : "object",
+      "description" : "If mappingStrategy is 'config', define the map here",
+      "additionalProperties" : {
+        "type" : "string"
+      }
+    }
+  }
+}

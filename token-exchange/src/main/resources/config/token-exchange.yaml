@@ -1,0 +1,19 @@
+# Token Exchange Handler configuration
+# Enable Token Exchange Handler
+enabled: ${token-exchange.enabled:true}
+# The path to the token exchange endpoint on OAuth 2.0 provider
+tokenExUri: ${token-exchange.tokenExUri:}
+# The client ID for the token exchange
+tokenExClientId: ${token-exchange.tokenExClientId:}
+# The client secret for the token exchange
+tokenExClientSecret: ${token-exchange.tokenExClientSecret:}
+# The scope of the returned token
+tokenExScope: ${token-exchange.tokenExScope:}
+# The subject token type
+subjectTokenType: ${token-exchange.subjectTokenType:urn:ietf:params:oauth:token-type:jwt}
+# The requested token type
+requestedTokenType: ${token-exchange.requestedTokenType:urn:ietf:params:oauth:token-type:jwt}
+# Mapping of external client IDs to internal function IDs (database or config)
+mappingStrategy: ${token-exchange.mappingStrategy:database}
+# If mappingStrategy is 'config', define the map here
+clientMapping: ${token-exchange.clientMapping:}

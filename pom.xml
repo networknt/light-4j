@@ -231,6 +231,7 @@
         <module>access-config</module>
         <module>sse-handler</module>
         <module>mcp-router</module>
+        <module>token-exchange</module>
     </modules>
 
     <dependencyManagement>
