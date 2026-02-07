@@ -29,16 +29,23 @@ public class McpHandler implements MiddlewareHandler {
     private static final String JSONRpc_VERSION = "2.0";
 
     private volatile HttpHandler next;
-    private McpConfig config;
+    private volatile McpConfig config;
     private ObjectMapper mapper = Config.getInstance().getMapper();
 
     /**
      * Default constructor
      */
     public McpHandler() {
-        McpConfig config = McpConfig.load();
+        config = McpConfig.load();
+        refreshTools(config);
+        if(logger.isInfoEnabled()) logger.info("McpHandler initialized.");
+    }
+
+    private void refreshTools(McpConfig config) {
         List<Tool> tools = config.getTools();
         if (tools != null) {
+            // clear before adding in case this is reload.
+            McpToolRegistry.clear();
             for (Tool toolData : tools) {
                 String name = toolData.getName();
                 String description = toolData.getDescription();
@@ -51,9 +58,9 @@ public class McpHandler implements MiddlewareHandler {
                 if (name != null && host != null && path != null && method != null) {
                     McpTool tool;
                     if ("mcp".equalsIgnoreCase(protocol)) {
-                         tool = new McpProxyTool(name, description, host, path, method, inputSchema);
+                        tool = new McpProxyTool(name, description, host, path, method, inputSchema);
                     } else {
-                         tool = new HttpMcpTool(name, description, host, path, method, inputSchema);
+                        tool = new HttpMcpTool(name, description, host, path, method, inputSchema);
                     }
                     McpToolRegistry.registerTool(tool);
                     if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
@@ -62,12 +69,19 @@ public class McpHandler implements MiddlewareHandler {
                 }
             }
         }
-        if(logger.isInfoEnabled()) logger.info("McpHandler initialized.");
     }
-
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        McpConfig config = McpConfig.load();
+        McpConfig newConfig = McpConfig.load();
+        if (newConfig != config) {
+            synchronized (this) {
+                if (newConfig != config) {
+                    config = newConfig;
+                    refreshTools(config);
+                }
+            }
+        }
+
         String path = exchange.getRequestPath();
 
         if (config.getPath().equals(path)) {
