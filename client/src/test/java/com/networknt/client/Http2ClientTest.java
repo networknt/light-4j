@@ -22,6 +22,7 @@ import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.Http2ClientConnectionPool;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -327,7 +328,25 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -382,7 +401,9 @@ public class Http2ClientTest extends Http2ClientBase {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -401,7 +422,25 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -458,7 +497,9 @@ public class Http2ClientTest extends Http2ClientBase {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -468,7 +509,19 @@ public class Http2ClientTest extends Http2ClientBase {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -480,7 +533,9 @@ public class Http2ClientTest extends Http2ClientBase {
             Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
 
     }
@@ -491,7 +546,19 @@ public class Http2ClientTest extends Http2ClientBase {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -509,7 +576,9 @@ public class Http2ClientTest extends Http2ClientBase {
             }
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -532,7 +601,19 @@ public class Http2ClientTest extends Http2ClientBase {
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -545,7 +626,9 @@ public class Http2ClientTest extends Http2ClientBase {
             Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
@@ -728,11 +811,29 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         assertTrue(connection.isOpen());
 
-        IoUtils.safeClose(connection);
+        client.restore(token);
     }
 
     // For these three tests, the behaviour is different between jdk9 and jdk10/11/12
@@ -745,7 +846,25 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         //should not be reached
         //assertFalse(connection.isOpen());
         fail();
@@ -757,7 +876,25 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         //should not be reached
         //assertFalse(connection.isOpen());
         fail();
@@ -769,7 +906,25 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         //should not be reached
         //assertFalse(connection.isOpen());
         fail();
@@ -778,11 +933,23 @@ public class Http2ClientTest extends Http2ClientBase {
     @Test
     public void default_group_key_is_used_in_Http2Client_SSL() throws Exception{
         final Http2Client client = createClient();
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         assertTrue(connection.isOpen());
 
-        IoUtils.safeClose(connection);
+        client.restore(token);
     }
 
     @Test

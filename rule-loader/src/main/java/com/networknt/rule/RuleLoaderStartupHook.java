@@ -2,6 +2,7 @@ package com.networknt.rule;
 
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.monad.Failure;
@@ -194,7 +195,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         Result<String> result = null;
         ClientConnection conn = null;
         try {
-            conn = client.connect(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            SimpleConnectionHolder.ConnectionToken tokenConn = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+            conn = (ClientConnection) tokenConn.getRawConnection();
             // Create one CountDownLatch that will be reset in the callback function
             final CountDownLatch latch = new CountDownLatch(1);
             // Create an AtomicReference object to receive ClientResponse from callback function
@@ -224,7 +227,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         Result<String> result = null;
         ClientConnection conn = null;
         try {
-            conn = client.connect(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            SimpleConnectionHolder.ConnectionToken tokenConn = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+            conn = (ClientConnection) tokenConn.getRawConnection();
             // Create one CountDownLatch that will be reset in the callback function
             final CountDownLatch latch = new CountDownLatch(1);
             // Create an AtomicReference object to receive ClientResponse from callback function

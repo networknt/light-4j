@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool;
 
 import io.undertow.connector.ByteBufferPool;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;

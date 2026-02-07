@@ -1,7 +1,9 @@
 package com.networknt.sse;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -68,7 +70,13 @@ public class SseHandlerTest {
     public void testSseConnection() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+        try {
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/sse");
@@ -91,7 +99,7 @@ public class SseHandlerTest {
             logger.error("Exception: ", e);
             throw e;
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
     }
 
@@ -99,7 +107,19 @@ public class SseHandlerTest {
     public void testSseWithTraceabilityId() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/sse");
@@ -119,7 +139,9 @@ public class SseHandlerTest {
             logger.error("Exception: ", e);
             throw e;
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -127,7 +149,19 @@ public class SseHandlerTest {
     public void testSsePathPrefix() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/sse/test");
@@ -144,7 +178,9 @@ public class SseHandlerTest {
             logger.error("Exception: ", e);
             throw e;
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 }

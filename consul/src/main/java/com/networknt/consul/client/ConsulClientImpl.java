@@ -255,7 +255,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("No response from Consul - Terminating connection to Consul");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} catch (InterruptedException e) {
@@ -263,7 +263,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("Consul connection timeout thread interrupted - Terminating connection to Consul");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} catch(Exception e) {
@@ -271,7 +271,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("Consul connection or request failed - Terminating and retrying connection to Consul...");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} finally {

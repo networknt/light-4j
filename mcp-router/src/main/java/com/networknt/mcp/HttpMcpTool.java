@@ -3,6 +3,7 @@ package com.networknt.mcp;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -67,10 +68,12 @@ public class HttpMcpTool implements McpTool {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> arguments) {
+        SimpleConnectionHolder.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
             URI uri = new URI(host);
-            connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            connection = (ClientConnection) token.getRawConnection();
             
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
@@ -139,7 +142,7 @@ public class HttpMcpTool implements McpTool {
             logger.error("Error executing HttpMcpTool " + name, e);
             throw new RuntimeException("Tool execution failed: " + e.getMessage());
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
     }
 }

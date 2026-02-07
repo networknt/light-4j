@@ -20,6 +20,8 @@
 
 package com.networknt.client.simplepool;
 
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+
 /***
  * SimpleConnection is an interface that contains all the required functions and properties of
  * a connection that are needed by the SimpleConnectionHolder, SimpleURIConnectionPool, and

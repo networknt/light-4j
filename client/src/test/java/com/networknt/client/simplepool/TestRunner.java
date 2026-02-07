@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool;
 
 import org.slf4j.Logger;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;

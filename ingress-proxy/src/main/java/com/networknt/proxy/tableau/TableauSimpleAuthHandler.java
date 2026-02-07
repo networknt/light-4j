@@ -18,6 +18,7 @@ package com.networknt.proxy.tableau;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -130,9 +131,10 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
+        SimpleConnectionHolder.ConnectionToken clientToken;
         try {
-            // use HTTP 1.1 connection as I don't think Tableau supports HTTP 2.0
-            connection = client.connect(new URI(config.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            clientToken = client.borrow(new URI(config.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            connection = (ClientConnection) clientToken.getRawConnection();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -158,7 +160,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(clientToken);
         }
         return token;
     }

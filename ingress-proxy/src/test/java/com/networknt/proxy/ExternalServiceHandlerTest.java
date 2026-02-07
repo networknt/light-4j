@@ -1,6 +1,7 @@
 package com.networknt.proxy;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.exception.ClientException;
 import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
@@ -90,13 +91,13 @@ public class ExternalServiceHandlerTest {
     }
 
     /**
-     * Helper method to create a test connection to the local test server.
+     * Helper method to borrow a connection token to the local test server.
      * Reduces code duplication across test methods.
      */
-    private static ClientConnection createTestConnection() throws Exception {
+    private static SimpleConnectionHolder.ConnectionToken borrowTestToken() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         try {
-            return client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            return client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -107,12 +108,19 @@ public class ExternalServiceHandlerTest {
     public void testOneGetRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionHolder.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
@@ -123,7 +131,9 @@ public class ExternalServiceHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -138,12 +148,19 @@ public class ExternalServiceHandlerTest {
     public void testOnePostRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionHolder.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         String requestBody = "{\"key\": \"key1\"}";
         try {
@@ -157,7 +174,9 @@ public class ExternalServiceHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -170,12 +189,19 @@ public class ExternalServiceHandlerTest {
     public void testEmptyPostBodyRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionHolder.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         String requestBody = "";
         try {
@@ -189,7 +215,9 @@ public class ExternalServiceHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -201,7 +229,8 @@ public class ExternalServiceHandlerTest {
     public void testPathPrefixGetRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = createTestConnection();
+        final SimpleConnectionHolder.ConnectionToken token = borrowTestToken();
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/timeout-test").setMethod(Methods.GET);
@@ -212,7 +241,7 @@ public class ExternalServiceHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -224,7 +253,8 @@ public class ExternalServiceHandlerTest {
     public void testPathPrefixPostRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = createTestConnection();
+        final SimpleConnectionHolder.ConnectionToken token = borrowTestToken();
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         String requestBody = "{\"key\": \"value\"}";
         try {
@@ -238,7 +268,7 @@ public class ExternalServiceHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -250,7 +280,8 @@ public class ExternalServiceHandlerTest {
     public void testPathPrefixTimeout() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = createTestConnection();
+        final SimpleConnectionHolder.ConnectionToken token = borrowTestToken();
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         boolean timeoutOccurred = false;
         try {
@@ -277,7 +308,7 @@ public class ExternalServiceHandlerTest {
                     (e.getMessage() != null && e.getMessage().toLowerCase().contains("timeout"));
             timeoutOccurred = isTimeoutException;
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
         Assert.assertTrue("Expected timeout to occur for slow endpoint with configured pathPrefix timeout", timeoutOccurred);
     }

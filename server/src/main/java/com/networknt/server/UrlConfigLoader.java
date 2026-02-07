@@ -19,6 +19,8 @@ import org.xnio.OptionMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -94,7 +96,7 @@ public class UrlConfigLoader implements IConfigLoader {
 	};
 	final static Pattern files = Pattern.compile(">([^>/]+)</a>");
 	static Http2Client client = Http2Client.getInstance();
-	ClientConnection connection = null;
+	SimpleConnectionHolder.ConnectionToken connectionToken = null;
 	String host = null;
 
 	@Override
@@ -106,8 +108,8 @@ public class UrlConfigLoader implements IConfigLoader {
 			logger.info("init url config: {}{}", configServerUri, configServerPath);
 			URI uri = new URI(configServerUri);
 			host = uri.getHost();
-			connection = client.connect(uri, Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()),
-					Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+			connectionToken = client.borrow(uri, Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()),
+					Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
 
 			loadConfigs();
 
@@ -120,7 +122,7 @@ public class UrlConfigLoader implements IConfigLoader {
 			// here the connection is closed after one request. It should be used for in
 			// frequent
 			// request as creating a new connection is costly with TLS handshake and ALPN.
-			IoUtils.safeClose(connection);
+			if(connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -133,8 +135,8 @@ public class UrlConfigLoader implements IConfigLoader {
 			logger.info("init url config: {}{}", configServerUri, configServerPath);
 			URI uri = new URI(configServerUri);
 			host = uri.getHost();
-			connection = client.connect(uri, Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()),
-					Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+			connectionToken = client.borrow(uri, Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()),
+					Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
 
 			loadConfigs();
 
@@ -144,7 +146,7 @@ public class UrlConfigLoader implements IConfigLoader {
 			// here the connection is closed after one request. It should be used for in
 			// frequent
 			// request as creating a new connection is costly with TLS handshake and ALPN.
-			IoUtils.safeClose(connection);
+			if(connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -278,6 +280,7 @@ public class UrlConfigLoader implements IConfigLoader {
 
 			AtomicReference<ClientResponse> responseReference = new AtomicReference<>();
 			CountDownLatch latch = new CountDownLatch(1);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			connection.sendRequest(clientRequest, raw ? client.byteBufferClientCallback(responseReference, latch)
 					: client.createClientCallback(responseReference, latch));
 

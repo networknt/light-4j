@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool;
 
 import java.net.URI;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

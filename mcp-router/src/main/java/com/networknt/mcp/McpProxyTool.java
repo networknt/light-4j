@@ -2,6 +2,7 @@ package com.networknt.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -75,10 +76,12 @@ public class McpProxyTool implements McpTool {
         jsonRpcRequest.put("params", params);
 
         Http2Client client = Http2Client.getInstance();
+        SimpleConnectionHolder.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
             URI uri = new URI(host);
-            connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            connection = (ClientConnection) token.getRawConnection();
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
@@ -121,7 +124,7 @@ public class McpProxyTool implements McpTool {
             logger.error("Error executing McpProxyTool", e);
             throw new RuntimeException("Tool execution failed: " + e.getMessage(), e);
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(token);
         }
     }
 }

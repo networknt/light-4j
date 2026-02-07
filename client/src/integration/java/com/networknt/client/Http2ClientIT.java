@@ -18,7 +18,9 @@
 
 package com.networknt.client;
 
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -218,7 +220,19 @@ public class Http2ClientIT {
 
         final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -242,7 +256,9 @@ public class Http2ClientIT {
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -254,7 +270,19 @@ public class Http2ClientIT {
 
         final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -276,7 +304,9 @@ public class Http2ClientIT {
                 Assert.assertEquals("HTTP/1.1", response.getProtocol().toString());
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
     */
@@ -289,7 +319,19 @@ public class Http2ClientIT {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -347,7 +389,9 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -360,7 +404,19 @@ public class Http2ClientIT {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -418,7 +474,9 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
     */
@@ -433,7 +491,25 @@ public class Http2ClientIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -457,7 +533,9 @@ public class Http2ClientIT {
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -471,7 +549,25 @@ public class Http2ClientIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -498,7 +594,7 @@ public class Http2ClientIT {
             connection.getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
-                    IoUtils.safeClose(connection);
+                    client.restore(token);
                 }
             });
         }
@@ -516,7 +612,25 @@ public class Http2ClientIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -574,7 +688,9 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
@@ -589,7 +705,25 @@ public class Http2ClientIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+
+        try {
+
+
+            token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+
+        } catch (Exception e) {
+
+
+            throw new ClientException(e);
+
+
+        }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -647,14 +781,28 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
     }
 
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -667,7 +815,9 @@ public class Http2ClientIT {
             Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
@@ -675,7 +825,19 @@ public class Http2ClientIT {
     public ByteBuffer callApiWithByteBuffer() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -689,7 +851,9 @@ public class Http2ClientIT {
             Assert.assertNotNull(reference.get().getAttachment(Http2Client.BUFFER_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         return reference.get().getAttachment(Http2Client.BUFFER_BODY);
     }
@@ -697,7 +861,19 @@ public class Http2ClientIT {
     public ByteBuffer callApiWithByteBufferRequest() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final SimpleConnectionHolder.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -711,7 +887,9 @@ public class Http2ClientIT {
             Assert.assertNotNull(reference.get().getAttachment(Http2Client.BUFFER_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         return reference.get().getAttachment(Http2Client.BUFFER_BODY);
     }

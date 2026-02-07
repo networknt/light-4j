@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool;
 
 import io.undertow.connector.ByteBufferPool;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
