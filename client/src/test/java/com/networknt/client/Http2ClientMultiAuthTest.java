@@ -5,6 +5,7 @@ import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.io.Receiver;
@@ -197,8 +198,9 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
 
     private String callPetstoreApiAsync() throws Exception {
         final Http2Client client = createClient();
-        // get a connection from the connection pool.
-        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        // get a connection token from the connection pool.
+        SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
@@ -210,8 +212,8 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
             final ClientResponse response = reference.get();
             Assert.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
-            // return the connection to the connection pool.
-            client.returnConnection(connection);
+            // restore the connection token to the pool.
+            client.restore(token);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
@@ -224,8 +226,9 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
 
     private String callMarketApiAsync() throws Exception {
         final Http2Client client = createClient();
-        // get a connection from the connection pool.
-        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        // get a connection token from the connection pool.
+        SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
@@ -237,8 +240,8 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
             final ClientResponse response = reference.get();
             Assert.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
-            // return the connection to the connection pool.
-            client.returnConnection(connection);
+            // restore the connection token to the pool.
+            client.restore(token);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
