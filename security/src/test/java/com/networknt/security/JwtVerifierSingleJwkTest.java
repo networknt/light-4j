@@ -2,6 +2,7 @@ package com.networknt.security;
 
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
@@ -292,7 +293,8 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
     private String callPetstoreApiAsync() throws Exception {
         final Http2Client client = createClient();
         // get a connection from the connection pool.
-        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
@@ -305,7 +307,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
             Assert.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // return the connection to the connection pool.
-            client.returnConnection(connection);
+            client.restore(token);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
@@ -319,7 +321,8 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
         logger.trace("callMarketApiAsync is called");
         final Http2Client client = createClient();
         // get a connection from the connection pool.
-        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
@@ -335,7 +338,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
             Assert.assertEquals("{\"message\":\"Market OK!\"}", body);
         } finally {
             // return the connection to the connection pool.
-            client.returnConnection(connection);
+            client.restore(token);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
