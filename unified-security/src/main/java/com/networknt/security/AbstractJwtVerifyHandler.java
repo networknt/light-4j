@@ -161,23 +161,31 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                         auditInfo.put(Constants.CALLER_ID_STRING, callerId);
 
                     if (config != null && config.isEnableVerifyScope()) {
-                        if (logger.isTraceEnabled())
-                            logger.trace("verify scope from the primary token when enableVerifyScope is true");
+                        // Get scopes from spec - may be null for simple JWT verification
+                        List<String> specScopes = getSpecScopes(exchange, auditInfo);
+                        if (specScopes == null) {
+                            // No scopes from spec, skip scope verification (simple jwt behavior)
+                            if (logger.isTraceEnabled())
+                                logger.trace("No spec scopes available, skipping scope verification");
+                        } else {
+                            if (logger.isTraceEnabled())
+                                logger.trace("verify scope from the primary token when enableVerifyScope is true");
 
-                        /* validate scope from operation */
-                        String scopeHeader = headerMap.getFirst(HttpStringConstants.SCOPE_TOKEN);
-                        String scopeJwt = JwtVerifier.getTokenFromAuthorization(scopeHeader);
-                        List<String> secondaryScopes = new ArrayList<>();
+                            /* validate scope from operation */
+                            String scopeHeader = headerMap.getFirst(HttpStringConstants.SCOPE_TOKEN);
+                            String scopeJwt = JwtVerifier.getTokenFromAuthorization(scopeHeader);
+                            List<String> secondaryScopes = new ArrayList<>();
 
-                        Status status = this.hasValidSecondaryScopes(exchange, scopeJwt, secondaryScopes, ignoreExpiry, pathPrefix, reqPath, jwkServiceIds, auditInfo);
-                        if(status != null) {
-                            if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
-                            return status;
-                        }
-                        status = this.hasValidScope(exchange, scopeHeader, secondaryScopes, claims, getSpecScopes(exchange, auditInfo));
-                        if(status != null) {
-                            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error {}", status);
-                            return status;
+                            Status status = this.hasValidSecondaryScopes(exchange, scopeJwt, secondaryScopes, ignoreExpiry, pathPrefix, reqPath, jwkServiceIds, auditInfo);
+                            if(status != null) {
+                                if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                                return status;
+                            }
+                            status = this.hasValidScope(exchange, scopeHeader, secondaryScopes, claims, specScopes);
+                            if(status != null) {
+                                if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                                return status;
+                            }
                         }
                     }
                     // pass through claims through request headers after verification is done.
@@ -260,13 +268,17 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
 
     /**
      * Gets the operation from the spec. If not defined or defined incorrectly, return null.
+     * Override this method in subclasses to provide spec-based scope verification.
+     * By default, returns null which skips scope verification (simple JWT behavior).
      *
      * @param exchange - the current exchange
      * @param auditInfo A map of audit info properties
-     * @return - return A list of scopes from the spec
+     * @return - return A list of scopes from the spec, or null to skip scope verification
      * @throws Exception - exception
      */
-    public abstract List<String> getSpecScopes(HttpServerExchange exchange, Map<String, Object> auditInfo) throws Exception;
+    public List<String> getSpecScopes(HttpServerExchange exchange, Map<String, Object> auditInfo) throws Exception {
+        return null;  // Default: no scope verification (simple JWT behavior)
+    }
     /**
      * Check is the request has secondary scopes and they are valid.
      *
@@ -406,6 +418,11 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
     @Override
     public JwtVerifier getJwtVerifier() {
         return jwtVerifier;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return config.isEnableVerifyJwt();
     }
 
 }

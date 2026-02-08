@@ -186,7 +186,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                             } else {
                                                 // No scope in the token. It is a sjwt, call sjwtVerifier to verify the token.
                                                 if(logger.isTraceEnabled()) logger.trace("Both jwt and sjwt are true and no scope in the token. It is a sjwt token.");
-                                                AbstractSimpleJwtVerifyHandler handler = (AbstractSimpleJwtVerifyHandler) handlers.get(SJWT);
+                                                AbstractJwtVerifyHandler handler = (AbstractJwtVerifyHandler) handlers.get(SJWT);
                                                 if (handler == null) {
                                                     logger.error("Cannot find SimpleJwtVerifyHandler with alias name sjwt.");
                                                     return new Status(HANDLER_NOT_FOUND, "com.networknt.openapi.SimpleJwtVerifyHandler@sjwt");
@@ -208,7 +208,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                         } else {
                                             // jwt is not true. this is must be a sjwt token without scope.
                                             if(logger.isTraceEnabled()) logger.trace("jwt is not true and sjwt is true. This is a sjwt token.");
-                                            AbstractSimpleJwtVerifyHandler handler = (AbstractSimpleJwtVerifyHandler) handlers.get(SJWT);
+                                            AbstractJwtVerifyHandler handler = (AbstractJwtVerifyHandler) handlers.get(SJWT);
                                             if (handler == null) {
                                                 logger.error("Cannot find SimpleJwtVerifyHandler with alias name sjwt.");
                                                 return new Status(HANDLER_NOT_FOUND, "com.networknt.openapi.SimpleJwtVerifyHandler@sjwt");
