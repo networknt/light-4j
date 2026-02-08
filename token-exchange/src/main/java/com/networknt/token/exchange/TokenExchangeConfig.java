@@ -16,9 +16,7 @@
 
 package com.networknt.token.exchange;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;
 
@@ -152,12 +150,6 @@ public class TokenExchangeConfig {
             }
         }
         return new TokenExchangeConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig.clear();
-        mappedConfig.putAll(Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME));
-        setConfigData();
     }
 
     private void setConfigData() {
