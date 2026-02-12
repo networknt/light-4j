@@ -74,12 +74,12 @@ public class HttpMcpTool implements McpTool {
             URI uri = new URI(host);
             token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
             connection = (ClientConnection) token.getRawConnection();
-            
+
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            
+
             ClientRequest request = new ClientRequest().setMethod(Methods.fromString(method));
-            
+
             if ("GET".equalsIgnoreCase(method)) {
                 StringBuilder queryParams = new StringBuilder();
                 if (arguments != null && !arguments.isEmpty()) {
@@ -112,12 +112,12 @@ public class HttpMcpTool implements McpTool {
             }
 
             latch.await(5000, TimeUnit.MILLISECONDS); // Default 5s timeout
-            
+
             ClientResponse response = reference.get();
             if (response != null) {
                 int statusCode = response.getResponseCode();
                 String body = response.getAttachment(Http2Client.RESPONSE_BODY);
-                
+
                 if (statusCode >= 200 && statusCode < 300) {
                      if (body != null && !body.isEmpty()) {
                          try {

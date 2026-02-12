@@ -53,4 +53,3 @@ public class ClientIdentityExtractorFactory {
         return extractor.extract(headerValue);
     }
 }
-

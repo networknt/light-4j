@@ -104,7 +104,7 @@ public class McpHandler implements MiddlewareHandler {
             // In a real scenario, you might want check headers for existing ID or token.
             SseConnectionRegistry.add(id, connection);
             if(logger.isDebugEnabled()) logger.debug("New MCP SSE connection established: {}", id);
-            
+
             // Send the endpoint event as per MCP HTTP transport spec
             try {
                 // The data field contains the URI for the POST endpoint (messagePath)
@@ -128,14 +128,14 @@ public class McpHandler implements MiddlewareHandler {
             exchange.dispatch(this);
             return;
         }
-        
+
         // Extract session ID from query parameter
         String sessionId = null;
         Deque<String> sessionIdDeque = exchange.getQueryParameters().get("sessionId");
         if (sessionIdDeque != null && !sessionIdDeque.isEmpty()) {
             sessionId = sessionIdDeque.getFirst();
         }
-        
+
         // Optionally valid sessionId against SseConnectionRegistry if needed for strict session checking
         // if (sessionId != null && !SseConnectionRegistry.contains(sessionId)) { ... }
 
@@ -170,7 +170,7 @@ public class McpHandler implements MiddlewareHandler {
                             if(tool.getInputSchema() != null) {
                                 t.put("inputSchema", mapper.readTree(tool.getInputSchema()));
                             } else {
-                                t.put("inputSchema", Map.of("type", "object")); 
+                                t.put("inputSchema", Map.of("type", "object"));
                             }
                         } catch (Exception e) {
                              logger.warn("Invalid JSON schema for tool {}", tool.getName(), e);

@@ -43,7 +43,7 @@ public class McpHandlerTest {
             // Manually register tool for test reliability
             McpTool weatherTool = new HttpMcpTool("weather", "Get weather information", "http://localhost:" + BACKEND_PORT, "/weather", "GET", null);
             McpToolRegistry.registerTool(weatherTool);
-            
+
             handler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));
             server = Undertow.builder()
                     .addHttpListener(PORT, "localhost")
@@ -127,7 +127,7 @@ public class McpHandlerTest {
         if (backendServer != null) {
             backendServer.stop();
         }
-        // internal clear method or just rely on static? 
+        // internal clear method or just rely on static?
         // McpToolRegistry doesn't have a clear method public exposed usually?
         // Let's check imports. We need to import HttpMcpTool first.
         McpToolRegistry.clear();
@@ -157,20 +157,20 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.ACCEPT, "text/event-stream");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await(1000, TimeUnit.MILLISECONDS);
-            
+
             ClientResponse response = reference.get();
             Assert.assertEquals(200, response.getResponseCode());
-            
+
             // Wait a bit for server handling
             Thread.sleep(500);
             Assert.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
-            
+
         } finally {
 
-            
+
             client.restore(token);
 
-            
+
         }
     }
 
@@ -217,7 +217,7 @@ public class McpHandlerTest {
 
         }
     }
-    
+
     @Test
     public void testListTools() throws Exception {
         // Register a dummy tool first
@@ -257,7 +257,7 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
             connection.sendRequest(request, client.createClientCallback(reference, latch, json));
             latch.await(1000, TimeUnit.MILLISECONDS);
-            
+
             ClientResponse response = reference.get();
             Assert.assertEquals(200, response.getResponseCode());
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
@@ -274,13 +274,13 @@ public class McpHandlerTest {
             }
             Assert.assertTrue(testToolFound);
             Assert.assertTrue(weatherToolFound);
-            
+
         } finally {
 
-            
+
             client.restore(token);
 
-            
+
         }
     }
 
@@ -314,20 +314,20 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
             connection.sendRequest(request, client.createClientCallback(reference, latch, json));
             latch.await(1000, TimeUnit.MILLISECONDS);
-            
+
             ClientResponse response = reference.get();
             Assert.assertEquals(200, response.getResponseCode());
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
             Assert.assertNotNull(body);
             // Verify result contains echo from backend
             Assert.assertTrue(body.contains("echo from mcp backend"));
-            
+
         } finally {
 
-            
+
             client.restore(token);
 
-            
+
         }
     }
 }

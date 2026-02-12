@@ -55,4 +55,3 @@ public final class SimpleConnectionPool {
             pool.restore(connectionToken);
     }
 }
-

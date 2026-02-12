@@ -483,7 +483,7 @@ public class Http2Client {
     @Deprecated(forRemoval = true)
     public void returnConnection(ClientConnection connection) {
         if (connection == null) return;
-        
+
         // Check if we have a token for this connection (from redirected borrow)
         SimpleConnectionHolder.ConnectionToken token = connectionTokenMap.remove(connection);
         if (token != null) {
@@ -491,7 +491,7 @@ public class Http2Client {
             restore(token);
             return;
         }
-        
+
         // Fallback to old pool for connections not borrowed via redirect
         http2ClientConnectionPool.resetConnectionStatus(connection);
     }

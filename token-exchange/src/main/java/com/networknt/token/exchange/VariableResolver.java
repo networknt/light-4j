@@ -214,4 +214,3 @@ public final class VariableResolver {
         throw new IllegalArgumentException("Invalid destination pattern: " + destination);
     }
 }
-

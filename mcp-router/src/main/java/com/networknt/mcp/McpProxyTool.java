@@ -104,7 +104,7 @@ public class McpProxyTool implements McpTool {
             ClientResponse response = reference.get();
             int statusCode = response.getResponseCode();
             String responseBody = response.getAttachment(Http2Client.RESPONSE_BODY);
-            
+
             if(logger.isDebugEnabled()) logger.debug("Backend MCP response: {}", responseBody);
 
             if (statusCode >= 200 && statusCode < 300) {

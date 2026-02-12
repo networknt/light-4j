@@ -350,4 +350,3 @@ public class VariableResolverTest {
         Assert.assertEquals("urn:ietf:params:oauth:token-type:access_token", resolved.get("subject_token_type"));
     }
 }
-
