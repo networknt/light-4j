@@ -1,19 +1,17 @@
-# Token Exchange Handler configuration
-# Enable Token Exchange Handler
 enabled: ${token-exchange.enabled:true}
-# The path to the token exchange endpoint on OAuth 2.0 provider
-tokenExUri: ${token-exchange.tokenExUri:}
-# The client ID for the token exchange
-tokenExClientId: ${token-exchange.tokenExClientId:}
-# The client secret for the token exchange
-tokenExClientSecret: ${token-exchange.tokenExClientSecret:}
-# The scope of the returned token
-tokenExScope: ${token-exchange.tokenExScope:}
-# The subject token type
-subjectTokenType: ${token-exchange.subjectTokenType:urn:ietf:params:oauth:token-type:jwt}
-# The requested token type
-requestedTokenType: ${token-exchange.requestedTokenType:urn:ietf:params:oauth:token-type:jwt}
-# Mapping of external client IDs to internal function IDs (database or config)
-mappingStrategy: ${token-exchange.mappingStrategy:database}
-# If mappingStrategy is 'config', define the map here
-clientMapping: ${token-exchange.clientMapping:}
+# Default proxy port.
+proxyPort: ${token-exchange.proxyPort:}
+# Default proxy host used in token requests.
+proxyHost: ${token-exchange.proxyHost:}
+# Enable/disable http2. Default enabled.
+enableHttp2: ${token-exchange.enableHttp2:true}
+moduleMasks: ${token-exchange.moduleMasks:}
+tokenSchemas: ${token-exchange.tokenSchemas:}
+# Maps client IDs (from Authorization headers) to token schema names.
+# This allows automatic schema selection based on the incoming request's credentials.
+clientMappings: ${token-exchange.clientMappings:}
+# Maps path prefixes to authentication types.
+# This determines how to extract client identity from the Authorization header.
+pathAuthMappings: ${token-exchange.pathAuthMappings:}
+# Default auth type to use when no path prefix matches.
+defaultAuthType: ${token-exchange.defaultAuthType:}
