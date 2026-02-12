@@ -154,4 +154,3 @@ public class TokenExchangeHandler implements MiddlewareHandler {
         return TokenExchangeConfig.load(configName).isEnabled();
     }
 }
-

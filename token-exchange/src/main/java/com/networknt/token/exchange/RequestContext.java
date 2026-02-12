@@ -163,4 +163,3 @@ public class RequestContext {
         return getHeader("authorization");
     }
 }
-

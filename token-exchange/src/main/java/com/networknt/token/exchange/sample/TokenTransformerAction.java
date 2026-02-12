@@ -16,9 +16,9 @@ import static com.networknt.utility.Constants.ERROR_MESSAGE;
 /**
  * Rule engine plugin for token transformation.
  * This plugin resolves token schemas based on the action value provided by the rule engine.
- * 
+ *
  * <p>For automatic schema resolution based on client ID, use the value "auto" in the action.</p>
- * 
+ *
  * <p>The actual token transformation logic is delegated to {@link }
  * which can be used independently of the rule engine.</p>
  *
