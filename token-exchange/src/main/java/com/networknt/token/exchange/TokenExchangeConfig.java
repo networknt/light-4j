@@ -6,7 +6,6 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 import com.networknt.token.exchange.extract.AuthType;
 import com.networknt.token.exchange.schema.TokenSchema;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +22,7 @@ import java.util.Map;
 )
 public class TokenExchangeConfig {
 
-    public static final String ENABLED = "enabled";
+    public static final String ENABLED_FIELD = "enabled";
     public static final String CONFIG_NAME = "token-exchange";
     public static final String TOKEN_SCHEMA = "tokenSchemas";
     public static final String CLIENT_MAPPINGS = "clientMappings";
@@ -38,11 +37,11 @@ public class TokenExchangeConfig {
     private final Map<String, Object> mappedConfig;
 
     @BooleanField(
-            configFieldName = ENABLED,
-            externalizedKeyName = ENABLED,
+            configFieldName = ENABLED_FIELD,
+            externalizedKeyName = ENABLED_FIELD,
             defaultValue = "true"
     )
-    @JsonProperty(ENABLED)
+    @JsonProperty(ENABLED_FIELD)
     private boolean enabled;
 
     @IntegerField(
@@ -214,13 +213,9 @@ public class TokenExchangeConfig {
         this.pathAuthMappings = pathAuthMappings != null ? pathAuthMappings : new HashMap<>();
     }
 
-    private void setDefaultAuthType(AuthType defaultAuthType) {
-        this.defaultAuthType = defaultAuthType;
-    }
-
     @SuppressWarnings("unchecked")
     private void setConfigData() {
-        var object = this.mappedConfig.get(ENABLED);
+        var object = this.mappedConfig.get(ENABLED_FIELD);
         if (object instanceof Boolean enabledValue)
             this.enabled = enabledValue;
 
@@ -233,13 +228,13 @@ public class TokenExchangeConfig {
             this.proxyPort = port;
 
         object = this.mappedConfig.get(ENABLE_HTTP2);
-        if (object instanceof Boolean enabled)
-            this.enableHttp2 = enabled;
+        if (object instanceof Boolean val)
+            this.enableHttp2 = val;
 
         object = this.mappedConfig.get(MODULE_MASKS);
         if (object instanceof List
                 && !((List<?>) object).isEmpty()
-                && ((List<?>) object).get(0) instanceof String)
+                && ((List<?>) object).getFirst() instanceof String)
             setModuleMasks((List<String>) object);
 
         if (this.mappedConfig.get(TOKEN_SCHEMA) != null) {
@@ -247,29 +242,17 @@ public class TokenExchangeConfig {
             if (rawTokenSchemas instanceof Map) {
                 final var converted = Config.getInstance().getMapper().convertValue(rawTokenSchemas, new TypeReference<Map<String, TokenSchema>>() {});
                 setTokenSchemas(converted);
-            } else if (rawTokenSchemas instanceof String) {
-                // TODO - handle string.
-                throw new NotImplementedException("tokenSchema string-to-pojo not implemented!");
             }
         }
 
         // Load client mappings
         object = this.mappedConfig.get(CLIENT_MAPPINGS);
-        if (object instanceof Map mappings)
-            this.clientMappings = (Map<String, String>) mappings;
+        if (object instanceof Map)
+            this.clientMappings = (Map<String, String>) object;
 
         // Load path auth mappings
         object = this.mappedConfig.get(PATH_AUTH_MAPPINGS);
-        if (object instanceof Map) {
-            final var pathMappings = new HashMap<String, AuthType>();
-            for (final var entry : ((Map<String, Object>) object).entrySet()) {
-                final var authType = parseAuthType(entry.getValue());
-                if (authType != null) {
-                    pathMappings.put(entry.getKey(), authType);
-                }
-            }
-            setPathAuthMappings(pathMappings);
-        }
+        this.setDefaultAuthType(object);
 
         // Load default auth type
         object = this.mappedConfig.get(DEFAULT_AUTH_TYPE);
@@ -278,17 +261,27 @@ public class TokenExchangeConfig {
         }
     }
 
-    private AuthType parseAuthType(final Object value) {
-        if (value instanceof AuthType auth) {
-            return auth;
-        }
-        if (value instanceof String authStr) {
-            try {
-                return AuthType.valueOf(authStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return null;
+    private void setDefaultAuthType(final Object value) {
+        if (value instanceof Map) {
+            final var pathMappings = new HashMap<String, AuthType>();
+            for (final var entry : ((Map<String, Object>) value).entrySet()) {
+                final var authType = parseAuthType(entry.getValue());
+                if (authType != null) {
+                    pathMappings.put(entry.getKey(), authType);
+                }
             }
+            setPathAuthMappings(pathMappings);
         }
+    }
+
+    private AuthType parseAuthType(final Object value) throws IllegalArgumentException {
+        if (value instanceof AuthType auth)
+            return auth;
+
+        if (value instanceof String authStr)
+            return AuthType.valueOf(authStr.toUpperCase());
+
+
         return null;
     }
 }

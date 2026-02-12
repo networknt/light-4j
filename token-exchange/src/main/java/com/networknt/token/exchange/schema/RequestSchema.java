@@ -22,10 +22,10 @@ public class RequestSchema {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestSchema.class);
 
-    private static final String URL = "url";
-    private static final String HEADERS = "headers";
-    private static final String BODY = "body";
-    private static final String TYPE = "type";
+    private static final String URL_FIELD = "url";
+    private static final String HEADERS_FIELD = "headers";
+    private static final String BODY_FIELD = "body";
+    private static final String TYPE_FIELD = "type";
     private static final String CACHE_HTTP_CLIENT = "cacheHttpClient";
     private static final String CACHE_SSL_CONTEXT = "cacheSSLContext";
     private static final String PROXY_HOST = "proxyHost";
@@ -34,37 +34,34 @@ public class RequestSchema {
     private static final String SSL_CONTEXT_SCHEMA = "sslContextSchema";
     private static final String JWT_SCHEMA = "jwtSchema";
 
-    /** Lock object for thread-safe HTTP client caching */
-    private final Object clientLock = new Object();
-
     @StringField(
-            configFieldName = URL,
+            configFieldName = URL_FIELD,
             description = "The full url to hit the token service."
     )
-    @JsonProperty(URL)
+    @JsonProperty(URL_FIELD)
     private String url;
 
     @MapField(
-            configFieldName = HEADERS,
+            configFieldName = HEADERS_FIELD,
             description = "Headers used in the token request.",
             valueType = String.class
     )
-    @JsonProperty(HEADERS)
+    @JsonProperty(HEADERS_FIELD)
     protected Map<String, String> headers;
 
     @MapField(
-            configFieldName = BODY,
+            configFieldName = BODY_FIELD,
             description = "Body used in the token request.",
             valueType = String.class
     )
-    @JsonProperty(BODY)
+    @JsonProperty(BODY_FIELD)
     protected Map<String, String> body;
 
     @StringField(
-            configFieldName = TYPE,
+            configFieldName = TYPE_FIELD,
             description = "The type of the request made. application/json etc."
     )
-    @JsonProperty(TYPE)
+    @JsonProperty(TYPE_FIELD)
     private String type;
 
     @BooleanField(configFieldName = CACHE_HTTP_CLIENT)
@@ -99,7 +96,8 @@ public class RequestSchema {
     private HttpClient httpClient;
     private SSLContext sslContext;
 
-
+    /** Lock object for thread-safe HTTP client caching */
+    private final Object clientLock = new Object();
 
     public Map<String, String> getHeaders() {
         return headers;

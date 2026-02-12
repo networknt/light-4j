@@ -20,25 +20,25 @@ public class SourceSchema {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceSchema.class);
 
-    private static final String HEADERS = "headers";
-    private static final String BODY = "body";
+    private static final String HEADERS_FIELD = "headers";
+    private static final String BODY_FIELD = "body";
     private static final String EXPIRATION_SCHEMA = "expirationSchema";
 
     @ArrayField(
-            configFieldName = HEADERS,
+            configFieldName = HEADERS_FIELD,
             description = "Describes what headers will be parsed, and where the data will be saved.",
             items = SourceDestinationDefinition.class
     )
-    @JsonProperty(HEADERS)
+    @JsonProperty(HEADERS_FIELD)
     private List<SourceDestinationDefinition> headers;
 
 
     @ArrayField(
-            configFieldName = BODY,
+            configFieldName = BODY_FIELD,
             description = "Describes what parts of the body to parse, and where the data will be saved.",
             items = SourceDestinationDefinition.class
     )
-    @JsonProperty(BODY)
+    @JsonProperty(BODY_FIELD)
     private List<SourceDestinationDefinition> body;
 
     @ObjectField(

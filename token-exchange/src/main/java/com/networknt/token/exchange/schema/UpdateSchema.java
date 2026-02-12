@@ -17,16 +17,16 @@ public class UpdateSchema {
 
     private static final Logger LOG = LoggerFactory.getLogger(UpdateSchema.class);
 
-    private static final String HEADERS = "headers";
-    private static final String BODY = "body";
+    private static final String HEADERS_FIELD = "headers";
+    private static final String BODY_FIELD = "body";
     private static final String UPDATE_EXPIRATION_FROM_TTL = "updateExpirationFromTtl";
 
-    @MapField(configFieldName = HEADERS, valueType = String.class)
-    @JsonProperty(HEADERS)
+    @MapField(configFieldName = HEADERS_FIELD, valueType = String.class)
+    @JsonProperty(HEADERS_FIELD)
     private Map<String, String> headers;
 
-    @MapField(configFieldName = BODY, valueType = String.class)
-    @JsonProperty(BODY)
+    @MapField(configFieldName = BODY_FIELD, valueType = String.class)
+    @JsonProperty(BODY_FIELD)
     private Map<String, String> body;
 
     @BooleanField(configFieldName = UPDATE_EXPIRATION_FROM_TTL)

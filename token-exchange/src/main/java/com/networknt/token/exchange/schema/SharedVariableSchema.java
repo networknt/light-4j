@@ -16,7 +16,6 @@ public class SharedVariableSchema {
 
     private static final Logger LOG = LoggerFactory.getLogger(SharedVariableSchema.class);
 
-    public static final String ACCESS_TOKEN = "accessToken";
     public static final String CONSTRUCTED_JWT = "constructedJwt";
     public static final String TOKEN_TTL = "tokenTtl";
     public static final String TOKEN_TTL_UNIT = "tokenTtlUnit";
@@ -39,14 +38,14 @@ public class SharedVariableSchema {
     public void setVariable(String name, Object value) {
         // Handle special type conversions for known fields
         if (TOKEN_TTL_UNIT.equals(name) && value != null) {
-            if (value instanceof String) {
-                variables.put(name, TtlUnit.valueOf((String) value));
+            if (value instanceof String val) {
+                variables.put(name, TtlUnit.valueOf(val));
             } else {
                 variables.put(name, value);
             }
         } else if ((TOKEN_TTL.equals(name) || WAIT_LENGTH.equals(name) || EXPIRATION.equals(name)) && value != null) {
-            if (value instanceof Number) {
-                variables.put(name, ((Number) value).longValue());
+            if (value instanceof Number val) {
+                variables.put(name, (val).longValue());
             } else {
                 variables.put(name, Long.parseLong(String.valueOf(value)));
             }
@@ -81,45 +80,28 @@ public class SharedVariableSchema {
         return new HashMap<>(variables);
     }
 
-//    // Convenience accessors for commonly used fields
-//    public String getAccessToken() {
-//        return (String) variables.get(ACCESS_TOKEN);
-//    }
-//
-//    public void setAccessToken(String accessToken) {
-//        variables.put(ACCESS_TOKEN, accessToken);
-//    }
-//
-//    public String getConstructedJwt() {
-//        return (String) variables.get(CONSTRUCTED_JWT);
-//    }
-//
-//    public void setConstructedJwt(String constructedJwt) {
-//        variables.put(CONSTRUCTED_JWT, constructedJwt);
-//    }
-
     public long getTokenTtl() {
         Object value = variables.get(TOKEN_TTL);
-        return value instanceof Number ? ((Number) value).longValue() : 0L;
+        return value instanceof Number val ? val.longValue() : 0L;
     }
     public TtlUnit getTokenTtlUnit() {
         Object value = variables.get(TOKEN_TTL_UNIT);
-        if (value instanceof TtlUnit) {
-            return (TtlUnit) value;
-        } else if (value instanceof String) {
-            return TtlUnit.valueOf((String) value);
+        if (value instanceof TtlUnit unit) {
+            return unit;
+        } else if (value instanceof String val) {
+            return TtlUnit.valueOf(val);
         }
         return TtlUnit.SECOND;
     }
 
     public long getWaitLength() {
         Object value = variables.get(WAIT_LENGTH);
-        return value instanceof Number ? ((Number) value).longValue() : 0L;
+        return value instanceof Number val ? val.longValue() : 0L;
     }
 
     public long getExpiration() {
         Object value = variables.get(EXPIRATION);
-        return value instanceof Number ? ((Number) value).longValue() : 0L;
+        return value instanceof Number val ? val.longValue() : 0L;
     }
 
     public void setExpiration(long expiration) {

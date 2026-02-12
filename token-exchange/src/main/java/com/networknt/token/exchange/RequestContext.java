@@ -59,8 +59,8 @@ public class RequestContext {
             final var result = new HashMap<String, String>();
             for (final var entry : ((Map<String, Object>) headers).entrySet()) {
                 final var value = entry.getValue();
-                if (value instanceof String) {
-                    result.put(entry.getKey(), (String) value);
+                if (value instanceof String val) {
+                    result.put(entry.getKey(), val);
                 } else if (value instanceof List && !((List<?>) value).isEmpty()) {
                     result.put(entry.getKey(), String.valueOf(((List<?>) value).get(0)));
                 }
@@ -81,8 +81,8 @@ public class RequestContext {
             final var result = new HashMap<String, String>();
             for (final var entry : ((Map<String, Object>) params).entrySet()) {
                 final var value = entry.getValue();
-                if (value instanceof String) {
-                    result.put(entry.getKey(), (String) value);
+                if (value instanceof String val) {
+                    result.put(entry.getKey(), val);
                 } else if (value instanceof List && !((List<?>) value).isEmpty()) {
                     result.put(entry.getKey(), String.valueOf(((List<?>) value).get(0)));
                 }
@@ -94,13 +94,13 @@ public class RequestContext {
 
     private static String extractPath(final Map<String, Object> objMap) {
         final var path = objMap.get("requestPath");
-        if (path instanceof String) {
-            return (String) path;
-        }
+        if (path instanceof String val)
+            return val;
+
         final var uri = objMap.get("requestUri");
-        if (uri instanceof String) {
-            return (String) uri;
-        }
+        if (uri instanceof String val)
+            return val;
+
         return null;
     }
 

@@ -1,4 +1,4 @@
-package com.networknt.token.exception;
+package com.networknt.token.exchange.exception;
 
 import java.net.http.HttpRequest;
 

@@ -201,29 +201,31 @@ public class TokenExchangeService {
      * Performs the token transformation using the provided schema.
      * Synchronized on the schema to prevent race conditions.
      */
-    private void transformWithSchema(final TokenSchema schema, final Map<String, Object> resultMap,
-                                     final RequestContext requestContext)
-            throws InterruptedException {
-        synchronized (schema) {
-            final var sharedVariables = schema.getSharedVariables();
+    private void transformWithSchema(
+            final TokenSchema schema,
+            final Map<String, Object> resultMap,
+            final RequestContext requestContext
+    ) throws InterruptedException {
+        final var sharedVariables = schema.getSharedVariables();
 
-            if (isTokenExpired(schema)) {
-                LOG.debug("Cached token is expired. Requesting a new token.");
-                refreshToken(schema, sharedVariables, requestContext);
-            } else {
-                LOG.debug("Using cached token.");
-            }
-
-            updateResultMap(schema.getTokenUpdate(), sharedVariables, resultMap, requestContext);
+        if (isTokenExpired(schema)) {
+            LOG.debug("Cached token is expired. Requesting a new token.");
+            refreshToken(schema, sharedVariables, requestContext);
+        } else {
+            LOG.debug("Using cached token.");
         }
+
+        updateResultMap(schema.getTokenUpdate(), sharedVariables, resultMap, requestContext);
     }
 
     /**
      * Refreshes the token by making a request to the token service.
      */
-    private void refreshToken(final TokenSchema schema, final SharedVariableSchema sharedVariables,
-                              final RequestContext requestContext)
-            throws InterruptedException {
+    private void refreshToken(
+            final TokenSchema schema,
+            final SharedVariableSchema sharedVariables,
+            final RequestContext requestContext
+    ) throws InterruptedException {
         final var requestSchema = schema.getTokenRequest();
 
         // Build JWT if required

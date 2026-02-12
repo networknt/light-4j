@@ -196,9 +196,9 @@ public final class VariableResolver {
             return "";
         }
 
-        if (value instanceof char[]) {
-            return new String((char[]) value);
-        }
+        if (value instanceof char[] arr)
+            return new String(arr);
+
         return String.valueOf(value);
     }
 
