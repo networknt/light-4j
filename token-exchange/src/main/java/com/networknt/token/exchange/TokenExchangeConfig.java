@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import com.networknt.token.exchange.extract.AuthType;
 import com.networknt.token.exchange.schema.TokenSchema;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 @ConfigSchema(
         configKey = "token-exchange",
         configName = "token-exchange",
+        configDescription = "Token Exchange Handler configuration",
         outputFormats = {
                 OutputFormat.JSON_SCHEMA,
                 OutputFormat.YAML,
@@ -33,12 +35,12 @@ public class TokenExchangeConfig {
     public static final String ENABLE_HTTP2 = "enableHttp2";
     public static final String MODULE_MASKS = "moduleMasks";
 
-    private final Config config;
     private final Map<String, Object> mappedConfig;
 
     @BooleanField(
             configFieldName = ENABLED_FIELD,
             externalizedKeyName = ENABLED_FIELD,
+            description = "Enable Token Exchange Handler",
             defaultValue = "true"
     )
     @JsonProperty(ENABLED_FIELD)
@@ -113,22 +115,43 @@ public class TokenExchangeConfig {
     @JsonProperty(DEFAULT_AUTH_TYPE)
     private AuthType defaultAuthType;
 
+    private static TokenExchangeConfig instance;
+
     public TokenExchangeConfig() {
         this(CONFIG_NAME);
     }
 
     public TokenExchangeConfig(final String configName) {
-        this.config = Config.getInstance();
-        this.mappedConfig = this.config.getJsonMapConfigNoCache(configName);
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static TokenExchangeConfig load() {
-        return new TokenExchangeConfig();
+        return load(CONFIG_NAME);
     }
 
     public static TokenExchangeConfig load(final String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (TokenExchangeConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new TokenExchangeConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, TokenExchangeConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new TokenExchangeConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public boolean isEnabled() {
