@@ -53,15 +53,15 @@ public class TokenKeyStoreManager {
 
         } catch (KeyStoreException e) {
             LOG.error("Keystore was not initialized correctly: {}", e.getMessage());
-            return null;
+            throw new RuntimeException("Keystore was not initialized correctly", e);
 
         } catch (NoSuchAlgorithmException e) {
             LOG.error("Algorithm for recovering key was not found: {}", e.getMessage());
-            return null;
+            throw new RuntimeException("Algorithm for recovering key was not found", e);
 
         } catch (UnrecoverableKeyException e) {
             LOG.error("Key could not be recovered: {}", e.getMessage());
-            return null;
+            throw new RuntimeException("Key could not be recovered", e);
         }
     }
 

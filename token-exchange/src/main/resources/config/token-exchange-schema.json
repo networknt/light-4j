@@ -34,10 +34,7 @@
         "properties" : {
           "sharedVariables" : {
             "type" : "object",
-            "description" : "Variables populated by incoming requests and custom parsing on the response.\nVariables can be referenced using !ref().",
-            "additionalProperties" : {
-              "type" : "string"
-            }
+            "description" : "Variables populated by incoming requests and custom parsing on the response.\nVariables can be referenced using !ref()."
           },
           "request" : {
             "type" : "object",

@@ -252,7 +252,7 @@ public class TokenExchangeConfig {
 
         // Load path auth mappings
         object = this.mappedConfig.get(PATH_AUTH_MAPPINGS);
-        this.setDefaultAuthType(object);
+        this.setPathAuthMappingsFromConfig(object);
 
         // Load default auth type
         object = this.mappedConfig.get(DEFAULT_AUTH_TYPE);
@@ -261,7 +261,7 @@ public class TokenExchangeConfig {
         }
     }
 
-    private void setDefaultAuthType(final Object value) {
+    private void setPathAuthMappingsFromConfig(final Object value) {
         if (value instanceof Map) {
             final var pathMappings = new HashMap<String, AuthType>();
             for (final var entry : ((Map<String, Object>) value).entrySet()) {

@@ -97,7 +97,13 @@ public class JwtBuilderTest {
 
         // Verify exp field exists and is a reasonable future timestamp
         Assert.assertTrue("Body should contain exp", body.containsKey("exp"));
-        long exp = Long.parseLong(body.get("exp").toString());
+        Object expObj = body.get("exp");
+        long exp;
+        if (expObj instanceof Number) {
+            exp = ((Number) expObj).longValue();
+        } else {
+            exp = Long.parseLong(expObj.toString());
+        }
         long now = System.currentTimeMillis() / 1000;
         Assert.assertTrue("Expiry should be in the future", exp > now);
         // With 3600 second TTL, exp should be roughly now + 3600
@@ -117,7 +123,13 @@ public class JwtBuilderTest {
 
         // Verify iat field exists and is approximately current time
         Assert.assertTrue("Body should contain iat", body.containsKey("iat"));
-        long iat = Long.parseLong(body.get("iat").toString());
+        Object iatObj = body.get("iat");
+        long iat;
+        if (iatObj instanceof Number) {
+            iat = ((Number) iatObj).longValue();
+        } else {
+            iat = Long.parseLong(iatObj.toString());
+        }
         long now = System.currentTimeMillis() / 1000;
         // Allow 5 seconds tolerance
         Assert.assertTrue("iat should be approximately current time", Math.abs(iat - now) < 5);
@@ -171,7 +183,13 @@ public class JwtBuilderTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> body = JsonMapper.string2Map(bodyJson);
 
-        long exp = Long.parseLong(body.get("exp").toString());
+        Object expObj = body.get("exp");
+        long exp;
+        if (expObj instanceof Number) {
+            exp = ((Number) expObj).longValue();
+        } else {
+            exp = Long.parseLong(expObj.toString());
+        }
         long now = System.currentTimeMillis() / 1000;
         // 60 minutes = 3600 seconds
         Assert.assertTrue("Expiry should be approximately 60 minutes from now",

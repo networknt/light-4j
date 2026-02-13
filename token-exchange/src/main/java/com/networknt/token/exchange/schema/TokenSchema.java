@@ -12,15 +12,15 @@ public class TokenSchema {
     private static final String SOURCE = "source";
     private static final String UPDATE = "update";
 
-    @MapField(
+    @ObjectField(
             configFieldName = SHARED_VARIABLES,
             description = """
                 Variables populated by incoming requests and custom parsing on the response.
                 Variables can be referenced using !ref().""",
-            valueType = String.class
+            ref = SharedVariableSchema.class
     )
     @JsonProperty(SHARED_VARIABLES)
-    private SharedVariableSchema sharedVariables;
+    private SharedVariableSchema sharedVariables = new SharedVariableSchema();
 
 
     @ObjectField(
@@ -29,7 +29,7 @@ public class TokenSchema {
             ref = RequestSchema.class
     )
     @JsonProperty(REQUEST)
-    private RequestSchema tokenRequest;
+    private RequestSchema tokenRequest = new RequestSchema();
 
     @ObjectField(
             configFieldName = SOURCE,
@@ -37,14 +37,14 @@ public class TokenSchema {
             ref = SourceSchema.class
     )
     @JsonProperty(SOURCE)
-    private SourceSchema tokenSource;
+    private SourceSchema tokenSource = new SourceSchema();
 
     @ObjectField(
             configFieldName = UPDATE,
             description = "Describes how the in-flight request is enriched."
     )
     @JsonProperty(UPDATE)
-    private UpdateSchema tokenUpdate;
+    private UpdateSchema tokenUpdate = new UpdateSchema();
 
     public SharedVariableSchema getSharedVariables() {
         return sharedVariables;
