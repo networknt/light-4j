@@ -185,7 +185,6 @@ public final class SimpleConnectionHolder {
         }
     }
 
-    private volatile boolean firstUse = true;
     /**
      * State Transition - Borrow
      *
@@ -212,22 +211,14 @@ public final class SimpleConnectionHolder {
          * (as long as the connection does not close between the 'if' and 'borrow').
          *
          */
-        ConnectionToken connectionToken;
-
         if(borrowable(now)) {
-            if (firstUse) {
-                firstUse = false;
-                connectionToken = new ConnectionToken(connection);
-            } else {
-                SimpleConnection reusedConnection = connectionMaker.reuseConnection(connection);
-                connectionToken = new ConnectionToken(reusedConnection);
-            }
-
+            ConnectionToken connectionToken = new ConnectionToken(connection);
+ 
             // add connectionToken to the Set of borrowed tokens
             borrowedTokens.add(connectionToken);
-
+ 
             logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
-
+ 
             return connectionToken;
         }
         else {

@@ -35,7 +35,6 @@ import java.util.Set;
  *
  */
 public interface SimpleConnectionMaker {
-    SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri, final Set<SimpleConnection> allCreatedConnections);
 
     /**
      * This is the method uses the XnioWorker to create the connection.
@@ -50,5 +49,5 @@ public interface SimpleConnectionMaker {
      * @return SimpleConnection the connection
      */
     SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections);
-    SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException;
+
 }

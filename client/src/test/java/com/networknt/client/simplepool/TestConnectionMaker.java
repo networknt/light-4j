@@ -42,27 +42,12 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
         this.connectionClass = clas;
     }
 
-    @Override
-    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, URI uri, Set<SimpleConnection> allConnections)
-        throws RuntimeException
-    {
-        SimpleConnection connection = instantiateConnection(createConnectionTimeout, isHttp2, allConnections);
-        return connection;
-    }
 
     @Override
     public SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, URI uri, XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, Set<SimpleConnection> allCreatedConnections) {
         return null;
     }
 
-    @Override
-    public SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException {
-        if(connection == null)
-            return null;
-        if(!connection.isOpen())
-            throw new RuntimeException("Reused-connection has been unexpectedly closed");
-        return connection;
-    }
 
     private SimpleConnection instantiateConnection(long createConnectionTimeout, final boolean isHttp2, final Set<SimpleConnection> allConnections)
             throws RuntimeException

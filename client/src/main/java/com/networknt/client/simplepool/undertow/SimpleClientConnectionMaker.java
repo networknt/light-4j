@@ -59,44 +59,6 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         return Holder.INSTANCE;
     }
 
-    @Override
-    public SimpleConnection makeConnection(
-        long createConnectionTimeout,
-        boolean isHttp2,
-        final URI uri,
-        final Set<SimpleConnection> allCreatedConnections) throws RuntimeException
-    {
-        boolean isHttps = uri.getScheme().equalsIgnoreCase("https");
-        XnioWorker worker = getWorker();
-        XnioSsl ssl = getSSL(isHttps);
-        OptionMap connectionOptions = getConnectionOptions(isHttp2);
-        InetSocketAddress bindAddress = null;
-
-        final FutureResult<SimpleConnection> result = new FutureResult<>();
-        ClientCallback<ClientConnection> connectionCallback = new ClientCallback<ClientConnection>() {
-            @Override
-            public void completed(ClientConnection connection) {
-                logger.debug("New connection {} established with {}", port(connection), uri);
-                SimpleConnection simpleConnection = new SimpleClientConnection(connection);
-
-                // note: its vital that allCreatedConnections and result contain the same SimpleConnection reference
-                allCreatedConnections.add(simpleConnection);
-                result.setResult(simpleConnection);
-            }
-
-            @Override
-            public void failed(IOException e) {
-                logger.error("Failed to establish new connection for uri {}: {}", uri, exceptionDetails(e));
-                result.setException(e);
-            }
-        };
-
-        UndertowClient undertowClient = UndertowClient.getInstance();
-        undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, BUFFER_POOL, connectionOptions);
-
-        IoFuture<SimpleConnection> future = result.getIoFuture();
-        return safeConnect(createConnectionTimeout, future);
-    }
 
     @Override
     public SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections) {
@@ -127,19 +89,6 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         return safeConnect(createConnectionTimeout, future);
     }
 
-    public SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException
-    {
-        if(connection == null)
-            return null;
-
-        if(!(connection.getRawConnection() instanceof ClientConnection))
-            throw new IllegalArgumentException("Attempt to reuse wrong connection type. Must be of type ClientConnection");
-
-        if(!connection.isOpen())
-            throw new RuntimeException("Reused-connection has been unexpectedly closed");
-
-        return connection;
-    }
 
     // PRIVATE METHODS
 
