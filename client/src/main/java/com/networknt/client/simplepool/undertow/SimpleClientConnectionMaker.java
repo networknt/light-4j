@@ -153,13 +153,16 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
     {
         if(WORKER.get() != null) return WORKER.get();
 
-        Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
-        try {
-            // if WORKER is null, then set new WORKER otherwise leave existing WORKER
-            WORKER.compareAndSet(null, xnio.createWorker(null, getWorkerOptionMap()));
+        synchronized (SimpleClientConnectionMaker.class) {
+            if(WORKER.get() != null) return WORKER.get();
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
+            try {
+                WORKER.set(xnio.createWorker(null, getWorkerOptionMap()));
+            } catch (IOException e) {
+                logger.error("Exception while creating new shared XnioWorker used to create connections", e);
+                throw new RuntimeException(e);
+            }
         }
         return WORKER.get();
     }
@@ -183,15 +186,16 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         if(SSL.get() != null)
             return SSL.get();
 
-        try {
-            // TODO: Should this be OptionMap.EMPTY ??
-            // if SSL is null, then set new SSL otherwise leave existing SSL
-            SSL.compareAndSet(
-                null,
-                new UndertowXnioSsl(getWorker().getXnio(), OptionMap.EMPTY, BUFFER_POOL, Http2Client.createSSLContext()));
-        } catch (Exception e) {
-            logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
-            throw new RuntimeException(e);
+        synchronized (SimpleClientConnectionMaker.class) {
+            if(SSL.get() != null)
+                return SSL.get();
+
+            try {
+                SSL.set(new UndertowXnioSsl(getWorker().getXnio(), OptionMap.EMPTY, BUFFER_POOL, Http2Client.createSSLContext()));
+            } catch (Exception e) {
+                logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
+                throw new RuntimeException(e);
+            }
         }
         return SSL.get();
     }
