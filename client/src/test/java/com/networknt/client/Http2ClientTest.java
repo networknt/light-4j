@@ -569,7 +569,8 @@ public class Http2ClientTest extends Http2ClientBase {
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
                 Assert.assertEquals(message, ar.result().getResponseBody());
-                Assert.assertTrue(ar.result().getResponseTime() > 0);
+                // we used to check the response time greater than 0, but it is not always true on a faster machine.
+                Assert.assertNotNull(ar.result().getResponseBody());
                 System.out.println("responseTime = " + ar.result().getResponseTime());
             } else {
                 ar.cause().printStackTrace();
