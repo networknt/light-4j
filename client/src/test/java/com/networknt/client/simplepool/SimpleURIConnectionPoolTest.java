@@ -50,8 +50,8 @@ public class SimpleURIConnectionPoolTest {
             .thenReturn(mockConnection);
             
         // Mock reuseConnection to return the same connection by default
-        when(connectionMaker.reuseConnection(anyLong(), any(SimpleConnection.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+        when(connectionMaker.reuseConnection(any(SimpleConnection.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
             
         pool = new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker);
     }

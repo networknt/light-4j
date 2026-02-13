@@ -189,12 +189,11 @@ public final class SimpleConnectionHolder {
     /**
      * State Transition - Borrow
      *
-     * @param connectionCreateTimeout the amount of time to wait for a connection to be created before throwing an exception
      * @param now the time at which to evaluate whether there are borrowable connections or not
      * @return returns a ConnectionToken representing this borrow of the connection
      * @throws RuntimeException if connection closed or attempt to borrow after pool is full
      */
-    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
+    public synchronized ConnectionToken borrow(long now) throws RuntimeException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
@@ -220,7 +219,7 @@ public final class SimpleConnectionHolder {
                 firstUse = false;
                 connectionToken = new ConnectionToken(connection);
             } else {
-                SimpleConnection reusedConnection = connectionMaker.reuseConnection(connectionCreateTimeout, connection);
+                SimpleConnection reusedConnection = connectionMaker.reuseConnection(connection);
                 connectionToken = new ConnectionToken(reusedConnection);
             }
 

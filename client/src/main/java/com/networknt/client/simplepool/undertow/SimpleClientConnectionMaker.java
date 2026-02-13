@@ -127,7 +127,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         return safeConnect(createConnectionTimeout, future);
     }
 
-    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException
+    public SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException
     {
         if(connection == null)
             return null;

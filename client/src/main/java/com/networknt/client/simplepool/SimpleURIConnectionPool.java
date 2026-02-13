@@ -99,6 +99,7 @@ public final class SimpleURIConnectionPool {
      * @throws RuntimeException if an attempt is made to exceed the maximum size of the connection pool
      */
     public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout) throws RuntimeException {
+        findAndCloseLeakedConnections();
         long now = System.currentTimeMillis();
         final SimpleConnectionHolder holder;
 
@@ -114,7 +115,7 @@ public final class SimpleURIConnectionPool {
                 throw new RuntimeException("An attempt was made to exceed the maximum size was of the " + uri.toString() + " connection pool");
         }
 
-        SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
+        SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(now);
         readConnectionHolder(holder, now, () -> allKnownConnections.remove(holder));
 
         logger.debug(showConnections("borrow"));
@@ -132,6 +133,7 @@ public final class SimpleURIConnectionPool {
      * @param connectionToken the connection token that represents the borrowing of a connection by a thread
      */
     public synchronized void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
         if(connectionToken == null)
             return;
 
@@ -186,8 +188,6 @@ public final class SimpleURIConnectionPool {
             }
         }
 
-        // find and close any leaked connections
-        findAndCloseLeakedConnections();
     }
 
     private interface RemoveFromAllKnownConnections { void remove(); }

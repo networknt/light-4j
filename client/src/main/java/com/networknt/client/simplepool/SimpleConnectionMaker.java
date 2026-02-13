@@ -50,5 +50,5 @@ public interface SimpleConnectionMaker {
      * @return SimpleConnection the connection
      */
     SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections);
-    SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException;
+    SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException;
 }

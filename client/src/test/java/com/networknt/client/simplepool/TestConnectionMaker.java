@@ -56,7 +56,7 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
     }
 
     @Override
-    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException {
+    public SimpleConnection reuseConnection(SimpleConnection connection) throws RuntimeException {
         if(connection == null)
             return null;
         if(!connection.isOpen())
