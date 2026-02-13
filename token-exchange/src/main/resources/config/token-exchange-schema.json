@@ -1,53 +1,268 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "tokenExUri", "tokenExClientId", "tokenExClientSecret", "tokenExScope", "subjectTokenType", "requestedTokenType", "mappingStrategy", "clientMapping" ],
+  "required" : [ "enabled", "proxyPort", "proxyHost", "enableHttp2", "moduleMasks", "tokenSchemas", "clientMappings", "pathAuthMappings", "defaultAuthType" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable Token Exchange Handler",
       "default" : true
     },
-    "tokenExUri" : {
-      "type" : "string",
-      "description" : "The path to the token exchange endpoint on OAuth 2.0 provider"
+    "proxyPort" : {
+      "type" : "integer",
+      "description" : "Default proxy port.",
+      "format" : "int32"
     },
-    "tokenExClientId" : {
+    "proxyHost" : {
       "type" : "string",
-      "description" : "The client ID for the token exchange"
+      "description" : "Default proxy host used in token requests."
     },
-    "tokenExClientSecret" : {
-      "type" : "string",
-      "description" : "The client secret for the token exchange"
+    "enableHttp2" : {
+      "type" : "boolean",
+      "description" : "Enable/disable http2. Default enabled.",
+      "default" : true
     },
-    "tokenExScope" : {
+    "moduleMasks" : {
       "type" : "array",
-      "description" : "The scope of the returned token",
       "items" : {
         "type" : "string"
       }
     },
-    "subjectTokenType" : {
-      "type" : "string",
-      "description" : "The subject token type",
-      "default" : "urn:ietf:params:oauth:token-type:jwt"
-    },
-    "requestedTokenType" : {
-      "type" : "string",
-      "description" : "The requested token type",
-      "default" : "urn:ietf:params:oauth:token-type:jwt"
-    },
-    "mappingStrategy" : {
-      "type" : "string",
-      "description" : "Mapping of external client IDs to internal function IDs (database or config)",
-      "default" : "database"
-    },
-    "clientMapping" : {
+    "tokenSchemas" : {
       "type" : "object",
-      "description" : "If mappingStrategy is 'config', define the map here",
       "additionalProperties" : {
-        "type" : "string"
+        "type" : "object",
+        "properties" : {
+          "sharedVariables" : {
+            "type" : "object",
+            "description" : "Variables populated by incoming requests and custom parsing on the response.\nVariables can be referenced using !ref()."
+          },
+          "request" : {
+            "type" : "object",
+            "description" : "Describes building a token service request.",
+            "properties" : {
+              "url" : {
+                "type" : "string",
+                "description" : "The full url to hit the token service."
+              },
+              "headers" : {
+                "type" : "object",
+                "description" : "Headers used in the token request.",
+                "additionalProperties" : {
+                  "type" : "string"
+                }
+              },
+              "body" : {
+                "type" : "object",
+                "description" : "Body used in the token request.",
+                "additionalProperties" : {
+                  "type" : "string"
+                }
+              },
+              "type" : {
+                "type" : "string",
+                "description" : "The type of the request made. application/json etc."
+              },
+              "cacheHttpClient" : {
+                "type" : "boolean"
+              },
+              "cacheSSLContext" : {
+                "type" : "boolean"
+              },
+              "proxyHost" : {
+                "type" : "string"
+              },
+              "proxyPort" : {
+                "type" : "integer",
+                "format" : "int32"
+              },
+              "enableHttp2" : {
+                "type" : "boolean"
+              },
+              "sslContextSchema" : {
+                "type" : "object",
+                "properties" : {
+                  "tlsVersion" : {
+                    "type" : "string"
+                  },
+                  "truststore" : {
+                    "type" : "object",
+                    "properties" : {
+                      "algorithm" : {
+                        "type" : "string"
+                      },
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "password" : {
+                        "type" : "string"
+                      }
+                    }
+                  },
+                  "keystore" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "password" : {
+                        "type" : "string"
+                      },
+                      "alias" : {
+                        "type" : "string"
+                      },
+                      "keyPass" : {
+                        "type" : "string"
+                      },
+                      "algorithm" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "jwtSchema" : {
+                "type" : "object",
+                "properties" : {
+                  "algorithm" : {
+                    "type" : "string"
+                  },
+                  "jwtTtl" : {
+                    "type" : "integer",
+                    "format" : "int32"
+                  },
+                  "ttlUnit" : {
+                    "type" : "string"
+                  },
+                  "keyStore" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "password" : {
+                        "type" : "string"
+                      },
+                      "alias" : {
+                        "type" : "string"
+                      },
+                      "keyPass" : {
+                        "type" : "string"
+                      },
+                      "algorithm" : {
+                        "type" : "string"
+                      }
+                    }
+                  },
+                  "jwtHeader" : {
+                    "type" : "object",
+                    "properties" : {
+                      "staticFields" : {
+                        "type" : "object",
+                        "additionalProperties" : {
+                          "type" : "string"
+                        }
+                      },
+                      "uuidFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "currentTimeFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "expiryFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      }
+                    }
+                  },
+                  "jwtBody" : {
+                    "type" : "object",
+                    "properties" : {
+                      "staticFields" : {
+                        "type" : "object",
+                        "additionalProperties" : {
+                          "type" : "string"
+                        }
+                      },
+                      "uuidFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "currentTimeFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "expiryFields" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "source" : {
+            "type" : "object",
+            "description" : "Describes taking data from the token service response.",
+            "properties" : {
+              "headers" : {
+                "type" : "array",
+                "description" : "Describes what headers will be parsed, and where the data will be saved.",
+                "items" : {
+                  "type" : "object"
+                }
+              },
+              "body" : {
+                "type" : "array",
+                "description" : "Describes what parts of the body to parse, and where the data will be saved.",
+                "items" : {
+                  "type" : "object"
+                }
+              },
+              "expirationSchema" : {
+                "type" : "object",
+                "description" : "Describes where the expiration field will go."
+              }
+            }
+          },
+          "update" : {
+            "type" : "object",
+            "description" : "Describes how the in-flight request is enriched."
+          }
+        }
       }
+    },
+    "clientMappings" : {
+      "type" : "object",
+      "description" : "Maps client IDs (from Authorization headers) to token schema names.\nThis allows automatic schema selection based on the incoming request's credentials.",
+      "additionalProperties" : {
+        "type" : "object"
+      }
+    },
+    "pathAuthMappings" : {
+      "type" : "object",
+      "description" : "Maps path prefixes to authentication types.\nThis determines how to extract client identity from the Authorization header.",
+      "additionalProperties" : {
+        "type" : "object"
+      }
+    },
+    "defaultAuthType" : {
+      "type" : "string",
+      "description" : "Default auth type to use when no path prefix matches."
     }
   }
 }

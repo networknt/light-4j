@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.token.exchange.TokenExchangeConfig",
-    "configDesc" : "Token Exchange Handler configuration",
+    "configDesc" : "",
     "configName" : "token-exchange",
     "configType" : "Handler",
     "updateUser" : "",

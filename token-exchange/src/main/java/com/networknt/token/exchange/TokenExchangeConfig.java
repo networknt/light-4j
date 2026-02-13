@@ -1,138 +1,136 @@
-/*
- * Copyright (c) 2016 Network New Technologies Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.networknt.token.exchange;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;
+import com.networknt.token.exchange.extract.AuthType;
+import com.networknt.token.exchange.schema.TokenSchema;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Configuration class for Token Exchange Handler.
- * Reads from token-exchange.yml
- *
- * @author Steve Hu
- */
 @ConfigSchema(
         configKey = "token-exchange",
         configName = "token-exchange",
         configDescription = "Token Exchange Handler configuration",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
+        outputFormats = {
+                OutputFormat.JSON_SCHEMA,
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
+        }
 )
 public class TokenExchangeConfig {
+
+    public static final String ENABLED_FIELD = "enabled";
     public static final String CONFIG_NAME = "token-exchange";
-    public static final String ENABLED = "enabled";
-    public static final String TOKEN_EX_URI = "tokenExUri";
-    public static final String TOKEN_EX_CLIENT_ID = "tokenExClientId";
-    public static final String TOKEN_EX_CLIENT_SECRET = "tokenExClientSecret";
-    public static final String TOKEN_EX_SCOPE = "tokenExScope";
-    public static final String SUBJECT_TOKEN_TYPE = "subjectTokenType";
-    public static final String REQUESTED_TOKEN_TYPE = "requestedTokenType";
-    public static final String MAPPING_STRATEGY = "mappingStrategy";
-    public static final String CLIENT_MAPPING = "clientMapping";
+    public static final String TOKEN_SCHEMA = "tokenSchemas";
+    public static final String CLIENT_MAPPINGS = "clientMappings";
+    public static final String PATH_AUTH_MAPPINGS = "pathAuthMappings";
+    public static final String DEFAULT_AUTH_TYPE = "defaultAuthType";
+    public static final String PROXY_HOST = "proxyHost";
+    public static final String PROXY_PORT = "proxyPort";
+    public static final String ENABLE_HTTP2 = "enableHttp2";
+    public static final String MODULE_MASKS = "moduleMasks";
 
     private final Map<String, Object> mappedConfig;
-    private static TokenExchangeConfig instance;
 
     @BooleanField(
-            configFieldName = ENABLED,
-            externalizedKeyName = ENABLED,
+            configFieldName = ENABLED_FIELD,
+            externalizedKeyName = ENABLED_FIELD,
             description = "Enable Token Exchange Handler",
             defaultValue = "true"
     )
+    @JsonProperty(ENABLED_FIELD)
     private boolean enabled;
 
-    @StringField(
-            configFieldName = TOKEN_EX_URI,
-            externalizedKeyName = TOKEN_EX_URI,
-            description = "The path to the token exchange endpoint on OAuth 2.0 provider"
+    @IntegerField(
+            configFieldName = PROXY_PORT,
+            externalizedKeyName = PROXY_PORT,
+            description = "Default proxy port."
     )
-    private String tokenExUri;
+    @JsonProperty(PROXY_PORT)
+    private int proxyPort;
 
     @StringField(
-            configFieldName = TOKEN_EX_CLIENT_ID,
-            externalizedKeyName = TOKEN_EX_CLIENT_ID,
-            description = "The client ID for the token exchange"
+            configFieldName = PROXY_HOST,
+            externalizedKeyName = PROXY_HOST,
+            description = "Default proxy host used in token requests."
     )
-    private String tokenExClientId;
+    @JsonProperty(PROXY_HOST)
+    private String proxyHost;
 
-    @StringField(
-            configFieldName = TOKEN_EX_CLIENT_SECRET,
-            externalizedKeyName = TOKEN_EX_CLIENT_SECRET,
-            description = "The client secret for the token exchange"
+    @BooleanField(
+            configFieldName = ENABLE_HTTP2,
+            externalizedKeyName = ENABLE_HTTP2,
+            defaultValue = "true",
+            description = "Enable/disable http2. Default enabled."
     )
-    private String tokenExClientSecret;
+    @JsonProperty(ENABLE_HTTP2)
+    private boolean enableHttp2;
 
     @ArrayField(
-            configFieldName = TOKEN_EX_SCOPE,
-            externalizedKeyName = TOKEN_EX_SCOPE,
-            description = "The scope of the returned token",
+            configFieldName = MODULE_MASKS,
+            externalizedKeyName = MODULE_MASKS,
             items = String.class
     )
-    private List<String> tokenExScope;
-
-    @StringField(
-            configFieldName = SUBJECT_TOKEN_TYPE,
-            externalizedKeyName = SUBJECT_TOKEN_TYPE,
-            description = "The subject token type",
-            defaultValue = "urn:ietf:params:oauth:token-type:jwt"
-    )
-    private String subjectTokenType;
-
-    @StringField(
-            configFieldName = REQUESTED_TOKEN_TYPE,
-            externalizedKeyName = REQUESTED_TOKEN_TYPE,
-            description = "The requested token type",
-            defaultValue = "urn:ietf:params:oauth:token-type:jwt"
-    )
-    private String requestedTokenType;
-
-    @StringField(
-            configFieldName = MAPPING_STRATEGY,
-            externalizedKeyName = MAPPING_STRATEGY,
-            description = "Mapping of external client IDs to internal function IDs (database or config)",
-            defaultValue = "database"
-    )
-    private String mappingStrategy;
+    @JsonProperty(MODULE_MASKS)
+    private List<String> moduleMasks;
 
     @MapField(
-            configFieldName = CLIENT_MAPPING,
-            externalizedKeyName = CLIENT_MAPPING,
-            description = "If mappingStrategy is 'config', define the map here",
-            valueType = String.class
+            configFieldName = TOKEN_SCHEMA,
+            externalizedKeyName = TOKEN_SCHEMA,
+            valueType = TokenSchema.class
     )
-    private Map<String, String> clientMapping;
+    @JsonProperty(TOKEN_SCHEMA)
+    private Map<String, TokenSchema> tokenSchemas;
 
-    private TokenExchangeConfig(String configName) {
-        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-        setConfigData();
+    @MapField(
+            configFieldName = CLIENT_MAPPINGS,
+            externalizedKeyName = CLIENT_MAPPINGS,
+            description = """
+                    Maps client IDs (from Authorization headers) to token schema names.
+                    This allows automatic schema selection based on the incoming request's credentials."""
+    )
+    @JsonProperty(CLIENT_MAPPINGS)
+    private Map<String, String> clientMappings;
+
+    @MapField(
+            configFieldName = PATH_AUTH_MAPPINGS,
+            externalizedKeyName = PATH_AUTH_MAPPINGS,
+            description = """
+                    Maps path prefixes to authentication types.
+                    This determines how to extract client identity from the Authorization header."""
+    )
+    @JsonProperty(PATH_AUTH_MAPPINGS)
+    private Map<String, AuthType> pathAuthMappings = new HashMap<>();
+
+    @StringField(
+            configFieldName = DEFAULT_AUTH_TYPE,
+            externalizedKeyName = DEFAULT_AUTH_TYPE,
+            description = "Default auth type to use when no path prefix matches."
+    )
+    @JsonProperty(DEFAULT_AUTH_TYPE)
+    private AuthType defaultAuthType;
+
+    private static TokenExchangeConfig instance;
+
+    public TokenExchangeConfig() {
+        this(CONFIG_NAME);
     }
 
-    private TokenExchangeConfig() {
-        this(CONFIG_NAME);
+    public TokenExchangeConfig(final String configName) {
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
     }
 
     public static TokenExchangeConfig load() {
         return load(CONFIG_NAME);
     }
 
-    public static TokenExchangeConfig load(String configName) {
+    public static TokenExchangeConfig load(final String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
             if (instance != null && instance.getMappedConfig() == mappedConfig) {
@@ -152,25 +150,6 @@ public class TokenExchangeConfig {
         return new TokenExchangeConfig(configName);
     }
 
-    private void setConfigData() {
-        if (mappedConfig != null) {
-            Object object = mappedConfig.get(ENABLED);
-            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-            tokenExUri = (String)mappedConfig.get(TOKEN_EX_URI);
-            tokenExClientId = (String)mappedConfig.get(TOKEN_EX_CLIENT_ID);
-            tokenExClientSecret = (String)mappedConfig.get(TOKEN_EX_CLIENT_SECRET);
-            if(mappedConfig.get(TOKEN_EX_SCOPE) != null) {
-                tokenExScope = (List<String>)mappedConfig.get(TOKEN_EX_SCOPE);
-            }
-            subjectTokenType = (String)mappedConfig.get(SUBJECT_TOKEN_TYPE);
-            requestedTokenType = (String)mappedConfig.get(REQUESTED_TOKEN_TYPE);
-            mappingStrategy = (String)mappedConfig.get(MAPPING_STRATEGY);
-            if(mappedConfig.get(CLIENT_MAPPING) != null) {
-                clientMapping = (Map<String, String>)mappedConfig.get(CLIENT_MAPPING);
-            }
-        }
-    }
-
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -179,35 +158,153 @@ public class TokenExchangeConfig {
         return enabled;
     }
 
-    public String getTokenExUri() {
-        return tokenExUri;
+    public int getProxyPort() {
+        return proxyPort;
     }
 
-    public String getTokenExClientId() {
-        return tokenExClientId;
+    public String getProxyHost() {
+        return proxyHost;
     }
 
-    public String getTokenExClientSecret() {
-        return tokenExClientSecret;
+    public boolean isEnableHttp2() {
+        return enableHttp2;
     }
 
-    public List<String> getTokenExScope() {
-        return tokenExScope;
+    public Map<String, TokenSchema> getTokenSchemas() {
+        return tokenSchemas;
     }
 
-    public String getSubjectTokenType() {
-        return subjectTokenType;
+    public List<String> getModuleMasks() {
+        return moduleMasks;
     }
 
-    public String getRequestedTokenType() {
-        return requestedTokenType;
+    public Map<String, String> getClientMappings() {
+        return clientMappings;
     }
 
-    public String getMappingStrategy() {
-        return mappingStrategy;
+    public Map<String, AuthType> getPathAuthMappings() {
+        return pathAuthMappings;
     }
 
-    public Map<String, String> getClientMapping() {
-        return clientMapping;
+    public AuthType getDefaultAuthType() {
+        return defaultAuthType;
+    }
+
+    /**
+     * Resolves the authentication type for a given request path.
+     * Checks path prefixes and returns the auth type for the first matching prefix.
+     *
+     * @param requestPath the request path
+     * @return the resolved AuthType, or defaultAuthType if no prefix matches, or null if no default
+     */
+    public AuthType resolveAuthTypeFromPath(final String requestPath) {
+        if (requestPath == null || pathAuthMappings == null || pathAuthMappings.isEmpty()) {
+            return defaultAuthType;
+        }
+
+        for (final var entry : pathAuthMappings.entrySet()) {
+            if (requestPath.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        return defaultAuthType;
+    }
+
+    /**
+     * Resolves a token schema name from a client ID using the clientMappings configuration.
+     *
+     * @param clientId the client ID extracted from the Authorization header
+     * @return the token schema name if a mapping exists, null otherwise
+     */
+    public String resolveSchemaFromClientId(final String clientId) {
+        if (clientMappings == null || clientId == null) {
+            return null;
+        }
+        return clientMappings.get(clientId);
+    }
+
+    private void setModuleMasks(List<String> moduleMasks) {
+        this.moduleMasks = moduleMasks;
+    }
+
+    private void setTokenSchemas(Map<String, TokenSchema> tokenSchemas) {
+        this.tokenSchemas = tokenSchemas;
+    }
+
+    private void setPathAuthMappings(Map<String, AuthType> pathAuthMappings) {
+        this.pathAuthMappings = pathAuthMappings != null ? pathAuthMappings : new HashMap<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setConfigData() {
+        var object = this.mappedConfig.get(ENABLED_FIELD);
+        if (object instanceof Boolean enabledValue)
+            this.enabled = enabledValue;
+
+        object = this.mappedConfig.get(PROXY_HOST);
+        if (object instanceof String host)
+            this.proxyHost = host;
+
+        object = this.mappedConfig.get(PROXY_PORT);
+        if (object instanceof Integer port)
+            this.proxyPort = port;
+
+        object = this.mappedConfig.get(ENABLE_HTTP2);
+        if (object instanceof Boolean val)
+            this.enableHttp2 = val;
+
+        object = this.mappedConfig.get(MODULE_MASKS);
+        if (object instanceof List
+                && !((List<?>) object).isEmpty()
+                && ((List<?>) object).getFirst() instanceof String)
+            setModuleMasks((List<String>) object);
+
+        if (this.mappedConfig.get(TOKEN_SCHEMA) != null) {
+            final var rawTokenSchemas = this.mappedConfig.get(TOKEN_SCHEMA);
+            if (rawTokenSchemas instanceof Map) {
+                final var converted = Config.getInstance().getMapper().convertValue(rawTokenSchemas, new TypeReference<Map<String, TokenSchema>>() {});
+                setTokenSchemas(converted);
+            }
+        }
+
+        // Load client mappings
+        object = this.mappedConfig.get(CLIENT_MAPPINGS);
+        if (object instanceof Map)
+            this.clientMappings = (Map<String, String>) object;
+
+        // Load path auth mappings
+        object = this.mappedConfig.get(PATH_AUTH_MAPPINGS);
+        this.setPathAuthMappingsFromConfig(object);
+
+        // Load default auth type
+        object = this.mappedConfig.get(DEFAULT_AUTH_TYPE);
+        if (object != null) {
+            this.defaultAuthType = this.parseAuthType(object);
+        }
+    }
+
+    private void setPathAuthMappingsFromConfig(final Object value) {
+        if (value instanceof Map) {
+            final var pathMappings = new HashMap<String, AuthType>();
+            for (final var entry : ((Map<String, Object>) value).entrySet()) {
+                final var authType = parseAuthType(entry.getValue());
+                if (authType != null) {
+                    pathMappings.put(entry.getKey(), authType);
+                }
+            }
+            setPathAuthMappings(pathMappings);
+        }
+    }
+
+    private AuthType parseAuthType(final Object value) throws IllegalArgumentException {
+        if (value instanceof AuthType auth)
+            return auth;
+
+        if (value instanceof String authStr)
+            return AuthType.valueOf(authStr.toUpperCase());
+
+
+        return null;
     }
 }
