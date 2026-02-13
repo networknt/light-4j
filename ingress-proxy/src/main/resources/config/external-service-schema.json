@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "proxyHost", "proxyPort", "connectTimeout", "timeout", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "pathPrefixes", "metricsInjection", "metricsName" ],
+  "required" : [ "enabled", "proxyHost", "proxyPort", "connectTimeout", "timeout", "enableHttp2", "maxConnectionRetries", "pathHostMappings", "urlRewriteRules", "pathPrefixes", "metricsInjection", "metricsName", "verifyHostname" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -56,7 +56,7 @@
     },
     "pathPrefixes" : {
       "type" : "array",
-      "description" : "Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is at\na pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and\nhost for target host of the external API. If request path cannot match to one of the pathPrefixes, the request\nwill be skipped.\nNote that this config properties will replace the pathHostMappings which is for single purpose only.\n  - pathPrefix: /sharepoint\n    timeout: 2000\n    host: https://sharepoint.microsoft.com\n  - pathPrefix: /v1/petstore\n    timeout: 4000\n    host: https://petstore.example.com\n",
+      "description" : "Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is\na pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and\nhost for target host of the external API. If request path cannot match to one of the pathPrefixes, the request\nwill be skipped.\nNote that this config properties will replace the pathHostMappings which is for single purpose only.\n  - pathPrefix: /sharepoint\n    timeout: 2000\n    host: https://sharepoint.microsoft.com\n  - pathPrefix: /v1/petstore\n    timeout: 4000\n    host: https://petstore.example.com\n",
       "items" : {
         "type" : "object",
         "properties" : {
@@ -83,6 +83,11 @@
       "type" : "string",
       "description" : "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\nmetrics info can be categorized in a tree structure under the name. By default, it is external-response, and\nusers can change it.\n",
       "default" : "external-response"
+    },
+    "verifyHostname" : {
+      "type" : "boolean",
+      "description" : "Indicate if the hostname verification is enabled or not",
+      "default" : true
     }
   }
 }

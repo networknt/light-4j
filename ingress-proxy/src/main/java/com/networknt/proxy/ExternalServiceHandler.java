@@ -338,9 +338,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                 .connectTimeout(Duration.ofMillis(connectTimeout));
 
 
-        if (tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+
+        if (!config.isVerifyHostname()) {
             // setting jdk.internal.httpclient.disableHostnameVerification=true set it globally for the JVM,
             // however it is overwritten by the sslContext defined in the HttpClient builder.
+            // this will not conflict with Http2Client due to different clients and different system properties
             props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
         }
         else {
