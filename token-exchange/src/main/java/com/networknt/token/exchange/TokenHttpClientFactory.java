@@ -4,7 +4,7 @@ import com.networknt.client.ClientConfig;
 import com.networknt.http.client.HttpClientRequest;
 import com.networknt.http.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.http.client.ssl.TLSConfig;
-import com.networknt.token.exception.TokenRequestException;
+import com.networknt.token.exchange.exception.TokenRequestException;
 import com.networknt.token.exchange.schema.RequestSchema;
 import com.networknt.token.exchange.schema.cert.SSLContextSchema;
 import org.slf4j.Logger;
