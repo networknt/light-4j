@@ -22,7 +22,7 @@ pathHostMappings: ${externalService.pathHostMappings:}
 # with a space. For details, please refer to the light-router router.yml configuration.
 # Test your rules at https://www.freeformatter.com/java-regex-tester.html
 urlRewriteRules: ${externalService.urlRewriteRules:}
-# Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is at
+# Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is
 # a pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and
 # host for target host of the external API. If request path cannot match to one of the pathPrefixes, the request
 # will be skipped.
@@ -44,3 +44,5 @@ metricsInjection: ${externalService.metricsInjection:false}
 # metrics info can be categorized in a tree structure under the name. By default, it is external-response, and
 # users can change it.
 metricsName: ${externalService.metricsName:external-response}
+# Indicate if the hostname verification is enabled or not
+verifyHostname: ${externalService.verifyHostname:true}

@@ -165,6 +165,16 @@ public class ExternalServiceConfig {
     )
     String metricsName;
 
+    private static final String VERIFY_HOSTNAME = "verifyHostname";
+
+    @BooleanField(
+            configFieldName = VERIFY_HOSTNAME,
+            externalizedKeyName = VERIFY_HOSTNAME,
+            description = "Indicate if the hostname verification is enabled or not",
+            defaultValue = "true"
+    )
+    boolean verifyHostname = true;
+
 
     private final Config config;
     private Map<String, Object> mappedConfig;
@@ -233,6 +243,9 @@ public class ExternalServiceConfig {
 
         object = mappedConfig.get(METRICS_NAME);
         if(object != null ) metricsName = (String)object; // String field, no load call needed
+
+        object = mappedConfig.get(VERIFY_HOSTNAME);
+        if(object != null) verifyHostname = Config.loadBooleanValue(VERIFY_HOSTNAME, object);
     }
 
     // --- Custom Setters for Complex List Fields ---
@@ -537,5 +550,13 @@ public class ExternalServiceConfig {
      */
     public void setPathPrefixes(List<PathPrefix> pathPrefixes) {
         this.pathPrefixes = pathPrefixes;
+    }
+
+    public boolean isVerifyHostname() {
+        return verifyHostname;
+    }
+
+    public void setVerifyHostname(boolean verifyHostname) {
+        this.verifyHostname = verifyHostname;
     }
 }
