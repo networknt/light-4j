@@ -34,7 +34,7 @@ public class SseConnectionRegistry {
     public static ServerSentEventConnection getConnection(String id) {
         return connections.get(id);
     }
-    
+
     public static Map<String, ServerSentEventConnection> getConnections() {
         return connections;
     }

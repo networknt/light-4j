@@ -46,7 +46,7 @@ public class McpConfig {
      * Tools
      */
     public static final String TOOLS = "tools";
-    
+
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,

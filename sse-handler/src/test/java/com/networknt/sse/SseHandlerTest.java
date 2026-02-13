@@ -84,17 +84,17 @@ public class SseHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await(1000, TimeUnit.MILLISECONDS);
-            
+
             // NOTE: Typical HTTP2Client usage waits for the entire response. SSE is an open stream.
             // This test mainly verifies we don't get an immediate error and that logic executes.
             // A more robust test requires a client that supports reading the stream chunk by chunk.
-            
+
             // For now, let's just inspect the connections in Registry if possible.
             // Since the client call might block waiting for close, we might need a separate thread or check registry async.
-            
+
             // Check registry
             Assert.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
-            
+
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw e;
@@ -128,13 +128,13 @@ public class SseHandlerTest {
             String traceId = "test-id-123";
             request.getRequestHeaders().put(io.undertow.util.HttpString.tryFromString("X-Traceability-Id"), traceId);
             connection.sendRequest(request, client.createClientCallback(reference, latch));
-            
+
             Thread.sleep(500); // Give time for connection to register
 
             ServerSentEventConnection conn = SseConnectionRegistry.getConnection(traceId);
             Assert.assertNotNull(conn);
             Assert.assertTrue(conn.isOpen());
-            
+
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw e;
@@ -169,11 +169,11 @@ public class SseHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await(1000, TimeUnit.MILLISECONDS);
-            
+
             // Check status code
             int statusCode = reference.get().getResponseCode();
             Assert.assertEquals(200, statusCode);
-            
+
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw e;
