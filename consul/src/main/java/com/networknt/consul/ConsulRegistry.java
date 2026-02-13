@@ -227,6 +227,7 @@ public class ConsulRegistry extends AbstractRegistry {
         Long lastConsulIndexId = 0L;
         if (isBlockQuery) {
             lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
+            if (lastConsulIndexId < 1) lastConsulIndexId = 1L;
         }
         if(logger.isDebugEnabled()) logger.debug("serviceName = {} lastConsulIndexId = {}", serviceName, lastConsulIndexId);
 
