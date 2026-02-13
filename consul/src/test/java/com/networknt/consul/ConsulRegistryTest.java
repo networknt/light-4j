@@ -21,6 +21,7 @@ import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.Constants;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -150,6 +151,53 @@ public class ConsulRegistryTest {
     private Boolean containsNotifyListener(URL serviceUrl, URL clientUrl, NotifyListener listener) {
         String service = ConsulUtils.getUrlClusterInfo(serviceUrl);
         return registry.getNotifyListeners().get(service).get(clientUrl) == listener;
+    }
+
+    @Test
+    public void subAndUnsubServiceWithTag() throws Exception {
+        // Service 1: dev
+        URL serviceUrlDev = MockUtils.getMockUrl(8003);
+        serviceUrlDev.addParameter(Constants.TAG_ENVIRONMENT, "dev");
+        String serviceIdDev = ConsulUtils.convertConsulSerivceId(serviceUrlDev);
+
+        // Service 2: prod
+        URL serviceUrlProd = MockUtils.getMockUrl(8004);
+        serviceUrlProd.addParameter(Constants.TAG_ENVIRONMENT, "prod");
+        String serviceIdProd = ConsulUtils.convertConsulSerivceId(serviceUrlProd);
+
+        registry.doRegister(serviceUrlDev);
+        registry.doRegister(serviceUrlProd);
+
+        // Client 1: dev
+        URL clientUrlDev = MockUtils.getMockUrl("127.0.0.1", 0);
+        clientUrlDev.addParameter(Constants.TAG_ENVIRONMENT, "dev");
+
+        // Client 2: prod
+        URL clientUrlProd = MockUtils.getMockUrl("127.0.0.1", 0);
+        clientUrlProd.addParameter(Constants.TAG_ENVIRONMENT, "prod");
+
+        NotifyListener listenerDev = createNewNotifyListener(serviceUrlDev);
+        NotifyListener listenerProd = createNewNotifyListener(serviceUrlProd);
+
+        registry.doSubscribe(clientUrlDev, listenerDev);
+        registry.doSubscribe(clientUrlProd, listenerProd);
+
+        registry.doAvailable(null);
+        Thread.sleep(sleepTime);
+
+        List<URL> devUrls = registry.discover(clientUrlDev);
+        Assert.assertTrue(devUrls.contains(serviceUrlDev));
+        Assert.assertFalse(devUrls.contains(serviceUrlProd));
+
+        List<URL> prodUrls = registry.discover(clientUrlProd);
+        Assert.assertTrue(prodUrls.contains(serviceUrlProd));
+        Assert.assertFalse(prodUrls.contains(serviceUrlDev));
+
+        // Cleanup
+        registry.doUnregister(serviceUrlDev);
+        registry.doUnregister(serviceUrlProd);
+        registry.doUnsubscribe(clientUrlDev, listenerDev);
+        registry.doUnsubscribe(clientUrlProd, listenerProd);
     }
 
 }
