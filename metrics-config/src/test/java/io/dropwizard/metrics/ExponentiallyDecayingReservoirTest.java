@@ -108,14 +108,14 @@ public class ExponentiallyDecayingReservoirTest {
         assertAllValuesBetween(reservoir, 1000, 3000);
 
 
-        // add 1000 values at a rate of 10 values/second
-        for (int i = 0; i < 1000; i++) {
+        // add 10000 values at a rate of 10 values/second
+        for (int i = 0; i < 10000; i++) {
             reservoir.update(3000 + i);
             clock.addMillis(100);
         }
         assertThat(reservoir.getSnapshot().size())
                 .isEqualTo(10);
-        assertAllValuesBetween(reservoir, 3000, 4000);
+        assertAllValuesBetween(reservoir, 3000, 13000);
     }
 
     @Test
