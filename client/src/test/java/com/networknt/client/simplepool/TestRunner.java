@@ -20,7 +20,7 @@
 package com.networknt.client.simplepool;
 
 import org.slf4j.Logger;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
@@ -225,7 +225,7 @@ public class TestRunner
         public void run() {
             logger.debug("{} Starting", Thread.currentThread().getName());
             while(!stopped.get()) {
-                SimpleConnectionHolder.ConnectionToken connectionToken = null;
+                SimpleConnectionState.ConnectionToken connectionToken = null;
                 try {
                     logger.debug("{} Borrowing connection", Thread.currentThread().getName());
                     connectionToken = pool.borrow(createConnectionTimeout);

@@ -17,7 +17,7 @@
 package com.networknt.correlation;
 
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
@@ -106,7 +106,7 @@ public class CorrelationHandlerTest {
     public void testWithCid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -145,7 +145,7 @@ public class CorrelationHandlerTest {
         CorrelationConfig correlationConfig = CorrelationConfig.load();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -189,7 +189,7 @@ public class CorrelationHandlerTest {
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -236,7 +236,7 @@ public class CorrelationHandlerTest {
         correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
         correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -288,7 +288,7 @@ public class CorrelationHandlerTest {
         CorrelationConfig correlationConfig = CorrelationConfig.load();
         correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
         correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -335,7 +335,7 @@ public class CorrelationHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 

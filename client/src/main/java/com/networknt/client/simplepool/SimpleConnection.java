@@ -20,11 +20,11 @@
 
 package com.networknt.client.simplepool;
 
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 
 /***
  * SimpleConnection is an interface that contains all the required functions and properties of
- * a connection that are needed by the SimpleConnectionHolder, SimpleURIConnectionPool, and
+ * a connection that are needed by the SimpleConnectionState, SimpleURIConnectionPool, and
  * SimpleConnectionPool classes.
  *
  * Concrete HTTP network connections (like Undertow's ClientConnection class) should be wrapped in

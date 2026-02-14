@@ -3,7 +3,7 @@ package com.networknt.token.limit;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.server.ServerConfig;
 import io.undertow.Handlers;
@@ -59,7 +59,7 @@ public class TokenLimitHandlerTest {
 
     public String callLegacyClient() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             if(enableHttps) {
@@ -87,7 +87,7 @@ public class TokenLimitHandlerTest {
 
     public String callLegacyClientWithAuthHeader() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             if(enableHttps) {
@@ -115,7 +115,7 @@ public class TokenLimitHandlerTest {
 
     public String callNonLegacyClient() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
         try {
@@ -143,7 +143,7 @@ public class TokenLimitHandlerTest {
 
     public String callNonLegacyClientWithXForwardedFor() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
         try {
@@ -172,7 +172,7 @@ public class TokenLimitHandlerTest {
 
     public String callExtra() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
         try {
@@ -202,7 +202,7 @@ public class TokenLimitHandlerTest {
 
     public void testOneRequest() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             if(enableHttps) {
@@ -234,7 +234,7 @@ public class TokenLimitHandlerTest {
     @Test
     public void testEmptyScopeRequest() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             if(enableHttps) {

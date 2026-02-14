@@ -3,7 +3,7 @@ package com.networknt.client;
 import com.networknt.exception.ClientException;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.HttpString;
@@ -42,7 +42,7 @@ public class HttpRequestSSLContextTest {
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken token;
+        SimpleConnectionState.ConnectionToken token;
         final ClientConnection connection;
         try {
             token = client.borrow(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
@@ -79,7 +79,7 @@ public class HttpRequestSSLContextTest {
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        SimpleConnectionHolder.ConnectionToken token;
+        SimpleConnectionState.ConnectionToken token;
         final ClientConnection connection;
         try {
             token = client.borrow(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));

@@ -19,7 +19,7 @@ package com.networknt.logging.handler;
 import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.common.ContentType;
@@ -115,7 +115,7 @@ public class LoggerGetHandler implements LightHttpHandler {
     private Result<List<LoggerInfo>> getBackendLogger(LoggerConfig config) {
         long start = System.currentTimeMillis();
         Result<List<LoggerInfo>> result = null;
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             if(config.getDownstreamHost().startsWith(Constants.HTTPS)) {
                 connectionToken = Http2Client.getInstance().borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.getInstance().getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));

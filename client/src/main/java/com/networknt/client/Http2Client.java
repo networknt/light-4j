@@ -25,11 +25,11 @@ import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.simplepool.ConnectionHealthChecker;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.client.simplepool.SimplePoolMetrics;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
-import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
+import com.networknt.client.simplepool.undertow.SimpleUndertowConnectionMaker;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.client.ssl.TLSConfig;
@@ -177,9 +177,7 @@ public class Http2Client {
     // Connection health checker (optional, enabled via configuration)
     private ConnectionHealthChecker healthChecker;
 
-    // Tracks ClientConnection → ConnectionToken for deprecated method redirection
-    // This allows returnConnection() to find the token for restore()
-    private final Map<ClientConnection, SimpleConnectionHolder.ConnectionToken> connectionTokenMap = new ConcurrentHashMap<>();
+    private final Map<ClientConnection, SimpleConnectionState.ConnectionToken> connectionTokenMap = new ConcurrentHashMap<>();
 
     /**
      * The buffer pool used by this client.
@@ -333,7 +331,7 @@ public class Http2Client {
      * @param isHttp2 true if HTTP/2 is enabled, false otherwise
      * @return a ConnectionToken
      */
-    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
+    public SimpleConnectionState.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
         if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
         return borrow(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
@@ -367,10 +365,10 @@ public class Http2Client {
      * @param options the option map
      * @return a ConnectionToken
      */
-    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+    public SimpleConnectionState.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
-            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            SimpleConnectionMaker undertowConnectionMaker = SimpleUndertowConnectionMaker.instance();
             ClientConfig config = ClientConfig.get();
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
@@ -393,7 +391,7 @@ public class Http2Client {
     @Deprecated(forRemoval = true)
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         // Redirect to SimplePool
-        SimpleConnectionHolder.ConnectionToken token = borrow(uri, worker, bufferPool, options);
+        SimpleConnectionState.ConnectionToken token = borrow(uri, worker, bufferPool, options);
         if (token != null && token.connection() != null) {
             ClientConnection connection = (ClientConnection) token.getRawConnection();
             connectionTokenMap.put(connection, token);  // Track for returnConnection
@@ -475,7 +473,7 @@ public class Http2Client {
     /**
      * Returns a connection to the pool.
      * @param connection the connection to return
-     * @deprecated Use {@link #restore(SimpleConnectionHolder.ConnectionToken)} instead.
+     * @deprecated Use {@link #restore(SimpleConnectionState.ConnectionToken)} instead.
      *             This method now redirects to SimplePool when possible.
      *             Will be removed in a future major version.
      * @see <a href="https://doc.networknt.com/concern/module/simplepool-migration">Migration Guide</a>
@@ -485,7 +483,7 @@ public class Http2Client {
         if (connection == null) return;
 
         // Check if we have a token for this connection (from redirected borrow)
-        SimpleConnectionHolder.ConnectionToken token = connectionTokenMap.remove(connection);
+        SimpleConnectionState.ConnectionToken token = connectionTokenMap.remove(connection);
         if (token != null) {
             // Redirect to SimplePool
             restore(token);
@@ -500,7 +498,7 @@ public class Http2Client {
      * Restores a connection token to the pool.
      * @param token the connection token to restore
      */
-    public void restore(SimpleConnectionHolder.ConnectionToken token) {
+    public void restore(SimpleConnectionState.ConnectionToken token) {
         if(token == null) return;
         SimpleURIConnectionPool pool = pools.get(token.uri());
         if(pool != null) pool.restore(token);
@@ -538,7 +536,7 @@ public class Http2Client {
 
         SimpleURIConnectionPool pool = pools.get(uri);
         if (pool == null) {
-            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            SimpleConnectionMaker undertowConnectionMaker = SimpleUndertowConnectionMaker.instance();
             ClientConfig config = ClientConfig.get();
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(),
                 null, worker, bufferPool, ssl, options, undertowConnectionMaker);
@@ -646,11 +644,11 @@ public class Http2Client {
      * @param options the option map
      * @return a ConnectionToken
      */
-    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+    public SimpleConnectionState.ConnectionToken borrow(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if(HTTPS.equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
-            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            SimpleConnectionMaker undertowConnectionMaker = SimpleUndertowConnectionMaker.instance();
             ClientConfig config = ClientConfig.get();
             pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);

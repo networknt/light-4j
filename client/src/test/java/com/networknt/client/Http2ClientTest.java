@@ -20,7 +20,7 @@ package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.Http2ClientConnectionPool;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
@@ -328,7 +328,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -422,7 +422,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -509,7 +509,7 @@ public class Http2ClientTest extends Http2ClientBase {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -546,7 +546,7 @@ public class Http2ClientTest extends Http2ClientBase {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -602,7 +602,7 @@ public class Http2ClientTest extends Http2ClientBase {
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -812,7 +812,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -847,7 +847,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -877,7 +877,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -907,7 +907,7 @@ public class Http2ClientTest extends Http2ClientBase {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
 
         try {
@@ -934,7 +934,7 @@ public class Http2ClientTest extends Http2ClientBase {
     @Test
     public void default_group_key_is_used_in_Http2Client_SSL() throws Exception{
         final Http2Client client = createClient();
-        final SimpleConnectionHolder.ConnectionToken token;
+        final SimpleConnectionState.ConnectionToken token;
 
         try {
 
@@ -957,7 +957,7 @@ public class Http2ClientTest extends Http2ClientBase {
     @Ignore
     public void simple_pool_return_null_token_if_api_is_not_available() {
         final Http2Client client = Http2Client.getInstance();
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             connectionToken = client.borrow(new URI("https://localhost:27778"), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
             assertNull(connectionToken);

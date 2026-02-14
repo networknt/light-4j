@@ -18,7 +18,7 @@
 
 package com.networknt.client;
 
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
@@ -219,7 +219,7 @@ public class Http2ClientPoolIT {
 
         final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -256,7 +256,7 @@ public class Http2ClientPoolIT {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -329,7 +329,7 @@ public class Http2ClientPoolIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -367,7 +367,7 @@ public class Http2ClientPoolIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -412,7 +412,7 @@ public class Http2ClientPoolIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -486,7 +486,7 @@ public class Http2ClientPoolIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             connection.getIoThread().execute(new Runnable() {
@@ -552,7 +552,7 @@ public class Http2ClientPoolIT {
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
@@ -574,7 +574,7 @@ public class Http2ClientPoolIT {
     public ByteBuffer callApiWithByteBuffer() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {

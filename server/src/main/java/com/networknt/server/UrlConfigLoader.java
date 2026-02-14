@@ -19,7 +19,7 @@ import org.xnio.OptionMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -96,7 +96,7 @@ public class UrlConfigLoader implements IConfigLoader {
 	};
 	final static Pattern files = Pattern.compile(">([^>/]+)</a>");
 	static Http2Client client = Http2Client.getInstance();
-	SimpleConnectionHolder.ConnectionToken connectionToken = null;
+	SimpleConnectionState.ConnectionToken connectionToken = null;
 	String host = null;
 
 	@Override

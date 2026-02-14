@@ -7,7 +7,7 @@ import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoGetHandler;
 import com.networknt.info.ServerInfoUtil;
 import com.networknt.utility.StringUtils;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -96,7 +96,7 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     public static String getServerInfo(String url, String token) {
 
         String res = "{}";
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             URI uri = new URI(url);
             switch(uri.getScheme()) {

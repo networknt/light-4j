@@ -1,7 +1,7 @@
 package com.networknt.proxy;
 
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.health.HealthConfig;
@@ -85,7 +85,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
         long start = System.currentTimeMillis();
         if(connection == null || !connection.isOpen()) {
             try {
-                SimpleConnectionHolder.ConnectionToken token;
+                SimpleConnectionState.ConnectionToken token;
                 if(config.getDownstreamHost().startsWith("https")) {
                     token = client.borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
                 } else {

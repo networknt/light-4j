@@ -1,7 +1,7 @@
 package com.networknt.body;
 
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.Handlers;
@@ -80,7 +80,7 @@ public class BodyStringCachingTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         String post;
-        SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        SimpleConnectionState.ConnectionToken token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
         connection = (ClientConnection) token.getRawConnection();
         try {
             post = "[{\"key1\":\"value1\"}, {\"key2\":\"value2\"}]";

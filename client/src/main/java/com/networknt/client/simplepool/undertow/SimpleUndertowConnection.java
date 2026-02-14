@@ -12,21 +12,18 @@
  * limitations under the License.
  *
  * @author miklish Michael N. Christoff
- *
- * testing / QA
- *   AkashWorkGit
- *   jaydeepparekh1311
  */
 package com.networknt.client.simplepool.undertow;
 
 import com.networknt.client.simplepool.SimpleConnection;
 import io.undertow.client.ClientConnection;
-import org.xnio.IoUtils;
 
-public class SimpleClientConnection implements SimpleConnection {
+import java.io.IOException;
+
+public class SimpleUndertowConnection implements SimpleConnection {
     private final ClientConnection connection;
 
-    public SimpleClientConnection(ClientConnection connection) {
+    public SimpleUndertowConnection(ClientConnection connection) {
         this.connection = connection;
     }
 
@@ -52,7 +49,10 @@ public class SimpleClientConnection implements SimpleConnection {
 
     @Override
     public void safeClose() {
-        if(connection.isOpen())
-            IoUtils.safeClose(connection);
+        try {
+            connection.close();
+        } catch (IOException e) {
+            // ignore
+        }
     }
 }

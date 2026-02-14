@@ -17,7 +17,7 @@
 package com.networknt.content;
 
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -103,7 +103,7 @@ public class ContentHandlerTest {
   public void testTextPlainContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final SimpleConnectionHolder.ConnectionToken token;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
 
@@ -149,7 +149,7 @@ public class ContentHandlerTest {
   public void testXMLContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final SimpleConnectionHolder.ConnectionToken token;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
 
@@ -195,7 +195,7 @@ public class ContentHandlerTest {
   public void testJSONContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final SimpleConnectionHolder.ConnectionToken token;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
 
@@ -241,7 +241,7 @@ public class ContentHandlerTest {
   public void testDefaultContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final SimpleConnectionHolder.ConnectionToken token;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
 

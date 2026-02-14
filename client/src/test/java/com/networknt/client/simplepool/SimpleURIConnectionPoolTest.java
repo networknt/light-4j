@@ -36,7 +36,7 @@ public class SimpleURIConnectionPoolTest {
         when(mockConnection.isMultiplexingSupported()).thenReturn(false); // HTTP/1.1 behavior for deterministic counting
         when(mockConnection.getLocalAddress()).thenReturn("localhost:12345");
         
-        // Mock the makeConnection method used by SimpleConnectionHolder constructor
+        // Mock the makeConnection method used by SimpleConnectionState constructor
         // simple signature: makeConnection(long, InetSocketAddress, URI, XnioWorker, XnioSsl, ByteBufferPool, OptionMap, Set)
         when(connectionMaker.makeConnection(
                 anyLong(), 
@@ -56,7 +56,7 @@ public class SimpleURIConnectionPoolTest {
     @Test
     public void testBorrowAndRestore() {
         // Borrow a connection
-        SimpleConnectionHolder.ConnectionToken token = pool.borrow(1000);
+        SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
         Assert.assertNotNull("Token should not be null", token);
         Assert.assertNotNull("Connection should not be null", token.connection());
         Assert.assertEquals("Borrowed count should be 1", 1, pool.getBorrowedCount());
@@ -91,12 +91,12 @@ public class SimpleURIConnectionPoolTest {
     @Test
     public void testReuseFromPool() {
         // Borrow and restore to populate pool
-        SimpleConnectionHolder.ConnectionToken token1 = pool.borrow(1000);
+        SimpleConnectionState.ConnectionToken token1 = pool.borrow(1000);
         SimpleConnection conn1 = token1.connection();
         pool.restore(token1);
 
         // Borrow again - should get the same connection
-        SimpleConnectionHolder.ConnectionToken token2 = pool.borrow(1000);
+        SimpleConnectionState.ConnectionToken token2 = pool.borrow(1000);
         Assert.assertSame("Should reuse the same connection", conn1, token2.connection());
         
         // Verify connection maker was only called once
@@ -118,7 +118,7 @@ public class SimpleURIConnectionPoolTest {
         pool = new SimpleURIConnectionPool(uri, shortExpiry, poolSize, connectionMaker);
 
         // Borrow and restore
-        SimpleConnectionHolder.ConnectionToken token = pool.borrow(1000);
+        SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
         pool.restore(token);
         Assert.assertEquals("Should have 1 borrowable connection", 1, pool.getBorrowableCount());
 
@@ -161,9 +161,9 @@ public class SimpleURIConnectionPoolTest {
 
         // We expect a specific behavior when maker returns null - usually it throws or returns null wrapped
         // Use a try-catch connection timeout wrapper logic in pool?
-        // Reading SimpleURIConnectionPool.borrow -> SimpleConnectionHolder constructor -> throws IO/RuntimeException if null?
+        // Reading SimpleURIConnectionPool.borrow -> SimpleConnectionState constructor -> throws IO/RuntimeException if null?
         
-        // Let's verify what happens. SimpleConnectionHolder throws if connection is null.
+        // Let's verify what happens. SimpleConnectionState throws if connection is null.
         
         try {
             pool.borrow(100);
@@ -179,7 +179,7 @@ public class SimpleURIConnectionPoolTest {
         // But we can verify validateAndCleanConnections calls.
         
         // Borrow and restore
-        SimpleConnectionHolder.ConnectionToken token = pool.borrow(1000);
+        SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
         pool.restore(token);
         
         // Mock connection as closed

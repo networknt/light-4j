@@ -2,7 +2,7 @@ package com.networknt.security;
 
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
@@ -284,7 +284,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
     private String callPetstoreApiAsync() throws Exception {
         final Http2Client client = createClient();
         // get a connection from the connection pool.
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7771"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
@@ -311,7 +311,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
     private String callMarketApiAsync() throws Exception {
         final Http2Client client = createClient();
         // get a connection from the connection pool.
-        final SimpleConnectionHolder.ConnectionToken token = client.borrow(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        final SimpleConnectionState.ConnectionToken token = client.borrow(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
         final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();

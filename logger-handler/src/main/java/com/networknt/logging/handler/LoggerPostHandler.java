@@ -19,7 +19,7 @@ package com.networknt.logging.handler;
 import ch.qos.logback.classic.Level;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
@@ -151,7 +151,7 @@ public class LoggerPostHandler implements LightHttpHandler {
     private Result<List<LoggerInfo>> postLight4jLogger(List<LoggerInfo> loggers, LoggerConfig config) {
         String requestPath = "/adm/logger";
         long start = System.currentTimeMillis();
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             if(config.getDownstreamHost().startsWith(Constants.HTTPS)) {
                 connectionToken = Http2Client.getInstance().borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.getInstance().getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
@@ -190,7 +190,7 @@ public class LoggerPostHandler implements LightHttpHandler {
         long start = System.currentTimeMillis();
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("configuredLevel", level);
-        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             if(config.getDownstreamHost().startsWith(Constants.HTTPS)) {
                 connectionToken = Http2Client.getInstance().borrow(new URI(config.getDownstreamHost()), Http2Client.WORKER, Http2Client.getInstance().getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));

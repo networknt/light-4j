@@ -20,7 +20,6 @@
 package com.networknt.client.simplepool;
 
 import java.net.URI;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,7 +38,7 @@ public final class SimpleConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
-    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, URI uri)
+    public SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, URI uri)
         throws RuntimeException
     {
         SimpleURIConnectionPool pool = pools.computeIfAbsent(uri,
@@ -47,7 +46,7 @@ public final class SimpleConnectionPool {
         return pool.borrow(createConnectionTimeout);
     }
 
-    public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+    public void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null)
             return;
         SimpleURIConnectionPool pool = pools.get(connectionToken.uri());

@@ -18,7 +18,7 @@ package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulConfig;
 import com.networknt.consul.ConsulResponse;
@@ -89,7 +89,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkPass(String serviceId, String token) {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
@@ -110,7 +110,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkFail(String serviceId, String token) {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
@@ -130,7 +130,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
@@ -150,7 +150,7 @@ public class ConsulClientImpl implements ConsulClient {
 	@Override
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
@@ -200,7 +200,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("Consul health service path = {}", path);
 
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			if(logger.isDebugEnabled()) logger.debug("Getting connection from pool with {}", uri);
 			// this will throw a Runtime Exception if creation of Consul connection fails

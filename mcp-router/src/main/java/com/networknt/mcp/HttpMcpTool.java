@@ -3,7 +3,7 @@ package com.networknt.mcp;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -68,7 +68,7 @@ public class HttpMcpTool implements McpTool {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> arguments) {
-        SimpleConnectionHolder.ConnectionToken token = null;
+        SimpleConnectionState.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
             URI uri = new URI(host);
