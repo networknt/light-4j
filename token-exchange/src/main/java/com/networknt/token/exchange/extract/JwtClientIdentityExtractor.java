@@ -10,9 +10,9 @@ import java.util.Map;
 
 /**
  * Extracts client identity from JWT Bearer tokens.
- * Parses the JWT payload to find the client_id or sub-claim.
+ * Parses the JWT payload to find the client_id or subclaim.
  */
-public class JwtClientIdentityExtractor implements ClientIdentityExtractor {
+public class JwtClientIdentityExtractor implements ClientIdentity.Extractor {
 
     private static final Logger LOG = LoggerFactory.getLogger(JwtClientIdentityExtractor.class);
     private static final String BEARER_PREFIX = "Bearer ";

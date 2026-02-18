@@ -20,10 +20,9 @@ public class TokenKeyStoreManager {
     private static final Map<String, KeyStore> KEY_STORE_MAP = new HashMap<>();
 
     private void addKeyStore(final String keyStoreName, final char[] keyStorePass) {
-
-        if (keyStoreName == null || keyStorePass == null)
-            throw new IllegalArgumentException("name and pass must not be null");
-
+        if (keyStoreName == null || keyStorePass == null) {
+            throw new IllegalArgumentException("keyStoreName and keyStorePass must not be null");
+        }
         KEY_STORE_MAP.put(keyStoreName, TlsUtil.loadKeyStore(keyStoreName, keyStorePass));
     }
 
@@ -35,16 +34,16 @@ public class TokenKeyStoreManager {
      * @return - returns a keystore.
      */
     private KeyStore getKeyStore(final String keyStoreName, final char[] keyStorePass) {
-
-        if (!KEY_STORE_MAP.containsKey(keyStoreName))
+        if (!KEY_STORE_MAP.containsKey(keyStoreName)) {
             this.addKeyStore(keyStoreName, keyStorePass);
-
+        }
         return KEY_STORE_MAP.get(keyStoreName);
     }
 
     public PrivateKey getPrivateKey(final String keyStoreName, final char[] keyStorePass, final String keyAlias, final char[] keyPass) {
-        if (keyStoreName == null || keyStorePass == null || keyAlias == null || keyPass == null)
-            throw new IllegalArgumentException("keyStoreName, keyStorePass, keyAlias, and keyPass must not be null.");
+        if (keyStoreName == null || keyStorePass == null || keyAlias == null || keyPass == null) {
+            throw new IllegalArgumentException("keyStoreName, keyStorePass, keyAlias, and keyPass must not be null");
+        }
 
         final var keystore = this.getKeyStore(keyStoreName, keyStorePass);
         /* load key from keystore based on provided alias */
@@ -52,29 +51,22 @@ public class TokenKeyStoreManager {
             return (PrivateKey) keystore.getKey(keyAlias, keyPass);
 
         } catch (KeyStoreException e) {
-            LOG.error("Keystore was not initialized correctly: {}", e.getMessage());
-            throw new RuntimeException("Keystore was not initialized correctly", e);
+            throw new RuntimeException("Keystore was not initialized correctly: " + e.getMessage(), e);
 
         } catch (NoSuchAlgorithmException e) {
-            LOG.error("Algorithm for recovering key was not found: {}", e.getMessage());
-            throw new RuntimeException("Algorithm for recovering key was not found", e);
+            throw new RuntimeException("Algorithm for recovering key was not found: " + e.getMessage(), e);
 
         } catch (UnrecoverableKeyException e) {
-            LOG.error("Key could not be recovered: {}", e.getMessage());
-            throw new RuntimeException("Key could not be recovered", e);
+            throw new RuntimeException("Key could not be recovered: " + e.getMessage(), e);
         }
     }
 
     public TrustManager[] getTrustManagers(final String keyStoreName, final char[] keyStorePass, final String algorithm) {
+        if (keyStoreName == null || keyStorePass == null) {
+            throw new IllegalArgumentException("keyStoreName and keyStorePass must not be null");
+        }
 
-        if (keyStoreName == null || keyStorePass == null)
-            throw new IllegalArgumentException("keyStoreName, keyStorePass, and ");
-
-        final String alg;
-        if (algorithm == null)
-            alg = TrustManagerFactory.getDefaultAlgorithm();
-
-        else alg = algorithm;
+        final String alg = (algorithm == null) ? TrustManagerFactory.getDefaultAlgorithm() : algorithm;
 
         final var keyStore = this.getKeyStore(keyStoreName, keyStorePass);
         final TrustManagerFactory trustManagerFactory;
@@ -98,15 +90,11 @@ public class TokenKeyStoreManager {
     }
 
     public KeyManager[] getKeyManagers(final String keyStoreName, final char[] keyStorePass, final char[] privateKeyPass, final String algorithm) {
+        if (keyStoreName == null || keyStorePass == null || privateKeyPass == null) {
+            throw new IllegalArgumentException("keyStoreName, keyStorePass, and privateKeyPass must not be null");
+        }
 
-        if (keyStoreName == null || keyStorePass == null || privateKeyPass == null)
-            throw new IllegalArgumentException("keyStoreName, keyStorePass, and ");
-
-        final String alg;
-        if (algorithm == null)
-            alg = KeyManagerFactory.getDefaultAlgorithm();
-
-        else alg = algorithm;
+        final String alg = (algorithm == null) ? KeyManagerFactory.getDefaultAlgorithm() : algorithm;
 
         final var keyStore = this.getKeyStore(keyStoreName, keyStorePass);
         final KeyManagerFactory keyManagerFactory;

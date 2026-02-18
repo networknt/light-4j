@@ -1,13 +1,12 @@
 package com.networknt.token.exchange;
 
-import com.networknt.token.exchange.extract.ClientIdentityExtractorFactory;
+
 import com.networknt.token.exchange.schema.SharedVariableSchema;
 import com.networknt.token.exchange.schema.TokenSchema;
 import com.networknt.token.exchange.schema.UpdateSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,7 @@ public class TokenExchangeService {
      */
     public TokenExchangeService(final TokenExchangeConfig config) {
         this.config = config;
-        TokenKeyStoreManager keyStoreManager = new TokenKeyStoreManager();
+        final var keyStoreManager = new TokenKeyStoreManager();
         this.jwtBuilder = new JwtBuilder(keyStoreManager);
         this.httpClientFactory = new TokenHttpClientFactory(
                 keyStoreManager,
@@ -56,170 +55,90 @@ public class TokenExchangeService {
         );
     }
 
-    /**
-     * Gets the configuration used by this service.
-     */
-    public TokenExchangeConfig getConfig() {
-        return config;
-    }
-
-    /**
-     * Transforms a request using the specified token schema name.
-     * This is the primary method for use case 1 (rule engine plugin).
-     *
-     * @param tokenSchemaName the name of the token schema to use
-     * @param resultMap the result map to populate with token data
-     * @throws InterruptedException if the token request is interrupted
-     * @throws IllegalArgumentException if the schema doesn't exist
-     */
-    public void transformBySchemaName(final String tokenSchemaName, final Map<String, Object> resultMap)
-            throws InterruptedException {
-        transformBySchemaName(tokenSchemaName, resultMap, null);
-    }
-
-    /**
-     * Transforms a request using the specified token schema name with request context.
-     * This allows shared variables to reference request headers and query parameters.
-     *
-     * @param tokenSchemaName the name of the token schema to use
-     * @param resultMap the result map to populate with token data
-     * @param requestContext the request context containing headers and query parameters (may be null)
-     * @throws InterruptedException if the token request is interrupted
-     * @throws IllegalArgumentException if the schema doesn't exist
-     */
-    public void transformBySchemaName(final String tokenSchemaName, final Map<String, Object> resultMap,
-                                       final RequestContext requestContext)
-            throws InterruptedException {
-        if (config.getTokenSchemas() == null) {
-            LOG.warn("No token schemas configured");
+    public void transform(final RequestContext.Parser incomingContext) throws InterruptedException {
+        var parsedContext = incomingContext.parseContext();
+        if (parsedContext == null) {
+            LOG.debug("Parser returned null context - skipping token transformation");
             return;
         }
 
-        final var schema = config.getTokenSchemas().get(tokenSchemaName);
-        if (schema == null) {
-            throw new IllegalArgumentException("Token schema '" + tokenSchemaName + "' does not exist");
+        final var tokenSchema = this.config.getTokenSchemas().get(parsedContext.schemaKey());
+        if (tokenSchema == null) {
+            throw new IllegalArgumentException("Token schema '" + parsedContext.schemaKey() + "' does not exist");
         }
-
-        transformWithSchema(schema, resultMap, requestContext);
-    }
-
-    /**
-     * Transforms a request by resolving the schema from a client ID.
-     *
-     * @param clientId the client ID to resolve the schema from
-     * @param resultMap the result map to populate with token data
-     * @param requestContext the request context containing headers and query parameters (may be null)
-     * @return true if transformation was successful, false if no mapping found
-     * @throws InterruptedException if the token request is interrupted
-     */
-    public boolean transformByClientId(
-            final String clientId,
-            final Map<String, Object> resultMap,
-            final RequestContext requestContext
-    ) throws InterruptedException {
-        final var schemaName = config.resolveSchemaFromClientId(clientId);
-        if (schemaName == null) {
-            LOG.debug("No schema mapping found for client '{}'", clientId);
-            return false;
-        }
-
-        LOG.debug("Resolved schema '{}' for client '{}'", schemaName, clientId);
-        transformBySchemaName(schemaName, resultMap, requestContext);
-        return true;
-    }
-
-    /**
-     * Transforms a request using the provided RequestContext.
-     * Extracts the authorization header and path from the context, resolves the auth type
-     * from the path, extracts client identity, and performs the transformation.
-     *
-     * @param requestContext the request context containing headers and path
-     * @param resultMap the result map to populate with token data
-     * @return true if transformation was successful, false if no mapping found
-     * @throws InterruptedException if the token request is interrupted
-     */
-    public boolean transformByRequestContext(
-            final RequestContext requestContext,
-            final Map<String, Object> resultMap
-    ) throws InterruptedException {
-        if (requestContext == null) {
-            LOG.debug("Request context is null");
-            return false;
-        }
-
-        final var authHeader = requestContext.getAuthorizationHeader();
-        if (authHeader == null || authHeader.isEmpty()) {
-            LOG.debug("Authorization header is empty");
-            return false;
-        }
-
-        // Resolve auth type from path
-        final var path = requestContext.getPath();
-        final var authType = config.resolveAuthTypeFromPath(path);
-        if (authType == null) {
-            LOG.debug("No auth type configured for path '{}', cannot extract client identity", path);
-            return false;
-        }
-
-        LOG.debug("Resolved auth type '{}' for path '{}'", authType, path);
-
-        // Extract client identity using the resolved auth type
-        final var clientIdentity = ClientIdentityExtractorFactory.extract(authType, authHeader);
-        if (clientIdentity == null) {
-            LOG.debug("Could not extract client identity from Authorization header using auth type {}", authType);
-            return false;
-        }
-
-        return transformByClientId(clientIdentity.id(), resultMap, requestContext);
-    }
-
-
-    /**
-     * Gets the token schema by name.
-     *
-     * @param schemaName the schema name
-     * @return the token schema, or null if not found
-     */
-    public TokenSchema getSchema(final String schemaName) {
-        if (config.getTokenSchemas() == null) {
-            return null;
-        }
-        return config.getTokenSchemas().get(schemaName);
-    }
-
-    /**
-     * Resolves schema name from client ID using clientMappings.
-     *
-     * @param clientId the client ID
-     * @return the schema name, or null if no mapping exists
-     */
-    public String resolveSchemaName(final String clientId) {
-        return config.resolveSchemaFromClientId(clientId);
-    }
-
-    /**
-     * Performs the token transformation using the provided schema.
-     * Synchronized on the schema to prevent race conditions.
-     */
-    private void transformWithSchema(
-            final TokenSchema schema,
-            final Map<String, Object> resultMap,
-            final RequestContext requestContext
-    ) throws InterruptedException {
-        final var sharedVariables = schema.getSharedVariables();
-
-        if (isTokenExpired(schema)) {
+        final var sharedVariables = tokenSchema.getSharedVariables();
+        if (isTokenExpired(tokenSchema)) {
             LOG.debug("Cached token is expired. Requesting a new token.");
-            refreshToken(schema, sharedVariables, requestContext);
+            refreshTokenSafely(tokenSchema, sharedVariables, parsedContext);
         } else {
             LOG.debug("Using cached token.");
         }
 
-        updateResultMap(schema.getTokenUpdate(), sharedVariables, resultMap, requestContext);
+        var update = tokenSchema.getTokenUpdate();
+        var resultMap = this.createResultMap(update, sharedVariables, parsedContext);
+        incomingContext.updateRequest(resultMap);
+    }
+
+    /**
+     * Updates the result map with resolved token data.
+     */
+    private Map<String, Object> createResultMap(
+            final UpdateSchema update,
+            final SharedVariableSchema sharedVariables,
+            final RequestContext requestContext
+    ) {
+        var resultMap = new HashMap<String, Object>();
+        // Update body if configured
+        if (update.getBody() != null && !update.getBody().isEmpty()) {
+            resultMap.put("requestBody", new HashMap<>(update.getResolvedBody(sharedVariables, requestContext)));
+        }
+
+        // Update headers if configured
+        if (update.getHeaders() != null && !update.getHeaders().isEmpty()) {
+            @SuppressWarnings("unchecked")
+            var requestHeaders = (Map<String, Object>) resultMap.get(REQUEST_HEADERS);
+            if (requestHeaders == null) {
+                requestHeaders = new HashMap<>();
+                resultMap.put(REQUEST_HEADERS, requestHeaders);
+            }
+
+            @SuppressWarnings("unchecked")
+            var updateMap = (Map<String, String>) requestHeaders.get(UPDATE);
+            if (updateMap == null) {
+                updateMap = new HashMap<>();
+                requestHeaders.put(UPDATE, updateMap);
+            }
+            updateMap.putAll(update.getResolvedHeaders(sharedVariables, requestContext));
+        }
+        return resultMap;
+    }
+
+    /**
+     * Thread-safe wrapper that ensures only one thread refreshes the token at a time.
+     */
+    private void refreshTokenSafely(
+            final TokenSchema schema,
+            final SharedVariableSchema sharedVariables,
+            final RequestContext requestContext
+    ) throws InterruptedException {
+        final var lock = schema.getTokenRefreshLock();
+        lock.lockInterruptibly();
+        try {
+            // Double-check if token is still expired after acquiring lock
+            // Another thread may have already refreshed it
+            if (isTokenExpired(schema)) {
+                refreshToken(schema, sharedVariables, requestContext);
+            } else {
+                LOG.debug("Token was refreshed by another thread, using cached token.");
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * Refreshes the token by making a request to the token service.
+     * This method should only be called within a lock to ensure thread safety.
      */
     private void refreshToken(
             final TokenSchema schema,
@@ -243,17 +162,6 @@ public class TokenExchangeService {
         final var request = this.httpClientFactory.buildRequest(requestSchema, resolvedHeaders, resolvedBody);
         final var response = this.httpClientFactory.send(client, request);
 
-        processTokenResponse(response, schema, sharedVariables);
-    }
-
-    /**
-     * Processes the token response and updates shared variables.
-     */
-    private void processTokenResponse(
-            final HttpResponse<String> response,
-            final TokenSchema schema,
-            final SharedVariableSchema sharedVariables
-    ) {
         if (response.statusCode() < 200 || response.statusCode() > 299) {
             LOG.error("Token request returned status code: {}", response.statusCode());
             return;
@@ -265,39 +173,6 @@ public class TokenExchangeService {
         // Update expiration if configured
         if (schema.getTokenUpdate().isUpdateExpirationFromTtl()) {
             sharedVariables.updateExpiration();
-        }
-    }
-
-    /**
-     * Updates the result map with resolved token data.
-     */
-    private void updateResultMap(
-            final UpdateSchema update,
-            final SharedVariableSchema sharedVariables,
-            final Map<String, Object> resultMap,
-            final RequestContext requestContext
-    ) {
-        // Update body if configured
-        if (update.getBody() != null && !update.getBody().isEmpty()) {
-            resultMap.put("requestBody", new HashMap<>(update.getResolvedBody(sharedVariables, requestContext)));
-        }
-
-        // Update headers if configured
-        if (update.getHeaders() != null && !update.getHeaders().isEmpty()) {
-            @SuppressWarnings("unchecked")
-            var requestHeaders = (Map<String, Object>) resultMap.get(REQUEST_HEADERS);
-            if (requestHeaders == null) {
-                requestHeaders = new HashMap<>();
-                resultMap.put(REQUEST_HEADERS, requestHeaders);
-            }
-
-            @SuppressWarnings("unchecked")
-            var updateMap = (Map<String, String>) requestHeaders.get(UPDATE);
-            if (updateMap == null) {
-                updateMap = new HashMap<>();
-                requestHeaders.put(UPDATE, updateMap);
-            }
-            updateMap.putAll(update.getResolvedHeaders(sharedVariables, requestContext));
         }
     }
 

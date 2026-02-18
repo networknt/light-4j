@@ -178,20 +178,12 @@ public class RequestSchema {
         this.sslContext = sslContext;
     }
 
-    public Map<String, String> getResolvedHeaders(final SharedVariableSchema sharedVariableSchema) {
-        return getResolvedHeaders(sharedVariableSchema, null);
-    }
-
     public Map<String, String> getResolvedHeaders(final SharedVariableSchema sharedVariableSchema, final RequestContext requestContext) {
         if (this.headers == null) {
             LOG.trace("No headers defined in request schema.");
             return new HashMap<>();
         }
         return VariableResolver.resolveMap(this.headers, sharedVariableSchema.asMap(), requestContext);
-    }
-
-    public Map<String, String> getResolvedBody(final SharedVariableSchema sharedVariableSchema) {
-        return getResolvedBody(sharedVariableSchema, null);
     }
 
     public Map<String, String> getResolvedBody(final SharedVariableSchema sharedVariableSchema, final RequestContext requestContext) {

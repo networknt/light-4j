@@ -113,7 +113,7 @@ public class SourceSchema {
             case HEADER:
                 final var headerValue = response.headers().map().get(this.expirationSchema.field);
                 if (headerValue != null && !headerValue.isEmpty()) {
-                    final var expiration = Long.parseLong(headerValue.get(0));
+                    final var expiration = Long.parseLong(headerValue.getFirst());
                     sharedVariables.setExpiration(this.expirationSchema.ttlUnit.unitToMillis(expiration));
                 } else {
                     LOG.error("Could not find '{}' in response headers", this.expirationSchema.field);
@@ -138,9 +138,11 @@ public class SourceSchema {
     /**
      * Writes source values to shared variables based on source-destination mappings.
      */
-    private static void writeToSharedVariables(final SharedVariableSchema sharedVariables,
-                                               final Map<String, Object> sourceData,
-                                               final List<SourceDestinationDefinition> mappings) {
+    private static void writeToSharedVariables(
+            final SharedVariableSchema sharedVariables,
+            final Map<String, Object> sourceData,
+            final List<SourceDestinationDefinition> mappings
+    ) {
         if (mappings == null || sourceData == null) {
             return;
         }
