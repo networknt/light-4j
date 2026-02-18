@@ -158,6 +158,12 @@ public final class SimpleConnectionState {
         }
     }
 
+    /**
+     * Borrow a connection token.
+     * @param now the current time
+     * @return the connection token
+     * @throws RuntimeException RuntimeException
+     */
     public synchronized ConnectionToken borrow(long now) throws RuntimeException {
         if(borrowable(now)) {
             ConnectionToken connectionToken = new ConnectionToken(connection);
@@ -173,12 +179,21 @@ public final class SimpleConnectionState {
         }
     }
 
+    /**
+     * Restore a connection token.
+     * @param connectionToken the connection token
+     */
     public synchronized void restore(ConnectionToken connectionToken) {
         borrowedTokens.remove(connectionToken);
         long now = System.currentTimeMillis();
         logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
     }
 
+    /**
+     * Safe close the connection.
+     * @param now the current time
+     * @return true if closed
+     */
     public synchronized boolean safeClose(long now) {
         logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
         if(closed())
@@ -193,6 +208,10 @@ public final class SimpleConnectionState {
         return closed;
     }
 
+    /**
+     * Check if closed.
+     * @return true if closed
+     */
     public synchronized boolean closed() {
         if(closed)
             return closed;
@@ -201,24 +220,49 @@ public final class SimpleConnectionState {
         return closed;
     }
 
+    /**
+     * Check if expired.
+     * @param now the current time
+     * @return true if expired
+     */
     public synchronized boolean expired(long now) {
         return now - startTime >= EXPIRE_TIME;
     }
 
+    /**
+     * Check if borrowed.
+     * @return true if borrowed
+     */
     public synchronized boolean borrowed() {
         return borrowedTokens.size() > 0;
     }
 
+    /**
+     * Check if max borrowed.
+     * @return true if max borrowed
+     */
     public synchronized boolean maxBorrowed() {
         return borrowedTokens.size() >= MAX_BORROWS;
     }
 
+    /**
+     * Check if borrowable.
+     * @param now the current time
+     * @return true if borrowable
+     */
     public synchronized boolean borrowable(long now) {
         return connection.isOpen() && !expired(now) && !maxBorrowed();
     }
 
+    /**
+     * Get the connection.
+     * @return the connection
+     */
     public SimpleConnection connection() { return connection; }
 
+    /**
+     * ConnectionToken class.
+     */
     public class ConnectionToken {
         private final SimpleConnection connection;
         private final SimpleConnectionState holder;
@@ -230,9 +274,25 @@ public final class SimpleConnectionState {
             this.uri = SimpleConnectionState.this.uri;
         }
 
+        /**
+         * Get the holder.
+         * @return the holder
+         */
         public SimpleConnectionState holder() { return holder; }
+        /**
+         * Get the connection.
+         * @return the connection
+         */
         public SimpleConnection connection() { return connection; }
+        /**
+         * Get the raw connection.
+         * @return the raw connection
+         */
         public Object getRawConnection() { return connection.getRawConnection(); }
+        /**
+         * Get the URI.
+         * @return the URI
+         */
         public URI uri() { return uri; }
     }
 

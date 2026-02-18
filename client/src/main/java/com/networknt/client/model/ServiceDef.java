@@ -16,6 +16,9 @@ package com.networknt.client.model;
  */
 
 
+/**
+ * ServiceDef class.
+ */
 public class ServiceDef {
     private String protocol;
     private String serviceId;
@@ -23,12 +26,25 @@ public class ServiceDef {
     private String requestKey;
 
     // To pick up the environment from config
+    /**
+     * Constructor.
+     * @param protocol the protocol
+     * @param serviceId the serviceId
+     * @param requestKey the requestKey
+     */
     public ServiceDef(String protocol, String serviceId, String requestKey) {
         this.protocol = protocol;
         this.serviceId = serviceId;
         this.requestKey = requestKey;
     }
 
+    /**
+     * Constructor.
+     * @param protocol the protocol
+     * @param serviceId the serviceId
+     * @param environment the environment
+     * @param requestKey the requestKey
+     */
     public ServiceDef(String protocol, String serviceId, String environment, String requestKey) {
         this.protocol = protocol;
         this.serviceId = serviceId;
@@ -36,34 +52,66 @@ public class ServiceDef {
         this.environment = environment;
     }
 
+    /**
+     * Get protocol.
+     * @return the protocol
+     */
     public String getProtocol() {
         return protocol;
     }
 
+    /**
+     * Set protocol.
+     * @param protocol the protocol
+     */
     public void setProtocol(String protocol) {
         this.protocol = protocol;
     }
 
+    /**
+     * Get serviceId.
+     * @return the serviceId
+     */
     public String getServiceId() {
         return serviceId;
     }
 
+    /**
+     * Set serviceId.
+     * @param serviceId the serviceId
+     */
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
 
+    /**
+     * Get environment.
+     * @return the environment
+     */
     public String getEnvironment() {
         return environment;
     }
 
+    /**
+     * Set environment.
+     * @param environment the environment
+     */
     public void setEnvironment(String environment) {
         this.environment = environment;
     }
 
+    /**
+     * Get requestKey.
+     * @return the requestKey
+     */
     public String getRequestKey() {
         return requestKey;
     }
 
+    /**
+     * Set requestKey.
+     * @param requestKey the requestKey
+     */
     public void setRequestKey(String requestKey) {
         this.requestKey = requestKey;
     }

@@ -12,8 +12,10 @@ import java.io.Serializable;
  */
 public class BodyPart<T> implements Serializable {
 
+    /** The content type */
     private final ContentType contentType;
 
+    /** The body */
     private final T body;
 
     /**

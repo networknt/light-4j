@@ -43,8 +43,16 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * SimpleUndertowConnectionMaker class.
+ */
 public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 {
+    /**
+     * Constructor.
+     */
+    public SimpleUndertowConnectionMaker() {
+    }
     private static final Logger logger = LoggerFactory.getLogger(SimpleUndertowConnectionMaker.class);
     private static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
     private static final int DEFAULT_WORKER_IO_THREADS = 8;
@@ -54,6 +62,10 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         static final SimpleUndertowConnectionMaker INSTANCE = new SimpleUndertowConnectionMaker();
     }
 
+    /**
+     * Get instance.
+     * @return the instance
+     */
     public static SimpleConnectionMaker instance() {
         return Holder.INSTANCE;
     }
@@ -174,6 +186,11 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return connection;
     }
 
+    /**
+     * Get exception details.
+     * @param e the exception
+     * @return the details
+     */
     public static String exceptionDetails(Exception e) {
         if(e == null || e.getMessage() == null)
             return "";
@@ -181,6 +198,11 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
             return e.getMessage();
     }
 
+    /**
+     * Get port.
+     * @param connection the connection
+     * @return the port
+     */
     public static String port(ClientConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress().toString();

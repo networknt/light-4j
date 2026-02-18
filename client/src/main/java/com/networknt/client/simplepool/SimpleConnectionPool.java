@@ -32,12 +32,25 @@ public final class SimpleConnectionPool {
     private final long expireTime;
     private final int poolSize;
 
+    /**
+     * Constructor.
+     * @param expireTime the expire time
+     * @param poolSize the pool size
+     * @param connectionMaker the connection maker
+     */
     public SimpleConnectionPool(long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         this.expireTime = expireTime;
         this.poolSize = poolSize;
         this.connectionMaker = connectionMaker;
     }
 
+    /**
+     * Borrow a connection token.
+     * @param createConnectionTimeout the create connection timeout
+     * @param uri the URI
+     * @return the connection token
+     * @throws RuntimeException RuntimeException
+     */
     public SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, URI uri)
         throws RuntimeException
     {
@@ -46,6 +59,10 @@ public final class SimpleConnectionPool {
         return pool.borrow(createConnectionTimeout);
     }
 
+    /**
+     * Restore a connection token.
+     * @param connectionToken the connection token
+     */
     public void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null)
             return;

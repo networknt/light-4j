@@ -686,6 +686,16 @@ public class Http2Client {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
+    /**
+     * Connects to the given URI with a bind address, using the given worker, SSL, buffer pool, and options.
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param worker the Xnio worker
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return an IoFuture that will contain the ClientConnection
+     */
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -997,6 +1007,16 @@ public class Http2Client {
         provider.connect(listener, uri, ioThread, ssl, bufferPool, options);
     }
 
+    /**
+     * Connects to the given URI with a listener and a bind address, using the given IoThread, SSL, buffer pool, and options.
+     * @param listener the callback to notify
+     * @param bindAddress the local address to bind to
+     * @param uri the URI to connect to
+     * @param ioThread the Xnio IoThread
+     * @param ssl the Xnio SSL context
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);

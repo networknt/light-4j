@@ -20,6 +20,9 @@ import com.networknt.client.model.ServiceDef;
 
 import java.util.Map;
 
+/**
+ * RestClient interface.
+ */
 public interface RestClient {
 
 

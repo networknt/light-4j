@@ -24,6 +24,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SimplePoolMetrics {
 
+    /**
+     * Constructor.
+     */
+    public SimplePoolMetrics() {
+    }
+
     private final Map<URI, UriMetrics> uriMetrics = new ConcurrentHashMap<>();
 
     /**
@@ -109,6 +115,11 @@ public class SimplePoolMetrics {
      * Metrics for a single URI.
      */
     public static class UriMetrics {
+        /**
+         * Constructor.
+         */
+        public UriMetrics() {
+        }
         private final AtomicLong totalBorrows = new AtomicLong(0);
         private final AtomicLong totalRestores = new AtomicLong(0);
         private final AtomicLong totalCreated = new AtomicLong(0);
@@ -140,26 +151,50 @@ public class SimplePoolMetrics {
             this.activeConnections = count;
         }
 
+        /**
+         * Get total borrows.
+         * @return total borrows
+         */
         public long getTotalBorrows() {
             return totalBorrows.get();
         }
 
+        /**
+         * Get total restores.
+         * @return total restores
+         */
         public long getTotalRestores() {
             return totalRestores.get();
         }
 
+        /**
+         * Get total created.
+         * @return total created
+         */
         public long getTotalCreated() {
             return totalCreated.get();
         }
 
+        /**
+         * Get total closed.
+         * @return total closed
+         */
         public long getTotalClosed() {
             return totalClosed.get();
         }
 
+        /**
+         * Get borrow failures.
+         * @return borrow failures
+         */
         public long getBorrowFailures() {
             return borrowFailures.get();
         }
 
+        /**
+         * Get active connections.
+         * @return active connections
+         */
         public int getActiveConnections() {
             return activeConnections;
         }

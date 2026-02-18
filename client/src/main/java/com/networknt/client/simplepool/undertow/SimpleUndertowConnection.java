@@ -20,9 +20,16 @@ import io.undertow.client.ClientConnection;
 
 import java.io.IOException;
 
+/**
+ * SimpleUndertowConnection class.
+ */
 public class SimpleUndertowConnection implements SimpleConnection {
     private final ClientConnection connection;
 
+    /**
+     * Constructor.
+     * @param connection the client connection
+     */
     public SimpleUndertowConnection(ClientConnection connection) {
         this.connection = connection;
     }

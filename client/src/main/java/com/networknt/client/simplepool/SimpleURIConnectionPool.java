@@ -76,6 +76,13 @@ public final class SimpleURIConnectionPool {
     private final Set<SimpleConnectionState> borrowed = new HashSet<>();
     private final Set<SimpleConnectionState> notBorrowedExpired = new HashSet<>();
 
+    /**
+     * Constructor.
+     * @param uri the URI
+     * @param expireTime the expire time
+     * @param poolSize the pool size
+     * @param connectionMaker the connection maker
+     */
     public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         EXPIRY_TIME = expireTime;
         this.uri = uri;
@@ -83,6 +90,18 @@ public final class SimpleURIConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
+    /**
+     * Constructor.
+     * @param uri the URI
+     * @param expireTime the expire time
+     * @param poolSize the pool size
+     * @param bindAddress the bind address
+     * @param worker the worker
+     * @param bufferPool the buffer pool
+     * @param ssl the SSL
+     * @param options the options
+     * @param connectionMaker the connection maker
+     */
     public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, InetSocketAddress bindAddress, XnioWorker worker, ByteBufferPool bufferPool, XnioSsl ssl, OptionMap options, SimpleConnectionMaker connectionMaker) {
         EXPIRY_TIME = expireTime;
         this.uri = uri;
@@ -96,7 +115,7 @@ public final class SimpleURIConnectionPool {
     }
 
     /***
-     *
+     * Borrow a connection token.
      * @param createConnectionTimeout the maximum time to wait for a connection to be created
      * @return a connection token that represents the borrowing of a connection by a thread
      * @throws RuntimeException if an attempt is made to exceed the maximum size of the connection pool
