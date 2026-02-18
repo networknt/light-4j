@@ -122,7 +122,7 @@ public class TokenExchangeService {
             final RequestContext requestContext
     ) throws InterruptedException {
         final var lock = schema.getTokenRefreshLock();
-        lock.lock();
+        lock.lockInterruptibly();
         try {
             // Double-check if token is still expired after acquiring lock
             // Another thread may have already refreshed it
