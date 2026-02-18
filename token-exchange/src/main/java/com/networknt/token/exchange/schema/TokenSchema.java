@@ -1,10 +1,16 @@
 package com.networknt.token.exchange.schema;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.networknt.config.schema.ObjectField;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 
 public class TokenSchema {
+
+    @JsonIgnore
+    private final ReentrantLock tokenRefreshLock = new ReentrantLock();
 
     private static final String SHARED_VARIABLES = "sharedVariables";
     private static final String REQUEST = "request";
@@ -59,5 +65,9 @@ public class TokenSchema {
 
     public UpdateSchema getTokenUpdate() {
         return tokenUpdate;
+    }
+
+    public ReentrantLock getTokenRefreshLock() {
+        return tokenRefreshLock;
     }
 }
