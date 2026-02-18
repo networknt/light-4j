@@ -69,7 +69,7 @@ public class TokenExchangeService {
         final var sharedVariables = tokenSchema.getSharedVariables();
         if (isTokenExpired(tokenSchema)) {
             LOG.debug("Cached token is expired. Requesting a new token.");
-            refreshToken(tokenSchema, sharedVariables, parsedContext);
+            refreshTokenSafely(tokenSchema, sharedVariables, parsedContext);
         } else {
             LOG.debug("Using cached token.");
         }
@@ -114,7 +114,31 @@ public class TokenExchangeService {
     }
 
     /**
+     * Thread-safe wrapper that ensures only one thread refreshes the token at a time.
+     */
+    private void refreshTokenSafely(
+            final TokenSchema schema,
+            final SharedVariableSchema sharedVariables,
+            final RequestContext requestContext
+    ) throws InterruptedException {
+        final var lock = schema.getTokenRefreshLock();
+        lock.lock();
+        try {
+            // Double-check if token is still expired after acquiring lock
+            // Another thread may have already refreshed it
+            if (isTokenExpired(schema)) {
+                refreshToken(schema, sharedVariables, requestContext);
+            } else {
+                LOG.debug("Token was refreshed by another thread, using cached token.");
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Refreshes the token by making a request to the token service.
+     * This method should only be called within a lock to ensure thread safety.
      */
     private void refreshToken(
             final TokenSchema schema,
