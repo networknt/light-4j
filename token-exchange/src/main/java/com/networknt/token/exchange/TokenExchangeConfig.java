@@ -239,26 +239,29 @@ public class TokenExchangeConfig {
     @SuppressWarnings("unchecked")
     private void setConfigData() {
         var object = this.mappedConfig.get(ENABLED_FIELD);
-        if (object instanceof Boolean enabledValue)
+        if (object instanceof Boolean enabledValue) {
             this.enabled = enabledValue;
+        }
 
         object = this.mappedConfig.get(PROXY_HOST);
-        if (object instanceof String host)
+        if (object instanceof String host) {
             this.proxyHost = host;
+        }
 
         object = this.mappedConfig.get(PROXY_PORT);
-        if (object instanceof Integer port)
+        if (object instanceof Integer port) {
             this.proxyPort = port;
+        }
 
         object = this.mappedConfig.get(ENABLE_HTTP2);
-        if (object instanceof Boolean val)
+        if (object instanceof Boolean val) {
             this.enableHttp2 = val;
+        }
 
         object = this.mappedConfig.get(MODULE_MASKS);
-        if (object instanceof List
-                && !((List<?>) object).isEmpty()
-                && ((List<?>) object).getFirst() instanceof String)
+        if (object instanceof List && !((List<?>) object).isEmpty() && ((List<?>) object).getFirst() instanceof String) {
             setModuleMasks((List<String>) object);
+        }
 
         if (this.mappedConfig.get(TOKEN_SCHEMA) != null) {
             final var rawTokenSchemas = this.mappedConfig.get(TOKEN_SCHEMA);
@@ -270,8 +273,9 @@ public class TokenExchangeConfig {
 
         // Load client mappings
         object = this.mappedConfig.get(CLIENT_MAPPINGS);
-        if (object instanceof Map)
+        if (object instanceof Map) {
             this.clientMappings = (Map<String, String>) object;
+        }
 
         // Load path auth mappings
         object = this.mappedConfig.get(PATH_AUTH_MAPPINGS);
@@ -298,12 +302,13 @@ public class TokenExchangeConfig {
     }
 
     private AuthType parseAuthType(final Object value) throws IllegalArgumentException {
-        if (value instanceof AuthType auth)
+        if (value instanceof AuthType auth) {
             return auth;
+        }
 
-        if (value instanceof String authStr)
+        if (value instanceof String authStr) {
             return AuthType.valueOf(authStr.toUpperCase());
-
+        }
 
         return null;
     }

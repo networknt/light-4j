@@ -72,9 +72,11 @@ public class TokenHttpClientFactory {
      * !ref() variables that change between calls (e.g., accessToken, constructedJwt).
      * Each token request should be built fresh with the current resolved values.
      */
-    public HttpRequest buildRequest(final RequestSchema schema,
-                                    final Map<String, String> resolvedHeaders,
-                                    final Map<String, String> resolvedBody) {
+    public HttpRequest buildRequest(
+            final RequestSchema schema,
+            final Map<String, String> resolvedHeaders,
+            final Map<String, String> resolvedBody
+    ) {
         LOG.debug("Building new HTTP request to {}", schema.getUrl());
         return new HttpTokenRequestBuilder(schema.getUrl())
                 .withHeaders(resolvedHeaders)
@@ -120,9 +122,7 @@ public class TokenHttpClientFactory {
 
         // Use HTTP/2 setting from the schema
         builder.version(schema.isEnableHttp2() ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1);
-
         configureHostnameVerification();
-
         return builder.build();
     }
 

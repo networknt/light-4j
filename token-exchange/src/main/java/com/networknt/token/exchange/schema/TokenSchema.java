@@ -1,7 +1,6 @@
 package com.networknt.token.exchange.schema;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.ObjectField;
 
 

@@ -10,7 +10,7 @@ import java.util.Base64;
  * Extracts client identity from Basic Authorization headers.
  * Format: "Basic base64(username:password)"
  */
-public class BasicAuthClientIdentityExtractor implements ClientIdentityExtractor {
+public class BasicAuthClientIdentityExtractor implements ClientIdentity.Extractor {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasicAuthClientIdentityExtractor.class);
     private static final String BASIC_PREFIX = "Basic ";

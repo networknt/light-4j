@@ -20,6 +20,8 @@ import com.networknt.status.Status;
 import com.networknt.token.exchange.RequestContext;
 import com.networknt.token.exchange.TokenExchangeConfig;
 import com.networknt.token.exchange.TokenExchangeService;
+import com.networknt.token.exchange.extract.AuthType;
+import com.networknt.token.exchange.extract.ClientIdentity;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import com.networknt.handler.Handler;
@@ -54,7 +56,7 @@ public class TokenExchangeHandler implements MiddlewareHandler {
     private static final String STATUS_TOKEN_EXCHANGE_FAILED = "ERR10001";
 
     // Only store the config name, not the config itself (Config Stateless pattern)
-    private String configName = TokenExchangeConfig.CONFIG_NAME;
+    private final String configName = TokenExchangeConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
     private final TokenExchangeService tokenService;
@@ -76,25 +78,13 @@ public class TokenExchangeHandler implements MiddlewareHandler {
             String authHeader = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
             if (authHeader != null && !authHeader.isEmpty()) {
                 try {
-                    // Build request context from the exchange
-                    Map<String, String> headers = new HashMap<>();
-                    exchange.getRequestHeaders().forEach(header -> headers.put(
-                            header.getHeaderName().toString(),
-                            exchange.getRequestHeaders().getFirst(header.getHeaderName()))
-                    );
+                    // Build client-ID based request context parser
+                    RequestContext.Parser requestParser = new ClientIdBasedRequestParser(exchange, config);
 
-                    String path = exchange.getRequestPath();
-                    RequestContext requestContext = RequestContext.of(headers, null, path);
+                    // Use the TokenExchangeService to transform the token
+                    this.tokenService.transform(requestParser);
 
-                    // Use the TokenTransformationService to transform the token
-                    Map<String, Object> resultMap = new HashMap<>();
-                    if (this.tokenService.transformByRequestContext(requestContext, resultMap)) {
-                        // Apply the transformed headers to the exchange
-                        applyTransformedHeaders(exchange, resultMap);
-                        logger.debug("Token exchange successful.");
-                    } else {
-                        logger.debug("No token transformation applied - no matching schema found.");
-                    }
+                    logger.debug("Token exchange successful.");
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     logger.error("Token exchange was interrupted", e);
@@ -112,25 +102,70 @@ public class TokenExchangeHandler implements MiddlewareHandler {
     }
 
     /**
-     * Apply the transformed headers from the result map to the exchange.
-     *
-     * @param exchange the HTTP server exchange
-     * @param resultMap the result map containing transformed headers
+     * Client-ID based request parser.
+     * Resolves schema by extracting client identity from Authorization header.
      */
-    @SuppressWarnings("unchecked")
-    private void applyTransformedHeaders(HttpServerExchange exchange, Map<String, Object> resultMap) {
-        Object requestHeaders = resultMap.get(TokenExchangeService.REQUEST_HEADERS);
-        if (requestHeaders instanceof Map) {
-            Map<String, Object> headersMap = (Map<String, Object>) requestHeaders;
-            Object update = headersMap.get(TokenExchangeService.UPDATE);
-            if (update instanceof Map) {
-                Map<String, String> updateMap = (Map<String, String>) update;
-                for (Map.Entry<String, String> entry : updateMap.entrySet()) {
-                    exchange.getRequestHeaders().put(
-                            io.undertow.util.HttpString.tryFromString(entry.getKey()),
-                            entry.getValue());
-                    if (logger.isTraceEnabled()) {
-                        logger.trace("Updated header '{}' with new token value", entry.getKey());
+    private static class ClientIdBasedRequestParser implements RequestContext.Parser {
+        private final HttpServerExchange exchange;
+        private final TokenExchangeConfig config;
+
+        private ClientIdBasedRequestParser(final HttpServerExchange exchange, final TokenExchangeConfig config) {
+            this.exchange = exchange;
+            this.config = config;
+        }
+
+        @Override
+        public RequestContext parseContext() {
+            // Build context from exchange headers and path
+            Map<String, String> headers = new HashMap<>();
+            exchange.getRequestHeaders().forEach(header ->
+                headers.put(header.getHeaderName().toString().toLowerCase(),
+                           exchange.getRequestHeaders().getFirst(header.getHeaderName()))
+            );
+
+            String path = exchange.getRequestPath();
+
+            // Resolve auth type from path
+            AuthType authType = config.resolveAuthTypeFromPath(path);
+            if (authType == null) {
+                logger.warn("No auth type resolved for path: {}", path);
+                return null;
+            }
+
+            // Extract client identity
+            String authHeader = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+            ClientIdentity identity = authType.extractor().extract(authHeader);
+            if (identity == null) {
+                logger.warn("Failed to extract client identity from Authorization header");
+                return null;
+            }
+
+            // Resolve schema key from client ID
+            String schemaKey = config.resolveSchemaFromClientId(identity.id());
+            if (schemaKey == null) {
+                logger.warn("No schema mapping found for client ID: {}", identity.id());
+                return null;
+            }
+
+            return new RequestContext(schemaKey, headers, Map.of(), path);
+        }
+
+        @Override
+        public void updateRequest(Map<String, Object> resultMap) {
+            // Apply transformed headers to the exchange
+            Object requestHeaders = resultMap.get(TokenExchangeService.REQUEST_HEADERS);
+            if (requestHeaders instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> headersMap = (Map<String, Object>) requestHeaders;
+                Object update = headersMap.get(TokenExchangeService.UPDATE);
+                if (update instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> updateMap = (Map<String, String>) update;
+                    for (Map.Entry<String, String> entry : updateMap.entrySet()) {
+                        exchange.getRequestHeaders().put(
+                                io.undertow.util.HttpString.tryFromString(entry.getKey()),
+                                entry.getValue());
+                        logger.trace("Updated header '{}' with new value", entry.getKey());
                     }
                 }
             }

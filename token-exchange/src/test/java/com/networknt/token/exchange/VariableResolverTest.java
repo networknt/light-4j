@@ -132,9 +132,9 @@ public class VariableResolverTest {
     public void testResolveRequestHeaderReference() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer original-token");
-        headers.put("X-Correlation-ID", "corr-12345");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/v1/test");
+        headers.put("authorization", "Bearer original-token");
+        headers.put("x-correlation-id", "corr-12345");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/v1/test");
 
         String result = VariableResolver.resolve(
                 "Original auth: !ref(request.header.authorization)",
@@ -148,8 +148,8 @@ public class VariableResolverTest {
     public void testResolveRequestHeaderReferenceCaseInsensitive() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
-        headers.put("X-Custom-Header", "custom-value");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/test");
+        headers.put("x-custom-header", "custom-value");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/test");
 
         // Reference using different case
         String result = VariableResolver.resolve(
@@ -164,9 +164,9 @@ public class VariableResolverTest {
     public void testResolveRequestQueryReference() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("clientId", "query-client-123");
+        queryParams.put("clientid", "query-client-123");
         queryParams.put("scope", "read");
-        RequestContext requestContext = RequestContext.of(null, queryParams, "/api/test");
+        RequestContext requestContext = new RequestContext("test-schema", new HashMap<>(), queryParams, "/api/test");
 
         String result = VariableResolver.resolve(
                 "Client from query: !ref(request.query.clientId)",
@@ -180,8 +180,8 @@ public class VariableResolverTest {
     public void testResolveRequestQueryReferenceCaseInsensitive() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("ClientID", "query-client-456");
-        RequestContext requestContext = RequestContext.of(null, queryParams, "/api/test");
+        queryParams.put("clientid", "query-client-456");
+        RequestContext requestContext = new RequestContext("test-schema", new HashMap<>(), queryParams, "/api/test");
 
         // Reference using different case (lowercase)
         String result = VariableResolver.resolve(
@@ -195,7 +195,7 @@ public class VariableResolverTest {
     @Test
     public void testResolveRequestPathReference() {
         Map<String, Object> variables = new HashMap<>();
-        RequestContext requestContext = RequestContext.of(null, null, "/api/v1/users/123");
+        RequestContext requestContext = new RequestContext("test-schema", new HashMap<>(), new HashMap<>(), "/api/v1/users/123");
 
         String result = VariableResolver.resolve(
                 "Path: !ref(request.path)",
@@ -211,10 +211,10 @@ public class VariableResolverTest {
         variables.put("accessToken", "new-token");
 
         Map<String, String> headers = new HashMap<>();
-        headers.put("X-Request-ID", "req-999");
+        headers.put("x-request-id", "req-999");
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("tenant", "acme");
-        RequestContext requestContext = RequestContext.of(headers, queryParams, "/services/data");
+        RequestContext requestContext = new RequestContext("test-schema", headers, queryParams, "/services/data");
 
         String result = VariableResolver.resolve(
                 "token=!ref(sharedVariables.accessToken)&request_id=!ref(request.header.x-request-id)&tenant=!ref(request.query.tenant)",
@@ -242,8 +242,8 @@ public class VariableResolverTest {
     public void testResolveRequestReferenceMissingHeader() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "token");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/test");
+        headers.put("authorization", "token");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/test");
 
         // Reference a header that doesn't exist
         String result = VariableResolver.resolve(
@@ -260,8 +260,8 @@ public class VariableResolverTest {
         variables.put("clientId", "var-client");
 
         Map<String, String> headers = new HashMap<>();
-        headers.put("X-Correlation-ID", "corr-abc");
-        RequestContext requestContext = RequestContext.of(headers, null, "/test");
+        headers.put("x-correlation-id", "corr-abc");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/test");
 
         Map<String, String> templateMap = new HashMap<>();
         templateMap.put("client_id", "!ref(sharedVariables.clientId)");
@@ -279,8 +279,8 @@ public class VariableResolverTest {
     public void testResolveBearerToken() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/test");
+        headers.put("authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/test");
 
         // request.bearerToken should strip the "Bearer " prefix
         String result = VariableResolver.resolve(
@@ -296,8 +296,8 @@ public class VariableResolverTest {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
         // Authorization header without "Bearer " prefix (unusual but should still work)
-        headers.put("Authorization", "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.sig");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/test");
+        headers.put("authorization", "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.sig");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/test");
 
         String result = VariableResolver.resolve(
                 "token=!ref(request.bearerToken)",
@@ -312,7 +312,7 @@ public class VariableResolverTest {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
         // No Authorization header
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/test");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/test");
 
         String result = VariableResolver.resolve(
                 "token=!ref(request.bearerToken)",
@@ -330,9 +330,9 @@ public class VariableResolverTest {
         variables.put("clientSecret", "my-secret");
 
         Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIn0.sig");
-        headers.put("X-Correlation-ID", "corr-12345");
-        RequestContext requestContext = RequestContext.of(headers, null, "/api/exchange");
+        headers.put("authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIn0.sig");
+        headers.put("x-correlation-id", "corr-12345");
+        RequestContext requestContext = new RequestContext("test-schema", headers, new HashMap<>(), "/api/exchange");
 
         Map<String, String> templateMap = new HashMap<>();
         templateMap.put("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange");
