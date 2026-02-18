@@ -480,4 +480,3 @@ public class TokenExchangeServiceIntegrationTest {
         return headers;
     }
 }
-

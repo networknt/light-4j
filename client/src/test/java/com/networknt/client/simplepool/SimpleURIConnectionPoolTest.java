@@ -22,7 +22,7 @@ public class SimpleURIConnectionPoolTest {
     private URI uri = URI.create("https://localhost:8443");
     private long expireTime = 10000; // 10 seconds
     private int poolSize = 5;
-    
+
     @Mock
     private SimpleConnectionMaker connectionMaker;
 
@@ -35,21 +35,21 @@ public class SimpleURIConnectionPoolTest {
         when(mockConnection.isOpen()).thenReturn(true);
         when(mockConnection.isMultiplexingSupported()).thenReturn(false); // HTTP/1.1 behavior for deterministic counting
         when(mockConnection.getLocalAddress()).thenReturn("localhost:12345");
-        
+
         // Mock the makeConnection method used by SimpleConnectionState constructor
         // simple signature: makeConnection(long, InetSocketAddress, URI, XnioWorker, XnioSsl, ByteBufferPool, OptionMap, Set)
         when(connectionMaker.makeConnection(
-                anyLong(), 
-                nullable(java.net.InetSocketAddress.class), 
-                eq(uri), 
-                nullable(org.xnio.XnioWorker.class), 
-                nullable(org.xnio.ssl.XnioSsl.class), 
-                nullable(io.undertow.connector.ByteBufferPool.class), 
-                nullable(org.xnio.OptionMap.class), 
+                anyLong(),
+                nullable(java.net.InetSocketAddress.class),
+                eq(uri),
+                nullable(org.xnio.XnioWorker.class),
+                nullable(org.xnio.ssl.XnioSsl.class),
+                nullable(io.undertow.connector.ByteBufferPool.class),
+                nullable(org.xnio.OptionMap.class),
                 anySet()))
             .thenReturn(mockConnection);
-            
-            
+
+
         pool = new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker);
     }
 
@@ -83,7 +83,7 @@ public class SimpleURIConnectionPoolTest {
             pool.borrow(1000);
             Assert.fail("Should have thrown RuntimeException for pool size limit");
         } catch (RuntimeException e) {
-            Assert.assertTrue("Exception message should check pool size", 
+            Assert.assertTrue("Exception message should check pool size",
                 e.getMessage().contains("exceed the maximum size"));
         }
     }
@@ -98,16 +98,16 @@ public class SimpleURIConnectionPoolTest {
         // Borrow again - should get the same connection
         SimpleConnectionState.ConnectionToken token2 = pool.borrow(1000);
         Assert.assertSame("Should reuse the same connection", conn1, token2.connection());
-        
+
         // Verify connection maker was only called once
         verify(connectionMaker, times(1)).makeConnection(
-                anyLong(), 
-                nullable(java.net.InetSocketAddress.class), 
-                eq(uri), 
-                nullable(org.xnio.XnioWorker.class), 
-                nullable(org.xnio.ssl.XnioSsl.class), 
-                nullable(io.undertow.connector.ByteBufferPool.class), 
-                nullable(org.xnio.OptionMap.class), 
+                anyLong(),
+                nullable(java.net.InetSocketAddress.class),
+                eq(uri),
+                nullable(org.xnio.XnioWorker.class),
+                nullable(org.xnio.ssl.XnioSsl.class),
+                nullable(io.undertow.connector.ByteBufferPool.class),
+                nullable(org.xnio.OptionMap.class),
                 anySet());
     }
 
@@ -132,39 +132,39 @@ public class SimpleURIConnectionPoolTest {
 
         // Original connection should be closed
         verify(mockConnection, atLeastOnce()).safeClose();
-        
+
         // Count might still be 1 because we borrowed a new one, but we expect maker to be called twice
         verify(connectionMaker, times(2)).makeConnection(
-                anyLong(), 
-                nullable(java.net.InetSocketAddress.class), 
-                eq(uri), 
-                nullable(org.xnio.XnioWorker.class), 
-                nullable(org.xnio.ssl.XnioSsl.class), 
-                nullable(io.undertow.connector.ByteBufferPool.class), 
-                nullable(org.xnio.OptionMap.class), 
+                anyLong(),
+                nullable(java.net.InetSocketAddress.class),
+                eq(uri),
+                nullable(org.xnio.XnioWorker.class),
+                nullable(org.xnio.ssl.XnioSsl.class),
+                nullable(io.undertow.connector.ByteBufferPool.class),
+                nullable(org.xnio.OptionMap.class),
                 anySet());
     }
-    
+
     @Test
     public void testConnectionCreationFailure() {
         // Mock maker to return null (simulating failure)
         when(connectionMaker.makeConnection(
-                anyLong(), 
-                nullable(java.net.InetSocketAddress.class), 
-                eq(uri), 
-                nullable(org.xnio.XnioWorker.class), 
-                nullable(org.xnio.ssl.XnioSsl.class), 
-                nullable(io.undertow.connector.ByteBufferPool.class), 
-                nullable(org.xnio.OptionMap.class), 
+                anyLong(),
+                nullable(java.net.InetSocketAddress.class),
+                eq(uri),
+                nullable(org.xnio.XnioWorker.class),
+                nullable(org.xnio.ssl.XnioSsl.class),
+                nullable(io.undertow.connector.ByteBufferPool.class),
+                nullable(org.xnio.OptionMap.class),
                 anySet()))
             .thenReturn(null);
 
         // We expect a specific behavior when maker returns null - usually it throws or returns null wrapped
         // Use a try-catch connection timeout wrapper logic in pool?
         // Reading SimpleURIConnectionPool.borrow -> SimpleConnectionState constructor -> throws IO/RuntimeException if null?
-        
+
         // Let's verify what happens. SimpleConnectionState throws if connection is null.
-        
+
         try {
             pool.borrow(100);
             Assert.fail("Should throw exception when connection creation fails");
@@ -177,17 +177,17 @@ public class SimpleURIConnectionPoolTest {
     public void testLeakedConnectionCleanup() {
         // This is harder to test with Mockito purely because we need to simulate the internal state.
         // But we can verify validateAndCleanConnections calls.
-        
+
         // Borrow and restore
         SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
         pool.restore(token);
-        
+
         // Mock connection as closed
         when(mockConnection.isOpen()).thenReturn(false);
-        
+
         // Manually trigger cleanup
         int cleaned = pool.validateAndCleanConnections();
-        
+
         // Since connection is closed, it should be removed
         Assert.assertEquals("Should have cleaned up 1 connection", 1, cleaned);
         Assert.assertEquals("Active connections should be 0", 0, pool.getActiveConnectionCount());

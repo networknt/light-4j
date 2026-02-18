@@ -466,4 +466,3 @@ public class TokenExchangeServiceTest {
         return schema;
     }
 }
-
