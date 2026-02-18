@@ -1,10 +1,28 @@
 package com.networknt.token.exchange;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 public record RequestContext(String schemaKey, Map<String, String> headers, Map<String, String> queryParams, String path) {
+
+    public RequestContext(String schemaKey, Map<String, String> headers, Map<String, String> queryParams, String path) {
+        this.schemaKey = schemaKey;
+        this.path = path;
+        this.headers = headers == null ? Collections.emptyMap() : normalizeKeys(headers);
+        this.queryParams = queryParams == null ? Collections.emptyMap() : normalizeKeys(queryParams);
+    }
+
+    private static Map<String, String> normalizeKeys(final Map<String, String> source) {
+        Map<String, String> normalized = new HashMap<>();
+        for (Map.Entry<String, String> entry : source.entrySet()) {
+            String key = entry.getKey();
+            String normalizedKey = key == null ? null : key.toLowerCase(Locale.ROOT);
+            normalized.put(normalizedKey, entry.getValue());
+        }
+        return normalized;
+    }
     /**
      * Parser interface for extracting RequestContext and applying updates.
      * Implementations determine their own strategy for resolving schema keys.
