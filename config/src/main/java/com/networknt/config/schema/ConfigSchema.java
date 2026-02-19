@@ -54,6 +54,11 @@ public @interface ConfigSchema {
     boolean DEFAULT_BOOLEAN = false;
 
     /**
+     * Default value for optional annotation booleans that default to true.
+     */
+    boolean DEFAULT_BOOLEAN_TRUE = true;
+
+    /**
      * The name of the parameter key of the configuration file.
      */
     String configKey();

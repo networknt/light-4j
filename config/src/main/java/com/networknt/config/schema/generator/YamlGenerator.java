@@ -177,8 +177,10 @@ public class YamlGenerator extends Generator {
         final var configFieldName = annotatedField.getConfigFieldName();
         final var defaultValue = annotatedField.getDefaultValue();
 
+        final var injection = annotatedField.getInjection().orElse(true);
+
         /* Don't stringify non-string values if not externalized. */
-        if (defaultValue.isPresent() && !externalized) {
+        if ((defaultValue.isPresent() && !externalized) || !injection) {
             yamlProp.put(configFieldName, defaultValue.get());
             return yamlProp;
         }

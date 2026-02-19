@@ -117,6 +117,9 @@ public class FieldNode {
     Boolean contains;
 
     @JsonProperty
+    Boolean injection;
+
+    @JsonProperty
     List<FieldNode> childNodes;
 
     private FieldNode(final UUID id, final FieldType type, final String configFieldName) {
@@ -263,6 +266,11 @@ public class FieldNode {
     @JsonIgnore
     public Optional<Boolean> getContains() {
         return this.getOptional(this.contains);
+    }
+
+    @JsonIgnore
+    public Optional<Boolean> getInjection() {
+        return this.getOptional(this.injection);
     }
 
     @JsonIgnore
@@ -438,6 +446,12 @@ public class FieldNode {
         public Builder multipleOf(final Double value) {
             if (!value.equals(ConfigSchema.DEFAULT_NUMBER))
                 this.node.multipleOfNumber = value;
+            return this;
+        }
+
+        public Builder injection(final Boolean value) {
+            if (!value.equals(ConfigSchema.DEFAULT_BOOLEAN_TRUE))
+                this.node.injection = value;
             return this;
         }
 

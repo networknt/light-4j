@@ -271,6 +271,7 @@ public class MetadataParser {
                 .defaultValue(field.defaultValue())
                 .pattern(field.pattern())
                 .format(field.format())
+                .injection(field.injection())
                 .build();
     }
 

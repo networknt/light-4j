@@ -48,4 +48,9 @@ public @interface StringField {
      * The format of the field.
      */
     Format format() default Format.none;
+
+    /**
+     * The injection indicator of the field.
+     */
+    boolean injection() default ConfigSchema.DEFAULT_BOOLEAN_TRUE;
 }
