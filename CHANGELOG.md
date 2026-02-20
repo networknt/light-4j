@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.3.3](https://github.com/networknt/light-4j/tree/2.3.3) (2026-02-19)
+
+
+**Merged pull requests:**
+
+
+- Additional Refactor For Token Exchange Handler [\#2668](https://github.com/networknt/light-4j/pull/2668) ([KalevGonvick](https://github.com/KalevGonvick))
+- Token-Transformer Plugin & Token-Exchange Merge [\#2661](https://github.com/networknt/light-4j/pull/2661) ([KalevGonvick](https://github.com/KalevGonvick))
+- Issue2637 [\#2644](https://github.com/networknt/light-4j/pull/2644) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.3.2](https://github.com/networknt/light-4j/tree/2.3.2) (2026-02-02)
 
 
