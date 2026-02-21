@@ -15,7 +15,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -32,7 +32,7 @@ public class ExternalServiceHandlerTest {
     static final ExternalServiceConfig config = new ExternalServiceConfig();
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception{
         if(server == null) {
             logger.info("starting serverconfig");
@@ -49,7 +49,7 @@ public class ExternalServiceHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -104,7 +104,7 @@ public class ExternalServiceHandlerTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOneGetRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -137,14 +137,14 @@ public class ExternalServiceHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertTrue(body.contains("https://postman-echo.com/get"));
+            Assertions.assertTrue(body.contains("https://postman-echo.com/get"));
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOnePostRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -181,11 +181,11 @@ public class ExternalServiceHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testEmptyPostBodyRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -222,7 +222,7 @@ public class ExternalServiceHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
     }
 
     @Test
@@ -245,8 +245,8 @@ public class ExternalServiceHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertTrue(body.contains("GET timeout-test OK"));
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertTrue(body.contains("GET timeout-test OK"));
     }
 
     @Test
@@ -272,8 +272,8 @@ public class ExternalServiceHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertTrue(body.contains("POST timeout-test OK"));
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertTrue(body.contains("POST timeout-test OK"));
     }
 
     @Test
@@ -310,7 +310,7 @@ public class ExternalServiceHandlerTest {
         } finally {
             client.restore(token);
         }
-        Assert.assertTrue("Expected timeout to occur for slow endpoint with configured pathPrefix timeout", timeoutOccurred);
+        Assertions.assertTrue(timeoutOccurred, "Expected timeout to occur for slow endpoint with configured pathPrefix timeout");
     }
 
 

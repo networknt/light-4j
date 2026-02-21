@@ -18,7 +18,7 @@ package com.networknt.whitelist;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class WhitelistConfigTest {
     @Test

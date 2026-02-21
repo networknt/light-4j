@@ -18,19 +18,19 @@ package com.networknt.db;
 
 import com.networknt.service.SingletonServiceFactory;
 import com.zaxxer.hikari.HikariDataSource;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class GenericDataSourceTest {
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(DataSource.class);
         assertNotNull(ds);
@@ -49,7 +49,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetH2DataSource() {
         DataSource ds = SingletonServiceFactory.getBean(H2DataSource.class).getDataSource();
         assertNotNull(ds);
@@ -62,7 +62,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetMysqlDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(MysqlDataSource.class).getDataSource();
         assertNotNull(ds);
@@ -75,7 +75,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testCustomMysqlDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(CustomMysqlDataSource.class).getDataSource();
         assertNotNull(ds);
@@ -88,7 +88,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetMariaDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(MariaDataSource.class).getDataSource();
         assertNotNull(ds);
@@ -101,7 +101,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetPostgresDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(PostgresDataSource.class).getDataSource();
         assertNotNull(ds);
@@ -114,7 +114,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetSqlServerDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(SqlServerDataSource.class).getDataSource();
         assertNotNull(ds);
@@ -127,7 +127,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetOracleDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(OracleDataSource.class).getDataSource();
         assertNotNull(ds);

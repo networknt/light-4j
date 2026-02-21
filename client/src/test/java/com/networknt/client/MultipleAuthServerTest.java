@@ -2,8 +2,8 @@ package com.networknt.client;
 
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.JsonMapper;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class MultipleAuthServerTest {
     public static final String CONFIG_NAME = "client-multiple";
     static ClientConfig config;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
     }

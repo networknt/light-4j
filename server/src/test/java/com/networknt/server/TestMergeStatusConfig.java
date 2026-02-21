@@ -17,9 +17,7 @@ package com.networknt.server;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
-import junit.framework.TestCase;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,17 +25,18 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestMergeStatusConfig extends TestCase {
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.MethodName.class)
+public class TestMergeStatusConfig {
 
     private Config config = null;
 
     final String homeDir = System.getProperty("user.home");
 
-    @BeforeClass
+    @BeforeAll
     public void setUp() throws Exception {
-        super.setUp();
-
         config = Config.getInstance();
         setExternalizedConfigDir(homeDir);
 
@@ -50,64 +49,73 @@ public class TestMergeStatusConfig extends TestCase {
         writeConfigFile("ERR99999", contents);
     }
 
-    @AfterClass
+    @AfterAll
     public void tearDown() throws Exception {
         File appStatus = new File(homeDir + "/app-status.yml");
-        appStatus.delete();
+        if (appStatus.exists()) {
+            appStatus.delete();
+        }
     }
 
     @Test
-    public void testAppStatus() {
+    public void test1AppStatus() {
         config.clear();
         // test default element without merging with app-status
         Status status0 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status0.getStatusCode());
+        Assertions.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
         System.out.println("****************************************************************" + status.toString());
-        Assert.assertEquals(404, status.getStatusCode());
+        Assertions.assertEquals(404, status.getStatusCode());
         // test default element after merging
         Status status1 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status1.getStatusCode());
+        Assertions.assertEquals(401, status1.getStatusCode());
     }
 
-    public void testDuplicateStatus() {
+    @Test
+    public void test2DuplicateStatus() {
         config.clear();
         try {
             Server.mergeStatusConfig();
             // second try to make sure duplication status appear
             Server.mergeStatusConfig();
-            fail();
+            fail("Expected RuntimeException was not thrown");
         } catch (RuntimeException expected) {
             // pass
         }
     }
 
-    public void testWithoutAppStatus() {
+    @Test
+    public void test3WithoutAppStatus() {
         config.clear();
         File appStatus = new File(homeDir + "/app-status.yml");
-        appStatus.delete();
+        if (appStatus.exists()) {
+            appStatus.delete();
+        }
         // test default element without merging with app-status
         Status status0 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status0.getStatusCode());
+        Assertions.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         // test default element after merging
         Status status1 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status1.getStatusCode());
+        Assertions.assertEquals(401, status1.getStatusCode());
     }
 
-    public void testEmptyAppStatus() {
+    @Test
+    public void test4EmptyAppStatus() throws IOException {
         config.clear();
         File appStatus = new File(homeDir + "/app-status.yml");
-        appStatus.delete();
-        new File(homeDir + "/app-status.yml");
+        if (appStatus.exists()) {
+            appStatus.delete();
+        }
+        appStatus.createNewFile();
         // test default element without merging with app-status
         Status status0 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status0.getStatusCode());
+        Assertions.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         // test default element after merging
         Status status1 = new Status("ERR10053", "url");
-        Assert.assertEquals(401, status1.getStatusCode());
+        Assertions.assertEquals(401, status1.getStatusCode());
     }
 
     private void setExternalizedConfigDir(String externalizedDir) throws Exception {

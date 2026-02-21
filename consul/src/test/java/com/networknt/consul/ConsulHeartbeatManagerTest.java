@@ -16,15 +16,15 @@
 
 package com.networknt.consul;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -37,7 +37,7 @@ public class ConsulHeartbeatManagerTest {
     private MockConsulClient client;
     private String token;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = new MockConsulClient("localhost", 8500);
         heartbeatManager = new ConsulHeartbeatManager(client, null);
@@ -46,7 +46,7 @@ public class ConsulHeartbeatManagerTest {
         ConsulConstants.SWITCHER_CHECK_CIRCLE = 20;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         heartbeatManager = null;
     }

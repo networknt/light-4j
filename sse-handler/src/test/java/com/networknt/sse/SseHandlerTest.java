@@ -13,10 +13,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -32,7 +32,7 @@ public class SseHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -48,7 +48,7 @@ public class SseHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -93,7 +93,7 @@ public class SseHandlerTest {
             // Since the client call might block waiting for close, we might need a separate thread or check registry async.
 
             // Check registry
-            Assert.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
+            Assertions.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
 
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -132,8 +132,8 @@ public class SseHandlerTest {
             Thread.sleep(500); // Give time for connection to register
 
             ServerSentEventConnection conn = SseConnectionRegistry.getConnection(traceId);
-            Assert.assertNotNull(conn);
-            Assert.assertTrue(conn.isOpen());
+            Assertions.assertNotNull(conn);
+            Assertions.assertTrue(conn.isOpen());
 
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -172,7 +172,7 @@ public class SseHandlerTest {
 
             // Check status code
             int statusCode = reference.get().getResponseCode();
-            Assert.assertEquals(200, statusCode);
+            Assertions.assertEquals(200, statusCode);
 
         } catch (Exception e) {
             logger.error("Exception: ", e);

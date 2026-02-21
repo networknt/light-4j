@@ -1,15 +1,15 @@
 package com.networknt.decrypt;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class AESDecryptorTest {
 
     @Test
     public void testConstructor() {
         AESSaltDecryptor decryptor = new AESSaltDecryptor();
-        Assert.assertNotNull(decryptor);
+        Assertions.assertNotNull(decryptor);
     }
 
     @Test
@@ -20,7 +20,7 @@ public class AESDecryptorTest {
 
             if (!typeClass.isInterface()) {
                 Decryptor decryptor = (Decryptor) typeClass.getConstructor().newInstance();
-                Assert.assertNotNull(decryptor);
+                Assertions.assertNotNull(decryptor);
             }
         } catch (Exception e) {
             throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
@@ -35,7 +35,7 @@ public class AESDecryptorTest {
      *
      * Here is the doc on how to use this test case as a utility. https://doc.networknt.com/concern/decryptor/
      */
-    @Ignore
+    @Disabled
     @Test
     public void testDecryptWithEnv() {
         String secretText = "CRYPT:ebfab3ef4261185776a026acf72d24ee:5eb239d133b840503eedf9b7de490341";

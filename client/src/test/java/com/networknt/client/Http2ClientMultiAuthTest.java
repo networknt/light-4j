@@ -13,7 +13,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Xnio;
@@ -50,7 +50,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
     static Undertow server2 = null;
     static SSLContext sslContext;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
         // Create xnio worker
@@ -77,10 +77,10 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
                     .setHandler(new PathHandler()
                             .addExactPath(API_PETSTORE, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0);
                                 boolean expired = isTokenExpired(scopeToken);
-                                Assert.assertFalse(expired);
+                                Assertions.assertFalse(expired);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
@@ -129,10 +129,10 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
                     .setHandler(new PathHandler()
                             .addExactPath(API_MARKET, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0);
                                 boolean expired = isTokenExpired(scopeToken);
-                                Assert.assertFalse(expired);
+                                Assertions.assertFalse(expired);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
@@ -164,7 +164,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
 
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         worker.shutdown();
         if(server1 != null) {
@@ -210,7 +210,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // restore the connection token to the pool.
             client.restore(token);
@@ -219,7 +219,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testSinglePetstoreAsych() throws Exception {
         callPetstoreApiAsync();
     }
@@ -238,7 +238,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // restore the connection token to the pool.
             client.restore(token);
@@ -247,7 +247,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testSingleMarketAsych() throws Exception {
         callMarketApiAsync();
     }

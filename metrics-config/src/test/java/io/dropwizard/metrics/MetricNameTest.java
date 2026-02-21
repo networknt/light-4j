@@ -18,7 +18,8 @@ package io.dropwizard.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,14 +82,14 @@ public class MetricNameTest {
         assertThat(MetricName.EMPTY.tagged("foo", "bar", "baz", "biz").getTags()).isEqualTo(refTags);
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testTaggedNotPairs() {
-        MetricName.EMPTY.tagged("foo");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> MetricName.EMPTY.tagged("foo"));
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testTaggedNotPairs2() {
-        MetricName.EMPTY.tagged("foo", "bar", "baz");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> MetricName.EMPTY.tagged("foo", "bar", "baz"));
     }
 
     @Test

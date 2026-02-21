@@ -17,8 +17,8 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ServerConfigTest {
 
@@ -32,8 +32,8 @@ public class ServerConfigTest {
         config.clear();
         // ensure that env is null if it is missing in the server.yml
         ServerConfig serverConfig = ServerConfig.load("server");
-        Assert.assertNull(serverConfig.getEnvironment());
-        Assert.assertEquals("petstore", serverConfig.getServiceName());
+        Assertions.assertNull(serverConfig.getEnvironment());
+        Assertions.assertEquals("petstore", serverConfig.getServiceName());
     }
 
     @Test
@@ -41,12 +41,12 @@ public class ServerConfigTest {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
-        Assert.assertEquals(1024*16, serverConfig.getBufferSize());
-        Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
-        Assert.assertEquals(200, serverConfig.getWorkerThreads());
-        Assert.assertEquals(10000, serverConfig.getBacklog());
-        Assert.assertTrue(serverConfig.isAlwaysSetDate());
-        Assert.assertEquals("L", serverConfig.getServerString());
+        Assertions.assertEquals(1024*16, serverConfig.getBufferSize());
+        Assertions.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
+        Assertions.assertEquals(200, serverConfig.getWorkerThreads());
+        Assertions.assertEquals(10000, serverConfig.getBacklog());
+        Assertions.assertTrue(serverConfig.isAlwaysSetDate());
+        Assertions.assertEquals("L", serverConfig.getServerString());
     }
 
     @Test
@@ -54,13 +54,13 @@ public class ServerConfigTest {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server_invalid_option");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
-        Assert.assertEquals(1024*16, serverConfig.getBufferSize());
-        Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
-        Assert.assertEquals(200, serverConfig.getWorkerThreads());
-        Assert.assertEquals(10000, serverConfig.getBacklog());
-        Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
-        Assert.assertEquals("L", serverConfig.getServerString());
-        Assert.assertEquals(false, serverConfig.isAllowUnescapedCharactersInUrl());
+        Assertions.assertEquals(1024*16, serverConfig.getBufferSize());
+        Assertions.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
+        Assertions.assertEquals(200, serverConfig.getWorkerThreads());
+        Assertions.assertEquals(10000, serverConfig.getBacklog());
+        Assertions.assertEquals(false, serverConfig.isAlwaysSetDate());
+        Assertions.assertEquals("L", serverConfig.getServerString());
+        Assertions.assertEquals(false, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 
     @Test
@@ -68,13 +68,13 @@ public class ServerConfigTest {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server_valid_option");
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
-        Assert.assertEquals(10000, serverConfig.getBufferSize());
-        Assert.assertEquals(1, serverConfig.getIoThreads());
-        Assert.assertEquals(100, serverConfig.getWorkerThreads());
-        Assert.assertEquals(10000, serverConfig.getBacklog());
-        Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
-        Assert.assertEquals("TEST", serverConfig.getServerString());
-        Assert.assertEquals(true, serverConfig.isAllowUnescapedCharactersInUrl());
+        Assertions.assertEquals(10000, serverConfig.getBufferSize());
+        Assertions.assertEquals(1, serverConfig.getIoThreads());
+        Assertions.assertEquals(100, serverConfig.getWorkerThreads());
+        Assertions.assertEquals(10000, serverConfig.getBacklog());
+        Assertions.assertEquals(false, serverConfig.isAlwaysSetDate());
+        Assertions.assertEquals("TEST", serverConfig.getServerString());
+        Assertions.assertEquals(true, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 
     @Test
@@ -82,6 +82,6 @@ public class ServerConfigTest {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load();
         ServerOption.serverOptionInit(serverConfig.getMappedConfig(), serverConfig);
-        Assert.assertEquals(1000000, serverConfig.getMaxTransferFileSize());
+        Assertions.assertEquals(1000000, serverConfig.getMaxTransferFileSize());
     }
 }

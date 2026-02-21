@@ -14,22 +14,22 @@
  */
 package com.networknt.url;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class URLNormalizerTest {
 
     private String s;
     private String t;
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         s = null;
         t = null;
@@ -70,7 +70,7 @@ public class URLNormalizerTest {
         String t1 = "http://example.org/1/~a_b:c%5Cd_%7Ce~f!g%20h/%5Ei%5EJ%5Bk%5D/l./"
                         + "m/p/q/r/?dd=ee&bb=aa";
         String res = n.toURI().toString();
-        assertTrue(res, t.equals(res) || t1.equals(res));
+        assertTrue(t.equals(res) || t1.equals(res), res);
     }
 
     @Test
@@ -344,7 +344,7 @@ public class URLNormalizerTest {
         s = "http://208.80.154.224/wiki/Main_Page";
         t = null;
 //        System.out.println("Result: " + n(s).replaceIPWithDomainName().toString());
-        Assert.assertTrue(
+        Assertions.assertTrue(
                 n(s).replaceIPWithDomainName().toString().contains("wikimedia"));
         s = "http://wikipedia.org/wiki/Main_Page";
         t = "http://wikipedia.org/wiki/Main_Page";

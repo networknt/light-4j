@@ -26,9 +26,9 @@ import io.undertow.client.ClientResponse;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AuditHandlerTest extends AuditHandlerTestBase{
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         setUp();
     }
@@ -95,7 +95,7 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
             client.restore(token);
 
         }
-        Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 
         try {
             Thread.sleep(100);
@@ -146,7 +146,7 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
             client.restore(token);
 
         }
-        Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 
         try {
             Thread.sleep(100);
@@ -273,13 +273,13 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
     @Test //used for testing when doesn't specify timestampFormat
     public void testAuditWith200TimestampLong() throws Exception {
         Map<String, Object> map = testTimestampInitHelper(null);
-        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+        Assertions.assertEquals(1607639411945L, map.get("timestamp"));
     }
 
     @Test //used for testing when user specified a wrong format timestampFormat
     public void testAuditWith200TimestampInvalidFormat() throws Exception {
         Map<String, Object> map = testTimestampInitHelper("abc");
-        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+        Assertions.assertEquals(1607639411945L, map.get("timestamp"));
     }
 
     private Map<String, Object> testTimestampInitHelper(String o) throws Exception {

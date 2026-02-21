@@ -20,10 +20,8 @@
  */
 package com.networknt.cors;
 
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Testing CORS utility class.
@@ -41,23 +39,23 @@ public class CorsUtilTest {
     @Test
     public void testSanitizeDefaultPort() {
         String url = "http://127.0.0.1:80";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1"));
+        Assertions.assertEquals("http://127.0.0.1", CorsUtil.sanitizeDefaultPort(url));
         url = "http://127.0.0.1";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1"));
+        Assertions.assertEquals("http://127.0.0.1", CorsUtil.sanitizeDefaultPort(url));
         url = "http://127.0.0.1:443";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1:443"));
+        Assertions.assertEquals("http://127.0.0.1:443", CorsUtil.sanitizeDefaultPort(url));
         url = "http://127.0.0.1:7080";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1:7080"));
+        Assertions.assertEquals("http://127.0.0.1:7080", CorsUtil.sanitizeDefaultPort(url));
         url = "https://127.0.0.1:80";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1:80"));
+        Assertions.assertEquals("https://127.0.0.1:80", CorsUtil.sanitizeDefaultPort(url));
         url = "https://127.0.0.1:443";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1"));
+        Assertions.assertEquals("https://127.0.0.1", CorsUtil.sanitizeDefaultPort(url));
         url = "https://127.0.0.1";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1"));
+        Assertions.assertEquals("https://127.0.0.1", CorsUtil.sanitizeDefaultPort(url));
         url = "http://[::FFFF:129.144.52.38]:7080";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://[::FFFF:129.144.52.38]:7080"));
+        Assertions.assertEquals("http://[::FFFF:129.144.52.38]:7080", CorsUtil.sanitizeDefaultPort(url));
         url = "http://[::FFFF:129.144.52.38]:80";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://[::FFFF:129.144.52.38]"));
+        Assertions.assertEquals("http://[::FFFF:129.144.52.38]", CorsUtil.sanitizeDefaultPort(url));
     }
 
     /**
@@ -65,9 +63,9 @@ public class CorsUtilTest {
      */
     @Test
     public void testDefaultOrigin() {
-        assertThat(CorsUtil.defaultOrigin("http", "localhost", 80), is("http://localhost"));
-        assertThat(CorsUtil.defaultOrigin("http", "www.example.com", 7080), is("http://www.example.com:7080"));
-        assertThat(CorsUtil.defaultOrigin("https", "www.example.com", 443), is("https://www.example.com"));
-        assertThat(CorsUtil.defaultOrigin("http", "[::1]", 80), is("http://[::1]"));
+        Assertions.assertEquals("http://localhost", CorsUtil.defaultOrigin("http", "localhost", 80));
+        Assertions.assertEquals("http://www.example.com:7080", CorsUtil.defaultOrigin("http", "www.example.com", 7080));
+        Assertions.assertEquals("https://www.example.com", CorsUtil.defaultOrigin("https", "www.example.com", 443));
+        Assertions.assertEquals("http://[::1]", CorsUtil.defaultOrigin("http", "[::1]", 80));
     }
 }

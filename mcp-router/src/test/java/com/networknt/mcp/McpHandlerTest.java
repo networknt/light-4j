@@ -11,10 +11,10 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -35,7 +35,7 @@ public class McpHandlerTest {
     static final int PORT = 7080;
     static final int BACKEND_PORT = 7081;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -103,12 +103,12 @@ public class McpHandlerTest {
             connection.sendRequest(request, client.createClientCallback(reference, latch, json));
             latch.await(5000, TimeUnit.MILLISECONDS);
             int statusCode = reference.get().getResponseCode();
-            Assert.assertEquals(200, statusCode);
+            Assertions.assertEquals(200, statusCode);
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
+            Assertions.assertNotNull(body);
             // Verify result contains weather data
-            Assert.assertTrue(body.contains("temperature"));
-            Assert.assertTrue(body.contains("25"));
+            Assertions.assertTrue(body.contains("temperature"));
+            Assertions.assertTrue(body.contains("25"));
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw e;
@@ -119,7 +119,7 @@ public class McpHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             server.stop();
@@ -159,11 +159,11 @@ public class McpHandlerTest {
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            Assert.assertEquals(200, response.getResponseCode());
+            Assertions.assertEquals(200, response.getResponseCode());
 
             // Wait a bit for server handling
             Thread.sleep(500);
-            Assert.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
+            Assertions.assertFalse(SseConnectionRegistry.getConnections().isEmpty());
 
         } finally {
 
@@ -202,15 +202,15 @@ public class McpHandlerTest {
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            Assert.assertEquals(200, response.getResponseCode());
+            Assertions.assertEquals(200, response.getResponseCode());
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
             ObjectMapper mapper = Config.getInstance().getMapper();
             Map<String, Object> map = mapper.readValue(body, Map.class);
-            Assert.assertEquals("2.0", map.get("jsonrpc"));
-            Assert.assertEquals(1, map.get("id"));
+            Assertions.assertEquals("2.0", map.get("jsonrpc"));
+            Assertions.assertEquals(1, map.get("id"));
             Map<String, Object> result = (Map<String, Object>) map.get("result");
-            Assert.assertNotNull(result);
-            Assert.assertEquals("2024-11-05", result.get("protocolVersion"));
+            Assertions.assertNotNull(result);
+            Assertions.assertEquals("2024-11-05", result.get("protocolVersion"));
         } finally {
 
             client.restore(token);
@@ -259,21 +259,21 @@ public class McpHandlerTest {
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            Assert.assertEquals(200, response.getResponseCode());
+            Assertions.assertEquals(200, response.getResponseCode());
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
             ObjectMapper mapper = Config.getInstance().getMapper();
             Map<String, Object> map = mapper.readValue(body, Map.class);
             Map<String, Object> result = (Map<String, Object>) map.get("result");
             java.util.List<Map<String, Object>> tools = (java.util.List<Map<String, Object>>) result.get("tools");
-            Assert.assertFalse(tools.isEmpty());
+            Assertions.assertFalse(tools.isEmpty());
             boolean testToolFound = false;
             boolean weatherToolFound = false;
             for(Map<String, Object> toolMap: tools) {
                 if("testTool".equals(toolMap.get("name"))) testToolFound = true;
                 if("weather".equals(toolMap.get("name"))) weatherToolFound = true;
             }
-            Assert.assertTrue(testToolFound);
-            Assert.assertTrue(weatherToolFound);
+            Assertions.assertTrue(testToolFound);
+            Assertions.assertTrue(weatherToolFound);
 
         } finally {
 
@@ -316,11 +316,11 @@ public class McpHandlerTest {
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            Assert.assertEquals(200, response.getResponseCode());
+            Assertions.assertEquals(200, response.getResponseCode());
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
+            Assertions.assertNotNull(body);
             // Verify result contains echo from backend
-            Assert.assertTrue(body.contains("echo from mcp backend"));
+            Assertions.assertTrue(body.contains("echo from mcp backend"));
 
         } finally {
 

@@ -17,7 +17,7 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.jose4j.jwt.JwtClaims;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
@@ -50,7 +50,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
 
     static SSLContext sslContext;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         securityConfig = SecurityConfig.load(JwtVerifier.SECURITY_CONFIG);
         config = ClientConfig.get();
@@ -79,7 +79,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
                             .addExactPath(API_PETSTORE, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
                                 String requestPath = exchange.getRequestPath();
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
@@ -116,7 +116,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
                             .addExactPath(API_MARKET, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
                                 String requestPath = exchange.getRequestPath();
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
@@ -223,7 +223,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
 
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         worker.shutdown();
         if(server1 != null) {
@@ -295,7 +295,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // return the connection to the connection pool.
             client.restore(token);
@@ -322,7 +322,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // return the connection to the connection pool.
             client.restore(token);
@@ -331,7 +331,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
     }
 
     @Test
-    @Ignore
+    @Disabled
     // This test case needs to be fixed in the future. It is not working now.
     public void testSingleMarketAsych() throws Exception {
         callMarketApiAsync();
@@ -342,15 +342,15 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
@@ -366,15 +366,15 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
@@ -390,15 +390,15 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);

@@ -32,7 +32,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -55,7 +55,7 @@ public class LimitHandlerTest {
     static final LimitConfig config = LimitConfig.load();
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception{
         if(server == null) {
             logger.info("starting serverconfig");
@@ -72,7 +72,7 @@ public class LimitHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -125,9 +125,9 @@ public class LimitHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("OK", body);
+            Assertions.assertEquals("OK", body);
         }
     }
 
@@ -166,7 +166,7 @@ public class LimitHandlerTest {
 
     @Test
     // For some reason, travis become really slow or not allow multi-thread anymore and this test fails always.
-    // You can run it within the IDE or remove the @Ignore and run it locally with mvn clean install.
+    // You can run it within the IDE or remove the @Disabled and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
         Callable<String> task = this::callApi;
         List<Callable<String>> tasks = Collections.nCopies(12, task);
@@ -185,6 +185,6 @@ public class LimitHandlerTest {
         // make sure that there are at least one element in resultList is :503 or :429
         List<String> errorList = resultList.stream().filter(r->r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
         logger.info("errorList size = " + errorList.size());
-        Assert.assertTrue(errorList.size()>0);
+        Assertions.assertTrue(errorList.size()>0);
     }
 }

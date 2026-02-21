@@ -12,10 +12,10 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -34,7 +34,7 @@ public class SanitizerHandlerWithEncodeTest {
 
     private static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             LOGGER.info("starting server");
@@ -43,7 +43,7 @@ public class SanitizerHandlerWithEncodeTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if(server != null) {
             try {
@@ -98,13 +98,13 @@ public class SanitizerHandlerWithEncodeTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
+            Assertions.assertNotNull(body);
             Map map = Config.getInstance().getMapper().readValue(body, new TypeReference<HashMap<String, Object>>() {});
-            Assert.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
-            Assert.assertEquals("<script>alert('test')</script>", map.get("key2"));
+            Assertions.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
+            Assertions.assertEquals("<script>alert('test')</script>", map.get("key2"));
         }
     }
 }

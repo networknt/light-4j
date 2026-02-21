@@ -18,8 +18,8 @@ package com.networknt.common;
 
 import com.networknt.config.Config;
 import com.networknt.decrypt.AESSaltDecryptor;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -40,7 +40,7 @@ public class DecryptUtilTest {
     public void testDecryptMap() {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
         DecryptUtil.decryptMap(secretMap);
-        Assert.assertEquals("password", secretMap.get("serverKeystorePass"));
+        Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
     }
 
     @Test

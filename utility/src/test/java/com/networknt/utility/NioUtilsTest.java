@@ -16,8 +16,8 @@
 
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URL;
@@ -52,7 +52,7 @@ public class NioUtilsTest {
         String s = "こんにちは";
         ByteBuffer bb = NioUtils.toByteBuffer(s);
         String n = new String(bb.array(), StandardCharsets.UTF_8);
-        Assert.assertEquals(s, n);
+        Assertions.assertEquals(s, n);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class NioUtilsTest {
         String s = "obufscate thdé alphebat and yolo!!";
         ByteBuffer bb = NioUtils.toByteBuffer(s);
         String n = new String(bb.array(), StandardCharsets.UTF_8);
-        Assert.assertEquals(s, n);
+        Assertions.assertEquals(s, n);
     }
 
 }

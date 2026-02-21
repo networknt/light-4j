@@ -27,9 +27,9 @@ import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class JmxAttributeGaugeTest {
 
@@ -48,13 +48,13 @@ public class JmxAttributeGaugeTest {
         }
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         registerMBean(new ObjectName("JmxAttributeGaugeTest:type=test,name=test1"));
         registerMBean(new ObjectName("JmxAttributeGaugeTest:type=test,name=test2"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         for (ObjectName objectName : registeredMBeans) {
             try {

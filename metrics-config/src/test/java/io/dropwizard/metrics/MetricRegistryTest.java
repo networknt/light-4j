@@ -18,8 +18,8 @@ package io.dropwizard.metrics;
 
 import static io.dropwizard.metrics.MetricRegistry.name;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Counter;
 import io.dropwizard.metrics.Gauge;
@@ -57,7 +57,7 @@ public class MetricRegistryTest {
     private final Meter meter = mock(Meter.class);
     private final Timer timer = mock(Timer.class);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         registry.addListener(listener);
     }

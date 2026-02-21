@@ -17,9 +17,9 @@
 package com.networknt.utility;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,10 +28,10 @@ import java.nio.charset.StandardCharsets;
 
 public class StringUtilsTest {
     @Test
-    @Ignore
+    @Disabled
     public void testExpandEnvVars() {
         String s = "IP=${DOCKER_HOST_IP}";
-        Assert.assertEquals("IP=192.168.1.120", StringUtils.expandEnvVars(s));
+        Assertions.assertEquals("IP=192.168.1.120", StringUtils.expandEnvVars(s));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class StringUtilsTest {
         String expected = "test data";
         InputStream anyInputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
         String actual = StringUtils.inputStreamToString(anyInputStream, StandardCharsets.UTF_8);
-        Assert.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -48,60 +48,60 @@ public class StringUtilsTest {
         String jwt = "eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTk0MTEyMjc3MiwianRpIjoiTkc4NWdVOFR0SEZuSThkS2JsQnBTUSIsImlhdCI6MTYyNTc2Mjc3MiwibmJmIjoxNjI1NzYyNjUyLCJ2ZXJzaW9uIjoiMS4wIiwiY2xpZW50X2lkIjoiZjdkNDIzNDgtYzY0Ny00ZWZiLWE1MmQtNGM1Nzg3NDIxZTcyIiwic2NvcGUiOiJwb3J0YWwuciBwb3J0YWwudyIsInNlcnZpY2UiOiIwMTAwIn0.Q6BN5CGZL2fBWJk4PIlfSNXpnVyFhK6H8X4caKqxE1XAbX5UieCdXazCuwZ15wxyQJgWCsv4efoiwO12apGVEPxIc7gpvctPrRIDo59dmTjfWH0p3ja0Zp8tYLD-5Sh65WUtJtkvPQk0uG96JJ64Da28lU4lGFZaCvkaS-Et9Wn0BxrlCE5_ta66Qc9t4iUMeAsAHIZJffOBsREFhOpC0dKSXBAyt9yuLDuDt9j7HURXBHyxSBrv8Nj_JIXvKhAxquffwjZF7IBqb3QRr-sJV0auy-aBQ1v8dYuEyIawmIP5108LH8QdH-K8NkI1wMnNOz_wWDgixOcQqERmoQ_Q3g";
         String swt = "4VHHkOUfQQuInU5auCHFvw";
 
-        Assert.assertTrue(StringUtils.isJwtToken(jwtBearer));
-        Assert.assertTrue(StringUtils.isJwtToken(jwt));
-        Assert.assertFalse(StringUtils.isJwtToken(swt));
+        Assertions.assertTrue(StringUtils.isJwtToken(jwtBearer));
+        Assertions.assertTrue(StringUtils.isJwtToken(jwt));
+        Assertions.assertFalse(StringUtils.isJwtToken(swt));
     }
 
     @Test
     public void testMaskHalfString() {
         String s = "1234567890";
-        Assert.assertEquals("*****67890", StringUtils.maskHalfString(s));
+        Assertions.assertEquals("*****67890", StringUtils.maskHalfString(s));
         s = "123456789";
-        Assert.assertEquals("****56789", StringUtils.maskHalfString(s));
+        Assertions.assertEquals("****56789", StringUtils.maskHalfString(s));
     }
 
     @Test
     public void testMatchPath() {
         String pattern = "/v1/pets/{petId}";
         String path = "/v1/pets/1";
-        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+        Assertions.assertTrue(StringUtils.matchPathToPattern(path, pattern));
         pattern = "/v1/pets/{petId}/name";
         path = "/v1/pets/1/name";
-        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+        Assertions.assertTrue(StringUtils.matchPathToPattern(path, pattern));
         pattern = "/v1/pets/{petId}";
-        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+        Assertions.assertTrue(StringUtils.matchPathToPattern(path, pattern));
 
         pattern = "/foo/bar";
-        Assert.assertTrue(StringUtils.matchPathToPattern("/foo/bar", pattern));
-        Assert.assertFalse(StringUtils.matchPathToPattern("/foo/bar?abc=123", pattern));
+        Assertions.assertTrue(StringUtils.matchPathToPattern("/foo/bar", pattern));
+        Assertions.assertFalse(StringUtils.matchPathToPattern("/foo/bar?abc=123", pattern));
 
         pattern = "/gateway/dev/ph-l4j-files/file?version=1";
-        Assert.assertFalse(StringUtils.matchPathToPattern("/dev-ph-l4j-files/file?version=1", pattern));
+        Assertions.assertFalse(StringUtils.matchPathToPattern("/dev-ph-l4j-files/file?version=1", pattern));
 
         pattern = "/gateway/dev/ph-l4j-files/file?version=1";
-        Assert.assertTrue(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
+        Assertions.assertTrue(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
 
         pattern = "/gateway/dev/ph-l4j-files/file/05048267?version=1";
-        Assert.assertFalse(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
+        Assertions.assertFalse(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
     }
 
     @Test
     public void testGetSecondPart() {
         String result = StringUtils.getSecondPart("Hello World");
-        Assert.assertEquals("World", result);
+        Assertions.assertEquals("World", result);
 
         result = StringUtils.getSecondPart("NoSpace");
-        Assert.assertNull(result);
+        Assertions.assertNull(result);
 
         result = StringUtils.getSecondPart("Multiple Words Here");
-        Assert.assertEquals("Words Here", result);
+        Assertions.assertEquals("Words Here", result);
 
         result = StringUtils.getSecondPart("Hello World ");
-        Assert.assertEquals("World ", result);
+        Assertions.assertEquals("World ", result);
 
         result = StringUtils.getSecondPart("Hello  World ");
-        Assert.assertEquals(" World ", result);
+        Assertions.assertEquals(" World ", result);
     }
 
     @Test

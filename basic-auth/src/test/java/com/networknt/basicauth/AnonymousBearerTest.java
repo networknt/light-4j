@@ -29,10 +29,10 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.apache.commons.codec.binary.Base64;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -54,7 +54,7 @@ public class AnonymousBearerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -70,7 +70,7 @@ public class AnonymousBearerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -120,9 +120,9 @@ public class AnonymousBearerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(401, statusCode);
+        Assertions.assertEquals(401, statusCode);
         if(statusCode == 401) {
-            Assert.assertNotNull(responseBody);
+            Assertions.assertNotNull(responseBody);
         }
     }
 
@@ -158,9 +158,9 @@ public class AnonymousBearerTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
         }
     }
 
@@ -197,9 +197,9 @@ public class AnonymousBearerTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
         }
     }
 
@@ -238,9 +238,9 @@ public class AnonymousBearerTest {
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("responseBody = " + responseBody);
-        Assert.assertEquals(401, statusCode);
+        Assertions.assertEquals(401, statusCode);
         if(statusCode == 401) {
-            Assert.assertNotNull(responseBody);
+            Assertions.assertNotNull(responseBody);
         }
     }
 

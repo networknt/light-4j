@@ -14,8 +14,8 @@
  */
 package com.networknt.url;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class QueryStringTest {
 
@@ -25,14 +25,13 @@ public class QueryStringTest {
         QueryString qs = new QueryString(
                 "http://site.com/page?NoEquals&WithEquals=EqualsValue");
 
-        Assert.assertTrue("Argument without equal sign was not found.",
-                qs.toString().contains("NoEquals"));
+        Assertions.assertTrue(qs.toString().contains("NoEquals"), "Argument without equal sign was not found.");
     }
 
     @Test
     public void testEmptyConstructor() {
         QueryString qs = new QueryString();
-        Assert.assertEquals("", qs.toString());
+        Assertions.assertEquals("", qs.toString());
     }
 
 }

@@ -1,8 +1,8 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 
 import java.util.ArrayList;
@@ -11,9 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This is a test class that deal with different configuration values for client.yml
@@ -22,7 +20,7 @@ import static org.junit.Assert.*;
 public class ClientConfigTest {
 
     @Test
-    @Ignore
+    @Disabled
     public void shouldLoadNullConfig() {
         ClientConfig clientConfig = ClientConfig.get();
         assertEquals(ClientConfig.DEFAULT_ERROR_THRESHOLD, clientConfig.getErrorThreshold());
@@ -35,7 +33,7 @@ public class ClientConfigTest {
 
 
     @Test
-    @Ignore
+    @Disabled
     public void shouldLoadEmptyConfig() {
         ClientConfig clientConfig = ClientConfig.get();
         assertEquals(ClientConfig.DEFAULT_ERROR_THRESHOLD, (int)clientConfig.getRequest().getErrorThreshold());
@@ -48,7 +46,7 @@ public class ClientConfigTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void shouldLoadCompleteConfig() {
         ClientConfig clientConfig = ClientConfig.get();
         assertEquals(2, clientConfig.getErrorThreshold());

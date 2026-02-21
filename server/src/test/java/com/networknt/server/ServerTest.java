@@ -26,9 +26,9 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerTest {
 
-    @ClassRule
+    @RegisterExtension
     public static TestServer server = TestServer.getInstance();
 
     static final Logger logger = LoggerFactory.getLogger(TestServer.class);
@@ -84,8 +84,8 @@ public class ServerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertNotNull(body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertNotNull(body);
     }
 
 }

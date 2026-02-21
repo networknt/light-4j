@@ -16,7 +16,8 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 
 public class TokenLimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(TokenLimitHandlerTest.class);
-    @ClassRule
+    @RegisterExtension
     public static TestServer server = TestServer.getInstance();
     static final boolean enableHttp2 = ServerConfig.getInstance().isEnableHttp2();
     static final boolean enableHttps = ServerConfig.getInstance().isEnableHttps();
@@ -51,7 +52,7 @@ public class TokenLimitHandlerTest {
     String legacyRequestBodyWithAuthHeader = "grant_type=client_credentials&scope=scope";
     String emptyScopeRequestBody = "grant_type=client_credentials&client_id=emptyScopeClient&client_secret=secret&scope=";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Reset the static counter in TestHandler before each test
         TestHandler.counter = 0;
@@ -225,9 +226,9 @@ public class TokenLimitHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("{\"accessToken\":\"abc\",\"counter\": 0}", body);
+            Assertions.assertEquals("{\"accessToken\":\"abc\",\"counter\": 0}", body);
         }
     }
 
@@ -257,9 +258,9 @@ public class TokenLimitHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertTrue(body.length() > 0);
+            Assertions.assertTrue(body.length() > 0);
         }
     }
 
@@ -287,7 +288,7 @@ public class TokenLimitHandlerTest {
         // make sure that there are at least one element is 400
         List<String> errorList = resultList.stream().filter(r->r.contains(":400")).collect(Collectors.toList());
         logger.info("errorList size = " + errorList.size());
-        Assert.assertTrue(errorList.size()>0);
+        Assertions.assertTrue(errorList.size()>0);
     }
 
     /**
@@ -317,7 +318,7 @@ public class TokenLimitHandlerTest {
         // make sure that there are EXACTLY one element as 400
         List<String> errorList = resultList.stream().filter(r->r.contains(":400")).collect(Collectors.toList());
         logger.info("errorList size = " + errorList.size());
-        Assert.assertTrue(errorList.size()==1);
+        Assertions.assertTrue(errorList.size()==1);
     }
 
     /**
@@ -354,8 +355,8 @@ public class TokenLimitHandlerTest {
         }
         long last = (System.currentTimeMillis() - start);
         // make sure at least there are some duplicated entries.
-        Assert.assertTrue(hasDuplicates(resultListToken));
-        Assert.assertTrue(hasDistincts(resultListExpire));
+        Assertions.assertTrue(hasDuplicates(resultListToken));
+        Assertions.assertTrue(hasDistincts(resultListExpire));
     }
 
     public static boolean hasDuplicates(List<String> list) {

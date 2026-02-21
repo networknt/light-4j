@@ -1,25 +1,25 @@
 package com.networknt.limit;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 public class LimitAlternativeConfigTest {
     private static LimitConfig limitConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         limitConfig = LimitConfig.load("limit-server");
     }
 
     @Test
     public void testConfigData() {
-        Assert.assertTrue(limitConfig.isEnabled());
+        Assertions.assertTrue(limitConfig.isEnabled());
         List<LimitQuota> quotas = limitConfig.getRateLimit();
         LimitQuota quota = quotas.get(0);
-        Assert.assertEquals(quota.getValue(), 100);
+        Assertions.assertEquals(quota.getValue(), 100);
     }
 
 }

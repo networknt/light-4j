@@ -1,8 +1,9 @@
 package com.networknt.limit;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +23,7 @@ public class RateLimiterTest {
 
     private static LimitConfig limitConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception{
         LimitConfig.load();
         limitConfig = LimitConfig.load();
@@ -33,7 +34,7 @@ public class RateLimiterTest {
         rateLimiterClient = new RateLimiter(limitConfig);
     }
 
-    @org.junit.After
+    @AfterEach
     public void tearDown() {
         com.networknt.config.Config.getInstance().clear();
     }
@@ -55,9 +56,9 @@ public class RateLimiterTest {
 //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
 //        }
 
-       // Assert.assertEquals(responseList.size(), 12);
+       // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
@@ -87,9 +88,9 @@ public class RateLimiterTest {
 //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
 //        }
 
-        // Assert.assertEquals(responseList.size(), 12);
+        // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
@@ -109,7 +110,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -132,7 +133,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -155,9 +156,9 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
 
-        // Assert.assertEquals(responseList.size(), 12);
+        // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
@@ -193,7 +194,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -215,7 +216,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -237,7 +238,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }

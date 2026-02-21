@@ -16,8 +16,8 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Counter;
 import io.dropwizard.metrics.Histogram;
@@ -264,7 +264,7 @@ public class InstrumentedScheduledExecutorServiceTest {
         assertThat(percentOfPeriod.getCount()).isNotEqualTo(0);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         instrumentedScheduledExecutor.shutdown();
         if (!instrumentedScheduledExecutor.awaitTermination(2, TimeUnit.SECONDS)) {

@@ -17,8 +17,8 @@
 package com.networknt.portal.registry;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
@@ -37,9 +37,9 @@ public class PortalRegistryServiceTest {
         String s = service.toString();
         System.out.println("s = " + s);
         if(config.httpCheck) {
-            Assert.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"healthPath\":\"/health/\",\"tlsSkipVerify\":true,\"interval\":10000}}", s);
+            Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"healthPath\":\"/health/\",\"tlsSkipVerify\":true,\"interval\":10000}}", s);
         } else {
-            Assert.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"interval\":10000}}", s);
+            Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"interval\":10000}}", s);
         }
     }
 }

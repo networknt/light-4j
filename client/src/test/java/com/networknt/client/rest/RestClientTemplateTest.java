@@ -11,10 +11,10 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -28,8 +28,8 @@ import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RestClientTemplateTest {
 
@@ -44,7 +44,7 @@ public class RestClientTemplateTest {
     private static RestClientTemplate restClientTemplate;
     static Pet pet;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         restClientTemplate = new RestClientTemplate();
 
@@ -109,7 +109,7 @@ public class RestClientTemplateTest {
     }
 
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -136,7 +136,7 @@ public class RestClientTemplateTest {
         assertTrue(pet.getId()==1);
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void testPost() throws RestClientException, JsonProcessingException {
         String requestBody = Config.getInstance().getMapper().writeValueAsString(pet);

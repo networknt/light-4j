@@ -1,8 +1,9 @@
 package com.networknt.config;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,12 +11,12 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ConfigSystemPropTest {
 	private static final String homeDir = System.getProperty("user.home");
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() throws IOException {
 		System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
 
@@ -24,7 +25,7 @@ public class ConfigSystemPropTest {
         writeConfigFile("value", "externalized dir2", homeDir + "/dir2");
 	}
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         File test1 = new File(homeDir + "/test.json");
         File test2 = new File(homeDir + "/dir1/test.json");
@@ -52,9 +53,9 @@ public class ConfigSystemPropTest {
 		Map<String, Object> map1 = config.getJsonMapConfigNoCache("test", "dir1");
 		Map<String, Object> map2 = config.getJsonMapConfigNoCache("test", "dir2");
 
-		assertEquals("default dir", map.get("value"));
-		assertEquals("externalized dir1", map1.get("value"));
-		assertEquals("externalized dir2", map2.get("value"));
+		Assertions.assertEquals("default dir", map.get("value"));
+		Assertions.assertEquals("externalized dir1", map1.get("value"));
+		Assertions.assertEquals("externalized dir2", map2.get("value"));
 	}
 
     private static void writeConfigFile(String key, String value, String path) throws IOException {

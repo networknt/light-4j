@@ -1,8 +1,8 @@
 package com.networknt.token.exchange;
 
 import com.networknt.token.exchange.schema.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,10 +44,10 @@ public class TokenExchangeServiceIntegrationTest {
         Map<String, String> resolvedHeaders = updateSchema.getResolvedHeaders(sharedVars, requestContext);
 
         // Then: Variables should be properly resolved
-        Assert.assertNotNull("Resolved headers should not be null", resolvedHeaders);
-        Assert.assertEquals("Bearer test-access-token-abc123",
+        Assertions.assertNotNull(resolvedHeaders, "Resolved headers should not be null");
+        Assertions.assertEquals("Bearer test-access-token-abc123",
             resolvedHeaders.get("Authorization"));
-        Assert.assertEquals("user-12345",
+        Assertions.assertEquals("user-12345",
             resolvedHeaders.get("X-User-Id"));
     }
 
@@ -82,13 +82,13 @@ public class TokenExchangeServiceIntegrationTest {
         Map<String, String> resolvedHeaders = updateSchema.getResolvedHeaders(sharedVars, requestContext);
 
         // Then: All variables should be resolved correctly
-        Assert.assertEquals("original-token-123",
+        Assertions.assertEquals("original-token-123",
             resolvedHeaders.get("X-Original-Token"));
-        Assert.assertEquals("/api/orders/456",
+        Assertions.assertEquals("/api/orders/456",
             resolvedHeaders.get("X-Request-Path"));
-        Assert.assertEquals("client-abc",
+        Assertions.assertEquals("client-abc",
             resolvedHeaders.get("X-Client-Id"));
-        Assert.assertEquals("static-value",
+        Assertions.assertEquals("static-value",
             resolvedHeaders.get("X-Static"));
     }
 
@@ -124,10 +124,10 @@ public class TokenExchangeServiceIntegrationTest {
         Map<String, String> resolvedBody = updateSchema.getResolvedBody(sharedVars, requestContext);
 
         // Then: All variables should be resolved
-        Assert.assertEquals("token-abc", resolvedBody.get("access_token"));
-        Assert.assertEquals("/api/payments", resolvedBody.get("request_path"));
-        Assert.assertEquals("client-xyz", resolvedBody.get("client_id"));
-        Assert.assertEquals("user-123", resolvedBody.get("user_id"));
+        Assertions.assertEquals("token-abc", resolvedBody.get("access_token"));
+        Assertions.assertEquals("/api/payments", resolvedBody.get("request_path"));
+        Assertions.assertEquals("client-xyz", resolvedBody.get("client_id"));
+        Assertions.assertEquals("user-123", resolvedBody.get("user_id"));
     }
 
     /**
@@ -144,9 +144,8 @@ public class TokenExchangeServiceIntegrationTest {
         sharedVarsSeconds.updateExpiration();
         long expirationSeconds = sharedVarsSeconds.getExpiration();
 
-        Assert.assertTrue("Expiration should be ~60 seconds from now",
-            expirationSeconds > beforeSeconds + 59000 &&
-            expirationSeconds < beforeSeconds + 61000);
+        Assertions.assertTrue(expirationSeconds > beforeSeconds + 59000 &&
+            expirationSeconds < beforeSeconds + 61000, "Expiration should be ~60 seconds from now");
 
         // Test with MINUTE
         SharedVariableSchema sharedVarsMinutes = new SharedVariableSchema();
@@ -157,9 +156,8 @@ public class TokenExchangeServiceIntegrationTest {
         sharedVarsMinutes.updateExpiration();
         long expirationMinutes = sharedVarsMinutes.getExpiration();
 
-        Assert.assertTrue("Expiration should be ~1 minute from now",
-            expirationMinutes > beforeMinutes + 59000 &&
-            expirationMinutes < beforeMinutes + 61000);
+        Assertions.assertTrue(expirationMinutes > beforeMinutes + 59000 &&
+            expirationMinutes < beforeMinutes + 61000, "Expiration should be ~1 minute from now");
 
         // Test with HOUR
         SharedVariableSchema sharedVarsHours = new SharedVariableSchema();
@@ -170,9 +168,8 @@ public class TokenExchangeServiceIntegrationTest {
         sharedVarsHours.updateExpiration();
         long expirationHours = sharedVarsHours.getExpiration();
 
-        Assert.assertTrue("Expiration should be ~1 hour from now",
-            expirationHours > beforeHours + 3599000 &&
-            expirationHours < beforeHours + 3601000);
+        Assertions.assertTrue(expirationHours > beforeHours + 3599000 &&
+            expirationHours < beforeHours + 3601000, "Expiration should be ~1 hour from now");
     }
 
     /**
@@ -189,7 +186,7 @@ public class TokenExchangeServiceIntegrationTest {
         boolean isExpired = System.currentTimeMillis() >= (expirationTime - waitLengthMillis);
 
         // Then: Token should be considered expired (refresh early)
-        Assert.assertTrue("Token should be expired due to grace period", isExpired);
+        Assertions.assertTrue(isExpired, "Token should be expired due to grace period");
 
         // Given: Token expires in 35 seconds with 30 second grace period
         expirationTime = System.currentTimeMillis() + 35000;
@@ -198,7 +195,7 @@ public class TokenExchangeServiceIntegrationTest {
         isExpired = System.currentTimeMillis() >= (expirationTime - waitLengthMillis);
 
         // Then: Token should NOT be expired
-        Assert.assertFalse("Token should not be expired yet", isExpired);
+        Assertions.assertFalse(isExpired, "Token should not be expired yet");
     }
 
     /**
@@ -225,8 +222,8 @@ public class TokenExchangeServiceIntegrationTest {
         Map<String, String> resolvedHeaders = updateSchema.getResolvedHeaders(sharedVars, requestContext);
 
         // Then: Missing variable should resolve to empty string
-        Assert.assertEquals("", resolvedHeaders.get("X-Missing"));
-        Assert.assertEquals("static", resolvedHeaders.get("X-Static"));
+        Assertions.assertEquals("", resolvedHeaders.get("X-Missing"));
+        Assertions.assertEquals("static", resolvedHeaders.get("X-Static"));
     }
 
     /**
@@ -255,7 +252,7 @@ public class TokenExchangeServiceIntegrationTest {
             @Override
             public void updateRequest(Map<String, Object> resultMap) {
                 updateCallCount[0] = "called";
-                Assert.assertNotNull("Result map should not be null", resultMap);
+                Assertions.assertNotNull(resultMap, "Result map should not be null");
             }
 
             private String mapClientIdToSchema(String clientId) {
@@ -268,9 +265,9 @@ public class TokenExchangeServiceIntegrationTest {
         RequestContext context = parser.parseContext();
 
         // Then: Schema should be resolved correctly
-        Assert.assertNotNull("Context should not be null", context);
-        Assert.assertEquals("oauth-schema-for-client-abc", context.schemaKey());
-        Assert.assertEquals("/api/test", context.path());
+        Assertions.assertNotNull(context, "Context should not be null");
+        Assertions.assertEquals("oauth-schema-for-client-abc", context.schemaKey());
+        Assertions.assertEquals("/api/test", context.path());
     }
 
     /**
@@ -315,8 +312,8 @@ public class TokenExchangeServiceIntegrationTest {
         RequestContext context = parser.parseContext();
 
         // Then: Schema should be resolved correctly
-        Assert.assertNotNull("Context should not be null", context);
-        Assert.assertEquals("customer-service-oauth", context.schemaKey());
+        Assertions.assertNotNull(context, "Context should not be null");
+        Assertions.assertEquals("customer-service-oauth", context.schemaKey());
     }
 
     /**
@@ -363,8 +360,8 @@ public class TokenExchangeServiceIntegrationTest {
         RequestContext context = parser.parseContext();
 
         // Then: Should fallback to default schema
-        Assert.assertNotNull("Context should not be null", context);
-        Assert.assertEquals("default-oauth-schema", context.schemaKey());
+        Assertions.assertNotNull(context, "Context should not be null");
+        Assertions.assertEquals("default-oauth-schema", context.schemaKey());
     }
 
     /**
@@ -374,8 +371,7 @@ public class TokenExchangeServiceIntegrationTest {
     public void testUpdateExpirationFromTtlFlag() {
         // Given: Update schema with flag enabled
         UpdateSchema updateSchemaEnabled = new UpdateSchema();
-        Assert.assertTrue("Default should be true",
-            updateSchemaEnabled.isUpdateExpirationFromTtl());
+        Assertions.assertTrue(updateSchemaEnabled.isUpdateExpirationFromTtl(), "Default should be true");
 
         // Given: Update schema with flag disabled (if setter exists)
         UpdateSchema updateSchemaDisabled = new UpdateSchema();
@@ -413,8 +409,8 @@ public class TokenExchangeServiceIntegrationTest {
         Map<String, String> resolvedBody = updateSchema.getResolvedBody(sharedVars, requestContext);
 
         // Then: Special characters should be preserved
-        Assert.assertEquals("abc=123&xyz=456", resolvedBody.get("encoded"));
-        Assert.assertEquals("{\"key\":\"value\"}", resolvedBody.get("json"));
+        Assertions.assertEquals("abc=123&xyz=456", resolvedBody.get("encoded"));
+        Assertions.assertEquals("{\"key\":\"value\"}", resolvedBody.get("json"));
     }
 
     /**
@@ -436,14 +432,14 @@ public class TokenExchangeServiceIntegrationTest {
         );
 
         // When/Then: Test case-insensitive lookups
-        Assert.assertEquals("application/json", context.getHeader("Content-Type"));
-        Assert.assertEquals("application/json", context.getHeader("CONTENT-TYPE"));
-        Assert.assertEquals("application/json", context.getHeader("content-type"));
+        Assertions.assertEquals("application/json", context.getHeader("Content-Type"));
+        Assertions.assertEquals("application/json", context.getHeader("CONTENT-TYPE"));
+        Assertions.assertEquals("application/json", context.getHeader("content-type"));
 
-        Assert.assertEquals("custom-value", context.getHeader("X-Custom-Header"));
-        Assert.assertEquals("custom-value", context.getHeader("x-custom-header"));
+        Assertions.assertEquals("custom-value", context.getHeader("X-Custom-Header"));
+        Assertions.assertEquals("custom-value", context.getHeader("x-custom-header"));
 
-        Assert.assertEquals("Bearer token-123", context.getAuthorizationHeader());
+        Assertions.assertEquals("Bearer token-123", context.getAuthorizationHeader());
     }
 
     // ==================== Helper Methods ====================

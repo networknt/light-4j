@@ -17,8 +17,8 @@
 package com.networknt.handler;
 
 import com.networknt.handler.config.PathChain;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PathChainTest {
 
@@ -44,11 +44,11 @@ public class PathChainTest {
         chain.setMethod("MAGIC");
         try {
             chain.validate("unit test config");
-            Assert.fail("Expected exception");
+            Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
             String ex_message = "Bad paths element in unit test config [ Invalid HTTP method: MAGIC ]";
-            Assert.assertEquals(ex_message, e.getMessage());
+            Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 
@@ -58,11 +58,11 @@ public class PathChainTest {
         chain.setMethod("GET");
         try {
             chain.validate("unit test config");
-            Assert.fail("Expected exception");
+            Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
             String ex_message = "Bad paths element in unit test config [ You must specify either path or source | It is possible that serviceId is missing from the values.yml and it is mandatory. ]";
-            Assert.assertEquals(ex_message, e.getMessage());
+            Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 
@@ -74,13 +74,13 @@ public class PathChainTest {
         chain.setMethod("GET");
         try {
             chain.validate("some unit test");
-            Assert.fail("Expected exception");
+            Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
             String ex_message = "Bad paths element in some unit test [ " +
                 "Conflicting source: some.source.Class and path: /some/path | " +
                 "Conflicting source: some.source.Class and method: GET ]";
-            Assert.assertEquals(ex_message, e.getMessage());
+            Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 
@@ -91,11 +91,11 @@ public class PathChainTest {
         chain.setPath("/some/path");
         try {
             chain.validate("some unit test");
-            Assert.fail("Expected exception");
+            Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
             String ex_message = "Bad paths element in some unit test [ Conflicting source: some.source.Class and path: /some/path ]";
-            Assert.assertEquals(ex_message, e.getMessage());
+            Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 
@@ -106,11 +106,11 @@ public class PathChainTest {
         chain.setMethod("GET");
         try {
             chain.validate("some unit test");
-            Assert.fail("Expected exception");
+            Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
             String ex_message = "Bad paths element in some unit test [ Conflicting source: some.source.Class and method: GET ]";
-            Assert.assertEquals(ex_message, e.getMessage());
+            Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 

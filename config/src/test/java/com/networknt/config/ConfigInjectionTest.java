@@ -1,14 +1,14 @@
 package com.networknt.config;
 
 import com.networknt.decrypt.Decryptor;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigInjectionTest {
 
@@ -23,7 +23,7 @@ public class ConfigInjectionTest {
      * method to support config-reload locally. Hence, this test is retired.
      */
     @Test
-    @Ignore
+    @Disabled
     public void testGetInjectValueIssue744() {
 
         Object oldConfigValue = null;
@@ -31,9 +31,9 @@ public class ConfigInjectionTest {
             oldConfigValue = ConfigInjection.getInjectValue(value, true);
         } catch (Exception ce) {
             // expected exception since no valuemap defined yet.
-            assertTrue(ce instanceof ConfigException);
+            Assertions.assertTrue(ce instanceof ConfigException);
         }
-        assertNull(oldConfigValue);
+        Assertions.assertNull(oldConfigValue);
 
         Map<String, Object> newValueMap = new HashMap<>();
         newValueMap.put(configKey, configValue);
@@ -41,53 +41,53 @@ public class ConfigInjectionTest {
 
         Object newConfigValue = ConfigInjection.getInjectValue(value, true);
 
-        assertNotNull(newConfigValue);
-        assertEquals(configValue, newConfigValue);
+        Assertions.assertNotNull(newConfigValue);
+        Assertions.assertEquals(configValue, newConfigValue);
     }
 
     @Test
     public void testConvertEnvVarsUsingDotInValue() {
         String testInput = ConfigInjection.convertEnvVars("server.environment");
-        Assert.assertEquals("SERVER_ENVIRONMENT", testInput);
+        Assertions.assertEquals("SERVER_ENVIRONMENT", testInput);
     }
 
     @Test
     public void testConvertEnvVarsUsingDotInValueWithMixCases() {
         String testInput = ConfigInjection.convertEnvVars("serVER.ENVironment");
-        Assert.assertEquals("SERVER_ENVIRONMENT", testInput);
+        Assertions.assertEquals("SERVER_ENVIRONMENT", testInput);
     }
 
     @Test
     public void testConvertEnvVarsUsingDotInValueWithCamelCasing() {
         String testInput = ConfigInjection.convertEnvVars("server.ENVIRONMENT");
-        Assert.assertEquals("SERVER_ENVIRONMENT", testInput);
+        Assertions.assertEquals("SERVER_ENVIRONMENT", testInput);
     }
 
     @Test
     public void testConvertEnvVarsKafkaPassword() {
         String testInput = ConfigInjection.convertEnvVars("kafka-consumer.password");
-        Assert.assertEquals("KAFKA_CONSUMER_PASSWORD", testInput);
+        Assertions.assertEquals("KAFKA_CONSUMER_PASSWORD", testInput);
     }
 
     @Test
     public void testConvertEnvVarsUsingNullValue() {
         String testInput2 = ConfigInjection.convertEnvVars(null);
-        Assert.assertEquals(null, testInput2);
+        Assertions.assertEquals(null, testInput2);
     }
 
     @Test
     public void testConvertEnvVarsUsingEmptyString() {
         String testInput3 = ConfigInjection.convertEnvVars("");
-        Assert.assertEquals("", testInput3);
+        Assertions.assertEquals("", testInput3);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testDecryptEnvValueWithEncryptedValue() {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();
         Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, "CRYPT:0754fbc37347c136be7725cbf62b6942:71756e13c2400985d0402ed6f49613d0");
-        Assert.assertEquals("password", envValue);
+        Assertions.assertEquals("password", envValue);
     }
 
     @Test
@@ -95,7 +95,7 @@ public class ConfigInjectionTest {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();
         Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, "password");
-        Assert.assertEquals("password", envValue);
+        Assertions.assertEquals("password", envValue);
     }
 
     @Test
@@ -103,7 +103,7 @@ public class ConfigInjectionTest {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();
         Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, "");
-        Assert.assertEquals("", envValue);
+        Assertions.assertEquals("", envValue);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class ConfigInjectionTest {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();
         Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, null);
-        Assert.assertEquals(null, envValue);
+        Assertions.assertEquals(null, envValue);
     }
 
     /**
@@ -120,11 +120,11 @@ public class ConfigInjectionTest {
      * to perform the following test. This test is to ensure that normal backslash in the stringify json is not escaped.
      */
     @Test
-    @Ignore
+    @Disabled
     public void testStringifiesJson() {
         String value = "users: [{\"username\":\"ML\\PAYOUT\"}]";
         String template = "users: ${basic.users:}";
         Object actual = ConfigInjection.getInjectValue(template, false);
-        assertEquals(value, actual);
+        Assertions.assertEquals(value, actual);
     }
 }

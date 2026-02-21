@@ -31,10 +31,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -85,8 +85,8 @@ public class ModuleRegistryGetHandlerTest extends  BaseTest{
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         ObjectMapper mapper = new ObjectMapper();
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(6, modules.size());
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals(6, modules.size());
     }
 
 }

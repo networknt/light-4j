@@ -16,7 +16,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -33,7 +33,7 @@ public class RequestTransformerInterceptorTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         if(server == null) {
             logger.info("starting server");
@@ -49,7 +49,7 @@ public class RequestTransformerInterceptorTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -72,7 +72,7 @@ public class RequestTransformerInterceptorTest {
                 });
     }
     @Test
-    @Ignore
+    @Disabled
     public void testPostRequest() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -114,12 +114,12 @@ public class RequestTransformerInterceptorTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             System.out.println("body = " + body);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.reqtrans.RequestTransformerHandler\"]}]", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.reqtrans.RequestTransformerHandler\"]}]", body);
         }
     }
 }

@@ -17,8 +17,8 @@
 package com.networknt.service;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +33,6 @@ public class ServiceConfigTest {
 
         ServiceConfig serviceConfig = ServiceConfig.load();
         List<Map<String, Object>> singletons = serviceConfig.getSingletons();
-        Assert.assertTrue(singletons.size() > 0);
+        Assertions.assertTrue(singletons.size() > 0);
     }
 }

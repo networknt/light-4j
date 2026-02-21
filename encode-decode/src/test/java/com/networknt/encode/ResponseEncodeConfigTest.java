@@ -17,13 +17,13 @@
 package com.networknt.encode;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ResponseEncodeConfigTest {
     @Test
     public void loadConfig() {
         ResponseEncodeConfig config = ResponseEncodeConfig.load();
-        Assert.assertEquals(config.getEncoders().size(), 2);
+        Assertions.assertEquals(config.getEncoders().size(), 2);
     }
 }

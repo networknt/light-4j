@@ -1,11 +1,13 @@
 package com.networknt.client.simplepool;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.net.URI;
 import java.util.HashSet;
@@ -15,7 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SimpleURIConnectionPoolTest {
 
     private SimpleURIConnectionPool pool;
@@ -29,7 +32,7 @@ public class SimpleURIConnectionPoolTest {
     @Mock
     private SimpleConnection mockConnection;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Default mock behavior for connection
         when(mockConnection.isOpen()).thenReturn(true);
@@ -57,15 +60,15 @@ public class SimpleURIConnectionPoolTest {
     public void testBorrowAndRestore() {
         // Borrow a connection
         SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
-        Assert.assertNotNull("Token should not be null", token);
-        Assert.assertNotNull("Connection should not be null", token.connection());
-        Assert.assertEquals("Borrowed count should be 1", 1, pool.getBorrowedCount());
-        Assert.assertEquals("Borrowable count should be 0", 0, pool.getBorrowableCount());
+        Assertions.assertNotNull(token, "Token should not be null");
+        Assertions.assertNotNull(token.connection(), "Connection should not be null");
+        Assertions.assertEquals(1, pool.getBorrowedCount(), "Borrowed count should be 1");
+        Assertions.assertEquals(0, pool.getBorrowableCount(), "Borrowable count should be 0");
 
         // Restore the connection
         pool.restore(token);
-        Assert.assertEquals("Borrowed count should be 0", 0, pool.getBorrowedCount());
-        Assert.assertEquals("Borrowable count should be 1", 1, pool.getBorrowableCount());
+        Assertions.assertEquals(0, pool.getBorrowedCount(), "Borrowed count should be 0");
+        Assertions.assertEquals(1, pool.getBorrowableCount(), "Borrowable count should be 1");
     }
 
     @Test
@@ -76,15 +79,14 @@ public class SimpleURIConnectionPoolTest {
         // Borrow 2 connections (filling the pool)
         pool.borrow(1000);
         pool.borrow(1000);
-        Assert.assertEquals("Borrowed count should be 2", 2, pool.getBorrowedCount());
+        Assertions.assertEquals(2, pool.getBorrowedCount(), "Borrowed count should be 2");
 
         // Attempt to borrow a 3rd should fail
         try {
             pool.borrow(1000);
-            Assert.fail("Should have thrown RuntimeException for pool size limit");
+            Assertions.fail("Should have thrown RuntimeException for pool size limit");
         } catch (RuntimeException e) {
-            Assert.assertTrue("Exception message should check pool size",
-                e.getMessage().contains("exceed the maximum size"));
+            Assertions.assertTrue(e.getMessage().contains("exceed the maximum size"), "Exception message should check pool size");
         }
     }
 
@@ -97,7 +99,7 @@ public class SimpleURIConnectionPoolTest {
 
         // Borrow again - should get the same connection
         SimpleConnectionState.ConnectionToken token2 = pool.borrow(1000);
-        Assert.assertSame("Should reuse the same connection", conn1, token2.connection());
+        Assertions.assertSame(conn1, token2.connection(), "Should reuse the same connection");
 
         // Verify connection maker was only called once
         verify(connectionMaker, times(1)).makeConnection(
@@ -120,7 +122,7 @@ public class SimpleURIConnectionPoolTest {
         // Borrow and restore
         SimpleConnectionState.ConnectionToken token = pool.borrow(1000);
         pool.restore(token);
-        Assert.assertEquals("Should have 1 borrowable connection", 1, pool.getBorrowableCount());
+        Assertions.assertEquals(1, pool.getBorrowableCount(), "Should have 1 borrowable connection");
 
         // Wait for expiry
         Thread.sleep(200);
@@ -167,7 +169,7 @@ public class SimpleURIConnectionPoolTest {
 
         try {
             pool.borrow(100);
-            Assert.fail("Should throw exception when connection creation fails");
+            Assertions.fail("Should throw exception when connection creation fails");
         } catch (Exception e) {
             // Expected
         }
@@ -189,7 +191,7 @@ public class SimpleURIConnectionPoolTest {
         int cleaned = pool.validateAndCleanConnections();
 
         // Since connection is closed, it should be removed
-        Assert.assertEquals("Should have cleaned up 1 connection", 1, cleaned);
-        Assert.assertEquals("Active connections should be 0", 0, pool.getActiveConnectionCount());
+        Assertions.assertEquals(1, cleaned, "Should have cleaned up 1 connection");
+        Assertions.assertEquals(0, pool.getActiveConnectionCount(), "Active connections should be 0");
     }
 }

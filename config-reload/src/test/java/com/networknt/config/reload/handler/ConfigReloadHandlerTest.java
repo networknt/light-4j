@@ -27,8 +27,8 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
@@ -83,8 +83,8 @@ public class ConfigReloadHandlerTest extends  BaseTest{
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(6, modules.size());
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals(6, modules.size());
     }
 
     @Test
@@ -128,8 +128,8 @@ public class ConfigReloadHandlerTest extends  BaseTest{
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(1, modules.size());
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals(1, modules.size());
     }
 
 }

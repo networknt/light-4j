@@ -13,8 +13,8 @@ import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
@@ -272,7 +272,7 @@ public class APMAgentReporterTest {
 
         // Wait for a couple of reporting intervals to ensure metrics are reported
         Thread.sleep(REPORTING_INTERVAL_MS * 2);
-        Assert.assertFalse(handler.hasFailed());
+        Assertions.assertFalse(handler.hasFailed());
         MockMetricsHandler.reporter.close();
         MockMetricsHandler.registry.removeMatching(MetricFilter.ALL);
     }
@@ -313,7 +313,7 @@ public class APMAgentReporterTest {
 
         // Wait for a couple of reporting intervals to ensure metrics are reported
         Thread.sleep(REPORTING_INTERVAL_MS * 2);
-        Assert.assertFalse(handler.hasFailed());
+        Assertions.assertFalse(handler.hasFailed());
         MockMetricsHandler.reporter.close();
         MockMetricsHandler.registry.removeMatching(MetricFilter.ALL);
     }
@@ -345,8 +345,8 @@ public class APMAgentReporterTest {
         reporter.report();
 
         // Verify data was written
-        Assert.assertTrue("Timer metrics should be reported", sender.hasSeriesData());
-        Assert.assertFalse("No negative values should be reported", sender.hasFailed());
+        Assertions.assertTrue(sender.hasSeriesData(), "Timer metrics should be reported");
+        Assertions.assertFalse(sender.hasFailed(), "No negative values should be reported");
     }
 
     /**
@@ -378,7 +378,7 @@ public class APMAgentReporterTest {
 
         // First report - should report all counts as delta
         reporter.report();
-        Assert.assertTrue("Histogram metrics should be reported", sender.hasSeriesData());
+        Assertions.assertTrue(sender.hasSeriesData(), "Histogram metrics should be reported");
 
         // Add more values and report again to test delta calculation
         sender.flush();
@@ -387,8 +387,8 @@ public class APMAgentReporterTest {
 
         // Second report - should report only new counts as delta
         reporter.report();
-        Assert.assertTrue("Histogram delta metrics should be reported", sender.hasSeriesData());
-        Assert.assertFalse("No negative values should be reported", sender.hasFailed());
+        Assertions.assertTrue(sender.hasSeriesData(), "Histogram delta metrics should be reported");
+        Assertions.assertFalse(sender.hasFailed(), "No negative values should be reported");
     }
 
     /**
@@ -422,8 +422,8 @@ public class APMAgentReporterTest {
         reporter.report();
 
         // Verify data was written (null gauge should be skipped)
-        Assert.assertTrue("Gauge metrics should be reported", sender.hasSeriesData());
-        Assert.assertFalse("No negative values should be reported", sender.hasFailed());
+        Assertions.assertTrue(sender.hasSeriesData(), "Gauge metrics should be reported");
+        Assertions.assertFalse(sender.hasFailed(), "No negative values should be reported");
     }
 
     /**
@@ -452,7 +452,7 @@ public class APMAgentReporterTest {
 
         // First report - should report initial count as delta
         reporter.report();
-        Assert.assertTrue("Counter metrics should be reported", sender.hasSeriesData());
+        Assertions.assertTrue(sender.hasSeriesData(), "Counter metrics should be reported");
 
         // Clear sender and increment again
         sender.flush();
@@ -461,8 +461,8 @@ public class APMAgentReporterTest {
 
         // Second report - should report only new increments as delta
         reporter.report();
-        Assert.assertTrue("Counter delta metrics should be reported", sender.hasSeriesData());
-        Assert.assertFalse("No negative values should be reported", sender.hasFailed());
+        Assertions.assertTrue(sender.hasSeriesData(), "Counter delta metrics should be reported");
+        Assertions.assertFalse(sender.hasFailed(), "No negative values should be reported");
 
         // Test with skipIdleMetrics=false
         APMAgentReporter reporterWithIdle = APMAgentReporter
@@ -472,7 +472,7 @@ public class APMAgentReporterTest {
 
         sender.flush();
         reporterWithIdle.report();
-        Assert.assertTrue("Idle metrics should be reported when skipIdleMetrics=false", sender.hasSeriesData());
+        Assertions.assertTrue(sender.hasSeriesData(), "Idle metrics should be reported when skipIdleMetrics=false");
     }
 
 }

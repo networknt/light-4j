@@ -17,7 +17,7 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.jose4j.jwt.JwtClaims;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
@@ -59,7 +59,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
 
     static SSLContext sslContext;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         securityConfig = SecurityConfig.load(JwtVerifier.SECURITY_CONFIG);
         config = ClientConfig.get(CLIENT_CONFIG_NAME);
@@ -88,7 +88,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
                             .addExactPath(API_PETSTORE, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
                                 String requestPath = exchange.getRequestPath();
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
@@ -124,7 +124,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
                     .setHandler(new PathHandler()
                             .addExactPath(API_MARKET, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String requestPath = exchange.getRequestPath();
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
@@ -232,7 +232,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
 
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         worker.shutdown();
         if(server1 != null) {
@@ -304,7 +304,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
             // return the connection to the connection pool.
             client.restore(token);
@@ -335,7 +335,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
             int responseStatus = response.getResponseCode();
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
             System.out.println("*************************************status code = " + responseStatus + " res body = " + body);
-            Assert.assertEquals("{\"message\":\"Market OK!\"}", body);
+            Assertions.assertEquals("{\"message\":\"Market OK!\"}", body);
         } finally {
             // return the connection to the connection pool.
             client.restore(token);
@@ -353,15 +353,15 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
@@ -377,15 +377,15 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
@@ -401,15 +401,15 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims, curr_kid, KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA));
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
@@ -425,12 +425,12 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
      * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
      */
     @Test
-    @Ignore
+    @Disabled
     public void testGetCertForToken() {
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         X509Certificate certificate = jwtVerifier.getCertForToken("100");
         System.out.println("certificate = " + certificate);
-        Assert.assertNotNull(certificate);
+        Assertions.assertNotNull(certificate);
     }
 
     /**
@@ -438,12 +438,12 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
      * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
      */
     @Test
-    @Ignore
+    @Disabled
     public void testGetCertForSign() {
         JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
         X509Certificate certificate = jwtVerifier.getCertForSign("100");
         System.out.println("certificate = " + certificate);
-        Assert.assertNotNull(certificate);
+        Assertions.assertNotNull(certificate);
     }
 
 

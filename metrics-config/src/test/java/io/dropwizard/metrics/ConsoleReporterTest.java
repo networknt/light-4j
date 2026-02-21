@@ -16,9 +16,9 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Clock;
 import io.dropwizard.metrics.ConsoleReporter;
@@ -60,13 +60,13 @@ public class ConsoleReporterTest {
                                                             .filter(MetricFilter.ALL)
                                                             .build();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         when(clock.getTime()).thenReturn(1363568676000L);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void reportsGaugeValues() throws Exception {
         final Gauge gauge = mock(Gauge.class);
         when(gauge.getValue()).thenReturn(1);
@@ -90,7 +90,7 @@ public class ConsoleReporterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void reportsCounterValues() throws Exception {
         final Counter counter = mock(Counter.class);
         when(counter.getCount()).thenReturn(100L);
@@ -114,7 +114,7 @@ public class ConsoleReporterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void reportsHistogramValues() throws Exception {
         final Histogram histogram = mock(Histogram.class);
         when(histogram.getCount()).thenReturn(1L);
@@ -162,7 +162,7 @@ public class ConsoleReporterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void reportsMeterValues() throws Exception {
         final Meter meter = mock(Meter.class);
         when(meter.getCount()).thenReturn(1L);
@@ -194,7 +194,7 @@ public class ConsoleReporterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void reportsTimerValues() throws Exception {
         final Timer timer = mock(Timer.class);
         when(timer.getCount()).thenReturn(1L);

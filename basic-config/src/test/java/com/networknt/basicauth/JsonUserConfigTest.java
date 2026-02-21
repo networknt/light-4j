@@ -1,7 +1,7 @@
 package com.networknt.basicauth;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,17 +14,17 @@ public class JsonUserConfigTest {
     @Test
     public void testDecryption() {
         logger.debug("password for user2 = " + config.getUsers().get("user2").getPassword());
-        Assert.assertEquals("password", config.getUsers().get("user2").getPassword());
+        Assertions.assertEquals("password", config.getUsers().get("user2").getPassword());
     }
 
     @Test
     public void testPaths() {
         Map<String, UserAuth> users = config.getUsers();
         UserAuth user = users.get("user1");
-        Assert.assertEquals("user1", user.getUsername());
-        Assert.assertEquals("user1pass", user.getPassword());
-        Assert.assertEquals(1, user.getPaths().size());
-        Assert.assertEquals("/v1/address", user.getPaths().get(0));
+        Assertions.assertEquals("user1", user.getUsername());
+        Assertions.assertEquals("user1pass", user.getPassword());
+        Assertions.assertEquals(1, user.getPaths().size());
+        Assertions.assertEquals("/v1/address", user.getPaths().get(0));
     }
 
 }

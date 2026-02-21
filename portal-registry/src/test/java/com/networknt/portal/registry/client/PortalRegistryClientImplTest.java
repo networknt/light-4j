@@ -17,10 +17,10 @@ package com.networknt.portal.registry.client;
 
 import com.networknt.config.Config;
 import com.networknt.portal.registry.PortalRegistryConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PortalRegistryClientImplTest {
 

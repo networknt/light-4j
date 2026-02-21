@@ -1,7 +1,7 @@
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +40,6 @@ public class TimeUtilTest {
 
     @Test
     public void testTimeUnitToMillisecond() {
-        Assert.assertEquals(1000, TimeUtil.oneTimeUnitMillisecond(TimeUnit.SECONDS));
+        Assertions.assertEquals(1000, TimeUtil.oneTimeUnitMillisecond(TimeUnit.SECONDS));
     }
 }

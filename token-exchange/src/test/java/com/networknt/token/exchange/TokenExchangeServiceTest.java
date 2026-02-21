@@ -1,9 +1,9 @@
 package com.networknt.token.exchange;
 
 import com.networknt.token.exchange.schema.*;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class TokenExchangeServiceTest {
     private TokenExchangeConfig mockConfig;
     private TokenExchangeService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Create a minimal mock configuration
         mockConfig = createMockConfig();
@@ -50,8 +50,7 @@ public class TokenExchangeServiceTest {
 
         // Then: The token should be considered expired
         // This would be verified by the service attempting a token refresh
-        Assert.assertTrue("Token should be expired",
-            System.currentTimeMillis() >= oneHourAgo);
+        Assertions.assertTrue(System.currentTimeMillis() >= oneHourAgo, "Token should be expired");
     }
 
     /**
@@ -74,7 +73,7 @@ public class TokenExchangeServiceTest {
         boolean isExpired = System.currentTimeMillis() >= (oneHourFromNow - waitLengthMillis);
 
         // Then: The token should NOT be expired
-        Assert.assertFalse("Token should not be expired", isExpired);
+        Assertions.assertFalse(isExpired, "Token should not be expired");
     }
 
     /**
@@ -96,7 +95,7 @@ public class TokenExchangeServiceTest {
         boolean isExpired = System.currentTimeMillis() >= (twentySecondsFromNow - waitLengthMillis);
 
         // Then: The token should be considered expired (refresh early)
-        Assert.assertTrue("Token should be expired due to wait length", isExpired);
+        Assertions.assertTrue(isExpired, "Token should be expired due to wait length");
     }
 
     /**
@@ -113,7 +112,7 @@ public class TokenExchangeServiceTest {
 
             @Override
             public void updateRequest(Map<String, Object> resultMap) {
-                Assert.fail("updateRequest should not be called when context is null");
+                Assertions.fail("updateRequest should not be called when context is null");
             }
         };
 
@@ -121,13 +120,13 @@ public class TokenExchangeServiceTest {
         service.transform(parser);
 
         // Then: No exception should be thrown and updateRequest should not be called
-        // (verified by the Assert.fail in updateRequest)
+        // (verified by the Assertions.fail in updateRequest)
     }
 
     /**
      * Test that the service throws exception for non-existent schema.
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTransformWithNonExistentSchema() throws InterruptedException {
         // Given: A parser that returns a context with non-existent schema
         RequestContext.Parser parser = new RequestContext.Parser() {
@@ -148,7 +147,7 @@ public class TokenExchangeServiceTest {
         };
 
         // When/Then: Transform should throw IllegalArgumentException
-        service.transform(parser);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> service.transform(parser));
     }
 
     /**
@@ -177,8 +176,8 @@ public class TokenExchangeServiceTest {
         Map<String, String> resolvedHeaders = updateSchema.getResolvedHeaders(sharedVars, requestContext);
 
         // Then: Headers should be resolved correctly
-        Assert.assertEquals("Bearer test-token-123", resolvedHeaders.get("Authorization"));
-        Assert.assertEquals("static-value", resolvedHeaders.get("X-Custom-Header"));
+        Assertions.assertEquals("Bearer test-token-123", resolvedHeaders.get("Authorization"));
+        Assertions.assertEquals("static-value", resolvedHeaders.get("X-Custom-Header"));
     }
 
     /**
@@ -208,8 +207,8 @@ public class TokenExchangeServiceTest {
         Map<String, String> resolvedBody = updateSchema.getResolvedBody(sharedVars, requestContext);
 
         // Then: Body should be resolved correctly
-        Assert.assertEquals("token-abc", resolvedBody.get("token"));
-        Assert.assertEquals("user-123", resolvedBody.get("userId"));
+        Assertions.assertEquals("token-abc", resolvedBody.get("token"));
+        Assertions.assertEquals("user-123", resolvedBody.get("userId"));
     }
 
     /**
@@ -227,10 +226,10 @@ public class TokenExchangeServiceTest {
         long expiration = sharedVars.getExpiration();
 
         // Then: Default values should be set
-        Assert.assertEquals("Default TTL should be 0", 0L, tokenTtl);
-        Assert.assertEquals("Default TTL unit should be SECOND", TtlUnit.SECOND, tokenTtlUnit);
-        Assert.assertEquals("Default wait length should be 0", 0L, waitLength);
-        Assert.assertEquals("Default expiration should be 0", 0L, expiration);
+        Assertions.assertEquals(0L, tokenTtl, "Default TTL should be 0");
+        Assertions.assertEquals(TtlUnit.SECOND, tokenTtlUnit, "Default TTL unit should be SECOND");
+        Assertions.assertEquals(0L, waitLength, "Default wait length should be 0");
+        Assertions.assertEquals(0L, expiration, "Default expiration should be 0");
     }
 
     /**
@@ -253,10 +252,8 @@ public class TokenExchangeServiceTest {
         long expectedExpiration = beforeUpdate + (3600 * 1000);
         long afterUpdate = System.currentTimeMillis() + (3600 * 1000);
 
-        Assert.assertTrue("Expiration should be after current time",
-            expiration > beforeUpdate);
-        Assert.assertTrue("Expiration should be reasonable",
-            expiration >= expectedExpiration && expiration <= afterUpdate);
+        Assertions.assertTrue(expiration > beforeUpdate, "Expiration should be after current time");
+        Assertions.assertTrue(expiration >= expectedExpiration && expiration <= afterUpdate, "Expiration should be reasonable");
     }
 
     /**
@@ -287,8 +284,8 @@ public class TokenExchangeServiceTest {
         Map<String, String> resolvedHeaders = updateSchema.getResolvedHeaders(sharedVars, requestContext);
 
         // Then: Request context variables should be resolved
-        Assert.assertEquals("/api/customers", resolvedHeaders.get("X-Original-Path"));
-        Assert.assertEquals("client-abc", resolvedHeaders.get("X-Client-Id"));
+        Assertions.assertEquals("/api/customers", resolvedHeaders.get("X-Original-Path"));
+        Assertions.assertEquals("client-abc", resolvedHeaders.get("X-Client-Id"));
     }
 
     /**
@@ -311,10 +308,10 @@ public class TokenExchangeServiceTest {
         Map<String, String> resolvedBody = updateSchema.getResolvedBody(sharedVars, requestContext);
 
         // Then: Empty maps should be returned
-        Assert.assertNotNull("Resolved headers should not be null", resolvedHeaders);
-        Assert.assertNotNull("Resolved body should not be null", resolvedBody);
-        Assert.assertTrue("Resolved headers should be empty", resolvedHeaders.isEmpty());
-        Assert.assertTrue("Resolved body should be empty", resolvedBody.isEmpty());
+        Assertions.assertNotNull(resolvedHeaders, "Resolved headers should not be null");
+        Assertions.assertNotNull(resolvedBody, "Resolved body should not be null");
+        Assertions.assertTrue(resolvedHeaders.isEmpty(), "Resolved headers should be empty");
+        Assertions.assertTrue(resolvedBody.isEmpty(), "Resolved body should be empty");
     }
 
     /**
@@ -323,25 +320,25 @@ public class TokenExchangeServiceTest {
     @Test
     public void testTtlUnitConversions() {
         // Test SECOND to milliseconds
-        Assert.assertEquals(3600000L, TtlUnit.SECOND.unitToMillis(3600L));
+        Assertions.assertEquals(3600000L, TtlUnit.SECOND.unitToMillis(3600L));
 
         // Test MINUTE to milliseconds
-        Assert.assertEquals(3600000L, TtlUnit.MINUTE.unitToMillis(60L));
+        Assertions.assertEquals(3600000L, TtlUnit.MINUTE.unitToMillis(60L));
 
         // Test HOUR to milliseconds
-        Assert.assertEquals(3600000L, TtlUnit.HOUR.unitToMillis(1L));
+        Assertions.assertEquals(3600000L, TtlUnit.HOUR.unitToMillis(1L));
 
         // Test MILLISECOND (identity)
-        Assert.assertEquals(3600000L, TtlUnit.MILLISECOND.unitToMillis(3600000L));
+        Assertions.assertEquals(3600000L, TtlUnit.MILLISECOND.unitToMillis(3600000L));
 
         // Test milliseconds to SECOND
-        Assert.assertEquals(3600L, TtlUnit.SECOND.millisToUnit(3600000L));
+        Assertions.assertEquals(3600L, TtlUnit.SECOND.millisToUnit(3600000L));
 
         // Test milliseconds to MINUTE
-        Assert.assertEquals(60L, TtlUnit.MINUTE.millisToUnit(3600000L));
+        Assertions.assertEquals(60L, TtlUnit.MINUTE.millisToUnit(3600000L));
 
         // Test milliseconds to HOUR
-        Assert.assertEquals(1L, TtlUnit.HOUR.millisToUnit(3600000L));
+        Assertions.assertEquals(1L, TtlUnit.HOUR.millisToUnit(3600000L));
     }
 
     /**
@@ -372,7 +369,7 @@ public class TokenExchangeServiceTest {
         service.transform(parser);
 
         // Then: Update should not be called
-        Assert.assertFalse("Update should not be called with null context", updateCalled[0]);
+        Assertions.assertFalse(updateCalled[0], "Update should not be called with null context");
     }
 
     /**
@@ -397,22 +394,22 @@ public class TokenExchangeServiceTest {
         );
 
         // When/Then: Test getters
-        Assert.assertEquals("test-schema", context.schemaKey());
-        Assert.assertEquals("/api/customers", context.getPath());
-        Assert.assertEquals("Bearer token-123", context.getHeader("Authorization"));
-        Assert.assertEquals("Bearer token-123", context.getAuthorizationHeader());
-        Assert.assertEquals("custom-value", context.getHeader("X-Custom"));
-        Assert.assertEquals("1", context.getQueryParam("page"));
-        Assert.assertEquals("10", context.getQueryParam("Size")); // case-insensitive
+        Assertions.assertEquals("test-schema", context.schemaKey());
+        Assertions.assertEquals("/api/customers", context.getPath());
+        Assertions.assertEquals("Bearer token-123", context.getHeader("Authorization"));
+        Assertions.assertEquals("Bearer token-123", context.getAuthorizationHeader());
+        Assertions.assertEquals("custom-value", context.getHeader("X-Custom"));
+        Assertions.assertEquals("1", context.getQueryParam("page"));
+        Assertions.assertEquals("10", context.getQueryParam("Size")); // case-insensitive
 
         // Test unmodifiable maps
         Map<String, String> allHeaders = context.getHeaders();
-        Assert.assertNotNull(allHeaders);
-        Assert.assertEquals(2, allHeaders.size());
+        Assertions.assertNotNull(allHeaders);
+        Assertions.assertEquals(2, allHeaders.size());
 
         Map<String, String> allQueryParams = context.getQueryParams();
-        Assert.assertNotNull(allQueryParams);
-        Assert.assertEquals(2, allQueryParams.size());
+        Assertions.assertNotNull(allQueryParams);
+        Assertions.assertEquals(2, allQueryParams.size());
     }
 
     // ==================== Helper Methods ====================

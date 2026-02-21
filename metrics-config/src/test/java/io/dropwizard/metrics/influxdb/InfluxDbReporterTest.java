@@ -21,8 +21,8 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.networknt.metrics.TimeSeriesDbSender;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -49,7 +49,7 @@ public class InfluxDbReporterTest {
     private MetricRegistry registry;
     private InfluxDbReporter reporter;
 
-    @Before
+    @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
         reporter = InfluxDbReporter

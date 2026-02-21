@@ -1,13 +1,13 @@
 package com.networknt.config;
 
 import com.networknt.config.yml.DecryptConstructor;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class DecryptConstructorTest {
     @Test
     public void testConstructor() {
         DecryptConstructor constructor = DecryptConstructor.getInstance();
-        Assert.assertNotNull(constructor);
+        Assertions.assertNotNull(constructor);
     }
 }

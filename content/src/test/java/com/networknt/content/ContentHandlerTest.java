@@ -30,10 +30,10 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -52,7 +52,7 @@ public class ContentHandlerTest {
   private static Undertow server = null;
   private static final String url = "http://localhost:7080";
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     if (server == null) {
       logger.info("starting server");
@@ -70,7 +70,7 @@ public class ContentHandlerTest {
     }
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     if (server != null) {
       try {
@@ -140,9 +140,9 @@ public class ContentHandlerTest {
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
@@ -186,9 +186,9 @@ public class ContentHandlerTest {
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
@@ -232,9 +232,9 @@ public class ContentHandlerTest {
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
@@ -275,8 +275,8 @@ public class ContentHandlerTest {
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst("Content-Type");
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, "application/json");
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, "application/json");
   }
 }

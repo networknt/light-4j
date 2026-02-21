@@ -3,9 +3,9 @@ package com.networknt.token.exchange;
 import com.networknt.config.JsonMapper;
 import com.networknt.token.exchange.schema.TtlUnit;
 import com.networknt.token.exchange.schema.jwt.JwtSchema;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -21,7 +21,7 @@ public class JwtBuilderTest {
     private JwtBuilder jwtBuilder;
     private TestTokenKeyStoreManager testKeyStoreManager;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testKeyStoreManager = new TestTokenKeyStoreManager();
         jwtBuilder = new JwtBuilder(testKeyStoreManager);
@@ -35,22 +35,22 @@ public class JwtBuilderTest {
         String jwt = jwtBuilder.build(jwtSchema);
 
         // Verify JWT structure (header.payload.signature)
-        Assert.assertNotNull("JWT should not be null", jwt);
+        Assertions.assertNotNull(jwt, "JWT should not be null");
         String[] parts = jwt.split("\\.");
-        Assert.assertEquals("JWT should have 3 parts", 3, parts.length);
+        Assertions.assertEquals(3, parts.length, "JWT should have 3 parts");
 
         // Verify header can be decoded
         String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
-        Assert.assertTrue("Header should contain alg", headerJson.contains("alg"));
-        Assert.assertTrue("Header should contain typ", headerJson.contains("typ"));
+        Assertions.assertTrue(headerJson.contains("alg"), "Header should contain alg");
+        Assertions.assertTrue(headerJson.contains("typ"), "Header should contain typ");
 
         // Verify body can be decoded
         String bodyJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        Assert.assertTrue("Body should contain iss", bodyJson.contains("iss"));
-        Assert.assertTrue("Body should contain sub", bodyJson.contains("sub"));
+        Assertions.assertTrue(bodyJson.contains("iss"), "Body should contain iss");
+        Assertions.assertTrue(bodyJson.contains("sub"), "Body should contain sub");
 
         // Verify signature is not empty
-        Assert.assertFalse("Signature should not be empty", parts[2].isEmpty());
+        Assertions.assertFalse(parts[2].isEmpty(), "Signature should not be empty");
     }
 
     @Test
@@ -64,8 +64,8 @@ public class JwtBuilderTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> header = JsonMapper.string2Map(headerJson);
 
-        Assert.assertEquals("RS256", header.get("alg"));
-        Assert.assertEquals("JWT", header.get("typ"));
+        Assertions.assertEquals("RS256", header.get("alg"));
+        Assertions.assertEquals("JWT", header.get("typ"));
     }
 
     @Test
@@ -79,9 +79,9 @@ public class JwtBuilderTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> body = JsonMapper.string2Map(bodyJson);
 
-        Assert.assertEquals("test-issuer", body.get("iss"));
-        Assert.assertEquals("test-subject", body.get("sub"));
-        Assert.assertEquals("test-audience", body.get("aud"));
+        Assertions.assertEquals("test-issuer", body.get("iss"));
+        Assertions.assertEquals("test-subject", body.get("sub"));
+        Assertions.assertEquals("test-audience", body.get("aud"));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class JwtBuilderTest {
         Map<String, Object> body = JsonMapper.string2Map(bodyJson);
 
         // Verify exp field exists and is a reasonable future timestamp
-        Assert.assertTrue("Body should contain exp", body.containsKey("exp"));
+        Assertions.assertTrue(body.containsKey("exp"), "Body should contain exp");
         Object expObj = body.get("exp");
         long exp;
         if (expObj instanceof Number) {
@@ -105,9 +105,9 @@ public class JwtBuilderTest {
             exp = Long.parseLong(expObj.toString());
         }
         long now = System.currentTimeMillis() / 1000;
-        Assert.assertTrue("Expiry should be in the future", exp > now);
+        Assertions.assertTrue(exp > now, "Expiry should be in the future");
         // With 3600 second TTL, exp should be roughly now + 3600
-        Assert.assertTrue("Expiry should be within expected range", exp <= now + 3700);
+        Assertions.assertTrue(exp <= now + 3700, "Expiry should be within expected range");
     }
 
     @Test
@@ -122,7 +122,7 @@ public class JwtBuilderTest {
         Map<String, Object> body = JsonMapper.string2Map(bodyJson);
 
         // Verify iat field exists and is approximately current time
-        Assert.assertTrue("Body should contain iat", body.containsKey("iat"));
+        Assertions.assertTrue(body.containsKey("iat"), "Body should contain iat");
         Object iatObj = body.get("iat");
         long iat;
         if (iatObj instanceof Number) {
@@ -132,7 +132,7 @@ public class JwtBuilderTest {
         }
         long now = System.currentTimeMillis() / 1000;
         // Allow 5 seconds tolerance
-        Assert.assertTrue("iat should be approximately current time", Math.abs(iat - now) < 5);
+        Assertions.assertTrue(Math.abs(iat - now) < 5, "iat should be approximately current time");
     }
 
     @Test
@@ -153,7 +153,7 @@ public class JwtBuilderTest {
         verifier.initVerify(publicKey);
         verifier.update(payload.getBytes(StandardCharsets.UTF_8));
 
-        Assert.assertTrue("Signature should be valid", verifier.verify(signatureBytes));
+        Assertions.assertTrue(verifier.verify(signatureBytes), "Signature should be valid");
     }
 
     @Test
@@ -162,13 +162,13 @@ public class JwtBuilderTest {
 
         String jwt = jwtBuilder.build(jwtSchema);
 
-        Assert.assertNotNull("JWT should not be null even with null header", jwt);
+        Assertions.assertNotNull(jwt, "JWT should not be null even with null header");
         String[] parts = jwt.split("\\.");
-        Assert.assertEquals("JWT should have 3 parts", 3, parts.length);
+        Assertions.assertEquals(3, parts.length, "JWT should have 3 parts");
 
         // Header part should be empty JSON object encoded
         String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
-        Assert.assertEquals("{}", headerJson);
+        Assertions.assertEquals("{}", headerJson);
     }
 
     @Test
@@ -192,14 +192,13 @@ public class JwtBuilderTest {
         }
         long now = System.currentTimeMillis() / 1000;
         // 60 minutes = 3600 seconds
-        Assert.assertTrue("Expiry should be approximately 60 minutes from now",
-                exp > now + 3500 && exp < now + 3700);
+        Assertions.assertTrue(exp > now + 3500 && exp < now + 3700, "Expiry should be approximately 60 minutes from now");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBuildWithInvalidAlgorithm() {
         JwtSchema jwtSchema = createTestJwtSchemaWithAlgorithm("INVALID_ALG");
-        jwtBuilder.build(jwtSchema);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> jwtBuilder.build(jwtSchema));
     }
 
     // Helper method to create a test JWT schema

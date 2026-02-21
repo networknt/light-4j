@@ -14,8 +14,8 @@
 
 package io.dropwizard.metrics.influxdb.data;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,7 +28,7 @@ public class InfluxDbPointTest {
     @Test
     public void testMap2StringEmpty() {
         Map<String, String> map = new HashMap<>();
-        Assert.assertEquals("", InfluxDbPoint.map2String(map));
+        Assertions.assertEquals("", InfluxDbPoint.map2String(map));
     }
     @Test
     public void testMap2String() {
@@ -36,7 +36,7 @@ public class InfluxDbPointTest {
         map.put("key1", "value1");
         map.put("key2", "value2");
         map.put("key3", "value3");
-        Assert.assertEquals("key1=value1,key2=value2,key3=value3", InfluxDbPoint.map2String(map));
+        Assertions.assertEquals("key1=value1,key2=value2,key3=value3", InfluxDbPoint.map2String(map));
     }
     @Test
     public void testToString() {
@@ -45,6 +45,6 @@ public class InfluxDbPointTest {
         tags.put("key2", "value2");
         tags.put("key3", "value3");
         InfluxDbPoint point = new InfluxDbPoint("counter", tags, 1234567890, "123");
-        Assert.assertEquals("counter,key1=value1,key2=value2,key3=value3 value=123 1234567890", point.toString());
+        Assertions.assertEquals("counter,key1=value1,key2=value2,key3=value3 value=123 1234567890", point.toString());
     }
 }

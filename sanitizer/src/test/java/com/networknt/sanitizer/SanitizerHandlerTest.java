@@ -25,10 +25,10 @@ import com.networknt.sanitizer.builder.ServerBuilder;
 import io.undertow.Undertow;
 import io.undertow.client.*;
 import io.undertow.util.*;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class SanitizerHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -61,7 +61,7 @@ public class SanitizerHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if(server != null) {
             try {
@@ -108,8 +108,8 @@ public class SanitizerHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
     }
 
     @Test
@@ -155,11 +155,11 @@ public class SanitizerHandlerTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
+            Assertions.assertNotNull(body);
+            Assertions.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
         }
     }
 
@@ -205,12 +205,12 @@ public class SanitizerHandlerTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
+            Assertions.assertNotNull(body);
             Map map = Config.getInstance().getMapper().readValue(body, new TypeReference<HashMap<String, Object>>() {});
-            Assert.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
+            Assertions.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
         }
     }
 
@@ -221,29 +221,29 @@ public class SanitizerHandlerTest {
         SanitizerConfig config = SanitizerConfig.load();
         org.owasp.encoder.EncoderWrapper bodyEncoder = new org.owasp.encoder.EncoderWrapper(org.owasp.encoder.Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
         bodyEncoder.encodeNode(jsonMap);
-        Assert.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
+        Assertions.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
         ArrayList l2 = (ArrayList)jsonMap.get("s2");
         String s2 = (String)l2.get(1);
-        Assert.assertEquals(s2, "<script>alert(\\'test2\\')</script>");
+        Assertions.assertEquals(s2, "<script>alert(\\'test2\\')</script>");
         HashMap<String, Object> m3 = (HashMap<String,Object>)jsonMap.get("s3");
         String s5 = (String)m3.get("s5");
-        Assert.assertEquals(s5, "<script>alert(\\'test5\\')</script>");
+        Assertions.assertEquals(s5, "<script>alert(\\'test5\\')</script>");
         ArrayList l6 = (ArrayList)jsonMap.get("s6");
         HashMap<String,Object> m7 = (HashMap<String, Object>)l6.get(0);
         String s7 = (String)m7.get("s7");
-        Assert.assertEquals(s7, "<script>alert(\\'test7\\')</script>");
+        Assertions.assertEquals(s7, "<script>alert(\\'test7\\')</script>");
         ArrayList l9 = (ArrayList)jsonMap.get("s9");
         ArrayList l = (ArrayList)l9.get(0);
         String s9 = (String)l.get(0);
-        Assert.assertEquals(s9, "<script>alert(\\'test9\\')</script>");
+        Assertions.assertEquals(s9, "<script>alert(\\'test9\\')</script>");
     }
 
     @Test
     public void testEncoder() throws Exception {
         String s1 = "keep-alive";
         String s2 = "text/html";
-        Assert.assertEquals(Encode.forJavaScriptSource(s1), s1);
-        Assert.assertEquals(Encode.forJavaScriptSource(s2), s2);
+        Assertions.assertEquals(Encode.forJavaScriptSource(s1), s1);
+        Assertions.assertEquals(Encode.forJavaScriptSource(s2), s2);
 
         String s3 = "<script>alert('test')</script>";
         String e3 = Encode.forJavaScriptSource(s3);
@@ -254,7 +254,7 @@ public class SanitizerHandlerTest {
         System.out.println("block = " + e5);
         String e6 = Encode.forJavaScript(e3);
         System.out.println("script = " + e6);
-        Assert.assertNotEquals(e3, s3);
+        Assertions.assertNotEquals(e3, s3);
 
         String s7 = "<script>location.href=\"respources.html\"</script>";
         String e7 = Encode.forJavaScriptSource(s7);

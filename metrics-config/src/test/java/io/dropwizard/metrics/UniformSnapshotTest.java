@@ -16,7 +16,8 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Snapshot;
 import io.dropwizard.metrics.UniformSnapshot;
@@ -42,19 +43,19 @@ public class UniformSnapshotTest {
                 .isEqualTo(5, offset(0.1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void disallowsNotANumberQuantile() {
-        snapshot.getValue( Double.NaN );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> snapshot.getValue(Double.NaN));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void disallowsNegativeQuantile() {
-        snapshot.getValue( -0.5 );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> snapshot.getValue(-0.5));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void disallowsQuantileOverOne() {
-       snapshot.getValue( 1.5 );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> snapshot.getValue(1.5));
     }
 
     @Test

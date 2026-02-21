@@ -25,7 +25,7 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -42,13 +42,13 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Steve Hu
  */
-@Ignore
+@Disabled
 public class PathResourceConfigHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(PathResourceConfigHandlerTest.class);
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -61,7 +61,7 @@ public class PathResourceConfigHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -112,9 +112,9 @@ public class PathResourceConfigHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if (statusCode == 200) {
-            Assert.assertTrue(body.contains("This is just a test"));
+            Assertions.assertTrue(body.contains("This is just a test"));
         }
     }
 
@@ -156,7 +156,7 @@ public class PathResourceConfigHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         // we are expecting a redirect to the welcome file here.
-        Assert.assertEquals(302, statusCode);
+        Assertions.assertEquals(302, statusCode);
     }
 
 }

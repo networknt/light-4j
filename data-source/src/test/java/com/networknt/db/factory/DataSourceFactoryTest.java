@@ -2,12 +2,12 @@ package com.networknt.db.factory;
 
 
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class DataSourceFactoryTest {
 

@@ -32,10 +32,10 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -59,7 +59,7 @@ public class BodyHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -75,7 +75,7 @@ public class BodyHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -172,8 +172,8 @@ public class BodyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("nobody", body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("nobody", body);
     }
 
     @Test
@@ -218,11 +218,11 @@ public class BodyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10015", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10015", status.getCode());
         }
     }
 
@@ -268,11 +268,11 @@ public class BodyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10015", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10015", status.getCode());
         }
     }
 
@@ -317,7 +317,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("[{key1=value1},{key2=value2}]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("[{key1=value1},{key2=value2}]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -361,7 +361,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("[]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("[]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -405,7 +405,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -449,7 +449,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -491,7 +491,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -533,7 +533,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -575,7 +575,7 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{key1:value1,key2:value2 with space,keylist[]:[1, 2]}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{key1:value1,key2:value2 with space,keylist[]:[1, 2]}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -625,6 +625,6 @@ public class BodyHandlerTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 }

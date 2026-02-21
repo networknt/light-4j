@@ -1,9 +1,9 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public class LongestExpireCacheStrategyTest {
     private static LongestExpireCacheStrategy cacheStrategy =  new LongestExpireCacheStrategy(4);
     private static long initExpiryTime = System.currentTimeMillis();
     private static ArrayList<Jwt> initJwts = createJwts(4, initExpiryTime);
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         for(Jwt jwt : initJwts) {
             cacheStrategy.cacheJwt(new Jwt.Key(jwt.getScopes()), jwt);
@@ -25,23 +25,23 @@ public class LongestExpireCacheStrategyTest {
 
     @Test
     public void testCacheJwt() throws NoSuchFieldException, IllegalAccessException {
-        Assert.assertNotNull(cacheStrategy.getCachedJwt(new Jwt.Key(initJwts.get(0).getScopes())));
+        Assertions.assertNotNull(cacheStrategy.getCachedJwt(new Jwt.Key(initJwts.get(0).getScopes())));
         Field field = LongestExpireCacheStrategy.class.getDeclaredField("expiryQueue");
         field.setAccessible(true);
         PriorityBlockingQueue cachedQueue = (PriorityBlockingQueue) field.get(cacheStrategy);
         Field field1 = LongestExpireCacheStrategy.class.getDeclaredField("cachedJwts");
         field1.setAccessible(true);
         ConcurrentHashMap<Jwt.Key, Jwt> cachedJwts = (ConcurrentHashMap) field1.get(cacheStrategy);
-        Assert.assertEquals(cachedJwts.size(), 4);
-        Assert.assertEquals(cachedQueue.size(), 4);
+        Assertions.assertEquals(cachedJwts.size(), 4);
+        Assertions.assertEquals(cachedQueue.size(), 4);
         ArrayList<Jwt> jwts = createJwts(2, initExpiryTime + 10);
         Jwt jwt5 = jwts.get(0);
         Jwt jwt1 = cachedJwts.get(cachedQueue.peek());
         long originalExpiry = jwt1.getExpire();
-        Assert.assertEquals(cachedJwts.get(new Jwt.Key(jwt1.getScopes())), jwt1);
+        Assertions.assertEquals(cachedJwts.get(new Jwt.Key(jwt1.getScopes())), jwt1);
         cacheStrategy.cacheJwt(new Jwt.Key(jwt5.getScopes()), jwt5);
-        Assert.assertEquals(cachedJwts.get(new Jwt.Key(jwt5.getScopes())), jwt5);
-        Assert.assertNotEquals(cachedJwts.get(new Jwt.Key(jwt5.getScopes())).getExpire(), originalExpiry);
+        Assertions.assertEquals(cachedJwts.get(new Jwt.Key(jwt5.getScopes())), jwt5);
+        Assertions.assertNotEquals(cachedJwts.get(new Jwt.Key(jwt5.getScopes())).getExpire(), originalExpiry);
     }
 
     //create an array of Jwts of number: num

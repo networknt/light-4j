@@ -16,8 +16,10 @@
 
 package com.networknt.config;
 
-import junit.framework.TestCase;
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -29,14 +31,14 @@ import java.util.Map;
 /**
  * Created by steve on 23/09/16.
  */
-public class ConfigClassPathTest extends TestCase {
+public class ConfigClassPathTest {
 
     private Config config = null;
     private final String homeDir = System.getProperty("user.home");
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
+        
         config = Config.getInstance();
 
         // write a config file into the user home directory.
@@ -50,9 +52,9 @@ public class ConfigClassPathTest extends TestCase {
         config.setClassLoader(classLoader);
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
-        super.tearDown();
+        
         // Remove the test.json from home directory
         File test = new File(homeDir + "/test.json");
         test.delete();
@@ -61,7 +63,7 @@ public class ConfigClassPathTest extends TestCase {
     public void testGetConfigFromClassPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
-        Assert.assertEquals("classpath", configMap.get("value"));
+        Assertions.assertEquals("classpath", configMap.get("value"));
     }
 
     @SuppressWarnings("unchecked")

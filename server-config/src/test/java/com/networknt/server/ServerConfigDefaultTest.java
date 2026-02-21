@@ -1,8 +1,8 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ServerConfigDefaultTest {
 
@@ -12,7 +12,7 @@ public class ServerConfigDefaultTest {
     public void testDefaultServerOptions() {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("default");
-        Assert.assertNull(serverConfig.getShutdownTimeout());
+        Assertions.assertNull(serverConfig.getShutdownTimeout());
     }
 
 }

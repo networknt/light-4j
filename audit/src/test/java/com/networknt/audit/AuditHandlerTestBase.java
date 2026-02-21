@@ -36,16 +36,15 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -64,8 +63,7 @@ import static org.mockito.Mockito.verify;
 /**
  * Created by steve on 01/09/16.
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
+@ExtendWith(MockitoExtension.class)
 public abstract class AuditHandlerTestBase {
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTestBase.class);
 
@@ -114,7 +112,7 @@ public abstract class AuditHandlerTestBase {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -136,14 +134,14 @@ public abstract class AuditHandlerTestBase {
                 .add(Methods.POST, "/pet/{petId}", exchange -> exchange.getResponseSender().send("OK"));
     }
 
-    @Before
+    @BeforeEach
     public void beforeTest() throws Exception {
         // inject the mock appender
         auditLogger.addAppender(mockAppender);
         System.out.println("before");
     }
 
-    @After
+    @AfterEach
     public void afterTest() throws Exception {
         // remove the mock appender
         auditLogger.detachAppender(mockAppender);
@@ -155,11 +153,11 @@ public abstract class AuditHandlerTestBase {
         ILoggingEvent event = captorLoggingEvent.getValue();
         Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
 
-        Assert.assertEquals(Level.INFO, event.getLevel());
-        Assert.assertTrue(Arrays.stream(requiredKeys).allMatch(mapValue::containsKey));
-        Assert.assertEquals(traceVal, mapValue.get(Constants.TRACEABILITY_ID_STRING));
-        Assert.assertNotNull(mapValue.get(Constants.CORRELATION_ID_STRING));
-        Assert.assertEquals(200, mapValue.get(AuditHandler.STATUS_CODE));
+        Assertions.assertEquals(Level.INFO, event.getLevel());
+        Assertions.assertTrue(Arrays.stream(requiredKeys).allMatch(mapValue::containsKey));
+        Assertions.assertEquals(traceVal, mapValue.get(Constants.TRACEABILITY_ID_STRING));
+        Assertions.assertNotNull(mapValue.get(Constants.CORRELATION_ID_STRING));
+        Assertions.assertEquals(200, mapValue.get(AuditHandler.STATUS_CODE));
     }
 
     protected void verifyAuditInfo(String key, String value) {
@@ -167,9 +165,9 @@ public abstract class AuditHandlerTestBase {
         ILoggingEvent event = captorLoggingEvent.getValue();
         Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
         if (value == null) {
-            Assert.assertNull(mapValue.get(key));
+            Assertions.assertNull(mapValue.get(key));
         } else {
-            Assert.assertEquals(value, mapValue.get(key));
+            Assertions.assertEquals(value, mapValue.get(key));
         }
     }
 
@@ -219,7 +217,7 @@ public abstract class AuditHandlerTestBase {
             client.restore(token);
 
         }
-        Assert.assertEquals(expectStatus, reference.get().getResponseCode());
+        Assertions.assertEquals(expectStatus, reference.get().getResponseCode());
 
         try {
             Thread.sleep(100);

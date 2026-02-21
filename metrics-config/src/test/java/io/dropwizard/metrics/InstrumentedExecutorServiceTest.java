@@ -16,8 +16,8 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Counter;
 import io.dropwizard.metrics.InstrumentedExecutorService;
@@ -119,7 +119,7 @@ public class InstrumentedExecutorServiceTest {
         assertThat(rejected.getCount()).isEqualTo(1);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (executor != null) {
             executor.shutdown();

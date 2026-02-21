@@ -16,8 +16,8 @@
 package com.networknt.access;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * The test case for {@link AccessControlConfig}.
@@ -27,6 +27,6 @@ public class AccessControlConfigTest {
     @Test
     public void shouldLoadConfig() {
         AccessControlConfig config = (AccessControlConfig) Config.getInstance().getJsonObjectConfig(AccessControlConfig.CONFIG_NAME, AccessControlConfig.class);
-        Assert.assertNotNull(config);
+        Assertions.assertNotNull(config);
     }
 }

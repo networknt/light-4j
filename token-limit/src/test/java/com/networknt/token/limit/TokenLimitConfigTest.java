@@ -1,25 +1,25 @@
 package com.networknt.token.limit;
 
 import com.networknt.cache.CacheManager;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TokenLimitConfigTest {
     private static TokenLimitConfig config;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         config = TokenLimitConfig.load("token-limit-template");
     }
 
     @Test
     public void testConfigData() {
-        Assert.assertTrue(config.isEnabled());
-        Assert.assertTrue(config.isErrorOnLimit());
-        Assert.assertEquals(2, config.getDuplicateLimit().intValue());
-        Assert.assertEquals("expires_in", config.getExpireKey());
-        Assert.assertTrue(config.getTokenPathTemplates().contains("/oauth2/(?<instanceId>[^/]+)/v1/token"));
+        Assertions.assertTrue(config.isEnabled());
+        Assertions.assertTrue(config.isErrorOnLimit());
+        Assertions.assertEquals(2, config.getDuplicateLimit().intValue());
+        Assertions.assertEquals("expires_in", config.getExpireKey());
+        Assertions.assertTrue(config.getTokenPathTemplates().contains("/oauth2/(?<instanceId>[^/]+)/v1/token"));
     }
 
     @Test

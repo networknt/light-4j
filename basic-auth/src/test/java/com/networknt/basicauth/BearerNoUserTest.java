@@ -29,10 +29,10 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.apache.commons.codec.binary.Base64;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -55,7 +55,7 @@ public class BearerNoUserTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -71,7 +71,7 @@ public class BearerNoUserTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -122,9 +122,9 @@ public class BearerNoUserTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if(statusCode == 400) {
-            Assert.assertNotNull(responseBody);
+            Assertions.assertNotNull(responseBody);
         }
     }
 
@@ -162,9 +162,9 @@ public class BearerNoUserTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if(statusCode == 400) {
-            Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
         }
     }
 }

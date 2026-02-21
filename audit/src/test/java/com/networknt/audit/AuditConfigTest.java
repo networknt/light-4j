@@ -15,32 +15,32 @@
  */
 package com.networknt.audit;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
 public class AuditConfigTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
     }
 
     @Test
     public void shouldLoadEmptyConfig() {
         AuditConfig config = AuditConfig.load();
-        Assert.assertTrue(config.hasAuditList());
-        Assert.assertTrue(config.hasHeaderList());
-        Assert.assertNotNull(config.getAuditFunc());
-        Assert.assertEquals(3, config.getHeaderList().size());
-        Assert.assertEquals(11, config.getAuditList().size());
-        Assert.assertTrue(config.isStatusCode());
-        Assert.assertTrue(config.isResponseTime());
-        Assert.assertFalse(config.isAuditOnError());
-        Assert.assertFalse(config.isMask());
-        Assert.assertNotNull(config.getTimestampFormat());
+        Assertions.assertTrue(config.hasAuditList());
+        Assertions.assertTrue(config.hasHeaderList());
+        Assertions.assertNotNull(config.getAuditFunc());
+        Assertions.assertEquals(3, config.getHeaderList().size());
+        Assertions.assertEquals(11, config.getAuditList().size());
+        Assertions.assertTrue(config.isStatusCode());
+        Assertions.assertTrue(config.isResponseTime());
+        Assertions.assertFalse(config.isAuditOnError());
+        Assertions.assertFalse(config.isMask());
+        Assertions.assertNotNull(config.getTimestampFormat());
     }
 
     @Test
@@ -49,15 +49,15 @@ public class AuditConfigTest {
         String format= "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
         configMap.put("timestampFormat", format);
         AuditConfig configHandler = AuditConfig.load();
-        Assert.assertEquals(format, configHandler.getTimestampFormat());
+        Assertions.assertEquals(format, configHandler.getTimestampFormat());
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void shouldLoadHeaderInJson() {
         AuditConfig config = AuditConfig.load("audit-json");
-        Assert.assertTrue(config.hasAuditList());
-        Assert.assertEquals(10, config.getAuditList().size());
+        Assertions.assertTrue(config.hasAuditList());
+        Assertions.assertEquals(10, config.getAuditList().size());
     }
 
 }

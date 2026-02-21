@@ -16,8 +16,8 @@
 
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ public class UtilTest {
         String text = "This is a test for ${v1} and ${v2}";
         String expect = "This is a test for abc and def";
 
-        Assert.assertEquals(expect, Util.substituteVariables(text, variables));
+        Assertions.assertEquals(expect, Util.substituteVariables(text, variables));
 
     }
 

@@ -15,10 +15,10 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -33,7 +33,7 @@ public class ApiKeyHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -49,7 +49,7 @@ public class ApiKeyHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -107,8 +107,8 @@ public class ApiKeyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("OK", responseBody);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("OK", responseBody);
     }
 
     /**
@@ -151,8 +151,8 @@ public class ApiKeyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("OK", responseBody);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("OK", responseBody);
     }
 
     @Test
@@ -189,8 +189,8 @@ public class ApiKeyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("OK", responseBody);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("OK", responseBody);
     }
 
     /**
@@ -233,11 +233,11 @@ public class ApiKeyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(401, statusCode);
+        Assertions.assertEquals(401, statusCode);
         if(statusCode == 401) {
             Status status = Config.getInstance().getMapper().readValue(responseBody, Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10075", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10075", status.getCode());
         }
     }
 
@@ -281,11 +281,11 @@ public class ApiKeyHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(401, statusCode);
+        Assertions.assertEquals(401, statusCode);
         if(statusCode == 401) {
             Status status = Config.getInstance().getMapper().readValue(responseBody, Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10075", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10075", status.getCode());
         }
     }
 }

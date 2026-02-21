@@ -16,9 +16,9 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Counter;
 import io.dropwizard.metrics.Gauge;
@@ -61,7 +61,7 @@ public class ScheduledReporterTest {
             }
     );
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         registry.register("gauge", gauge);
         registry.register("counter", counter);
@@ -72,7 +72,7 @@ public class ScheduledReporterTest {
         reporter.start(200, TimeUnit.MILLISECONDS);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         reporter.stop();
     }

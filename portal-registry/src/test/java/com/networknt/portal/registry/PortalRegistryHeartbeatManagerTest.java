@@ -16,7 +16,7 @@
 
 package com.networknt.portal.registry;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,9 +24,9 @@ import java.util.Map.Entry;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -39,7 +39,7 @@ public class PortalRegistryHeartbeatManagerTest {
     private MockPortalRegistryClient client;
     private String token;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = new MockPortalRegistryClient("localhost", 8500);
         heartbeatManager = new PortalRegistryHeartbeatManager(client, null);
@@ -48,7 +48,7 @@ public class PortalRegistryHeartbeatManagerTest {
         PortalRegistryConstants.SWITCHER_CHECK_CIRCLE = 20;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         heartbeatManager = null;
     }

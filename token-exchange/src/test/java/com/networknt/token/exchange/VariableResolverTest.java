@@ -1,7 +1,7 @@
 package com.networknt.token.exchange;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class VariableResolverTest {
 
         // Test with sharedVariables. prefix (backward compatible)
         String result = VariableResolver.resolve("Bearer !ref(sharedVariables.accessToken)", variables);
-        Assert.assertEquals("Bearer my-token-123", result);
+        Assertions.assertEquals("Bearer my-token-123", result);
     }
 
     @Test
@@ -28,7 +28,7 @@ public class VariableResolverTest {
 
         // Test simplified syntax without prefix
         String result = VariableResolver.resolve("Bearer !ref(accessToken)", variables);
-        Assert.assertEquals("Bearer my-token-123", result);
+        Assertions.assertEquals("Bearer my-token-123", result);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class VariableResolverTest {
                 "client=!ref(clientId)&scope=!ref(scope)",
                 variables
         );
-        Assert.assertEquals("client=client-abc&scope=read write", result);
+        Assertions.assertEquals("client=client-abc&scope=read write", result);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class VariableResolverTest {
         variables.put("token", "abc");
 
         String result = VariableResolver.resolve("static-value", variables);
-        Assert.assertEquals("static-value", result);
+        Assertions.assertEquals("static-value", result);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class VariableResolverTest {
         // Variable not set
 
         String result = VariableResolver.resolve("Bearer !ref(sharedVariables.missingToken)", variables);
-        Assert.assertEquals("Bearer ", result);
+        Assertions.assertEquals("Bearer ", result);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class VariableResolverTest {
         variables.put("expiration", 1234567890L);
 
         String result = VariableResolver.resolve("exp=!ref(sharedVariables.expiration)", variables);
-        Assert.assertEquals("exp=1234567890", result);
+        Assertions.assertEquals("exp=1234567890", result);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class VariableResolverTest {
         variables.put("password", "secret123".toCharArray());
 
         String result = VariableResolver.resolve("pass=!ref(sharedVariables.password)", variables);
-        Assert.assertEquals("pass=secret123", result);
+        Assertions.assertEquals("pass=secret123", result);
     }
 
     @Test
@@ -94,36 +94,36 @@ public class VariableResolverTest {
 
         Map<String, String> resolved = VariableResolver.resolveMap(templateMap, variables);
 
-        Assert.assertEquals("my-client", resolved.get("client_id"));
-        Assert.assertEquals("my-secret", resolved.get("client_secret"));
-        Assert.assertEquals("client_credentials", resolved.get("grant_type"));
+        Assertions.assertEquals("my-client", resolved.get("client_id"));
+        Assertions.assertEquals("my-secret", resolved.get("client_secret"));
+        Assertions.assertEquals("client_credentials", resolved.get("grant_type"));
     }
 
     @Test
     public void testResolveMapWithNullInput() {
         Map<String, Object> variables = new HashMap<>();
         Map<String, String> resolved = VariableResolver.resolveMap(null, variables);
-        Assert.assertNotNull(resolved);
-        Assert.assertTrue(resolved.isEmpty());
+        Assertions.assertNotNull(resolved);
+        Assertions.assertTrue(resolved.isEmpty());
     }
 
     @Test
     public void testExtractDestinationVariable() {
         String destination = "!ref(sharedVariables.accessToken)";
         String variableName = VariableResolver.extractDestinationVariable(destination);
-        Assert.assertEquals("accessToken", variableName);
+        Assertions.assertEquals("accessToken", variableName);
     }
 
     @Test
     public void testExtractDestinationVariableNested() {
         String destination = "!ref(sharedVariables.myCustomVar)";
         String variableName = VariableResolver.extractDestinationVariable(destination);
-        Assert.assertEquals("myCustomVar", variableName);
+        Assertions.assertEquals("myCustomVar", variableName);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testExtractDestinationVariableInvalid() {
-        VariableResolver.extractDestinationVariable("not-a-ref-pattern");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> VariableResolver.extractDestinationVariable("not-a-ref-pattern"));
     }
 
     // Tests for new request context reference feature
@@ -141,7 +141,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Original auth: Bearer original-token", result);
+        Assertions.assertEquals("Original auth: Bearer original-token", result);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Header: custom-value", result);
+        Assertions.assertEquals("Header: custom-value", result);
     }
 
     @Test
@@ -173,7 +173,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Client from query: query-client-123", result);
+        Assertions.assertEquals("Client from query: query-client-123", result);
     }
 
     @Test
@@ -189,7 +189,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Client: query-client-456", result);
+        Assertions.assertEquals("Client: query-client-456", result);
     }
 
     @Test
@@ -202,7 +202,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Path: /api/v1/users/123", result);
+        Assertions.assertEquals("Path: /api/v1/users/123", result);
     }
 
     @Test
@@ -221,7 +221,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("token=new-token&request_id=req-999&tenant=acme", result);
+        Assertions.assertEquals("token=new-token&request_id=req-999&tenant=acme", result);
     }
 
     @Test
@@ -235,7 +235,7 @@ public class VariableResolverTest {
                 variables,
                 null
         );
-        Assert.assertEquals("token=my-token&header=", result);
+        Assertions.assertEquals("token=my-token&header=", result);
     }
 
     @Test
@@ -251,7 +251,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("Header: ", result);
+        Assertions.assertEquals("Header: ", result);
     }
 
     @Test
@@ -270,9 +270,9 @@ public class VariableResolverTest {
 
         Map<String, String> resolved = VariableResolver.resolveMap(templateMap, variables, requestContext);
 
-        Assert.assertEquals("var-client", resolved.get("client_id"));
-        Assert.assertEquals("corr-abc", resolved.get("correlation_id"));
-        Assert.assertEquals("unchanged", resolved.get("static_value"));
+        Assertions.assertEquals("var-client", resolved.get("client_id"));
+        Assertions.assertEquals("corr-abc", resolved.get("correlation_id"));
+        Assertions.assertEquals("unchanged", resolved.get("static_value"));
     }
 
     @Test
@@ -288,7 +288,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("subject_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature", result);
+        Assertions.assertEquals("subject_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature", result);
     }
 
     @Test
@@ -304,7 +304,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("token=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.sig", result);
+        Assertions.assertEquals("token=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.sig", result);
     }
 
     @Test
@@ -319,7 +319,7 @@ public class VariableResolverTest {
                 variables,
                 requestContext
         );
-        Assert.assertEquals("token=", result);
+        Assertions.assertEquals("token=", result);
     }
 
     @Test
@@ -343,10 +343,10 @@ public class VariableResolverTest {
 
         Map<String, String> resolved = VariableResolver.resolveMap(templateMap, variables, requestContext);
 
-        Assert.assertEquals("urn:ietf:params:oauth:grant-type:token-exchange", resolved.get("grant_type"));
-        Assert.assertEquals("my-client", resolved.get("client_id"));
-        Assert.assertEquals("my-secret", resolved.get("client_secret"));
-        Assert.assertEquals("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIn0.sig", resolved.get("subject_token"));
-        Assert.assertEquals("urn:ietf:params:oauth:token-type:access_token", resolved.get("subject_token_type"));
+        Assertions.assertEquals("urn:ietf:params:oauth:grant-type:token-exchange", resolved.get("grant_type"));
+        Assertions.assertEquals("my-client", resolved.get("client_id"));
+        Assertions.assertEquals("my-secret", resolved.get("client_secret"));
+        Assertions.assertEquals("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIn0.sig", resolved.get("subject_token"));
+        Assertions.assertEquals("urn:ietf:params:oauth:token-type:access_token", resolved.get("subject_token_type"));
     }
 }

@@ -1,11 +1,11 @@
 package com.networknt.config;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.security.KeyStore;
 
-import static junit.framework.TestCase.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TlsUtilTest {
     private final static String KEYSTORE_NAME = "client.keystore";
@@ -18,51 +18,51 @@ public class TlsUtilTest {
     @Test
     public void testLoadValidKeyStore() {
         KeyStore keyStore = TlsUtil.loadKeyStore(KEYSTORE_NAME, PASSWORD);
-        Assert.assertNotNull(keyStore);
+        Assertions.assertNotNull(keyStore);
     }
 
     @Test
     public void testLoadInvalidKeyStore() {
         try {
             KeyStore keyStore = TlsUtil.loadKeyStore(INVALID_KEYSTORE_NAME, PASSWORD);
-            fail();
+            Assertions.fail();
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "Unable to load stream for keystore " + INVALID_KEYSTORE_NAME);
+            Assertions.assertEquals(e.getMessage(), "Unable to load stream for keystore " + INVALID_KEYSTORE_NAME);
         }
         try {
             KeyStore keyStore = TlsUtil.loadKeyStore(OTHER_EXTENTION, PASSWORD);
-            fail();
+            Assertions.fail();
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "Unable to load stream for keystore " + OTHER_EXTENTION);
+            Assertions.assertEquals(e.getMessage(), "Unable to load stream for keystore " + OTHER_EXTENTION);
         }
     }
 
     @Test
     public void testLoadTrustStore() {
         KeyStore keyStore = TlsUtil.loadKeyStore(TRUSTSTORE_NAME, PASSWORD);
-        Assert.assertNotNull(keyStore);
+        Assertions.assertNotNull(keyStore);
     }
 
     @Test
     public void testLoadInvalidTrustStore() {
         try {
             KeyStore keyStore = TlsUtil.loadKeyStore(INVALID_TRUST_NAME, PASSWORD);
-            fail();
+            Assertions.fail();
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "Unable to load stream for keystore " + INVALID_TRUST_NAME);
+            Assertions.assertEquals(e.getMessage(), "Unable to load stream for keystore " + INVALID_TRUST_NAME);
         }
     }
 
     @Test
     public void testLoadPKCS12TrustStore() {
         KeyStore keyStore = TlsUtil.loadKeyStore("clientpkcs12.truststore", PASSWORD);
-        Assert.assertNotNull(keyStore);
+        Assertions.assertNotNull(keyStore);
     }
 
     @Test
     public void testLoadPKCS12KeyStore() {
         KeyStore keyStore = TlsUtil.loadKeyStore("serverpkcs12.keystore", PASSWORD);
-        Assert.assertNotNull(keyStore);
+        Assertions.assertNotNull(keyStore);
     }
 
 }

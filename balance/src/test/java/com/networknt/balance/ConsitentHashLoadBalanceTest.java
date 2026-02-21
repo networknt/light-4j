@@ -17,7 +17,7 @@
 package com.networknt.balance;
 
 import com.networknt.registry.URL;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,16 +41,16 @@ public class ConsitentHashLoadBalanceTest {
 
         URL url1 = loadBalance.select(urls, "user1");
         URL url2 = loadBalance.select(urls, "user1");
-        Assert.assertEquals(url1, url2);
+        Assertions.assertEquals(url1, url2);
 
         URL url3 = loadBalance.select(urls, "user1");
-        Assert.assertEquals(url1, url3);
+        Assertions.assertEquals(url1, url3);
 
 
         URL url4 = loadBalance.select(urls, "user2");
-        Assert.assertNotEquals(url1, url4);
+        Assertions.assertNotEquals(url1, url4);
         URL url5 = loadBalance.select(urls, "user3");
-        Assert.assertNotEquals(url4, url5);
+        Assertions.assertNotEquals(url4, url5);
         */
     }
 }

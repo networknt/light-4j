@@ -16,9 +16,8 @@
 
 package com.networknt.switcher;
 
-import junit.framework.TestCase;
-
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -27,8 +26,9 @@ import org.junit.Assert;
  * @author maijunsheng
  *
  */
-public class LocalSwitcherServiceTest extends TestCase {
+public class LocalSwitcherServiceTest {
 
+    @Test
     public void testProtocolSwitcher() {
 
         String protocolSwitcher = "HeartBeatSwitcher";
@@ -38,14 +38,14 @@ public class LocalSwitcherServiceTest extends TestCase {
 
         Switcher switcher = localSwitcherService.getSwitcher(protocolSwitcher);
 
-        Assert.assertNotNull(switcher);
-        Assert.assertFalse(switcher.isOn());
+        Assertions.assertNotNull(switcher);
+        Assertions.assertFalse(switcher.isOn());
 
         localSwitcherService.setValue(protocolSwitcher, true);
 
         switcher = localSwitcherService.getSwitcher(protocolSwitcher);
-        Assert.assertNotNull(switcher);
-        Assert.assertTrue(switcher.isOn());
+        Assertions.assertNotNull(switcher);
+        Assertions.assertTrue(switcher.isOn());
 
     }
 }

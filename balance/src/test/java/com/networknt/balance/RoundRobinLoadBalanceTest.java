@@ -18,9 +18,9 @@ package com.networknt.balance;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,35 +45,35 @@ public class RoundRobinLoadBalanceTest {
             if(url.getPort() == 8081) break;
         }
         URL url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8082/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8082/v1"));
         url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8083/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8083/v1"));
         url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8084/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8084/v1"));
         url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8081/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8081/v1"));
         url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8082/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8082/v1"));
 
     }
     @Test
     public void testSelectWithEmptyList() throws Exception {
         List<URL> urls = new ArrayList<>();
         URL url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertNull(url);
+        Assertions.assertNull(url);
     }
 
     /**
      * There is a chance that both values are the same but it should be very rare. Given this possibility,
      * ignore this test unless we need it.
      */
-    @Ignore
+    @Disabled
     @Test
     public void testRandom() {
         int r1 = (int)(Math.random()*50);
         int r2 = (int)(Math.random()*50);
         System.out.println("r1 = " + r1);
         System.out.println("r2 = " + r2);
-        Assert.assertNotEquals(r1, r2);
+        Assertions.assertNotEquals(r1, r2);
     }
 }

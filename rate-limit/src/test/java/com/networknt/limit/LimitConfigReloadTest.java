@@ -14,10 +14,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -33,7 +33,7 @@ public class LimitConfigReloadTest {
     static final String CONFIG_NAME = "limit";
     static byte[] backup;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         Config.getInstance().clear();
         if (server == null) {
@@ -70,7 +70,7 @@ public class LimitConfigReloadTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -97,7 +97,7 @@ public class LimitConfigReloadTest {
     @Test
     public void testLimitReload() throws Exception {
         // 1. Send first request - should success
-        Assert.assertEquals(200, sendRequest());
+        Assertions.assertEquals(200, sendRequest());
 
         // 2. Trigger rate limit (1/s) with concurrent requests
         boolean rateLimited = false;
@@ -119,7 +119,7 @@ public class LimitConfigReloadTest {
         }
         executor.shutdown();
 
-        Assert.assertTrue("Should have triggered rate limit", rateLimited);
+        Assertions.assertTrue(rateLimited, "Should have triggered rate limit");
 
 
         // 3. Update config to allow more requests (100/s)
@@ -145,7 +145,7 @@ public class LimitConfigReloadTest {
         // 5. Send requests again - should success
         // Send multiple requests to verify limit is indeed increased
         for(int i=0; i<5; i++) {
-            Assert.assertEquals("Request " + i + " should succeed after reload", 200, sendRequest());
+            Assertions.assertEquals(200, sendRequest(), "Request " + i + " should succeed after reload");
         }
     }
 

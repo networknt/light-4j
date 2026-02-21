@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import com.networknt.config.schema.Format;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,13 +34,13 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertStringNode(testFieldNode);
-        Assert.assertEquals(FieldType.STRING.toString(), parsed.get("type"));
-        Assert.assertEquals(testDescription, parsed.get("description"));
-        Assert.assertEquals(testDefaultValue, parsed.get("default"));
-        Assert.assertEquals(testMinLength, parsed.get("minLength"));
-        Assert.assertEquals(testMaxLength, parsed.get("maxLength"));
-        Assert.assertEquals(testPattern, parsed.get("pattern"));
-        Assert.assertEquals(testFormat, parsed.get("format"));
+        Assertions.assertEquals(FieldType.STRING.toString(), parsed.get("type"));
+        Assertions.assertEquals(testDescription, parsed.get("description"));
+        Assertions.assertEquals(testDefaultValue, parsed.get("default"));
+        Assertions.assertEquals(testMinLength, parsed.get("minLength"));
+        Assertions.assertEquals(testMaxLength, parsed.get("maxLength"));
+        Assertions.assertEquals(testPattern, parsed.get("pattern"));
+        Assertions.assertEquals(testFormat, parsed.get("format"));
     }
 
     @Test
@@ -55,9 +55,9 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertBooleanNode(testFieldNode);
-        Assert.assertEquals(FieldType.BOOLEAN.toString(), parsed.get("type"));
-        Assert.assertEquals(testDescription, parsed.get("description"));
-        Assert.assertEquals(false, parsed.get("default")); // "false" should get parsed as the real boolean value.
+        Assertions.assertEquals(FieldType.BOOLEAN.toString(), parsed.get("type"));
+        Assertions.assertEquals(testDescription, parsed.get("description"));
+        Assertions.assertEquals(false, parsed.get("default")); // "false" should get parsed as the real boolean value.
     }
 
     @Test
@@ -84,15 +84,15 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertNumberNode(testFieldNode);
-        Assert.assertEquals(FieldType.NUMBER.toString(), parsed.get("type"));
-        Assert.assertEquals(description, parsed.get("description"));
-        Assert.assertEquals(3.38, parsed.get("default"));
-        Assert.assertEquals(min, parsed.get("minimum"));
-        Assert.assertEquals(max, parsed.get("maximum"));
-        Assert.assertEquals(exclMin, parsed.get("exclusiveMin"));
-        Assert.assertEquals(exclMax, parsed.get("exclusiveMax"));
-        Assert.assertEquals(format, parsed.get("format"));
-        Assert.assertEquals(multiple, parsed.get("multipleOf"));
+        Assertions.assertEquals(FieldType.NUMBER.toString(), parsed.get("type"));
+        Assertions.assertEquals(description, parsed.get("description"));
+        Assertions.assertEquals(3.38, parsed.get("default"));
+        Assertions.assertEquals(min, parsed.get("minimum"));
+        Assertions.assertEquals(max, parsed.get("maximum"));
+        Assertions.assertEquals(exclMin, parsed.get("exclusiveMin"));
+        Assertions.assertEquals(exclMax, parsed.get("exclusiveMax"));
+        Assertions.assertEquals(format, parsed.get("format"));
+        Assertions.assertEquals(multiple, parsed.get("multipleOf"));
     }
 
     @Test
@@ -119,18 +119,18 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertIntegerNode(testFieldNode);
-        Assert.assertEquals(FieldType.INTEGER.toString(), parsed.get("type"));
-        Assert.assertEquals(description, parsed.get("description"));
-        Assert.assertEquals(4, parsed.get("default"));
-        Assert.assertEquals(min, parsed.get("minimum"));
-        Assert.assertEquals(max, parsed.get("maximum"));
+        Assertions.assertEquals(FieldType.INTEGER.toString(), parsed.get("type"));
+        Assertions.assertEquals(description, parsed.get("description"));
+        Assertions.assertEquals(4, parsed.get("default"));
+        Assertions.assertEquals(min, parsed.get("minimum"));
+        Assertions.assertEquals(max, parsed.get("maximum"));
 
         // Since false is the default, we should expect that exclusiveMin is null.
-        Assert.assertNull(parsed.get("exclusiveMin"));
+        Assertions.assertNull(parsed.get("exclusiveMin"));
 
-        Assert.assertEquals(exclMax, parsed.get("exclusiveMax"));
-        Assert.assertEquals(format, parsed.get("format"));
-        Assert.assertEquals(multiple, parsed.get("multipleOf"));
+        Assertions.assertEquals(exclMax, parsed.get("exclusiveMax"));
+        Assertions.assertEquals(format, parsed.get("format"));
+        Assertions.assertEquals(multiple, parsed.get("multipleOf"));
     }
 
     @Test
@@ -152,13 +152,13 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertArrayNode(testFieldNode);
-        Assert.assertEquals(FieldType.ARRAY.toString(), parsed.get("type"));
-        Assert.assertEquals(description, parsed.get("description"));
-        Assert.assertEquals(min, parsed.get("minItems"));
-        Assert.assertEquals(max, parsed.get("maxItems"));
-        Assert.assertEquals(unique, parsed.get("uniqueItems"));
-        Assert.assertEquals("testValue1", ((List<String>)parsed.get("default")).get(0));
-        Assert.assertEquals(FieldType.STRING.toString(), ((LinkedHashMap<String, Object>)parsed.get("items")).get("type"));
+        Assertions.assertEquals(FieldType.ARRAY.toString(), parsed.get("type"));
+        Assertions.assertEquals(description, parsed.get("description"));
+        Assertions.assertEquals(min, parsed.get("minItems"));
+        Assertions.assertEquals(max, parsed.get("maxItems"));
+        Assertions.assertEquals(unique, parsed.get("uniqueItems"));
+        Assertions.assertEquals("testValue1", ((List<String>)parsed.get("default")).get(0));
+        Assertions.assertEquals(FieldType.STRING.toString(), ((LinkedHashMap<String, Object>)parsed.get("items")).get("type"));
     }
 
     @Test
@@ -185,9 +185,9 @@ public class JsonSchemaGeneratorTest {
                 .build();
 
         var parsed = generator.convertMapNode(testFieldNode);
-        Assert.assertEquals(FieldType.MAP.toString(), parsed.get("type"));
-        Assert.assertEquals(description, parsed.get("description"));
-        Assert.assertEquals(FieldType.ARRAY.toString(), ((LinkedHashMap<String, Object>)parsed.get("additionalProperties")).get("type"));
+        Assertions.assertEquals(FieldType.MAP.toString(), parsed.get("type"));
+        Assertions.assertEquals(description, parsed.get("description"));
+        Assertions.assertEquals(FieldType.ARRAY.toString(), ((LinkedHashMap<String, Object>)parsed.get("additionalProperties")).get("type"));
     }
 
     @Test
@@ -206,10 +206,10 @@ public class JsonSchemaGeneratorTest {
 
         var parsed = generator.convertObjectNode(testFieldNode);
         System.out.println(parsed);
-        Assert.assertEquals(FieldType.OBJECT.toString(), parsed.get("type"));
-        Assert.assertEquals(description, parsed.get("description"));
+        Assertions.assertEquals(FieldType.OBJECT.toString(), parsed.get("type"));
+        Assertions.assertEquals(description, parsed.get("description"));
 
-        Assert.assertEquals(propertiesList.size(), ((LinkedHashMap<String, Object>)parsed.get("properties")).size());
+        Assertions.assertEquals(propertiesList.size(), ((LinkedHashMap<String, Object>)parsed.get("properties")).size());
     }
 
     @Test
@@ -241,21 +241,21 @@ public class JsonSchemaGeneratorTest {
         var result = generator.addJsonSchemaRootInfo(rootNode);
 
         var requiredArray = result.get(JsonSchemaGenerator.REQUIRED_KEY);
-        Assert.assertEquals(2, ((List<String>) requiredArray).size());
+        Assertions.assertEquals(2, ((List<String>) requiredArray).size());
 
         var rootProps = (LinkedHashMap<String, Object>) result.get(JsonSchemaGenerator.PROPERTIES_KEY);
-        Assert.assertNotNull(rootProps);
+        Assertions.assertNotNull(rootProps);
 
         var mapProps = (LinkedHashMap<String, Object>) rootProps.get("map");
-        Assert.assertNotNull(mapProps);
+        Assertions.assertNotNull(mapProps);
 
         var innerString = ((LinkedHashMap<String, Object>)((LinkedHashMap<String, Object>) mapProps.get(JsonSchemaGenerator.ADDITIONAL_PROPERTIES_KEY)).get(JsonSchemaGenerator.PROPERTIES_KEY)).get("innerStringNode");
-        Assert.assertNotNull(innerString);
+        Assertions.assertNotNull(innerString);
 
-        Assert.assertEquals(pattern, ((LinkedHashMap<String, Object>)innerString).get(JsonSchemaGenerator.PATTERN_KEY));
+        Assertions.assertEquals(pattern, ((LinkedHashMap<String, Object>)innerString).get(JsonSchemaGenerator.PATTERN_KEY));
 
         var innerBooleanDefault = ((LinkedHashMap<String, Object>)rootProps.get("outerBoolean")).get(JsonSchemaGenerator.DEFAULT_KEY);
-        Assert.assertEquals(false, innerBooleanDefault);
+        Assertions.assertEquals(false, innerBooleanDefault);
     }
 
     @Test
@@ -290,7 +290,7 @@ public class JsonSchemaGeneratorTest {
         var parsed = generator.convertConfigRoot(rootObj);
         ObjectMapper objectMapper = new ObjectMapper();
         var result = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsed);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 testOutput.replace("\n", "").replace("\r", "").replace(" ", ""),
                 result.replace("\n", "").replace("\r", "").replace(" ", "")
         );

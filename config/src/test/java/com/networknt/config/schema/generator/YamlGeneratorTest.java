@@ -2,8 +2,8 @@ package com.networknt.config.schema.generator;
 
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class YamlGeneratorTest {
                 .build();
 
         var parsed = generator.convertBooleanNode(testFieldNode).toString();
-        Assert.assertTrue(parsed.contains("${configTest.alternateExternalName:false}"));
+        Assertions.assertTrue(parsed.contains("${configTest.alternateExternalName:false}"));
     }
 
     /**
@@ -43,7 +43,7 @@ public class YamlGeneratorTest {
                 .build();
 
         var parsed = generator.convertNumberNode(testFieldNode).toString();
-        Assert.assertTrue(parsed.contains("${configTest.root:3.38}"));
+        Assertions.assertTrue(parsed.contains("${configTest.root:3.38}"));
     }
 
     /**
@@ -60,7 +60,7 @@ public class YamlGeneratorTest {
                 .build();
 
         var parsed = generator.convertIntegerNode(testFieldNode).toString();
-        Assert.assertTrue(parsed.contains("${configTest.root:4}"));
+        Assertions.assertTrue(parsed.contains("${configTest.root:4}"));
     }
 
     /**
@@ -78,7 +78,7 @@ public class YamlGeneratorTest {
                 .build();
 
         var json = generator.convertArrayNode(testFieldNode).toString();
-        Assert.assertTrue(json.contains("${configTest.arrayNode:[\"testValue1\", \"testValue2\"]}"));
+        Assertions.assertTrue(json.contains("${configTest.arrayNode:[\"testValue1\", \"testValue2\"]}"));
     }
 
     /**
@@ -106,7 +106,7 @@ public class YamlGeneratorTest {
                 .build();
 
         var json = generator.convertMapNode(testFieldNode).toString();
-        Assert.assertTrue(json.contains("${configTest.innerArray:[\"testValue1\", \"testValue2\"]}"));
+        Assertions.assertTrue(json.contains("${configTest.innerArray:[\"testValue1\", \"testValue2\"]}"));
     }
 
     /**
@@ -137,9 +137,9 @@ public class YamlGeneratorTest {
                 .build();
 
         var parsed = generator.convertObjectNode(testFieldNode).toString();
-        Assert.assertTrue(parsed.contains("${configTest.node1:Node1DefaultValue}"));
-        Assert.assertTrue(parsed.contains("${configTest.node2:Node2DefaultValue}"));
-        Assert.assertTrue(parsed.contains("${configTest.node3:Node3DefaultValue}"));
+        Assertions.assertTrue(parsed.contains("${configTest.node1:Node1DefaultValue}"));
+        Assertions.assertTrue(parsed.contains("${configTest.node2:Node2DefaultValue}"));
+        Assertions.assertTrue(parsed.contains("${configTest.node3:Node3DefaultValue}"));
     }
 
     /**
@@ -183,8 +183,8 @@ public class YamlGeneratorTest {
                 .build();
 
         var result = generator.convertConfigRoot(rootNode).toString();
-        Assert.assertTrue(result.contains("${configTest.innerStringNode:123}"));
-        Assert.assertTrue(result.contains("${configTest.otherNode:abc}"));
+        Assertions.assertTrue(result.contains("${configTest.innerStringNode:123}"));
+        Assertions.assertTrue(result.contains("${configTest.otherNode:abc}"));
     }
 
 
@@ -251,10 +251,10 @@ public class YamlGeneratorTest {
         final var yaml = new Yaml(new YamlGenerator.YamlCommentRepresenter(YAML_OPTIONS, root), YAML_OPTIONS);
         final var fileContent = yaml.dump(result);
 
-        Assert.assertTrue(fileContent.contains("${configTest.externalarr1:[\"test1\", \"test2\"]}"));
-        Assert.assertTrue(fileContent.contains("${configTest.strstr1:abc123}"));
-        Assert.assertTrue(fileContent.contains("${configTest.integer1:}"));
-        Assert.assertTrue(fileContent.contains("${configTest.strstr2:}"));
+        Assertions.assertTrue(fileContent.contains("${configTest.externalarr1:[\"test1\", \"test2\"]}"));
+        Assertions.assertTrue(fileContent.contains("${configTest.strstr1:abc123}"));
+        Assertions.assertTrue(fileContent.contains("${configTest.integer1:}"));
+        Assertions.assertTrue(fileContent.contains("${configTest.strstr2:}"));
     }
 
 

@@ -8,8 +8,8 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ public class BaseTest {
     static final Logger logger = LoggerFactory.getLogger(ModuleRegistryGetHandlerTest.class);
     public static final String CONFIG_NAME = "body";
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -37,7 +37,7 @@ public class BaseTest {
         ModuleRegistry.registerModule(CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {

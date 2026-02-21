@@ -17,13 +17,13 @@
 package com.networknt.decode;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class RequestDecodeConfigTest {
     @Test
     public void loadConfig() {
         RequestDecodeConfig config = RequestDecodeConfig.load();
-        Assert.assertEquals(config.getDecoders().size(), 2);
+        Assertions.assertEquals(config.getDecoders().size(), 2);
     }
 }

@@ -26,8 +26,8 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.lang.JoseException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.security.Key;
 import java.security.KeyStore;
@@ -55,7 +55,7 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
             }
             certMap.put(kid, cert);
         }
-        Assert.assertEquals(2, certMap.size());
+        Assertions.assertEquals(2, certMap.size());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
             }
         }
 
-        Assert.assertEquals(0, certMap.size());
+        Assertions.assertEquals(0, certMap.size());
     }
 
     @Test
@@ -111,7 +111,7 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
 
         String jwt = jws.getCompactSerialization();
 
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
 
         System.out.print("JWT = " + jwt);
 
@@ -132,8 +132,8 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
             return null;
         });
 
-        Assert.assertNotNull(claims);
-        Assert.assertEquals(iss, claims.getStringClaimValue("iss"));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals(iss, claims.getStringClaimValue("iss"));
     }
 
     @Test
@@ -159,15 +159,15 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME_509));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
@@ -183,15 +183,15 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME_509));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
@@ -207,15 +207,15 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
-        Assert.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME_509));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
@@ -239,7 +239,7 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
         /* config points to our test pub cert for this JWT */
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_RELAXED_VERIFICATION));
 
-        Assert.assertTrue(jwtVerifier.enableRelaxedKeyValidation);
+        Assertions.assertTrue(jwtVerifier.enableRelaxedKeyValidation);
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, true, true);
@@ -248,8 +248,8 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
         }
 
         /* assert that our claims are not null, and that we can find the claim 'sub' */
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("CONSUMER\\160123021653", claims.getStringClaimValue("sub"));
+        Assertions.assertNotNull(claims);
+        Assertions.assertEquals("CONSUMER\\160123021653", claims.getStringClaimValue("sub"));
         System.out.println("jwt = " + jwt);
         System.out.println("jwtClaims = " + claims);
     }

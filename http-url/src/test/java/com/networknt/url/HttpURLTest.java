@@ -14,10 +14,11 @@
  */
 package com.networknt.url;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpURLTest {
 
@@ -27,7 +28,7 @@ public class HttpURLTest {
     private String t;
 
 
-//    @Before
+//    @BeforeEach
 //    public void before() {
 //        Logger logger = Logger.getRootLogger();
 //        logger.setLevel(Level.DEBUG);
@@ -37,7 +38,7 @@ public class HttpURLTest {
 //                ConsoleAppender.SYSTEM_OUT));
 //    }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         s = null;
         t = null;

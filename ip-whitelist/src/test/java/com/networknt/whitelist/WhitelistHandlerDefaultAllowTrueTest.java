@@ -29,10 +29,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -56,7 +56,7 @@ public class WhitelistHandlerDefaultAllowTrueTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -74,7 +74,7 @@ public class WhitelistHandlerDefaultAllowTrueTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -142,9 +142,9 @@ public class WhitelistHandlerDefaultAllowTrueTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if (statusCode == 200) {
-            Assert.assertEquals("OK", body);
+            Assertions.assertEquals("OK", body);
         }
     }
 
@@ -189,9 +189,9 @@ public class WhitelistHandlerDefaultAllowTrueTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(403, statusCode);
+        Assertions.assertEquals(403, statusCode);
         if (statusCode == 403) {
-            Assert.assertTrue(body.contains("ERR10049"));
+            Assertions.assertTrue(body.contains("ERR10049"));
         }
     }
 
@@ -236,9 +236,9 @@ public class WhitelistHandlerDefaultAllowTrueTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(403, statusCode);
+        Assertions.assertEquals(403, statusCode);
         if (statusCode == 403) {
-            Assert.assertTrue(body.contains("ERR10049"));
+            Assertions.assertTrue(body.contains("ERR10049"));
         }
     }
 
@@ -282,9 +282,9 @@ public class WhitelistHandlerDefaultAllowTrueTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if (statusCode == 200) {
-            Assert.assertEquals("OK", body);
+            Assertions.assertEquals("OK", body);
         }
     }
 

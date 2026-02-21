@@ -16,8 +16,8 @@
 package com.networknt.body;
 
 import io.undertow.server.handlers.form.FormData;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class BodyConverterTest {
         FormData formData = new FormData(99);
         Map<String, Object> bodyMap = BodyConverter.convert(formData);
 
-        Assert.assertEquals(0, bodyMap.size());
+        Assertions.assertEquals(0, bodyMap.size());
     }
 
     @Test
@@ -45,15 +45,15 @@ public class BodyConverterTest {
 
         Map<String, Object> bodyMap = BodyConverter.convert(formData);
 
-        Assert.assertEquals(2, bodyMap.size());
+        Assertions.assertEquals(2, bodyMap.size());
 
         Object aConvertedListvalue = bodyMap.get(aKey);
-        Assert.assertTrue(aConvertedListvalue instanceof String);
-        Assert.assertEquals(aValue, aConvertedListvalue);
+        Assertions.assertTrue(aConvertedListvalue instanceof String);
+        Assertions.assertEquals(aValue, aConvertedListvalue);
 
         Object anotherListvalues = bodyMap.get(anotherKey);
-        Assert.assertTrue(anotherListvalues instanceof String);
-        Assert.assertEquals(anotherValue, anotherListvalues);
+        Assertions.assertTrue(anotherListvalues instanceof String);
+        Assertions.assertEquals(anotherValue, anotherListvalues);
     }
 
     @Test
@@ -68,15 +68,15 @@ public class BodyConverterTest {
 
         Map<String, Object> bodyMap = BodyConverter.convert(formData);
 
-        Assert.assertEquals(1, bodyMap.size());
+        Assertions.assertEquals(1, bodyMap.size());
 
         List<Object> aConvertedListvalue = (List<Object>) bodyMap.get(aKey);
-        Assert.assertEquals(2, aConvertedListvalue.size());
+        Assertions.assertEquals(2, aConvertedListvalue.size());
 
-        Assert.assertTrue(aConvertedListvalue.get(0) instanceof String);
-        Assert.assertEquals(aValue, aConvertedListvalue.get(0));
+        Assertions.assertTrue(aConvertedListvalue.get(0) instanceof String);
+        Assertions.assertEquals(aValue, aConvertedListvalue.get(0));
 
-        Assert.assertTrue(aConvertedListvalue.get(1) instanceof String);
-        Assert.assertEquals(anotherValue, aConvertedListvalue.get(1));
+        Assertions.assertTrue(aConvertedListvalue.get(1) instanceof String);
+        Assertions.assertEquals(anotherValue, aConvertedListvalue.get(1));
     }
 }

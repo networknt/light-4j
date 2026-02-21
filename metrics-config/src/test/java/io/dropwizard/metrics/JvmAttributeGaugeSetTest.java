@@ -16,8 +16,8 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Gauge;
 import io.dropwizard.metrics.JvmAttributeGaugeSet;
@@ -33,7 +33,7 @@ public class JvmAttributeGaugeSetTest {
     private final RuntimeMXBean runtime = mock(RuntimeMXBean.class);
     private final JvmAttributeGaugeSet gauges = new JvmAttributeGaugeSet(runtime);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         when(runtime.getName()).thenReturn("9928@example.com");
 

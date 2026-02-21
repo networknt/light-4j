@@ -16,7 +16,7 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * Test the ProxyBodyHandler to ensure that form and stream request will be supported.
  *
- * Note: I have marked all application/json content type with @Ignore as they need the proxy
+ * Note: I have marked all application/json content type with @Disabled as they need the proxy
  * handler to consume the stream to clear the buffer and those test cases won't work 100%
  * if they are triggered together. Those tests will be moved to light-proxy or http-sidecar.
  *
@@ -44,7 +44,7 @@ public class RequestBodyInterceptorTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -60,7 +60,7 @@ public class RequestBodyInterceptorTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -114,7 +114,7 @@ public class RequestBodyInterceptorTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGet() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -147,12 +147,12 @@ public class RequestBodyInterceptorTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("nobody", body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("nobody", body);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostNonJson() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -194,16 +194,16 @@ public class RequestBodyInterceptorTest {
         }
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10015", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10015", status.getCode());
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostInvalidJson() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -245,16 +245,16 @@ public class RequestBodyInterceptorTest {
         }
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
-        Assert.assertEquals(400, statusCode);
+        Assertions.assertEquals(400, statusCode);
         if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
-            Assert.assertNotNull(status);
-            Assert.assertEquals("ERR10015", status.getCode());
+            Assertions.assertNotNull(status);
+            Assertions.assertEquals("ERR10015", status.getCode());
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostJsonList() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -295,11 +295,11 @@ public class RequestBodyInterceptorTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("[{key1=value1},{key2=value2}]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("[{key1=value1},{key2=value2}]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostJsonListEmpty() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -340,11 +340,11 @@ public class RequestBodyInterceptorTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("[]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("[]", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostJsonMap() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -385,11 +385,11 @@ public class RequestBodyInterceptorTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostJsonMapEmpty() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -430,11 +430,11 @@ public class RequestBodyInterceptorTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("{}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("{}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostJsonMapWithoutContentTypeHeader() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -473,11 +473,11 @@ public class RequestBodyInterceptorTest {
             client.restore(token);
 
         }
-        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostFormWithoutContentTypeHeader() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -518,6 +518,6 @@ public class RequestBodyInterceptorTest {
         }
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("response body = " + responseBody);
-        Assert.assertEquals("nobody", responseBody);
+        Assertions.assertEquals("nobody", responseBody);
     }
 }

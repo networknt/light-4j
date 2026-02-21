@@ -24,9 +24,9 @@ import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.EnumSet;
@@ -34,7 +34,7 @@ import java.util.Set;
 
 public class MaskTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void runOnceBeforeClass() {
         Configuration.setDefaults(new Configuration.Defaults() {
 
@@ -63,7 +63,7 @@ public class MaskTest {
         String url1 = "/v1/customer?sin=123456789&password=secret&number=1234567890123456";
         String output = Mask.maskString(url1, "uri");
         System.out.println("ouput = " + output);
-        Assert.assertEquals("/v1/customer?sin=masked&password=******&number=----------------", output);
+        Assertions.assertEquals("/v1/customer?sin=masked&password=******&number=----------------", output);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class MaskTest {
         String test = "aaaa";
         String output = Mask.maskRegex(test, "queryParameter", "accountNo");
         System.out.println("output = " + output);
-        Assert.assertEquals(output, "****");
+        Assertions.assertEquals(output, "****");
     }
 
     @Test
@@ -80,9 +80,9 @@ public class MaskTest {
         String testHeader2 = "tests";
         String output1 = Mask.maskRegex(testHeader1, "requestHeader", "header1");
         System.out.println("output1 = " + output1);
-        Assert.assertEquals(output1, "****");
+        Assertions.assertEquals(output1, "****");
         String output2 = Mask.maskRegex(testHeader2, "requestHeader", "header2");
-        Assert.assertEquals(output2, "*****");
+        Assertions.assertEquals(output2, "*****");
     }
 
     @Test
@@ -90,16 +90,16 @@ public class MaskTest {
         String testHeader = "header";
         String output = Mask.maskRegex(testHeader, "responseHeader", "header3");
         System.out.println("output = " + output);
-        Assert.assertEquals(output, "******");
+        Assertions.assertEquals(output, "******");
     }
     @Test
     public void testMaskRequestBody() {
         String input = "{\"name\":\"Steve\",\"contact\":{\"phone\":\"416-111-1111\"},\"password\":\"secret\"}";
         String output = Mask.maskJson(input, "test1");
         System.out.println(output);
-        Assert.assertEquals(JsonPath.parse(output).read("$.contact.phone"), "************");
-        Assert.assertEquals(JsonPath.parse(output).read("$.password"), "******");
-        Assert.assertEquals(output, "{\"name\":\"Steve\",\"contact\":{\"phone\":\"************\"},\"password\":\"******\"}");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.contact.phone"), "************");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.password"), "******");
+        Assertions.assertEquals(output, "{\"name\":\"Steve\",\"contact\":{\"phone\":\"************\"},\"password\":\"******\"}");
     }
 
     @Test
@@ -122,10 +122,10 @@ public class MaskTest {
 //        String input = "{\"name\":\"Steve\",\"list\":[\"secret1\", \"secret2\"],\"password\":\"secret\"}";
         String output = Mask.maskJson(input, "test2");
         System.out.println(output);
-        Assert.assertEquals(JsonPath.parse(output).read("$.list[2].accounts[2]"), "******");
-        Assert.assertEquals(JsonPath.parse(output).read("$.list[1].name"), "***");
-        Assert.assertEquals(JsonPath.parse(output).read("$.list1[2]"), "*****");
-        Assert.assertEquals(JsonPath.parse(output).read("$.password"), "******");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.list[2].accounts[2]"), "******");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.list[1].name"), "***");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.list1[2]"), "*****");
+        Assertions.assertEquals(JsonPath.parse(output).read("$.password"), "******");
     }
 
     @Test
@@ -134,7 +134,7 @@ public class MaskTest {
         String input = "{\"name\":\"Steve\", \"list\":[{\"name\":\"Josh\", \"creditCardNumber\":\"4586996854721123\"}],\"password\":\"secret\"}";
         String output = Mask.maskJson(input, "testIssue942");
         System.out.println(output);
-        Assert.assertEquals(output, "{\"name\":\"Steve\",\"list\":[{\"name\":\"Josh\",\"creditCardNumber\":\"****************\"}],\"password\":\"secret\"}");
+        Assertions.assertEquals(output, "{\"name\":\"Steve\",\"list\":[{\"name\":\"Josh\",\"creditCardNumber\":\"****************\"}],\"password\":\"secret\"}");
     }
 
     @Test
@@ -145,31 +145,31 @@ public class MaskTest {
         // Mask.maskString((String) null, "");
         output = Mask.maskString((String) null, "uri");
         System.out.println("ouput = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
 
         // Mask.maskRegex((String) null, "", "");
         output = Mask.maskRegex((String) null, "queryParameter", "accountNo");
         System.out.println("output = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
 
         // Mask.maskJson((String) null,"key");
         output = Mask.maskJson((String) null, "uri");
         System.out.println("output = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
 
         // Mask.maskJson((InputStream) null, "");
         output = Mask.maskJson((InputStream) null, "uri");
         System.out.println("output = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
 
         // Mask.maskJson((Object) null, "");
         output = Mask.maskJson((Object) null, "uri");
         System.out.println("output = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
 
         // Mask.maskJson((DocumentContext) null, "");
         output = Mask.maskJson((DocumentContext) null, "uri");
         System.out.println("output = " + output);
-        Assert.assertEquals(null, output);
+        Assertions.assertEquals(null, output);
     }
 }

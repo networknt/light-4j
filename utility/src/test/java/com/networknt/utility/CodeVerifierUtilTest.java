@@ -16,8 +16,8 @@
 
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by steve on 22/06/17.
@@ -33,7 +33,7 @@ public class CodeVerifierUtilTest {
 
         String c2 = CodeVerifierUtil.deriveCodeVerifierChallenge(v);
         System.out.println("c2 = " + c2);
-        Assert.assertTrue(c1.equals(c2));
+        Assertions.assertTrue(c1.equals(c2));
     }
 
 

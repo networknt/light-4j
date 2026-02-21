@@ -1,7 +1,7 @@
 package com.networknt.config;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
@@ -26,25 +26,25 @@ public class ConfigEscapeTest {
     @Test
     public void testPasswordConfig() {
         Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
-        Assert.assertEquals("abc$defg", passwordMap.get("password"));
+        Assertions.assertEquals("abc$defg", passwordMap.get("password"));
     }
 
     @Test
     public void testValuesEscape() {
         Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
-        Assert.assertEquals("def$g", passwordMap.get("value"));
+        Assertions.assertEquals("def$g", passwordMap.get("value"));
     }
 
     @Test
     public void testSql1() {
         Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
-        Assert.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql1"));
+        Assertions.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql1"));
     }
 
     @Test
     public void testSql2() {
         Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
-        Assert.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql2"));
+        Assertions.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql2"));
     }
 
 }

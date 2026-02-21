@@ -1,8 +1,8 @@
 package com.networknt.proxy;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 
 public class LightProxyHandlerTest {
@@ -37,6 +37,6 @@ public class LightProxyHandlerTest {
         // Get new proxyHandler
         Object newProxyHandler = proxyHandlerField.get(handler);
 
-        Assert.assertNotEquals("ProxyHandler should have been rebuilt after config reload", initialProxyHandler, newProxyHandler);
+        Assertions.assertNotEquals(initialProxyHandler, newProxyHandler, "ProxyHandler should have been rebuilt after config reload");
     }
 }

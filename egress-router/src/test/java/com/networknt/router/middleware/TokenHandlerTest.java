@@ -22,7 +22,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -43,7 +43,7 @@ public class TokenHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(TokenHandlerTest.class);
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception{
         if(server == null) {
             logger.info("starting server");
@@ -60,7 +60,7 @@ public class TokenHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -84,7 +84,7 @@ public class TokenHandlerTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOneGetService1Request() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -118,14 +118,14 @@ public class TokenHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("GET OK", body);
+            Assertions.assertEquals("GET OK", body);
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOnePostRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -162,7 +162,7 @@ public class TokenHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
     }
 
     @Test
@@ -180,8 +180,8 @@ public class TokenHandlerTest {
         Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
 
         // Verify the result
-        Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals(cachedJwt, result.getResult());
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertEquals(cachedJwt, result.getResult());
     }
 
     @Test
@@ -193,28 +193,28 @@ public class TokenHandlerTest {
         Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
 
         // Verify the result
-        Assert.assertTrue(result.isFailure());
-        Assert.assertNull(TokenHandler.cache.get(serviceId)); // Verify cache is not updated
+        Assertions.assertTrue(result.isFailure());
+        Assertions.assertNull(TokenHandler.cache.get(serviceId)); // Verify cache is not updated
     }
 
     @Test
     public void testBuildConfigMap() {
         final var config = ClientConfig.get().getOAuth().getToken().getClientCredentials().getServiceIdAuthServers();
-        Assert.assertNotNull(config);
+        Assertions.assertNotNull(config);
 
         final AuthServerConfig serviceConfig = config.get("service1");
-        Assert.assertNotNull(serviceConfig);
+        Assertions.assertNotNull(serviceConfig);
 
         final var mapper = Config.getInstance().getMapper();
         final var configMap = mapper.convertValue(serviceConfig, new TypeReference<Map<String, Object>>() {
         });
-        Assert.assertNotNull(configMap);
+        Assertions.assertNotNull(configMap);
 
         final var completeAuthConfig = TokenHandler.enrichAuthServerConfig(serviceConfig, ClientConfig.get().getOAuth().getToken());
-        Assert.assertNotNull(completeAuthConfig);
+        Assertions.assertNotNull(completeAuthConfig);
 
         // config should not contain proxy settings
-        Assert.assertNull(completeAuthConfig.getProxyHost());
+        Assertions.assertNull(completeAuthConfig.getProxyHost());
     }
 
 }

@@ -1,8 +1,8 @@
 package com.networknt.server;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class DefaultConfigLoaderTest {
 
     public static DefaultConfigLoader configLoader;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         configLoader = new DefaultConfigLoader();
     }
@@ -56,9 +56,9 @@ public class DefaultConfigLoaderTest {
 
         Map<String, Object> result = (Map)map.get("test1");
         List<String> result1 = (List)result.get("languages");
-        Assert.assertEquals("Ruby", result1.get(0));
+        Assertions.assertEquals("Ruby", result1.get(0));
         Map<String, String> result2 = (Map)result.get("websites");
-        Assert.assertEquals( "yaml.org", result2.get("YAML"));
+        Assertions.assertEquals( "yaml.org", result2.get("YAML"));
         System.out.println(map);
 
     }

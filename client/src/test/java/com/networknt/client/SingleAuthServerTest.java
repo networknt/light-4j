@@ -1,17 +1,17 @@
 package com.networknt.client;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class SingleAuthServerTest {
     public static final String CONFIG_NAME = "client-single";
     static ClientConfig config;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
     }

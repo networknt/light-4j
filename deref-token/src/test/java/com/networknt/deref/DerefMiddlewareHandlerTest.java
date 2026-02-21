@@ -27,10 +27,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -51,7 +51,7 @@ public class DerefMiddlewareHandlerTest {
     static Undertow server = null;
     static Undertow oauth = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -83,7 +83,7 @@ public class DerefMiddlewareHandlerTest {
                 .addPrefixPath("/api", (exchange) -> {
                     // check if the Authorization header contains JWT token here.
                     String authHeader = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-                    Assert.assertEquals("Bearer " + token, authHeader);
+                    Assertions.assertEquals("Bearer " + token, authHeader);
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                     exchange.getResponseSender().send("OK");
                 });
@@ -97,7 +97,7 @@ public class DerefMiddlewareHandlerTest {
                 });
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -160,11 +160,11 @@ public class DerefMiddlewareHandlerTest {
 
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("OK", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("OK", body);
         }
     }
 

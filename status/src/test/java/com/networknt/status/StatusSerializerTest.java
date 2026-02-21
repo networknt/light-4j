@@ -17,10 +17,10 @@
 package com.networknt.status;
 
 import com.networknt.config.Config;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
@@ -34,7 +34,7 @@ public class StatusSerializerTest {
     private static Config config = null;
     private static final String homeDir = System.getProperty("user.home");
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         config = Config.getInstance();
 
@@ -55,7 +55,7 @@ public class StatusSerializerTest {
         config.setClassLoader(classLoader);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         // Remove the test.json from home directory
         File test = new File(homeDir + "/service.json");
@@ -67,7 +67,7 @@ public class StatusSerializerTest {
         Status status = new Status("ERR10001");
         System.out.println(status);
         // test with ErrorStatusRootStatusSerializer
-        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class StatusSerializerTest {
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
         // test with ErrorStatusRootStatusSerializer
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
     }
 
 }

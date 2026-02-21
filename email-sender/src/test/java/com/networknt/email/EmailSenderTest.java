@@ -17,14 +17,14 @@
 package com.networknt.email;
 
 import com.networknt.config.Config;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import jakarta.mail.*;
 import java.io.File;
 
 public class EmailSenderTest {
     @Test
-    @Ignore
+    @Disabled
     public void testEmail() {
         EmailSender sender = new EmailSender();
         try {
@@ -35,7 +35,7 @@ public class EmailSenderTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testEmailWithAttachment() {
         EmailSender sender = new EmailSender();
         try {

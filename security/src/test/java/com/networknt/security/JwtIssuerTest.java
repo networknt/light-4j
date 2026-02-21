@@ -17,7 +17,7 @@
 package com.networknt.security;
 
 import org.jose4j.jwt.JwtClaims;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;

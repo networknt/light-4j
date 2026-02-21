@@ -1,6 +1,6 @@
 package com.networknt.sanitizer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SanitizerConfigTest {
     @Test
