@@ -55,4 +55,28 @@ public class JsonMapperTest {
         System.out.println(newMap);
     }
 
+    @Test
+    void testHybridBody() {
+        String s = "{\n" +
+                "  \"host\": \"lightapi.net\",\n" +
+                "  \"service\": \"oauth\",\n" +
+                "  \"action\": \"createClient\",\n" +
+                "  \"version\": \"0.1.0\",\n" +
+                "  \"title\": \"Create Client\",\n" +
+                "  \"success\": \"/app/success\",\n" +
+                "  \"failure\": \"/app/failure\",\n" +
+                "  \"data\": {\n" +
+                "    \"hostId\": \"01964b05-552a-7c4b-9184-6857e7f3dc5f\",\n" +
+                "    \"authenticateClass\": \"com.networknt.oauth.auth.LightPortalAuth\",\n" +
+                "    \"clientName\": \"pylon\",\n" +
+                "    \"clientType\": \"trusted\",\n" +
+                "    \"clientProfile\": \"service\",\n" +
+                "    \"clientScope\": \"portal.r portal.w\",\n" +
+                "    \"customClaim\": \"{\\\"roles\\\":\\\"aG9zdC1hZG1pbiB1c2Vy\\\",\\\"userId\\\":\\\"01964b05-5532-7c79-8cde-191dcbd421b8\\\",\\\"host\\\":\\\"01964b05-552a-7c4b-9184-6857e7f3dc5f\\\",\\\"email\\\":\\\"steve.hu@sunlife.com\\\",\\\"eid\\\":\\\"sh35\\\"}\"\n" +
+                "  }\n" +
+                "}";
+        Map<String, Object> map = JsonMapper.string2Map(s);
+        Assertions.assertNotNull(map);
+        Assertions.assertFalse(map.isEmpty());
+    }
 }
