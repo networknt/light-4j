@@ -154,4 +154,8 @@ public class Constants {
 
     // plugin error message
     public static final String ERROR_MESSAGE = "errorMessage";
+
+    // token exchange type
+    public static final String TOKEN_EX_TYPE_CCAC = "ccac"; // client credentials to authorization code.
+    public static final String TOKEN_EX_TYPE_MSAL = "msal"; // Microsoft authentication library
 }
