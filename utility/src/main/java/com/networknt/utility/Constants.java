@@ -83,7 +83,7 @@ public class Constants {
     public static final String AUDIT_LOGGER = "Audit";
     public static final String STATUS = "Status";
     public static final String STACK_TRACE = "StackTrace";
-
+    public static final String JSONRPC_ID = "jsonrpc_id";
     // JWT claims for fine-grained authorization in business context.
     public static final String AUDIT_INFO = "auditInfo";
     // The key for the subject token claims in auditInfo after security handler
