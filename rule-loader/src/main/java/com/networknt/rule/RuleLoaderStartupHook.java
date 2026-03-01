@@ -191,7 +191,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     }
 
     public static Result<String> getServiceRule(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
@@ -223,7 +223,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     }
 
     public static Result<String> getServicePermission(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServicePermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getApiPermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
