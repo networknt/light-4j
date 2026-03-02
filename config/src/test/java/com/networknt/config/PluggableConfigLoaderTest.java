@@ -23,13 +23,13 @@ public class PluggableConfigLoaderTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        
+
         System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        
+
         // Remove the config.yml from home directory
         File test = new File(homeDir + "/config.yml");
         test.delete();

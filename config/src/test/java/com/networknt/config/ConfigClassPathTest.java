@@ -38,7 +38,7 @@ public class ConfigClassPathTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        
+
         config = Config.getInstance();
 
         // write a config file into the user home directory.
@@ -54,7 +54,7 @@ public class ConfigClassPathTest {
 
     @AfterEach
     public void tearDown() throws Exception {
-        
+
         // Remove the test.json from home directory
         File test = new File(homeDir + "/test.json");
         test.delete();

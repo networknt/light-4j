@@ -35,7 +35,7 @@ public class ConfigPropertyPathTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        
+
 
         // the instance would already be created by other classes since the config is singleton, so need to using
         // reflection to inject field.
