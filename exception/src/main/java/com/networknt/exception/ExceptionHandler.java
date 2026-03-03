@@ -16,13 +16,8 @@
 
 package com.networknt.exception;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.exception.ApiException;
-import com.networknt.exception.FrameworkException;
-import com.networknt.exception.ClientException;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -48,8 +43,7 @@ import org.slf4j.MDC;
 public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
-    public static final String CONFIG_NAME = "exception";
-    static  ExceptionConfig config = (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
+    private String configName = ExceptionConfig.CONFIG_NAME;
 
     static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
     static final String STATUS_UNCAUGHT_EXCEPTION = "ERR10011";
@@ -57,7 +51,14 @@ public class ExceptionHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public ExceptionHandler() {
+        ExceptionConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed.");
+    }
 
+    public ExceptionHandler(String configName) {
+        this.configName = configName;
+        ExceptionConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed with {}.", configName);
     }
 
     @Override
@@ -137,18 +138,6 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(ExceptionConfig.CONFIG_NAME, ExceptionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExceptionConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config =  (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
-        ModuleRegistry.registerModule(ExceptionConfig.CONFIG_NAME, ExceptionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExceptionConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("ExceptionHandler is reloaded.");
+        return ExceptionConfig.load(configName).isEnabled();
     }
 }

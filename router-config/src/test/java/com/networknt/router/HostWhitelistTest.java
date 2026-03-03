@@ -17,10 +17,10 @@
 package com.networknt.router;
 
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,28 +29,28 @@ public class HostWhitelistTest {
 
     private HostWhitelist hostWhitelist;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         SingletonServiceFactory.setBean("com.networknt.router.HostWhitelist", new HostWhitelist());
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         hostWhitelist = SingletonServiceFactory.getBean(HostWhitelist.class);
     }
 
     @Test
     public void testHostAllowed() throws URISyntaxException {
-        Assert.assertTrue(hostWhitelist.isHostAllowed(new URI("http://192.168.0.1")));
-        Assert.assertTrue(hostWhitelist.isHostAllowed(new URI("http://10.1.2.3:8543")));
-        Assert.assertTrue(hostWhitelist.isHostAllowed(new URI("https://192.168.0.10:8765")));
+        Assertions.assertTrue(hostWhitelist.isHostAllowed(new URI("http://192.168.0.1")));
+        Assertions.assertTrue(hostWhitelist.isHostAllowed(new URI("http://10.1.2.3:8543")));
+        Assertions.assertTrue(hostWhitelist.isHostAllowed(new URI("https://192.168.0.10:8765")));
     }
 
     @Test
     public void testHostNotAllowed() throws URISyntaxException {
-        Assert.assertFalse(hostWhitelist.isHostAllowed(new URI("http://192.168.2.1")));
-        Assert.assertFalse(hostWhitelist.isHostAllowed(new URI("http2://10.2.3.4:8643")));
-        Assert.assertFalse(hostWhitelist.isHostAllowed(new URI("https://192.168.1.20:7654")));
+        Assertions.assertFalse(hostWhitelist.isHostAllowed(new URI("http://192.168.2.1")));
+        Assertions.assertFalse(hostWhitelist.isHostAllowed(new URI("http2://10.2.3.4:8643")));
+        Assertions.assertFalse(hostWhitelist.isHostAllowed(new URI("https://192.168.1.20:7654")));
     }
 
 }

@@ -1,0 +1,32 @@
+# Token Exchange Handler Configuration with Client Mapping
+
+# Enable or disable the handler
+enabled: true
+
+# The path to the token exchange endpoint on OAuth 2.0 provider
+tokenExUri: https://localhost:6882/oauth2/token
+
+# The client ID for the token exchange
+tokenExClientId: portal-client
+
+# The client secret for the token exchange
+tokenExClientSecret: portal-secret
+
+# The scope of the returned token
+tokenExScope:
+  - portal.w
+  - portal.r
+
+# The subject token type
+subjectTokenType: urn:ietf:params:oauth:token-type:jwt
+
+# The requested token type
+requestedTokenType: urn:ietf:params:oauth:token-type:jwt
+
+# Mapping strategy - use 'config' to use the clientMapping below
+mappingStrategy: config
+
+# Client mapping from external client IDs to internal function IDs
+clientMapping:
+  external-client-1: internal-function-1
+  external-client-2: internal-function-2

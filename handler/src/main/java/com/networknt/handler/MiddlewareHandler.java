@@ -59,18 +59,6 @@ public interface MiddlewareHandler extends LightHttpHandler {
      */
     boolean isEnabled();
 
-    /**
-     * Register this handler to the handler registration.
-     */
-    void register();
-
-    /**
-     * Reload config values in case the config values changed by config server.
-     */
-    default void reload() {
-
-    }
-
     default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
         var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
         if (context != null) {

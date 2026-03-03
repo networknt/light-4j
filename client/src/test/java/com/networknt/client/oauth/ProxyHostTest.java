@@ -1,9 +1,9 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ public class ProxyHostTest {
     public static final String CONFIG_NAME = "client-proxy";
     static ClientConfig config;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
     }
@@ -27,29 +27,29 @@ public class ProxyHostTest {
     @Test
     public void testKeyRequest() {
         TokenKeyRequest request = new TokenKeyRequest("001");
-        Assert.assertEquals("proxy.lightapi.net", request.getProxyHost());
-        Assert.assertEquals(3128, request.getProxyPort());
+        Assertions.assertEquals("proxy.lightapi.net", request.getProxyHost());
+        Assertions.assertEquals(3128, request.getProxyPort());
     }
 
     @Test
     public void testClientCredentialsRequest() {
         ClientCredentialsRequest request = new ClientCredentialsRequest(null);
-        Assert.assertEquals("proxy.lightapi.net", request.getProxyHost());
-        Assert.assertEquals(3128, request.getProxyPort());
+        Assertions.assertEquals("proxy.lightapi.net", request.getProxyHost());
+        Assertions.assertEquals(3128, request.getProxyPort());
     }
 
     @Test
     public void testAuthorizationCodeRequest() {
         AuthorizationCodeRequest request = new AuthorizationCodeRequest();
-        Assert.assertEquals("proxy.lightapi.net", request.getProxyHost());
-        Assert.assertEquals(3128, request.getProxyPort());
+        Assertions.assertEquals("proxy.lightapi.net", request.getProxyHost());
+        Assertions.assertEquals(3128, request.getProxyPort());
     }
 
     @Test
     public void testClientAuthenticatedUserRequest() {
         ClientAuthenticatedUserRequest request = new ClientAuthenticatedUserRequest("Employee", "userId", "admin");
-        Assert.assertEquals("proxy.lightapi.net", request.getProxyHost());
-        Assert.assertEquals(3128, request.getProxyPort());
+        Assertions.assertEquals("proxy.lightapi.net", request.getProxyHost());
+        Assertions.assertEquals(3128, request.getProxyPort());
     }
 
 }

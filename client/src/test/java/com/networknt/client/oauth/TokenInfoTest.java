@@ -2,8 +2,8 @@ package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.JsonMapper;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
@@ -40,7 +40,7 @@ public class TokenInfoTest {
         Field field = object.getClass().getDeclaredField("clientId");
         field.setAccessible(true);
         Object value = field.get(object);
-        Assert.assertEquals("bb8293f6-ceef-4e7a-90c8-1492e97df19f", value);
+        Assertions.assertEquals("bb8293f6-ceef-4e7a-90c8-1492e97df19f", value);
         System.out.println("value = " + value);
     }
 }

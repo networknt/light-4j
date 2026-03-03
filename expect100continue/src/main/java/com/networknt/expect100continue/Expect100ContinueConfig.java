@@ -6,6 +6,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,6 @@ public class Expect100ContinueConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "Indicate if the Expect100Continue middleware is enabled or not."
     )
     private boolean enabled;
@@ -37,7 +37,6 @@ public class Expect100ContinueConfig {
     @ArrayField(
             configFieldName = IN_PLACE_PATH_PREFIXES,
             externalizedKeyName = IN_PLACE_PATH_PREFIXES,
-            externalized = true,
             description = "List of paths that will not follow the expect-100-continue protocol. The Expect header will be removed altogether.\n" +
                     "format is in array format, or in string array format (i.e. '[path1, path2]')",
             items = String.class
@@ -47,7 +46,6 @@ public class Expect100ContinueConfig {
     @ArrayField(
             configFieldName = IGNORED_PATH_PREFIXES,
             externalizedKeyName = IGNORED_PATH_PREFIXES,
-            externalized = true,
             description = "List of paths that will respond 100-continue in place before continuing execution of the remaining handlers.\n" +
                     "The Expect header will be removed after the response is sent.\n" +
                     "format is in array format, or in string array format (i.e. '[path1, path2]')",
@@ -55,11 +53,32 @@ public class Expect100ContinueConfig {
     )
     private List<String> inPlacePathPrefixes;
 
-    private final Config config;
+
     private Map<String, Object> mappedConfig;
+    private static volatile Expect100ContinueConfig instance;
 
     public static Expect100ContinueConfig load() {
-        return new Expect100ContinueConfig();
+        return load(CONFIG_NAME);
+    }
+
+    public static Expect100ContinueConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (Expect100ContinueConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new Expect100ContinueConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, Expect100ContinueConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new Expect100ContinueConfig(configName);
     }
 
     private Expect100ContinueConfig() {
@@ -67,13 +86,7 @@ public class Expect100ContinueConfig {
     }
 
     private Expect100ContinueConfig(String configName) {
-        this.config = Config.getInstance();
-        this.mappedConfig = config.getJsonMapConfigNoCache(configName);
-        this.setConfigData();
-    }
-
-    void reload() {
-        this.mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        this.mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         this.setConfigData();
     }
 
@@ -126,5 +139,9 @@ public class Expect100ContinueConfig {
 
     public List<String> getInPlacePathPrefixes() {
         return inPlacePathPrefixes;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 }

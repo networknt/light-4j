@@ -26,7 +26,6 @@ import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,6 @@ import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 public class PortalRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
-    private static final PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
     PortalRegistryWebSocketClient webSocketClient = null;
     private PortalRegistryClient client;
     private PortalRegistryHeartbeatManager heartbeatManager;
@@ -59,7 +57,6 @@ public class PortalRegistry extends AbstractRegistry {
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), PortalRegistryConstants.DEFAULT_LOOKUP_INTERVAL);
         logger.info("PortalRegistry init finish.");
-        ModuleRegistry.registerModule(CONFIG_NAME, PortalRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
@@ -110,6 +107,7 @@ public class PortalRegistry extends AbstractRegistry {
             // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
             // can save a lot of threads than the Consul implementation.
             try {
+                PortalRegistryConfig config = PortalRegistryConfig.load();
                 String u = "wss" + config.getPortalUrl().substring(config.getPortalUrl().indexOf("://"));
                 if(webSocketClient == null) {
                     // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
@@ -274,11 +272,11 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private PortalRegistryConfig getPortalRegistryConfig(){
-        return (PortalRegistryConfig)Config.getInstance().getJsonObjectConfig(PortalRegistryConfig.CONFIG_NAME, PortalRegistryConfig.class);
+        return PortalRegistryConfig.load();
     }
 
     private String getPortalToken() {
-        String token = config.getPortalToken();
+        String token = getPortalRegistryConfig().getPortalToken();
         if(token == null) return null;
         // make sure that the token has the Bearer prefix.
         if(token.toUpperCase().startsWith("BEARER ")) {

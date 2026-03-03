@@ -15,17 +15,20 @@
     "maxReqPerConn" : {
       "type" : "integer",
       "description" : "number of requests before resetting the shared connection to work around HTTP/2 limitation",
-      "default" : 1000000
+      "default" : 1000000,
+      "format" : "int32"
     },
     "deregisterAfter" : {
       "type" : "integer",
       "description" : "De-register the service after the amount of time with health check failed. Once a health check is failed, the\nservice will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\nthe value is an integer in milliseconds. 1000 means 1 second and default to 2 minutes",
-      "default" : 120000
+      "default" : 120000,
+      "format" : "int32"
     },
     "checkInterval" : {
       "type" : "integer",
       "description" : "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\nrequest will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\nafter 10 seconds, then mark the service is critical. The value is an integer in milliseconds",
-      "default" : 10000
+      "default" : 10000,
+      "format" : "int32"
     },
     "httpCheck" : {
       "type" : "boolean",

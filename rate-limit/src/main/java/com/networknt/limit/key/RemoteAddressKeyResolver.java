@@ -12,6 +12,12 @@ import java.net.InetSocketAddress;
  */
 public class RemoteAddressKeyResolver implements KeyResolver {
 
+    /**
+     * Default constructor
+     */
+    public RemoteAddressKeyResolver() {
+    }
+
     @Override
     public String resolve(HttpServerExchange exchange) {
         InetSocketAddress address = exchange.getSourceAddress();

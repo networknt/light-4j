@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * RestClientTemplate class.
+ */
 public class RestClientTemplate implements RestClient {
 
     private static Logger logger = LoggerFactory.getLogger(RestClientTemplate.class);
@@ -44,6 +47,10 @@ public class RestClientTemplate implements RestClient {
         this.restOptions = OptionMap.EMPTY;
     }
 
+    /**
+     * Set valid status codes.
+     * @param statusCodesValid the list of valid status codes
+     */
     public void setStatusCodesValid(List<HttpStatus> statusCodesValid) {
         this.statusCodesValid = Optional.of(statusCodesValid);
     }
@@ -151,6 +158,18 @@ public class RestClientTemplate implements RestClient {
         return execute(serviceDef, path, String.class, null, Methods.DELETE, null);
     }
 
+    /**
+     * Execute the request.
+     * @param url the URL
+     * @param path the path
+     * @param responseType the response type
+     * @param headerMap the header map
+     * @param method the HTTP method
+     * @param requestBody the request body
+     * @param <T> the type parameter
+     * @return the result
+     * @throws RestClientException RestClientException
+     */
     protected <T> T execute(String url, String path, Class<T> responseType, Map<String, ?> headerMap, HttpString method, String requestBody) throws RestClientException {
         try {
             Http2ServiceRequest http2ServiceRequest = new Http2ServiceRequest(new URI(url), path, method);
@@ -165,6 +184,18 @@ public class RestClientTemplate implements RestClient {
         }
     }
 
+    /**
+     * Execute the request.
+     * @param serviceDef the service definition
+     * @param path the path
+     * @param responseType the response type
+     * @param headerMap the header map
+     * @param method the HTTP method
+     * @param requestBody the request body
+     * @param <T> the type parameter
+     * @return the result
+     * @throws RestClientException RestClientException
+     */
     protected <T> T execute(ServiceDef serviceDef, String path, Class<T> responseType, Map<String, ?> headerMap, HttpString method, String requestBody) throws RestClientException {
         try {
             Http2ServiceRequest http2ServiceRequest = new Http2ServiceRequest(serviceDef, path, method);

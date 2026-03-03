@@ -1,6 +1,7 @@
 package com.networknt.reqtrans;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.RequestInterceptorInjectionHandler;
@@ -15,7 +16,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -32,7 +33,7 @@ public class RequestTransformerInterceptorTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         if(server == null) {
             logger.info("starting server");
@@ -48,7 +49,7 @@ public class RequestTransformerInterceptorTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -71,17 +72,24 @@ public class RequestTransformerInterceptorTest {
                 });
     }
     @Test
-    @Ignore
+    @Disabled
     public void testPostRequest() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "original post";
@@ -101,15 +109,17 @@ public class RequestTransformerInterceptorTest {
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             System.out.println("body = " + body);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.reqtrans.RequestTransformerHandler\"]}]", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.reqtrans.RequestTransformerHandler\"]}]", body);
         }
     }
 }

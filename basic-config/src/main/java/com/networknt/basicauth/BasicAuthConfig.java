@@ -20,7 +20,9 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "false",
             description = "Enable Basic Authentication Handler, default is true."
     )
@@ -56,7 +57,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ENABLE_AD,
             externalizedKeyName = ENABLE_AD,
-            externalized = true,
             defaultValue = "true",
             description = "Enable Ldap Authentication, default is true."
     )
@@ -65,7 +65,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ALLOW_ANONYMOUS,
             externalizedKeyName = ALLOW_ANONYMOUS,
-            externalized = true,
             defaultValue = "false",
             description = "Do we allow the anonymous to pass the authentication and limit it with some paths\n" +
                     "to access? Default is false, and it should only be true in client-proxy."
@@ -75,7 +74,6 @@ public class BasicAuthConfig {
     @BooleanField(
             configFieldName = ALLOW_BEARER_TOKEN,
             externalizedKeyName = ALLOW_BEARER_TOKEN,
-            externalized = true,
             defaultValue = "false",
             description = "Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths\n" +
                     "authorization defined under username bearer. This feature is used in proxy-client\n" +
@@ -86,7 +84,6 @@ public class BasicAuthConfig {
     @MapField(
             configFieldName = USERS,
             externalizedKeyName = USERS,
-            externalized = true,
             description = "usernames and passwords in a list, the password can be encrypted like user2 in test.\n" +
                     "As we are supporting multiple users, so leave the passwords in this file with users.\n" +
                     "For each user, you can specify a list of optional paths that this user is allowed to\n" +
@@ -96,42 +93,46 @@ public class BasicAuthConfig {
     )
     Map<String, UserAuth> users;  // the key is the username to locate the object
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
 
-    public BasicAuthConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+    private Map<String, Object> mappedConfig;
+    private static volatile BasicAuthConfig instance;
+
+    private BasicAuthConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
-        setConfigUser();
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     *
-     * @param configName String
-     */
-    public BasicAuthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigUser();
+    private BasicAuthConfig() {
+        this(CONFIG_NAME);
     }
 
     public static BasicAuthConfig load() {
-        return new BasicAuthConfig();
+        return load(CONFIG_NAME);
     }
 
     public static BasicAuthConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (BasicAuthConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new BasicAuthConfig(configName);
+                // Register the module with the configuration. masking the password property.
+                List<String> masks = new ArrayList<>();
+                masks.add("password");
+                ModuleRegistry.registerModule(configName, BasicAuthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                return instance;
+            }
+        }
         return new BasicAuthConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigUser();
-    }
+
 
     public boolean isEnabled() {
         return enabled;
@@ -142,7 +143,7 @@ public class BasicAuthConfig {
     }
 
     public boolean isEnableAD() {
-        return enabled;
+        return enableAD;
     }
 
     public void setEnableAD(boolean enabled) {
@@ -169,15 +170,24 @@ public class BasicAuthConfig {
         return users;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+
+
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(ENABLE_AD);
-        if (object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
-        object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if (object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
-        object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if (object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(ENABLE_AD);
+            if (object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
+            object = mappedConfig.get(ALLOW_ANONYMOUS);
+            if (object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
+            object = mappedConfig.get(ALLOW_BEARER_TOKEN);
+            if (object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
+            setConfigUser();
+        }
     }
 
     private void setConfigUser() {

@@ -2,7 +2,7 @@ package com.networknt.security;
 
 import com.networknt.utility.HashUtil;
 import com.networknt.utility.UuidUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.security.KeyPair;
 

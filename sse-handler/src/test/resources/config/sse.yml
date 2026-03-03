@@ -1,0 +1,6 @@
+enabled: true
+path: /sse
+keepAliveInterval: 10000
+pathPrefixes:
+  - pathPrefix: /sse/test
+    keepAliveInterval: 5000

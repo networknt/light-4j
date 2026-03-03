@@ -479,8 +479,8 @@ public class DefaultConfigLoader implements IConfigLoader{
     private static KeyStore loadBootstrapTrustStore(){
         String truststorePassword = getPropertyOrEnv(CLIENT_TRUSTSTORE_PASS);
         String truststoreLocation = getPropertyOrEnv(CLIENT_TRUSTSTORE_LOC);
-        if(truststoreLocation == null) truststoreLocation = ServerConfig.getInstance().getBootstrapStoreName();
-        if(truststorePassword == null) truststorePassword = ServerConfig.getInstance().getBootstrapStorePass();
+        if(truststoreLocation == null) truststoreLocation = ServerConfig.load().getBootstrapStoreName();
+        if(truststorePassword == null) truststorePassword = ServerConfig.load().getBootstrapStorePass();
 
         try (InputStream stream = new FileInputStream(truststoreLocation)) {
             if (stream == null) {

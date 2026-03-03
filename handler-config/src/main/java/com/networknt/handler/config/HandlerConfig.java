@@ -20,17 +20,23 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
+ * Handler Configuration that maps to handler.yml
+ *
  * @author Nicholas Azar
  * @author Dan Dobrin
  */
 @ConfigSchema(configName = "handler", configKey = "handler", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class HandlerConfig {
+    /**
+     * Configuration name
+     */
     public static final String CONFIG_NAME = "handler";
     private static final Logger logger = LoggerFactory.getLogger(HandlerConfig.class);
     private static final String ENABLED = "enabled";
@@ -63,26 +69,25 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = AUDIT_ON_ERROR,
             externalizedKeyName = AUDIT_ON_ERROR,
-            externalized = true,
-            description = "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\n" +
-                    "set the Status Object in the AUDIT_INFO, for auditing purposes\n" +
-                    "default, if not set:false"
+            description = """
+                    Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+                    set the Status Object in the AUDIT_INFO, for auditing purposes
+                    default, if not set:false"""
     )
     private boolean auditOnError;
 
     @BooleanField(
             configFieldName = AUDIT_STACK_TRACE,
             externalizedKeyName = AUDIT_STACK_TRACE,
-            externalized = true,
-            description = "set the StackTrace in the AUDIT_INFO, for auditing purposes\n" +
-                    "default, if not set:false"
+            description = """
+                    set the StackTrace in the AUDIT_INFO, for auditing purposes
+                    default, if not set:false"""
     )
     private boolean auditStackTrace;
 
     @BooleanField(
             configFieldName = REPORT_HANDLER_DURATION,
             externalizedKeyName = REPORT_HANDLER_DURATION,
-            externalized = true,
             description = "Indicate if the handler middleware should report handler duration."
     )
     private boolean enabledHandlerMetrics;
@@ -90,7 +95,6 @@ public class HandlerConfig {
     @StringField(
             configFieldName = HANDLER_METRICS_LOG_LEVEL,
             externalizedKeyName = HANDLER_METRICS_LOG_LEVEL,
-            externalized = true,
             defaultValue = "DEBUG",
             pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
             description = "The log level for the handler metrics."
@@ -100,7 +104,6 @@ public class HandlerConfig {
     @StringField(
             configFieldName = BASE_PATH,
             externalizedKeyName = BASE_PATH,
-            externalized = true,
             defaultValue = "/",
             description = "Base Path of the API endpoints"
     )
@@ -109,41 +112,42 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = HANDLERS,
             externalizedKeyName = HANDLERS,
-            externalized = true,
-            description = "------------------------------------------------------------------------------\n" +
-                    "Support individual handler chains for each separate endpoint. It allows framework\n" +
-                    "handlers like health check, server info to bypass majority of the middleware handlers\n" +
-                    "and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.\n" +
-                    "\n" +
-                    "handlers  --  list of handlers to be used across chains in this microservice\n" +
-                    "              including the routing handlers for ALL endpoints\n" +
-                    "          --  format: fully qualified handler class name@optional:given name\n" +
-                    "chains    --  allows forming of [1..N] chains, which could be wholly or\n" +
-                    "              used to form handler chains for each endpoint\n" +
-                    "              ex.: default chain below, reused partially across multiple endpoints\n" +
-                    "paths     --  list all the paths to be used for routing within the microservice\n" +
-                    "          ----  path: the URI for the endpoint (ex.: path: '/v1/pets')\n" +
-                    "          ----  method: the operation in use (ex.: 'post')\n" +
-                    "          ----  exec: handlers to be executed -- this element forms the list and\n" +
-                    "                      the order of execution for the handlers\n" +
-                    "\n" +
-                    "IMPORTANT NOTES:\n" +
-                    "- to avoid executing a handler, it has to be removed/commented out in the chain\n" +
-                    "  or change the enabled:boolean to false for a middleware handler configuration.\n" +
-                    "- all handlers, routing handler included, are to be listed in the execution chain\n" +
-                    "- for consistency, give a name to each handler; it is easier to refer to a name\n" +
-                    "  vs a fully qualified class name and is more elegant\n" +
-                    "- you can list in chains the fully qualified handler class names, and avoid using the\n" +
-                    "  handlers element altogether\n" +
-                    "------------------------------------------------------------------------------",
+            description = """
+                    ------------------------------------------------------------------------------
+                    Support individual handler chains for each separate endpoint. It allows framework
+                    handlers like health check, server info to bypass majority of the middleware handlers
+                    and allows mixing multiple frameworks like OpenAPI and GraphQL in the same instance.
+
+                    handlers  --  list of handlers to be used across chains in this microservice
+                                  including the routing handlers for ALL endpoints
+                              --  format: fully qualified handler class name@optional:given name
+                    chains    --  allows forming of [1..N] chains, which could be wholly or
+                                  used to form handler chains for each endpoint
+                                  ex.: default chain below, reused partially across multiple endpoints
+                    paths     --  list all the paths to be used for routing within the microservice
+                              ----  path: the URI for the endpoint (ex.: path: '/v1/pets')
+                              ----  method: the operation in use (ex.: 'post')
+                              ----  exec: handlers to be executed -- this element forms the list and
+                                          the order of execution for the handlers
+
+                    IMPORTANT NOTES:
+                    - to avoid executing a handler, it has to be removed/commented out in the chain
+                      or change the enabled:boolean to false for a middleware handler configuration.
+                    - all handlers, routing handler included, are to be listed in the execution chain
+                    - for consistency, give a name to each handler; it is easier to refer to a name
+                      vs a fully qualified class name and is more elegant
+                    - you can list in chains the fully qualified handler class names, and avoid using the
+                      handlers element altogether
+                    ------------------------------------------------------------------------------""",
             items = String.class
     )
     private List<String> handlers;
 
+    // NOTE: Current limitations of the schema generator cannot handle wrapped types.
+    // This means the JSON schema output will be inaccurate for this field.
     @MapField(
-            configFieldName = DEFAULT_HANDLERS,
-            externalizedKeyName = DEFAULT_HANDLERS,
-            externalized = true,
+            configFieldName = CHAINS,
+            externalizedKeyName = CHAINS,
             description = "List of defined chains",
             valueType = List.class
     )
@@ -152,7 +156,7 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = PATHS,
             externalizedKeyName = PATHS,
-            externalized = true,
+            description = "List of defined paths",
             items = PathChain.class
     )
     private List<PathChain> paths;
@@ -160,131 +164,241 @@ public class HandlerConfig {
     @ArrayField(
             configFieldName = DEFAULT_HANDLERS,
             externalizedKeyName = DEFAULT_HANDLERS,
-            externalized = true,
-            description = "If there is no matched path, then it goes here first. If this is not set, then an error\n" +
-                    "will be returned.",
+            description = """
+                    If there is no matched path, then it goes here first. If this is not set, then an error
+                    will be returned.""",
             items = String.class
     )
     private List<String> defaultHandlers;
-    private Map<String, Object> mappedConfig;
-    private final Config config;
+    private final Map<String, Object> mappedConfig;
+
+    private static HandlerConfig instance;
 
     private HandlerConfig() {
         this(CONFIG_NAME);
     }
 
     private HandlerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
     }
 
+    /**
+     * Load the default configuration.
+     * @return HandlerConfig
+     */
     public static HandlerConfig load() {
-        return new HandlerConfig();
+        return load(CONFIG_NAME);
     }
 
+    /**
+     * Load the configuration by name.
+     * @param configName config name
+     * @return HandlerConfig
+     */
     public static HandlerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (HandlerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new HandlerConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, HandlerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new HandlerConfig(configName);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
-    }
-
+    /**
+     * Get enabled status
+     * @return enabled
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Set enabled status
+     * @param enabled enabled
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * Get enabled handler metrics status
+     * @return enabled handler metrics
+     */
     public boolean isEnabledHandlerMetrics() {
         return enabledHandlerMetrics;
     }
 
+    /**
+     * Set enabled handler metrics status
+     * @param enabledHandlerMetrics enabled handler metrics
+     */
     public void setEnabledHandlerMetrics(boolean enabledHandlerMetrics) {
         this.enabledHandlerMetrics = enabledHandlerMetrics;
     }
 
+    /**
+     * Get handler metrics log level
+     * @return handler metrics log level
+     */
     public String getHandlerMetricsLogLevel() {
         return handlerMetricsLogLevel;
     }
 
+    /**
+     * Set handler metrics log level
+     * @param handlerMetricsLogLevel handler metrics log level
+     */
     public void setHandlerMetricsLogLevel(String handlerMetricsLogLevel) {
         this.handlerMetricsLogLevel = handlerMetricsLogLevel;
     }
 
+    /**
+     * Get handlers list
+     * @return handlers
+     */
     public List<String> getHandlers() {
         return handlers;
     }
 
+    /**
+     * Set handlers list
+     * @param handlers handlers
+     */
     public void setHandlers(List<String> handlers) {
         this.handlers = handlers;
     }
 
+    /**
+     * Get chains map
+     * @return chains
+     */
     public Map<String, List<String>> getChains() {
         return chains;
     }
 
+    /**
+     * Set chains map
+     * @param chains chains
+     */
     public void setChains(Map<String, List<String>> chains) {
         this.chains = chains;
     }
 
+    /**
+     * Get paths list
+     * @return paths
+     */
     public List<PathChain> getPaths() {
         return paths;
     }
 
+    /**
+     * Set paths list
+     * @param paths paths
+     */
     public void setPaths(List<PathChain> paths) {
         this.paths = paths;
     }
 
+    /**
+     * Get default handlers list
+     * @return default handlers
+     */
     public List<String> getDefaultHandlers() {
         return defaultHandlers;
     }
 
+    /**
+     * Set default handlers list
+     * @param defaultHandlers default handlers
+     */
     public void setDefaultHandlers(List<String> defaultHandlers) {
         this.defaultHandlers = defaultHandlers;
     }
 
+    /**
+     * Get audit on error status
+     * @return audit on error
+     */
     public boolean getAuditOnError() {
     	return auditOnError;
     }
 
+    /**
+     * Set audit on error status
+     * @param auditOnError audit on error
+     */
     public void setAuditOnError(boolean auditOnError) {
     	this.auditOnError = auditOnError;
     }
 
+    /**
+     * Get audit stack trace status
+     * @return audit stack trace
+     */
     public boolean getAuditStackTrace() {
     	return auditStackTrace;
     }
 
+    /**
+     * Set audit stack trace status
+     * @param auditStackTrace audit stack trace
+     */
     public void setAuditStackTrace(boolean auditStackTrace) {
     	this.auditStackTrace = auditStackTrace;
     }
 
 
+    /**
+     * Get base path
+     * @return base path
+     */
     public String getBasePath() {
         return basePath;
     }
 
+    /**
+     * Set base path
+     * @param basePath base path
+     */
     public void setBasePath(String basePath) {
         this.basePath = basePath;
     }
 
+    /**
+     * Check if audit on error is enabled
+     * @return true if audit on error is enabled
+     */
     public boolean isAuditOnError() {
         return auditOnError;
     }
 
+    /**
+     * Check if audit stack trace is enabled
+     * @return true if audit stack trace is enabled
+     */
     public boolean isAuditStackTrace() {
         return auditStackTrace;
     }
 
+    /**
+     * Get the mapped config object
+     * @return map of config
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

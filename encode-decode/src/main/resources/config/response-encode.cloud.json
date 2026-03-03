@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.encode.ResponseEncodeConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "response-encode",
     "configType" : "Handler",
     "updateUser" : "",

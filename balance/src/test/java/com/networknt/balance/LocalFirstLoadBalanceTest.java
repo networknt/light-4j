@@ -18,9 +18,9 @@ package com.networknt.balance;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class LocalFirstLoadBalanceTest {
      * As the test case is highly depending on the local network configuration, ignore it for now.
      * @throws Exception
      */
-    @Ignore
+    @Disabled
     @Test
     public void testSelect() throws Exception {
         List<URL> urls = new ArrayList<>();
@@ -47,7 +47,7 @@ public class LocalFirstLoadBalanceTest {
         urls.add(new URLImpl("http", "127.0.0.12", 8083, "v1", new HashMap<String, String>()));
         urls.add(new URLImpl("http", "127.0.0.115", 8084, "v1", new HashMap<String, String>()));
         URL url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8081/v1"));
+        Assertions.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8081/v1"));
     }
 
     @Test
@@ -60,13 +60,13 @@ public class LocalFirstLoadBalanceTest {
 
         // no local host URL available, go round-robin
         URL url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertTrue(urls.contains(url));
+        Assertions.assertTrue(urls.contains(url));
     }
 
     @Test
     public void testSelectWithEmptyList() throws Exception {
         List<URL> urls = new ArrayList<>();
         URL url = loadBalance.select(urls, "serviceId", "tag", null);
-        Assert.assertNull(url);
+        Assertions.assertNull(url);
     }
 }

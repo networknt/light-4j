@@ -1,0 +1,17 @@
+enabled: ${token-exchange.enabled:true}
+# Default proxy port.
+proxyPort: ${token-exchange.proxyPort:}
+# Default proxy host used in token requests.
+proxyHost: ${token-exchange.proxyHost:}
+# Enable/disable http2. Default enabled.
+enableHttp2: ${token-exchange.enableHttp2:true}
+moduleMasks: ${token-exchange.moduleMasks:}
+tokenSchemas: ${token-exchange.tokenSchemas:}
+# Maps client IDs (from Authorization headers) to token schema names.
+# This allows automatic schema selection based on the incoming request's credentials.
+clientMappings: ${token-exchange.clientMappings:}
+# Maps path prefixes to authentication types.
+# This determines how to extract client identity from the Authorization header.
+pathAuthMappings: ${token-exchange.pathAuthMappings:}
+# Default auth type to use when no path prefix matches.
+defaultAuthType: ${token-exchange.defaultAuthType:}

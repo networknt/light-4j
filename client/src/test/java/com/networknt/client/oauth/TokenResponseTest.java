@@ -18,7 +18,7 @@ package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.config.Config;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

@@ -41,7 +41,6 @@ public class PathPrefixServiceConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if PathPrefixServiceHandler is enabled or not"
     )
@@ -50,7 +49,6 @@ public class PathPrefixServiceConfig {
     @MapField(
             configFieldName = MAPPING,
             externalizedKeyName = MAPPING,
-            externalized = true,
             description = "mapping from request path prefixes to serviceIds.\n" +
                     "The following are examples in the values.yml\n" +
                     "  /v1/address: party.address-1.0.0\n" +
@@ -80,12 +78,6 @@ public class PathPrefixServiceConfig {
 
     public static PathPrefixServiceConfig load(String configName) {
         return new PathPrefixServiceConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setMap();
-        setConfigData();
     }
 
     public Map<String, String> getMapping() {

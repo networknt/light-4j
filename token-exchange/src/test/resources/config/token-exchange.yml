@@ -1,0 +1,35 @@
+# Token Exchange Handler Configuration
+
+# Enable or disable the handler
+enabled: true
+
+# The path to the token exchange endpoint on OAuth 2.0 provider
+# This is usually /oauth2/token
+tokenExUri: https://localhost:6882/oauth2/token
+
+# The client ID for the token exchange
+tokenExClientId: portal-client
+
+# The client secret for the token exchange
+tokenExClientSecret: portal-secret
+
+# The scope of the returned token
+tokenExScope:
+  - portal.w
+  - portal.r
+
+# The subject token type. Default is urn:ietf:params:oauth:token-type:jwt
+subjectTokenType: urn:ietf:params:oauth:token-type:jwt
+
+# The requested token type. Default is urn:ietf:params:oauth:token-type:jwt
+requestedTokenType: urn:ietf:params:oauth:token-type:jwt
+
+# Mapping of external client IDs to internal function IDs (Optional)
+# strategies:
+#   - config: use the mapping defined below
+#   - database: use the light-oauth2 database (shadow client)
+mappingStrategy: database
+
+# If mappingStrategy is 'config', define the map here:
+# clientMapping:
+#   external-client-1: internal-function-1

@@ -40,7 +40,7 @@ public class ConsulConstants {
     /**
      * Service Check Interval
      */
-    public static String INTERVAL = ConsulService.config.checkInterval == null ? "10s" : ConsulService.config.checkInterval;
+    public static String INTERVAL = ConsulConfig.load().getCheckInterval() == null ? "10s" : ConsulConfig.load().getCheckInterval();
 
     /**
      * Service TCP Check Deregister After

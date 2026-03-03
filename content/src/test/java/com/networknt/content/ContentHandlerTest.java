@@ -17,6 +17,7 @@
 package com.networknt.content;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -29,10 +30,10 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -51,7 +52,7 @@ public class ContentHandlerTest {
   private static Undertow server = null;
   private static final String url = "http://localhost:7080";
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     if (server == null) {
       logger.info("starting server");
@@ -69,7 +70,7 @@ public class ContentHandlerTest {
     }
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     if (server != null) {
       try {
@@ -102,13 +103,19 @@ public class ContentHandlerTest {
   public void testTextPlainContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final ClientConnection connection;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
-      connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+        token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
     } catch (Exception e) {
-      throw new ClientException(e);
+
+        throw new ClientException(e);
+
     }
+
+    final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
     final AtomicReference<ClientResponse> reference = new AtomicReference<>();
     final String defaultContentType = "text/plain";
@@ -124,29 +131,37 @@ public class ContentHandlerTest {
       logger.error("Exception: ", e);
       throw new ClientException(e);
     } finally {
-      IoUtils.safeClose(connection);
+
+        client.restore(token);
+
     }
 
     final int statusCode = reference.get().getResponseCode();
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
   public void testXMLContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final ClientConnection connection;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
-      connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+        token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
     } catch (Exception e) {
-      throw new ClientException(e);
+
+        throw new ClientException(e);
+
     }
+
+    final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
     final AtomicReference<ClientResponse> reference = new AtomicReference<>();
     final String defaultContentType = "application/xml";
@@ -162,29 +177,37 @@ public class ContentHandlerTest {
       logger.error("Exception: ", e);
       throw new ClientException(e);
     } finally {
-      IoUtils.safeClose(connection);
+
+        client.restore(token);
+
     }
 
     final int statusCode = reference.get().getResponseCode();
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
   public void testJSONContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final ClientConnection connection;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
-      connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+        token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
     } catch (Exception e) {
-      throw new ClientException(e);
+
+        throw new ClientException(e);
+
     }
+
+    final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
     final AtomicReference<ClientResponse> reference = new AtomicReference<>();
     final String defaultContentType = "application/json";
@@ -200,29 +223,37 @@ public class ContentHandlerTest {
       logger.error("Exception: ", e);
       throw new ClientException(e);
     } finally {
-      IoUtils.safeClose(connection);
+
+        client.restore(token);
+
     }
 
     final int statusCode = reference.get().getResponseCode();
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst(defaultHeader);
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, defaultContentType);
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, defaultContentType);
   }
 
   @Test
   public void testDefaultContentType() throws Exception {
     final Http2Client client = Http2Client.getInstance();
     final CountDownLatch latch = new CountDownLatch(1);
-    final ClientConnection connection;
+    final SimpleConnectionState.ConnectionToken token;
 
     try {
-      connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+        token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
     } catch (Exception e) {
-      throw new ClientException(e);
+
+        throw new ClientException(e);
+
     }
+
+    final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
     final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
@@ -235,15 +266,17 @@ public class ContentHandlerTest {
       logger.error("Exception: ", e);
       throw new ClientException(e);
     } finally {
-      IoUtils.safeClose(connection);
+
+        client.restore(token);
+
     }
 
     final int statusCode = reference.get().getResponseCode();
     final HeaderMap headerMap = reference.get().getResponseHeaders();
     final String header = headerMap.getFirst("Content-Type");
 
-    Assert.assertEquals(200, statusCode);
-    Assert.assertNotNull(header);
-    Assert.assertEquals(header, "application/json");
+    Assertions.assertEquals(200, statusCode);
+    Assertions.assertNotNull(header);
+    Assertions.assertEquals(header, "application/json");
   }
 }

@@ -16,8 +16,8 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.InstrumentedExecutorService;
 import io.dropwizard.metrics.InstrumentedExecutors;
@@ -40,7 +40,7 @@ public class InstrumentedExecutorsTest {
     private final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
     private MetricRegistry registry;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         registry = new MetricRegistry();
     }

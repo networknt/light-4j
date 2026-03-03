@@ -31,7 +31,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class OauthHelperTest {
     static final String token = "eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA";
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -97,7 +97,7 @@ public class OauthHelperTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -221,7 +221,7 @@ public class OauthHelperTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetTokenResult() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
@@ -238,14 +238,14 @@ public class OauthHelperTest {
         tokenRequest.setAuthCode("test_code");
 
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
-        Assert.assertTrue(result.isSuccess());
+        Assertions.assertTrue(result.isSuccess());
         TokenResponse tokenResponse = result.getResult();
         System.out.println("tokenResponse = " + tokenResponse);
     }
 
     @Test
     @Deprecated
-    @Ignore
+    @Disabled
     public void testGetToken() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
@@ -262,8 +262,8 @@ public class OauthHelperTest {
         tokenRequest.setAuthCode("test_code");
 
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
-        Assert.assertTrue(result.isSuccess());
-        Assert.assertNotNull(result.getResult());
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertNotNull(result.getResult());
         System.out.println("tokenResponse = " + result.getResult());
     }
 
@@ -281,7 +281,7 @@ public class OauthHelperTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetTokenKey() throws Exception {
         TokenKeyRequest request = new TokenKeyRequest("100");
         request.setClientId("test_client");
@@ -308,7 +308,7 @@ public class OauthHelperTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testTokenIntrospection() throws Exception {
         TokenIntrospectionRequest request = new TokenIntrospectionRequest("Simple Web Token");
         request.setClientId("test_client");

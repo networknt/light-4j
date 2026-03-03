@@ -1,7 +1,7 @@
 package com.networknt.body;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * This is a test case that show users how to config the appliedPathPrefixes in values.yml externalized
@@ -12,7 +12,7 @@ public class BodyConfigTest {
     @Test
     public void canLoadPathPrefixes() {
         BodyConfig config = BodyConfig.load();
-        Assert.assertFalse(config.isCacheRequestBody());
-        Assert.assertFalse(config.isCacheResponseBody());
+        Assertions.assertFalse(config.isCacheRequestBody());
+        Assertions.assertFalse(config.isCacheResponseBody());
     }
 }

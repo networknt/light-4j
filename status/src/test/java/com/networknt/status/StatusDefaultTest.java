@@ -20,8 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,49 +34,49 @@ public class StatusDefaultTest {
     @Test
     public void testConstructor() {
         Status status = new Status("ERR10001");
-        Assert.assertEquals(401, status.getStatusCode());
+        Assertions.assertEquals(401, status.getStatusCode());
     }
 
     @Test
     public void testConstructorMissingArgs() {
         Status status = new Status("ERR10048");
-        Assert.assertEquals(404, status.getStatusCode());
-        Assert.assertTrue(status.getDescription().contains("%s"));
+        Assertions.assertEquals(404, status.getStatusCode());
+        Assertions.assertTrue(status.getDescription().contains("%s"));
     }
 
     @Test
     public void testToString() {
         Status status = new Status("ERR10001");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
     public void testToStringConditionallyWithDefault() {
         Status status = new Status("ERR10001");
         System.out.println(status.toStringConditionally());
-        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toStringConditionally());
+        Assertions.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @Test
     public void testToStringWithArgs() {
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
     public void testToStringWithoutSeverity() {
         Status status = new Status(400, "ERR11000", "INVALID_AUTH_TOKEN","Incorrect signature or malformed token in authorization header");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
     public void testToStringWithAllArgs() {
         Status status = new Status(400, "ERR11000", "INVALID_AUTH_TOKEN","Incorrect signature or malformed token in authorization header", "SEVERE");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"SEVERE\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"SEVERE\"}", status.toString());
     }
 
     @Test
@@ -86,17 +86,17 @@ public class StatusDefaultTest {
         System.out.println(status);
         String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
         ObjectMapper mapper = new ObjectMapper();
-        Assert.assertEquals(expected, status.toStringConditionally());
+        Assertions.assertEquals(expected, status.toStringConditionally());
         HashMap<String, Object> deSerialized = mapper.readValue(expected, new TypeReference<HashMap<String, Object>>() {
         });
-        Assert.assertEquals(deSerialized.get("statusCode"), 400);
-        Assert.assertEquals(deSerialized.get("code"), "ERR11000");
-        Assert.assertEquals(deSerialized.get("message"), "VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING");
-        Assert.assertEquals(deSerialized.get("description"), "Query parameter parameter name is required on path original url but not found in request.");
+        Assertions.assertEquals(deSerialized.get("statusCode"), 400);
+        Assertions.assertEquals(deSerialized.get("code"), "ERR11000");
+        Assertions.assertEquals(deSerialized.get("message"), "VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING");
+        Assertions.assertEquals(deSerialized.get("description"), "Query parameter parameter name is required on path original url but not found in request.");
         Map<String, Object> meta = (Map<String, Object>) deSerialized.get("metadata");
-        Assert.assertNotNull(meta.get("metaKey"));
+        Assertions.assertNotNull(meta.get("metaKey"));
         Map<String, Object> nested = (Map<String, Object>) meta.get("metaKey");
-        Assert.assertEquals(nested.get("nestedKey"), "nestedValue");
+        Assertions.assertEquals(nested.get("nestedKey"), "nestedValue");
     }
 
     @Test
@@ -105,8 +105,8 @@ public class StatusDefaultTest {
         Status status = new Status("ERR11000", Map.of("metaKey", Map.of("nestedKey", "nestedValue")), "parameter name", "original url");
         System.out.println(status);
         String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
-        Assert.assertEquals(expected, status.toString());
-        Assert.assertEquals(status.toString(), status.toStringConditionally());
+        Assertions.assertEquals(expected, status.toString());
+        Assertions.assertEquals(status.toString(), status.toStringConditionally());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class StatusDefaultTest {
         config.put("showMetadata", false);
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status.toStringConditionally());
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toStringConditionally());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @Test
@@ -136,7 +136,7 @@ public class StatusDefaultTest {
         config.put("showMetadata", true);
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @Test
@@ -147,7 +147,7 @@ public class StatusDefaultTest {
         config.put("showMetadata", true);
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @Test
@@ -158,7 +158,7 @@ public class StatusDefaultTest {
         config.put("showMessage", false);
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"severity\":\"ERROR\"}", status.toStringConditionally());
+        Assertions.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
 

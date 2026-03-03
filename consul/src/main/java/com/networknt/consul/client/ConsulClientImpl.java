@@ -18,7 +18,7 @@ package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulConfig;
 import com.networknt.consul.ConsulResponse;
@@ -80,7 +80,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
-			logger.error("Invalid URI " + consulUrl, e);
+            logger.error("Invalid URI {}", consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 	}
@@ -89,9 +89,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkPass(String serviceId, String token) {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -101,7 +102,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -109,9 +110,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkFail(String serviceId, String token) {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -120,7 +122,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckFail request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -128,9 +130,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
-		ClientConnection connection = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -140,16 +143,17 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Failed to register on Consul, Exception:", e);
 			throw new RuntimeException(e.getMessage());
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
 	@Override
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
-		ClientConnection connection = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
 	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -158,7 +162,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("Failed to unregister on Consul, Exception:", e);
 		} finally {
-			client.returnConnection(connection);
+			if (connectionToken != null) client.restore(connectionToken);
 		}
 	}
 
@@ -196,7 +200,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("Consul health service path = {}", path);
 
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			if(logger.isDebugEnabled()) logger.debug("Getting connection from pool with {}", uri);
 			// this will throw a Runtime Exception if creation of Consul connection fails
@@ -251,7 +255,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("No response from Consul - Terminating connection to Consul");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} catch (InterruptedException e) {
@@ -259,7 +263,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("Consul connection timeout thread interrupted - Terminating connection to Consul");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} catch(Exception e) {
@@ -267,7 +271,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Exception:", e);
 
 			logger.error("Consul connection or request failed - Terminating and retrying connection to Consul...");
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) client.restore(connectionToken);
 			return null;
 
 		} finally {

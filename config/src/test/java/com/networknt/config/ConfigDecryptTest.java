@@ -18,9 +18,9 @@ package com.networknt.config;
 
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
@@ -38,53 +38,53 @@ public class ConfigDecryptTest {
 
     @SuppressWarnings("unchecked")
 	@Test
-    @Ignore
+    @Disabled
     public void testDecryptMap() {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfigNoCache("secret-map-test");
-        Assert.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
+        Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
 
         secretMap = Config.getInstance().getJsonMapConfig("secret-map-test");
-        Assert.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
+        Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
 
         List<String> testArray = (List<String>) secretMap.get(TEST_ARRAY);
 
-        Assert.assertTrue(testArray.size()>0);
+        Assertions.assertTrue(testArray.size()>0);
 
         for (String s: testArray) {
-        	Assert.assertEquals(SECRET, s);
+        	Assertions.assertEquals(SECRET, s);
         }
 
         Map<String, String> testMap = (Map<String, String>) secretMap.get(TEST_MAP);
 
-        Assert.assertTrue(testMap.size()>0);
+        Assertions.assertTrue(testMap.size()>0);
 
         for (String s: testMap.values()) {
-        	Assert.assertEquals(SECRET, s);
+        	Assertions.assertEquals(SECRET, s);
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testDecryptObject() {
     	SecretConfig secretConfig = (SecretConfig) Config.getInstance().getJsonObjectConfig("secret-object-test", SecretConfig.class);
 
-    	Assert.assertEquals(SECRET, secretConfig.getServerKeystorePass());
-    	Assert.assertEquals(SECRET, secretConfig.getServerKeyPass());
-    	Assert.assertEquals(SECRET, secretConfig.getServerTruststorePass());
-    	Assert.assertEquals(SECRET, secretConfig.getClientKeystorePass());
-    	Assert.assertEquals(SECRET, secretConfig.getClientKeyPass());
-    	Assert.assertEquals(SECRET, secretConfig.getClientTruststorePass());
+    	Assertions.assertEquals(SECRET, secretConfig.getServerKeystorePass());
+    	Assertions.assertEquals(SECRET, secretConfig.getServerKeyPass());
+    	Assertions.assertEquals(SECRET, secretConfig.getServerTruststorePass());
+    	Assertions.assertEquals(SECRET, secretConfig.getClientKeystorePass());
+    	Assertions.assertEquals(SECRET, secretConfig.getClientKeyPass());
+    	Assertions.assertEquals(SECRET, secretConfig.getClientTruststorePass());
 
-        Assert.assertTrue(secretConfig.getTestArray().size()>0);
+        Assertions.assertTrue(secretConfig.getTestArray().size()>0);
 
         for (String s: secretConfig.getTestArray()) {
-        	Assert.assertEquals(SECRET, s);
+        	Assertions.assertEquals(SECRET, s);
         }
 
-        Assert.assertTrue(secretConfig.getTestMap().size()>0);
+        Assertions.assertTrue(secretConfig.getTestMap().size()>0);
 
         for (String s: secretConfig.getTestMap().values()) {
-        	Assert.assertEquals(SECRET, s);
+        	Assertions.assertEquals(SECRET, s);
         }
     }
 
@@ -96,7 +96,7 @@ public class ConfigDecryptTest {
 
         Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
 
-        Assert.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
+        Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 
     @Test
@@ -108,6 +108,6 @@ public class ConfigDecryptTest {
 
         Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
 
-        Assert.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
+        Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 }

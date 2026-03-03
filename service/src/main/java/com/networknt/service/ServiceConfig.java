@@ -36,7 +36,6 @@ public class ServiceConfig {
     public static final String CONFIG_NAME = "service";
     public static final String SINGLETONS = "singletons";
     private List<Map<String, Object>> singletons;
-    private Config config;
     private Map<String, Object> mappedConfig;
 
     private ServiceConfig() {
@@ -44,8 +43,7 @@ public class ServiceConfig {
     }
 
     private ServiceConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 

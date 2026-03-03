@@ -18,13 +18,13 @@ package com.networknt.consul;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author zhanglei28
@@ -42,7 +42,7 @@ public class ConsulUtilsTest {
     String testServiceId;
     String testServiceTag;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         testGroup = "com.networknt.apia-1.0.0";
         testServiceName = "com.networknt.apia-1.0.0";
@@ -55,7 +55,7 @@ public class ConsulUtilsTest {
         testServiceTag = ConsulConstants.CONSUL_TAG_LIGHT_PROTOCOL + ":" + testProtocol;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 
@@ -88,8 +88,8 @@ public class ConsulUtilsTest {
         String w1 = "600s";
         String w2 = "10m";
         int w = ConsulUtils.getWaitInSecond(w1);
-        Assert.assertEquals(600, w);
+        Assertions.assertEquals(600, w);
         w = ConsulUtils.getWaitInSecond(w2);
-        Assert.assertEquals(600, w);
+        Assertions.assertEquals(600, w);
     }
 }

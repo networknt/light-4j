@@ -19,8 +19,8 @@
  */
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.net.*;
 
@@ -33,11 +33,11 @@ public class NetUtilsTest {
     @Test
     public void testGetLocalAddress() {
         InetAddress address = NetUtils.getLocalAddress();
-        Assert.assertNotNull(address);
-        Assert.assertTrue(NetUtils.isValidAddress(address));
+        Assertions.assertNotNull(address);
+        Assertions.assertTrue(NetUtils.isValidAddress(address));
         try {
             if(NetUtils.isValidAddress(InetAddress.getLocalHost())){
-                Assert.assertEquals(InetAddress.getLocalHost(), address);
+                Assertions.assertEquals(InetAddress.getLocalHost(), address);
             }
         } catch (UnknownHostException e) {
             e.printStackTrace();

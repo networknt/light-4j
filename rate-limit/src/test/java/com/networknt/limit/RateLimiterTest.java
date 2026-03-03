@@ -1,8 +1,9 @@
 package com.networknt.limit;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,14 +23,20 @@ public class RateLimiterTest {
 
     private static LimitConfig limitConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception{
+        LimitConfig.load();
         limitConfig = LimitConfig.load();
         rateLimiter = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.ADDRESS);
         rateLimiterAddress = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.CLIENT);
         rateLimiterClient = new RateLimiter(limitConfig);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        com.networknt.config.Config.getInstance().clear();
     }
 
     @Test
@@ -49,15 +56,15 @@ public class RateLimiterTest {
 //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
 //        }
 
-       // Assert.assertEquals(responseList.size(), 12);
+       // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
     public RateLimitResponse callByServerAsync() throws Exception {
         LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-        return rateLimiter.isAllowByServer( "/v1/address");
+        return rateLimiter.isAllowByServer( "/v1/address", limitConfig);
     }
 
     /**
@@ -81,15 +88,15 @@ public class RateLimiterTest {
 //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
 //        }
 
-        // Assert.assertEquals(responseList.size(), 12);
+        // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
     public RateLimitResponse callByServerAsyncWithLongPath() throws Exception {
         LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-        return rateLimiter.isAllowByServer( "/v1/address/anything/else");
+        return rateLimiter.isAllowByServer( "/v1/address/anything/else", limitConfig);
     }
 
     @Test
@@ -103,7 +110,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -111,7 +118,7 @@ public class RateLimiterTest {
     public RateLimitResponse callByClientAsync() throws Exception {
         String clientId = "f7d42348-c647-4efb-a52d-4c5787421e74";
         List<LimitQuota> rateLimit = limitConfig.getClient().directMaps.get(clientId);
-        return rateLimiterClient.isAllowDirect(clientId, "/v1/petstore", RateLimiter.CLIENT_TYPE);
+        return rateLimiterClient.isAllowDirect(clientId, "/v1/petstore", RateLimiter.CLIENT_TYPE, limitConfig);
     }
 
 
@@ -126,14 +133,14 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
 
     public RateLimitResponse callByAddressAsync() throws Exception {
         String address = "192.168.1.102";
-        return rateLimiterAddress.isAllowDirect(address, "/v1/address", RateLimiter.ADDRESS_TYPE);
+        return rateLimiterAddress.isAllowDirect(address, "/v1/address", RateLimiter.ADDRESS_TYPE, limitConfig);
     }
 
     @Test
@@ -149,9 +156,9 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
 
-        // Assert.assertEquals(responseList.size(), 12);
+        // Assertions.assertEquals(responseList.size(), 12);
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
     }
 
@@ -173,7 +180,7 @@ public class RateLimiterTest {
 
     public RateLimitResponse callByServerAsyncRandom() throws Exception {
         LimitQuota limitQuota = limitConfig.getServer().get("/v1/" + generateRandomString(10));
-        return rateLimiter.isAllowByServer( "/v1/" + generateRandomString(10));
+        return rateLimiter.isAllowByServer( "/v1/" + generateRandomString(10), limitConfig);
     }
 
     @Test
@@ -187,14 +194,14 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
 
     public RateLimitResponse callByAddressAsyncRandom() throws Exception {
         String address = "192.168.1.102";
-        return rateLimiterAddress.isAllowDirect(address, "/v1/" + generateRandomString(10), RateLimiter.ADDRESS_TYPE);
+        return rateLimiterAddress.isAllowDirect(address, "/v1/" + generateRandomString(10), RateLimiter.ADDRESS_TYPE, limitConfig);
     }
 
 
@@ -209,7 +216,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -217,7 +224,7 @@ public class RateLimiterTest {
     public RateLimitResponse callByClientAsyncRandom() throws Exception {
         String clientId = "f7d42348-c647-4efb-a52d-4c5787421e75";
         List<LimitQuota> rateLimit = limitConfig.getClient().directMaps.get(clientId);
-        return rateLimiterClient.isAllowDirect(clientId, "/v1/" + generateRandomString(10), RateLimiter.CLIENT_TYPE);
+        return rateLimiterClient.isAllowDirect(clientId, "/v1/" + generateRandomString(10), RateLimiter.CLIENT_TYPE, limitConfig);
     }
 
     @Test
@@ -231,7 +238,7 @@ public class RateLimiterTest {
             responseList.add(future.get());
         }
         List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assert.assertEquals(rejects.size(), 2);
+        Assertions.assertEquals(rejects.size(), 2);
         executorService.shutdown();
 
     }
@@ -239,7 +246,7 @@ public class RateLimiterTest {
     public RateLimitResponse callByUserAsyncRandom() throws Exception {
         String userId = "albert@lightapi.net";
         List<LimitQuota> rateLimit = limitConfig.getUser().directMaps.get(userId);
-        return rateLimiterClient.isAllowDirect(userId, "/v1/" + generateRandomString(10), RateLimiter.USER_TYPE);
+        return rateLimiterClient.isAllowDirect(userId, "/v1/" + generateRandomString(10), RateLimiter.USER_TYPE, limitConfig);
     }
 
     @Test

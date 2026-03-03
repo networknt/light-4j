@@ -20,7 +20,7 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,7 @@ public class ConsulTestIT {
     private URL serviceUrl;
     private long sleepTime;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         registry = (ConsulRegistry)SingletonServiceFactory.getBean(Registry.class);
 
@@ -41,13 +41,13 @@ public class ConsulTestIT {
         sleepTime = ConsulConstants.SWITCHER_CHECK_CIRCLE + 500;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         registry = null;
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void doRegisterAndAvailable() throws Exception {
         // register
         registry.doRegister(serviceUrl);
@@ -57,14 +57,14 @@ public class ConsulTestIT {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discover(serviceUrl);
-        Assert.assertEquals(urls.size(), 0);
+        Assertions.assertEquals(0, urls.size());
         Thread.sleep(sleepTime);
         urls = registry.discover(serviceUrl);
-        //Assert.assertTrue(urls.contains(serviceUrl));
+        //Assertions.assertTrue(urls.contains(serviceUrl));
     }
 
     public static URL getMockUrl(String protocol, String address, int port, String serviceName) {

@@ -23,20 +23,36 @@ import java.util.Objects;
  */
 public interface EndpointSource {
 
+    /**
+     * Endpoint class
+     */
     final class Endpoint {
 
         private String path;
         private String method;
 
+        /**
+         * Construct an Endpoint with path and method
+         * @param path request path
+         * @param method request method
+         */
         public Endpoint(String path, String method) {
             this.path = path;
             this.method = method;
         }
 
+        /**
+         * Get request path
+         * @return request path
+         */
         public String getPath() {
             return path;
         }
 
+        /**
+         * Get request method
+         * @return request method
+         */
         public String getMethod() {
             return method;
         }
@@ -67,6 +83,10 @@ public interface EndpointSource {
         }
     }
 
+    /**
+     * List all endpoints
+     * @return iterable of endpoints
+     */
     Iterable<Endpoint> listEndpoints();
 
 }

@@ -1,8 +1,8 @@
 package com.networknt.ldap;
 
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +15,7 @@ import java.util.Hashtable;
 public class LdapAuthTest {
     static final Logger logger = LoggerFactory.getLogger(LdapAuthTest.class);
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
         ApacheDirectoryServer.startServer();
     }
@@ -87,7 +87,7 @@ public class LdapAuthTest {
         return true;
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void testAuthentication() throws Exception {
         String user = "jduke";
@@ -111,7 +111,7 @@ public class LdapAuthTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testAuthorization() throws Exception {
         String uid = "jduke";
         String domainName = "undertow.io";

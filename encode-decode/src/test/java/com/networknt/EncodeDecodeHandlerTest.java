@@ -33,10 +33,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class EncodeDecodeHandlerTest {
     static Undertow server = null;
     static volatile String message;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
@@ -88,7 +88,7 @@ public class EncodeDecodeHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -129,9 +129,9 @@ public class EncodeDecodeHandlerTest {
             HttpGet get = new HttpGet("http://localhost:7080/encode");
             get.setHeader(Headers.ACCEPT_ENCODING_STRING, encoding);
             HttpResponse result = client.execute(get);
-            Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
+            Assertions.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
             Header[] header = result.getHeaders(Headers.CONTENT_ENCODING_STRING);
-            Assert.assertEquals(encoding, header[0].getValue());
+            Assertions.assertEquals(encoding, header[0].getValue());
             byte[] body = HttpClientUtils.readRawResponse(result);
 
             HttpPost post = new HttpPost("http://localhost:7080/decode");
@@ -139,10 +139,10 @@ public class EncodeDecodeHandlerTest {
             post.addHeader(Headers.CONTENT_ENCODING_STRING, encoding);
 
             result = client.execute(post);
-            Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
+            Assertions.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
             String sb = HttpClientUtils.readResponse(result);
-            Assert.assertEquals(theMessage.length(), sb.length());
-            Assert.assertEquals(theMessage, sb);
+            Assertions.assertEquals(theMessage.length(), sb.length());
+            Assertions.assertEquals(theMessage, sb);
         }
     }
 }

@@ -1,0 +1,50 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "path", "keepAliveInterval", "pathPrefixes", "metricsInjection", "metricsName" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable SSE Handler",
+      "default" : true
+    },
+    "path" : {
+      "type" : "string",
+      "description" : "Default SSE Endpoint Path if there is only one endpoint for SSE Handler.",
+      "default" : "/sse"
+    },
+    "keepAliveInterval" : {
+      "type" : "integer",
+      "description" : "Default keep-alive interval in milliseconds for path prefixes not defined in pathPrefixes or there is\nonly one endpoint for SSE Handler.\n",
+      "default" : 10000,
+      "format" : "int32"
+    },
+    "pathPrefixes" : {
+      "type" : "array",
+      "description" : "Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is\na pathPrefix key in the config along with keepAliveInterval in milliseconds for the pathPrefix. If request\npath cannot match to one of the pathPrefixes, the request will be skipped.\n  - pathPrefix: /sse/abc\n    keepAliveInterval: 20000\n  - pathPrefix: /sse/def\n    keepAliveInterval: 40000\n",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "pathPrefix" : {
+            "type" : "string",
+            "pattern" : "^/.*"
+          },
+          "keepAliveInterval" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      }
+    },
+    "metricsInjection" : {
+      "type" : "boolean",
+      "description" : "When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the\ntotal response time of the downstream API. With this value injected, users can quickly determine how much\ntime the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\nthe network latency. By default, it is false, and metrics will not be collected and injected into the metrics\nhandler configured in the request/response chain.",
+      "default" : false
+    },
+    "metricsName" : {
+      "type" : "string",
+      "description" : "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\nmetrics info can be categorized in a tree structure under the name. By default, it is router-response, and\nusers can change it.",
+      "default" : "router-response"
+    }
+  }
+}

@@ -17,8 +17,8 @@
 package com.networknt.health;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -43,13 +43,12 @@ public class HealthConfig {
     private static final String DOWNSTREAM_PATH = "downstreamPath";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+    private static HealthConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "true to enable this middleware handler. By default, the health check is enabled."
     )
     boolean enabled;
@@ -57,7 +56,6 @@ public class HealthConfig {
     @BooleanField(
             configFieldName = USE_JSON,
             externalizedKeyName = USE_JSON,
-            externalized = true,
             description = "true to return Json format message. By default, it is false. It will only be changed to true if the monitor\n" +
                           "tool only support JSON response body.",
             defaultValue = "false"
@@ -68,7 +66,6 @@ public class HealthConfig {
             configFieldName = TIMEOUT,
             externalizedKeyName = TIMEOUT,
             defaultValue = "2000",
-            externalized = true,
             description = "timeout in milliseconds for the health check. If the duration is passed, a failure will return.\n" +
                     "It is to prevent taking too much time to check subsystems that are not available or timeout.\n" +
                     "As the health check is used by the control plane for service discovery, by default, one request\n" +
@@ -79,7 +76,6 @@ public class HealthConfig {
     @BooleanField(
             configFieldName = DOWNSTREAM_ENABLED,
             externalizedKeyName = DOWNSTREAM_ENABLED,
-            externalized = true,
             description = "For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down\n" +
                     "stream API before return the health status to the invoker. By default, it is not enabled.\n" +
                     "if the health check needs to invoke down streams API. It is false by default.",
@@ -90,7 +86,6 @@ public class HealthConfig {
     @StringField(
             configFieldName = DOWNSTREAM_HOST,
             externalizedKeyName = DOWNSTREAM_HOST,
-            externalized = true,
             defaultValue = "http://localhost:8081",
             description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
     )
@@ -99,37 +94,40 @@ public class HealthConfig {
     @StringField(
             configFieldName = DOWNSTREAM_PATH,
             externalizedKeyName = DOWNSTREAM_PATH,
-            externalized = true,
             defaultValue = "/health",
             description = "down stream API health check path. This allows the down stream API to have customized path implemented."
     )
     String downstreamPath;
 
     private HealthConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
+        ModuleRegistry.registerModule(configName, HealthConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
     }
     private HealthConfig() {
         this(CONFIG_NAME);
     }
 
-    public static HealthConfig load(String configName) {
-        return new HealthConfig(configName);
-    }
-
     public static HealthConfig load() {
-        return new HealthConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
+    public static HealthConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == config) {
+                return instance;
+            }
+            synchronized (HealthConfig.class) {
+                config = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == config) {
+                    return instance;
+                }
+                instance = new HealthConfig(configName);
+                return instance;
+            }
+        }
+        return new HealthConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -184,9 +182,7 @@ public class HealthConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

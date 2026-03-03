@@ -1,6 +1,7 @@
 package com.networknt.restrans;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.ResponseInterceptorInjectionHandler;
 import com.networknt.rule.RuleLoaderStartupHook;
@@ -15,7 +16,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -28,13 +29,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
-@Ignore
+@Disabled
 public class ResponseTransformerInterceptorTest {
     static final Logger logger = LoggerFactory.getLogger(ResponseTransformerInterceptorTest.class);
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         if(server == null) {
             logger.info("starting server");
@@ -52,7 +53,7 @@ public class ResponseTransformerInterceptorTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -72,16 +73,23 @@ public class ResponseTransformerInterceptorTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v1/pets").setMethod(Methods.GET);
@@ -92,30 +100,39 @@ public class ResponseTransformerInterceptorTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             System.out.println("body = " + body);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("[{\"com.networknt.handler.ResponseInterceptorHandler\":[\"com.networknt.restrans.ResponseTransformerHandler\"]}]", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("[{\"com.networknt.handler.ResponseInterceptorHandler\":[\"com.networknt.restrans.ResponseTransformerHandler\"]}]", body);
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testPostRequest() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "post";
@@ -135,15 +152,17 @@ public class ResponseTransformerInterceptorTest {
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             System.out.println("body = " + body);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("[{\"com.networknt.handler.ResponseInterceptorHandler\":[\"com.networknt.restrans.ResponseTransformerHandler\"]}]", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("[{\"com.networknt.handler.ResponseInterceptorHandler\":[\"com.networknt.restrans.ResponseTransformerHandler\"]}]", body);
         }
     }
 
@@ -157,13 +176,13 @@ public class ResponseTransformerInterceptorTest {
         String requestPath = "/gateway/partyInfo/1.0/salesforce";
 
         Optional<String> match = findMatchingPrefix(requestPath, list);
-        Assert.assertTrue(match.isPresent());
-        Assert.assertEquals("/gateway/partyInfo/1.0", match.get());
+        Assertions.assertTrue(match.isPresent());
+        Assertions.assertEquals("/gateway/partyInfo/1.0", match.get());
 
         requestPath = "/corp/lab/1.0";
         match = findMatchingPrefix(requestPath, list);
-        Assert.assertTrue(match.isPresent());
-        Assert.assertEquals("/corp/lab/1.0", match.get());
+        Assertions.assertTrue(match.isPresent());
+        Assertions.assertEquals("/corp/lab/1.0", match.get());
 
     }
 

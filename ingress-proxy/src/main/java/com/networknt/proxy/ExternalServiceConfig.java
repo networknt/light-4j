@@ -18,14 +18,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Config class for ExternalServiceHandler
+ *
+ * @author Steve Hu
+ */
 @ConfigSchema(
         configKey = "externalService",
         configName = "external-service",
         configDescription = "Configuration for external service handler to access third party services through proxy/gateway.",
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
-)
+    )
 public class ExternalServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceConfig.class);
+    /** Config Name */
     public static final String CONFIG_NAME = "external-service";
     private static final String ENABLED = "enabled";
     private static final String PROXY_HOST = "proxyHost";
@@ -38,12 +44,11 @@ public class ExternalServiceConfig {
     private static final String URL_REWRITE_RULES = "urlRewriteRules"; // Constant for rewrite rules
     private static final String CONNECT_TIMEOUT = "connectTimeout";
     private static final String TIMEOUT = "timeout";
-
+    private static final String PATH_PREFIXES = "pathPrefixes";
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Indicate if the handler is enabled or not",
-            externalized = true,
             defaultValue = "false"
     )
     boolean enabled;
@@ -51,16 +56,14 @@ public class ExternalServiceConfig {
     @StringField(
             configFieldName = PROXY_HOST,
             externalizedKeyName = PROXY_HOST,
-            description = "Proxy Host if calling within the corp network with a gateway like Mcafee gateway.",
-            externalized = true
+            description = "Proxy Host if calling within the corp network with a gateway like Mcafee gateway."
     )
     String proxyHost;
 
     @IntegerField(
             configFieldName = PROXY_PORT,
             externalizedKeyName = PROXY_PORT,
-            description = "Proxy Port if proxy host is used. default value will be 443 which means HTTPS.",
-            externalized = true
+            description = "Proxy Port if proxy host is used. default value will be 443 which means HTTPS."
     )
     int proxyPort;
 
@@ -69,7 +72,6 @@ public class ExternalServiceConfig {
             externalizedKeyName = CONNECT_TIMEOUT,
             description = "Connect Timeout in milliseconds. It is used to overwrite the connectTimeout in the client.yml. The default\n" +
                     "value is 3000.\n",
-            externalized = true,
             defaultValue = "3000"
     )
     int connectTimeout;
@@ -78,7 +80,6 @@ public class ExternalServiceConfig {
             configFieldName = TIMEOUT,
             externalizedKeyName = TIMEOUT,
             description = "Timeout in milliseconds. It is used to overwrite the timeout in the client.yml. The default value is 5000.",
-            externalized = true,
             defaultValue = "5000"
     )
     int timeout;
@@ -87,7 +88,6 @@ public class ExternalServiceConfig {
             configFieldName = ENABLE_HTTP2,
             externalizedKeyName = ENABLE_HTTP2,
             description = "If HTTP2 is used to connect to the external service.",
-            externalized = true,
             defaultValue = "false"
     )
     boolean enableHttp2;
@@ -96,7 +96,6 @@ public class ExternalServiceConfig {
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
             description = "Max Connection Retries",
-            externalized = true,
             defaultValue = "3"
     )
     int maxConnectionRetries;
@@ -108,7 +107,6 @@ public class ExternalServiceConfig {
             description = "A list of request path to the service host mappings. Other requests will skip this handler. The value is\n" +
                     "a string with two parts. The first part is the path and the second is the target host the request is\n" +
                     "finally routed to.\n",
-            externalized = true,
             items = String.class // Items are strings that will be split later
     )
     List<String[]> pathHostMappings; // Keep as List<String[]>
@@ -120,10 +118,30 @@ public class ExternalServiceConfig {
             description = "URL rewrite rules, each line will have two parts: the regex pattern and replace string separated\n" +
                     "with a space. For details, please refer to the light-router router.yml configuration.\n" +
                     "Test your rules at https://www.freeformatter.com/java-regex-tester.html\n",
-            externalized = true,
             items = String.class // Items are strings that will be converted to UrlRewriteRule later
     )
     List<UrlRewriteRule> urlRewriteRules; // Keep as List<UrlRewriteRule>
+
+    @ArrayField(
+            configFieldName = PATH_PREFIXES,
+            externalizedKeyName = PATH_PREFIXES,
+            description =
+            """
+            Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is
+            a pathPrefix key in the config along with timeout for request/response exchange timeout in milliseconds and
+            host for target host of the external API. If request path cannot match to one of the pathPrefixes, the request
+            will be skipped.
+            Note that this config properties will replace the pathHostMappings which is for single purpose only.
+              - pathPrefix: /sharepoint
+                timeout: 2000
+                host: https://sharepoint.microsoft.com
+              - pathPrefix: /v1/petstore
+                timeout: 4000
+                host: https://petstore.example.com
+            """,
+            items = PathPrefix.class
+    )
+    List<PathPrefix> pathPrefixes;
 
     @BooleanField(
             configFieldName = METRICS_INJECTION,
@@ -133,7 +151,6 @@ public class ExternalServiceConfig {
                     "time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\n" +
                     "the network latency. By default, it is false, and metrics will not be collected and injected into the metrics\n" +
                     "handler configured in the request/response chain.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean metricsInjection;
@@ -144,10 +161,19 @@ public class ExternalServiceConfig {
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\n" +
                     "metrics info can be categorized in a tree structure under the name. By default, it is external-response, and\n" +
                     "users can change it.\n",
-            externalized = true,
             defaultValue = "external-response"
     )
     String metricsName;
+
+    private static final String VERIFY_HOSTNAME = "verifyHostname";
+
+    @BooleanField(
+            configFieldName = VERIFY_HOSTNAME,
+            externalizedKeyName = VERIFY_HOSTNAME,
+            description = "Indicate if the hostname verification is enabled or not",
+            defaultValue = "true"
+    )
+    boolean verifyHostname = true;
 
 
     private final Config config;
@@ -155,31 +181,36 @@ public class ExternalServiceConfig {
 
     // --- Constructor and Loading Logic ---
 
+    /**
+     * Construct ExternalServiceConfig with default config name
+     */
     public ExternalServiceConfig() {
         this(CONFIG_NAME);
     }
 
     private ExternalServiceConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData(); // Load annotated fields first
         setUrlRewriteRules(); // Load and convert rewrite rules
         setConfigList(); // Load and convert pathHostMappings
     }
 
+    /**
+     * Load config
+     * @return ExternalServiceConfig
+     */
     public static ExternalServiceConfig load() {
         return new ExternalServiceConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return ExternalServiceConfig
+     */
     public static ExternalServiceConfig load(String configName) {
         return new ExternalServiceConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setUrlRewriteRules();
-        setConfigList();
     }
 
     // --- Private Setters for Annotated Fields ---
@@ -212,6 +243,9 @@ public class ExternalServiceConfig {
 
         object = mappedConfig.get(METRICS_NAME);
         if(object != null ) metricsName = (String)object; // String field, no load call needed
+
+        object = mappedConfig.get(VERIFY_HOSTNAME);
+        if(object != null) verifyHostname = Config.loadBooleanValue(VERIFY_HOSTNAME, object);
     }
 
     // --- Custom Setters for Complex List Fields ---
@@ -260,6 +294,9 @@ public class ExternalServiceConfig {
         }
     }
 
+    /**
+     * set url rewrite rules
+     */
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
         if(mappedConfig.get(URL_REWRITE_RULES) != null) {
@@ -295,73 +332,231 @@ public class ExternalServiceConfig {
     private void setConfigList() {
         setPathHostMappingsList();
         setUrlRewriteRules();
+        setPathPrefixesList();
+    }
+
+    private void setPathPrefixesList() {
+        if (mappedConfig.get(PATH_PREFIXES) != null) {
+            Object object = mappedConfig.get(PATH_PREFIXES);
+            pathPrefixes = new ArrayList<>();
+            if (object instanceof String) {
+                String s = (String) object;
+                s = s.trim();
+                if (s.startsWith("[")) {
+                    try {
+                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                        pathPrefixes = populatePathPrefixes(values);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the pathPrefixes json with a list of string and object.");
+                    }
+                } else {
+                    throw new ConfigException("pathPrefixes must be a list of string object map.");
+                }
+            } else if (object instanceof List) {
+                List<Map<String, Object>> values = (List<Map<String, Object>>) object;
+                pathPrefixes = populatePathPrefixes(values);
+            } else {
+                throw new ConfigException("pathPrefixes must be a list of string object map.");
+            }
+        }
+    }
+
+    private List<PathPrefix> populatePathPrefixes(List<Map<String, Object>> values) {
+        List<PathPrefix> prefixes = new ArrayList<>();
+        for (Map<String, Object> value : values) {
+            PathPrefix pathPrefix = new PathPrefix();
+            pathPrefix.setPathPrefix((String) value.get("pathPrefix"));
+            pathPrefix.setHost((String) value.get("host"));
+            Object timeoutObj = value.get("timeout");
+            if (timeoutObj != null) {
+                int timeout;
+                if (timeoutObj instanceof Number) {
+                    timeout = ((Number) timeoutObj).intValue();
+                } else if (timeoutObj instanceof String) {
+                    try {
+                        timeout = Integer.parseInt((String) timeoutObj);
+                    } catch (NumberFormatException e) {
+                        throw new ConfigException("Invalid timeout value for pathPrefix '" +
+                                pathPrefix.getPathPrefix() + "': must be an integer, but was '" +
+                                timeoutObj + "'");
+                    }
+                } else {
+                    throw new ConfigException("Invalid timeout type for pathPrefix '" +
+                            pathPrefix.getPathPrefix() + "': " + timeoutObj.getClass().getName());
+                }
+                pathPrefix.setTimeout(timeout);
+            }
+            prefixes.add(pathPrefix);
+        }
+        return prefixes;
     }
 
 
     // --- Getters and Setters (Original Methods) ---
 
+    /**
+     * Get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * set enabled
+     * @param enabled boolean
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * get proxy host
+     * @return String
+     */
     public String getProxyHost() {
         return proxyHost;
     }
 
+    /**
+     * set proxy host
+     * @param proxyHost String
+     */
     public void setProxyHost(String proxyHost) {
         this.proxyHost = proxyHost;
     }
 
+    /**
+     * get proxy port
+     * @return int
+     */
     public int getProxyPort() {
         return proxyPort;
     }
 
+    /**
+     * get connect timeout
+     * @return int
+     */
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
+    /**
+     * get timeout
+     * @return int
+     */
     public int getTimeout() { return timeout; }
 
+    /**
+     * get max connection retries
+     * @return int
+     */
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
+    /**
+     * set max connection retries
+     * @param maxConnectionRetries int
+     */
     public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
 
+    /**
+     * set proxy port
+     * @param proxyPort int
+     */
     public void setProxyPort(int proxyPort) {
         this.proxyPort = proxyPort;
     }
 
+    /**
+     * is enable http2
+     * @return boolean
+     */
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
 
+    /**
+     * set enable http2
+     * @param enableHttp2 boolean
+     */
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
 
+    /**
+     * is metrics injection
+     * @return boolean
+     */
     public boolean isMetricsInjection() { return metricsInjection; }
+
+    /**
+     * get metrics name
+     * @return String
+     */
     public String getMetricsName() { return metricsName; }
 
+    /**
+     * get path host mappings
+     * @return List
+     */
     public List<String[]> getPathHostMappings() {
         return pathHostMappings;
     }
 
+    /**
+     * set path host mappings
+     * @param pathHostMappings List
+     */
     public void setPathHostMappings(List<String[]> pathHostMappings) {
         this.pathHostMappings = pathHostMappings;
     }
 
+    /**
+     * get url rewrite rules
+     * @return List
+     */
     public List<UrlRewriteRule> getUrlRewriteRules() {
         return urlRewriteRules;
     }
 
+    /**
+     * set url rewrite rules
+     * @param urlRewriteRules List
+     */
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
+    }
+
+    /**
+     * get path prefixes
+     * @return List
+     */
+    public List<PathPrefix> getPathPrefixes() {
+        return pathPrefixes;
+    }
+
+    /**
+     * set path prefixes
+     * @param pathPrefixes List
+     */
+    public void setPathPrefixes(List<PathPrefix> pathPrefixes) {
+        this.pathPrefixes = pathPrefixes;
+    }
+
+    public boolean isVerifyHostname() {
+        return verifyHostname;
+    }
+
+    public void setVerifyHostname(boolean verifyHostname) {
+        this.verifyHostname = verifyHostname;
     }
 }

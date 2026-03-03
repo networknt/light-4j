@@ -1,8 +1,8 @@
 package com.networknt.utility;
 
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class MapUtilTest {
         // Get value from HashMap with case-insensitive key lookup
         String key = "key1";
         Optional<String> value = getValueIgnoreCase(hashMap, key);
-        Assert.assertTrue(value.isPresent());
+        Assertions.assertTrue(value.isPresent());
     }
 
 }

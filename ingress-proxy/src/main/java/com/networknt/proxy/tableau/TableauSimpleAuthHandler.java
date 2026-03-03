@@ -18,12 +18,13 @@ package com.networknt.proxy.tableau;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -68,7 +69,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
     private static final HttpString TABLEAU_TOKEN = new HttpString("X-Tableau-Auth");
     private static final HttpString TABLEAU_CONTENT_URL = new HttpString("tableauContentUrl");
 
-    private static final TableauConfig config = TableauConfig.load();
+    private String configName = TableauConfig.CONFIG_NAME;
     private static final Map<String, Object> secretConfig;
 
     private volatile HttpHandler next;
@@ -82,8 +83,21 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         }
     }
 
+    /**
+     * Construct TableauSimpleAuthHandler with default config name
+     */
     public TableauSimpleAuthHandler() {
+        this(TableauConfig.CONFIG_NAME);
+    }
 
+    /**
+     * Construct TableauSimpleAuthHandler with config name
+     * @param configName config name
+     */
+    public TableauSimpleAuthHandler(String configName) {
+        this.configName = configName;
+        TableauConfig.load(configName);
+        if(logger.isInfoEnabled()) logger.info("TableauSimpleAuthHandler is loaded with {}.", configName);
     }
 
     /**
@@ -101,7 +115,8 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
             setExchangeStatus(exchange, MISSING_TABLEAU_CONTENT_URL);
             return;
         }
-        String token = getToken(contentUrl);
+        TableauConfig config = TableauConfig.load(configName);
+        String token = getToken(contentUrl, config);
         if(token == null) {
             setExchangeStatus(exchange, FAIL_TO_GET_TABLEAU_TOKEN);
             return;
@@ -111,20 +126,21 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private String getToken(String contentUrl) throws ClientException {
+    private String getToken(String contentUrl, TableauConfig config) throws ClientException {
         String token = null;
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
+        SimpleConnectionState.ConnectionToken clientToken;
         try {
-            // use HTTP 1.1 connection as I don't think Tableau supports HTTP 2.0
-            connection = client.connect(new URI(config.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            clientToken = client.borrow(new URI(config.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            connection = (ClientConnection) clientToken.getRawConnection();
         } catch (Exception e) {
             throw new ClientException(e);
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            final String requestBody = getRequestBody(contentUrl);
+            final String requestBody = getRequestBody(contentUrl, config);
             ClientRequest request = new ClientRequest().setPath(config.getServerPath()).setMethod(Methods.POST);
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -144,12 +160,12 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+            client.restore(clientToken);
         }
         return token;
     }
 
-    private String getRequestBody(String contentUrl) throws IOException {
+    private String getRequestBody(String contentUrl, TableauConfig config) throws IOException {
         Map<String, Object> site = new HashMap<>();
         site.put("contentUrl", contentUrl);
         Map<String, Object> credentials = new HashMap<>();
@@ -175,12 +191,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TableauConfig.CONFIG_NAME, TableauSimpleAuthHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TableauConfig.CONFIG_NAME), null);
+        return TableauConfig.load(configName).isEnabled();
     }
 
 }

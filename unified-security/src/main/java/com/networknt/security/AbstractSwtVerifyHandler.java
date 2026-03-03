@@ -35,9 +35,9 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
     static final String STATUS_CLIENT_EXCEPTION = "ERR10082";
 
 
-    public static SwtVerifier swtVerifier;
+    public static volatile SwtVerifier swtVerifier;
 
-    public static SecurityConfig config;
+    public static volatile SecurityConfig config;
     public volatile HttpHandler next;
 
     @Override
@@ -59,6 +59,15 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        SecurityConfig securityConfig = SecurityConfig.load();
+        if (securityConfig != config) {
+            synchronized (AbstractSwtVerifyHandler.class) {
+                if (securityConfig != config) {
+                    config = securityConfig;
+                    swtVerifier = new SwtVerifier(config);
+                }
+            }
+        }
         if (logger.isDebugEnabled())
             logger.debug("SwtVerifyHandler.handleRequest starts.");
 

@@ -22,7 +22,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -58,15 +58,15 @@ import java.util.Map;
 public class PathServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathServiceHandler.class);
     private volatile HttpHandler next;
-    private static PathServiceConfig config;
     public PathServiceHandler() {
+        PathServiceConfig.load();
         logger.info("PathServiceHandler is constructed");
-        config = PathServiceConfig.load();
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("PathServiceConfig.handleRequest starts.");
+        PathServiceConfig config = PathServiceConfig.load();
         // if service URL is in the header, we don't need to do the service discovery with serviceId.
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
@@ -74,12 +74,13 @@ public class PathServiceHandler implements MiddlewareHandler {
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             if (auditInfo != null) {
                 String endpoint = (String) auditInfo.get(Constants.ENDPOINT_STRING);
-                if (logger.isDebugEnabled()) logger.debug("endpoint = " + endpoint);
+                if (logger.isDebugEnabled()) logger.debug("endpoint = {}", endpoint);
                 // now find the mapped serviceId from the mapping.
                 if (endpoint != null) {
                     serviceId = config.getMapping() == null ? null : config.getMapping().get(endpoint);
                     if(serviceId != null) {
-                        if(logger.isTraceEnabled()) logger.trace("Put into the service_id header for serviceId = " + serviceId);
+                        if(logger.isTraceEnabled())
+                            logger.trace("Put into the service_id header for serviceId = {}", serviceId);
                         exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
                     } else {
                         if(logger.isDebugEnabled()) logger.debug("The endpoint is not in the mapping config");
@@ -110,18 +111,6 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("PathServiceHandler is reloaded.");
+        return PathServiceConfig.load().isEnabled();
     }
 }

@@ -18,8 +18,8 @@
 
 package com.networknt.utility;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,33 +79,35 @@ public class PathTemplateTestCase {
         testMatch("/docs/{docId}/{docId2}/*", "/docs/mydoc/test/test2/test3/test4", "docId", "mydoc","docId2", "test", "*","test2/test3/test4");
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testNullPath() {
-        PathTemplate.create(null);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            PathTemplate.create(null);
+        });
     }
 
     @Test
     public void testDetectDuplicates() {
         final TreeSet<PathTemplate> seen = new TreeSet<>();
         seen.add(PathTemplate.create("/bob/{foo}"));
-        Assert.assertTrue(seen.contains(PathTemplate.create("/bob/{ak}")));
-        Assert.assertFalse(seen.contains(PathTemplate.create("/bob/{ak}/other")));
+        Assertions.assertTrue(seen.contains(PathTemplate.create("/bob/{ak}")));
+        Assertions.assertFalse(seen.contains(PathTemplate.create("/bob/{ak}/other")));
     }
 
     @Test
     public void testTrailingSlash() {
         PathTemplate template = PathTemplate.create("/bob/");
-        Assert.assertFalse(template.matches("/bob", new HashMap<>()));
-        Assert.assertTrue(template.matches("/bob/", new HashMap<>()));
+        Assertions.assertFalse(template.matches("/bob", new HashMap<>()));
+        Assertions.assertTrue(template.matches("/bob/", new HashMap<>()));
 
         template = PathTemplate.create("/bob/{id}/");
-        Assert.assertFalse(template.matches("/bob/1", new HashMap<>()));
-        Assert.assertTrue(template.matches("/bob/1/", new HashMap<>()));
+        Assertions.assertFalse(template.matches("/bob/1", new HashMap<>()));
+        Assertions.assertTrue(template.matches("/bob/1/", new HashMap<>()));
 
     }
 
     private void testMatch(final String template, final String path, final String ... pathParams)  {
-        Assert.assertEquals(0, pathParams.length % 2);
+        Assertions.assertEquals(0, pathParams.length % 2);
         final Map<String, String> expected = new HashMap<>();
         for(int i = 0; i < pathParams.length; i+=2) {
             expected.put(pathParams[i], pathParams[i+1]);
@@ -113,10 +115,10 @@ public class PathTemplateTestCase {
         final Map<String, String> params = new HashMap<>();
 
         PathTemplate pathTemplate = PathTemplate.create(template);
-        Assert.assertTrue("Failed. Template: " + pathTemplate, pathTemplate.matches(path, params));
-        Assert.assertEquals(expected, params);
+        Assertions.assertTrue(pathTemplate.matches(path, params), "Failed. Template: " + pathTemplate);
+        Assertions.assertEquals(expected, params);
         if(template.endsWith("*") && ! template.contains("{")){
-            Assert.assertEquals("Failed. Template: "+pathTemplate+"Must have a part representing the wildcard",1,new PathTemplateFriend(pathTemplate).getPartAmount());
+            Assertions.assertEquals(1, new PathTemplateFriend(pathTemplate).getPartAmount(), "Failed. Template: " + pathTemplate + "Must have a part representing the wildcard");
         }
 
     }

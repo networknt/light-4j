@@ -16,10 +16,8 @@
 
 package com.networknt.dump;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -36,11 +34,20 @@ import java.util.Map;
  */
 public class DumpHandler implements MiddlewareHandler {
 
-    private static DumpConfig config = (DumpConfig) Config.getInstance().getJsonObjectConfig(DumpConfig.CONFIG_NAME, DumpConfig.class);
+    private String configName = DumpConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
-    public DumpHandler() { }
+    public DumpHandler() {
+        DumpConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("DumpHandler is constructed.");
+    }
+
+    public DumpHandler(String configName) {
+        this.configName = configName;
+        DumpConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("DumpHandler is constructed with {}.", configName);
+    }
 
     @Override
     public HttpHandler getNext() {
@@ -56,12 +63,7 @@ public class DumpHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(DumpConfig.CONFIG_NAME, DumpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
+        return DumpConfig.load(configName).isEnabled();
     }
 
     @Override
@@ -71,6 +73,7 @@ public class DumpHandler implements MiddlewareHandler {
             return;
         }
         if(isEnabled()) {
+            DumpConfig config = DumpConfig.load(configName);
             Map<String, Object> result = new LinkedHashMap<>();
             //create rootDumper which will do dumping.
             RootDumper rootDumper = new RootDumper(config, exchange);
@@ -97,10 +100,4 @@ public class DumpHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    @Override
-    public void reload() {
-        config = (DumpConfig)Config.getInstance().getJsonObjectConfigNoCache(DumpConfig.CONFIG_NAME, DumpConfig.class);
-        ModuleRegistry.registerModule(DumpConfig.CONFIG_NAME, DumpHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("DumpHandler is reloaded.");
-    }
 }

@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,6 @@ public class BodyConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Enable body parse flag",
-            externalized = true,
             defaultValue = "true"
     )
     boolean enabled;
@@ -56,7 +56,6 @@ public class BodyConfig {
     @BooleanField(
             configFieldName = CACHE_REQUEST_BODY,
             externalizedKeyName = CACHE_REQUEST_BODY,
-            externalized = true,
             defaultValue = "false",
             description = "cache request body as a string along with JSON object. The string formatted request body will be used for audit log.\n" +
                           "you should only enable this if you have configured audit.yml to log the request body as it uses extra memory."
@@ -66,7 +65,6 @@ public class BodyConfig {
     @BooleanField(
             configFieldName = LOG_FULL_REQUEST_BODY,
             externalizedKeyName = LOG_FULL_REQUEST_BODY,
-            externalized = true,
             defaultValue = "false",
             description = "log the full request body when RequestBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
                           "for production. The default value is false and only 16K of the request body will be logged."
@@ -76,7 +74,6 @@ public class BodyConfig {
     @BooleanField(
             configFieldName = CACHE_RESPONSE_BODY,
             externalizedKeyName = CACHE_RESPONSE_BODY,
-            externalized = true,
             defaultValue = "false",
             description = "cache response body as a string along with JSON object. The string formatted response body will be used for audit log.\n" +
                           "you should only enable this if you have configured audit.yml to log the response body as it uses extra memory."
@@ -86,42 +83,48 @@ public class BodyConfig {
     @BooleanField(
             configFieldName = LOG_FULL_RESPONSE_BODY,
             externalizedKeyName = LOG_FULL_RESPONSE_BODY,
-            externalized = true,
             defaultValue = "false",
             description = "log the full response body when ResponseBodyInterceptor is enabled. This is useful for troubleshooting but not recommended\n" +
                           "for production. The default value is false and only 16K of the response body will be logged."
     )
     boolean logFullResponseBody;
-    private final Config config;
-    private Map<String, Object> mappedConfig;
 
-    public BodyConfig() {
+    private Map<String, Object> mappedConfig;
+    private static volatile BodyConfig instance;
+
+    private BodyConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+
+    private BodyConfig() {
         this(CONFIG_NAME);
     }
 
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
-    private BodyConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-    }
-
     public static BodyConfig load() {
-        return new BodyConfig();
+        return load(CONFIG_NAME);
     }
 
     public static BodyConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (BodyConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new BodyConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, BodyConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new BodyConfig(configName);
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
@@ -143,15 +146,17 @@ public class BodyConfig {
     public boolean isLogFullResponseBody() { return logFullResponseBody; }
 
     private void setConfigData() {
-        Object object = mappedConfig.get(ENABLED);
-        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        object = mappedConfig.get(CACHE_REQUEST_BODY);
-        if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
-        object = mappedConfig.get(CACHE_RESPONSE_BODY);
-        if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
-        object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
-        if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
-        object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
-        if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
+        if(mappedConfig != null) {
+            Object object = mappedConfig.get(ENABLED);
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(CACHE_REQUEST_BODY);
+            if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
+            object = mappedConfig.get(CACHE_RESPONSE_BODY);
+            if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
+            object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
+            if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
+            object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
+            if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
+        }
     }
 }

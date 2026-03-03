@@ -29,8 +29,8 @@ public class AESSaltDecryptor implements Decryptor {
 
     // cache the secret to void recreating instances for each decrypt call as all config files
     // will use the same salt per application.
-    private Map<String, SecretKeySpec> secretMap = new ConcurrentHashMap<>();
-    private Cipher cipher;
+    private final Map<String, SecretKeySpec> secretMap = new ConcurrentHashMap<>();
+    private final Cipher cipher;
     IvParameterSpec ivSpec;
 
     public AESSaltDecryptor() {

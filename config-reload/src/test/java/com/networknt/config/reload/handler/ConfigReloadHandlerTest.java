@@ -19,6 +19,7 @@ package com.networknt.config.reload.handler;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.client.ClientConnection;
@@ -26,8 +27,8 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
@@ -42,21 +43,27 @@ public class ConfigReloadHandlerTest extends  BaseTest{
 
     static final String JSON_MEDIA_TYPE = "application/json";
     @Test
-    public void testConfigReload() throws Exception {
+    public void testConfigReloadALL() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         ObjectMapper mapper = new ObjectMapper();
         List<String> input = new ArrayList<>();
         input.add("ALL");
         String req =  mapper.writeValueAsString(input);
-        System.out.println(req);
         try {
             ClientRequest request = new ClientRequest().setPath("/reloadconfig").setMethod(Methods.POST);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -68,14 +75,61 @@ public class ConfigReloadHandlerTest extends  BaseTest{
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(1, modules.size());
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals(6, modules.size());
+    }
+
+    @Test
+    public void testConfigReloadBodyHandler() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final SimpleConnectionState.ConnectionToken token;
+
+        try {
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        } catch (Exception e) {
+
+            throw new ClientException(e);
+
+        }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> input = new ArrayList<>();
+        input.add("com.networknt.body.BodyHandler");
+        String req =  mapper.writeValueAsString(input);
+        try {
+            ClientRequest request = new ClientRequest().setPath("/reloadconfig").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, JSON_MEDIA_TYPE);
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, req));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+
+            client.restore(token);
+
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+
+        List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals(1, modules.size());
     }
 
 }

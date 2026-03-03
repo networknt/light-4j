@@ -9,6 +9,8 @@ import com.networknt.config.schema.StringField; // REQUIRED IMPORT
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.Map;
 
 /**
@@ -49,7 +51,6 @@ public class ProxyConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Indicate if the proxy handler is enabled or not.",
-            externalized = true,
             defaultValue = "true" // Assuming true is the intended default if not explicitly set in YAML
     )
     boolean enabled;
@@ -59,7 +60,6 @@ public class ProxyConfig {
             externalizedKeyName = HTTP2_ENABLED,
             description = "If HTTP 2.0 protocol will be used to connect to target servers. Only if all host are using https\n" +
                     "and support the HTTP2 can set this one to true.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean http2Enabled;
@@ -69,7 +69,6 @@ public class ProxyConfig {
             externalizedKeyName = HOSTS,
             description = "Target URIs. Use comma separated string for multiple hosts. You can have mix http and https and\n" +
                     "they will be load balanced. If the host start with https://, then TLS context will be created.\n",
-            externalized = true,
             defaultValue = "http://localhost:8080"
     )
     String hosts;
@@ -78,7 +77,6 @@ public class ProxyConfig {
             configFieldName = CONNECTIONS_PER_THREAD,
             externalizedKeyName = CONNECTIONS_PER_THREAD,
             description = "Connections per thread to the target servers.",
-            externalized = true,
             defaultValue = "20"
     )
     int connectionsPerThread;
@@ -87,7 +85,6 @@ public class ProxyConfig {
             configFieldName = MAX_REQUEST_TIME,
             externalizedKeyName = MAX_REQUEST_TIME,
             description = "Max request time in milliseconds before timeout.",
-            externalized = true,
             defaultValue = "1000"
     )
     int maxRequestTime;
@@ -96,7 +93,6 @@ public class ProxyConfig {
             configFieldName = REWRITE_HOST_HEADER,
             externalizedKeyName = REWRITE_HOST_HEADER,
             description = "Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host.",
-            externalized = true,
             defaultValue = "true"
     )
     boolean rewriteHostHeader;
@@ -105,7 +101,6 @@ public class ProxyConfig {
             configFieldName = REUSE_X_FORWARDED,
             externalizedKeyName = REUSE_X_FORWARDED,
             description = "Reuse XForwarded for the target XForwarded header.",
-            externalized = true,
             defaultValue = "false"
     )
     boolean reuseXForwarded;
@@ -114,7 +109,6 @@ public class ProxyConfig {
             configFieldName = MAX_CONNECTION_RETRIES,
             externalizedKeyName = MAX_CONNECTION_RETRIES,
             description = "Max Connection Retries.",
-            externalized = true,
             defaultValue = "3"
     )
     int maxConnectionRetries;
@@ -126,7 +120,6 @@ public class ProxyConfig {
                     "The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\n" +
                     "need to use the request queue to increase the memory usage. It should only be used when you see 503 errors\n" +
                     "in the log after maxConnectionRetries to accommodate slow backend API.\n",
-            externalized = true,
             defaultValue = "0"
     )
     int maxQueueSize;
@@ -135,7 +128,6 @@ public class ProxyConfig {
             configFieldName = FORWARD_JWT_CLAIMS,
             externalizedKeyName = FORWARD_JWT_CLAIMS,
             description = "Decode the JWT token claims and forward to the backend api in the form of json string.",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean forwardJwtClaims;
@@ -148,7 +140,6 @@ public class ProxyConfig {
                     "time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including\n" +
                     "the network latency. By default, it is false, and metrics will not be collected and injected into the metrics\n" +
                     "handler configured in the request/response chain.\n",
-            externalized = true,
             defaultValue = "false"
     )
     boolean metricsInjection;
@@ -159,11 +150,14 @@ public class ProxyConfig {
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the\n" +
                     "metrics info can be categorized in a tree structure under the name. By default, it is proxy-response, and\n" +
                     "users can change it.\n",
-            externalized = true,
             defaultValue = "proxy-response"
     )
     String metricsName;
 
+
+    // --- Constructor and Loading Logic ---
+
+    private static volatile ProxyConfig instance;
 
     // --- Constructor and Loading Logic ---
 
@@ -173,99 +167,215 @@ public class ProxyConfig {
 
     private ProxyConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
+    /**
+     * Load config
+     * @return ProxyConfig
+     */
     public static ProxyConfig load() {
-        return new ProxyConfig();
+        return load(CONFIG_NAME);
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return ProxyConfig
+     */
     public static ProxyConfig load(String configName) {
-        return new ProxyConfig(configName);
+        ProxyConfig config = instance;
+        if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+            synchronized (ProxyConfig.class) {
+                config = instance;
+                if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
+                    config = new ProxyConfig(configName);
+                    instance = config;
+                    // Register the module with the new config
+                    ModuleRegistry.registerModule(configName, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfig(configName), null);
+                }
+            }
+        }
+        return config;
     }
 
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-    }
-
+    /**
+     * get mapped config
+     * @return Map
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
     // --- Getters and Setters (Original Methods) ---
 
+    /**
+     * is enabled
+     * @return boolean
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * set enabled
+     * @param enabled boolean
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * is http2 enabled
+     * @return boolean
+     */
     public boolean isHttp2Enabled() {
         return http2Enabled;
     }
 
+    /**
+     * set http2 enabled
+     * @param http2Enabled boolean
+     */
     public void setHttp2Enabled(boolean http2Enabled) {
         this.http2Enabled = http2Enabled;
     }
 
+    /**
+     * get hosts
+     * @return String
+     */
     public String getHosts() {
         return hosts;
     }
 
+    /**
+     * set hosts
+     * @param hosts String
+     */
     public void setHosts(String hosts) {
         this.hosts = hosts;
     }
 
+    /**
+     * get connections per thread
+     * @return int
+     */
     public int getConnectionsPerThread() {
         return connectionsPerThread;
     }
 
+    /**
+     * set connections per thread
+     * @param connectionsPerThread int
+     */
     public void setConnectionsPerThread(int connectionsPerThread) {
         this.connectionsPerThread = connectionsPerThread;
     }
 
+    /**
+     * get max request time
+     * @return int
+     */
     public int getMaxRequestTime() {
         return maxRequestTime;
     }
 
+    /**
+     * set max request time
+     * @param maxRequestTime int
+     */
     public void setMaxRequestTime(int maxRequestTime) {
         this.maxRequestTime = maxRequestTime;
     }
 
+    /**
+     * is rewrite host header
+     * @return boolean
+     */
     public boolean isRewriteHostHeader() { return rewriteHostHeader; }
 
+    /**
+     * set rewrite host header
+     * @param rewriteHostHeader boolean
+     */
     public void setRewriteHostHeader(boolean rewriteHostHeader) { this.rewriteHostHeader = rewriteHostHeader; }
 
+    /**
+     * is reuse x forwarded
+     * @return boolean
+     */
     public boolean isReuseXForwarded() { return reuseXForwarded; }
 
+    /**
+     * set reuse x forwarded
+     * @param reuseXForwarded boolean
+     */
     public void setReuseXForwarded(boolean reuseXForwarded) { this.reuseXForwarded = reuseXForwarded; }
 
+    /**
+     * get max connection retries
+     * @return int
+     */
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
+    /**
+     * set max connection retries
+     * @param maxConnectionRetries int
+     */
     public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
 
+    /**
+     * get max queue size
+     * @return int
+     */
     public int getMaxQueueSize() { return maxQueueSize; }
 
+    /**
+     * set max queue size
+     * @param maxQueueSize int
+     */
     public void setMaxQueueSize(int maxQueueSize) { this.maxQueueSize = maxQueueSize; }
 
+    /**
+     * is forward jwt claims
+     * @return boolean
+     */
     public boolean isForwardJwtClaims() {
         return forwardJwtClaims;
     }
 
+    /**
+     * set forward jwt claims
+     * @param forwardJwtClaims boolean
+     */
     public void setForwardJwtClaims(boolean forwardJwtClaims) {
         this.forwardJwtClaims = forwardJwtClaims;
     }
 
+    /**
+     * is metrics injection
+     * @return boolean
+     */
     public boolean isMetricsInjection() { return metricsInjection; }
 
+    /**
+     * set metrics injection
+     * @param metricsInjection boolean
+     */
     public void setMetricsInjection(boolean metricsInjection) { this.metricsInjection = metricsInjection; }
 
+    /**
+     * get metrics name
+     * @return String
+     */
     public String getMetricsName() { return metricsName; }
 
+    /**
+     * set metrics name
+     * @param metricsName String
+     */
     public void setMetricsName(String metricsName) { this.metricsName = metricsName; }
 
     private void setConfigData() {

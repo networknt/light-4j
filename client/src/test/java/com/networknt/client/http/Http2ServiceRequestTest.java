@@ -3,8 +3,8 @@ package com.networknt.client.http;
 
 import com.networknt.status.HttpStatus;
 import io.undertow.util.Methods;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public class Http2ServiceRequestTest {
     private Http2ServiceRequest  http2ServiceRequest;
     List<HttpStatus> statusCodesValid;
 
-    @Before
+    @BeforeEach
     public void setUp() throws  Exception{
         http2ServiceRequest = new Http2ServiceRequest(new URI("http://localhost:7080"), Methods.GET);
         statusCodesValid = new ArrayList<>();

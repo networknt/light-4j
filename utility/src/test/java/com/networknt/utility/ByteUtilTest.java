@@ -1,6 +1,6 @@
 package com.networknt.utility;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ByteUtilTest {
     @Test

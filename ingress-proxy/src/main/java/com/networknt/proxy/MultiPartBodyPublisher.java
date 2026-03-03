@@ -13,11 +13,23 @@ import java.util.function.Supplier;
 /**
  * This is copied from stackoverflow answer by @ittupelo.
  * https://stackoverflow.com/questions/46392160/java-9-httpclient-send-a-multipart-form-data-request
+ *
+ * @author Steve Hu
  */
 public class MultiPartBodyPublisher {
     private List<PartsSpecification> partsSpecificationList = new ArrayList<>();
     private String boundary = UUID.randomUUID().toString();
 
+    /**
+     * Default constructor
+     */
+    public MultiPartBodyPublisher() {
+    }
+
+    /**
+     * Build the body publisher
+     * @return BodyPublisher
+     */
     public HttpRequest.BodyPublisher build() {
         if (partsSpecificationList.size() == 0) {
             throw new IllegalStateException("Must have at least one part to build multipart message.");
@@ -26,10 +38,20 @@ public class MultiPartBodyPublisher {
         return HttpRequest.BodyPublishers.ofByteArrays(PartsIterator::new);
     }
 
+    /**
+     * get boundary
+     * @return String
+     */
     public String getBoundary() {
         return boundary;
     }
 
+    /**
+     * Add a part to the multipart body
+     * @param name part name
+     * @param value part value
+     * @return MultiPartBodyPublisher
+     */
     public MultiPartBodyPublisher addPart(String name, String value) {
         PartsSpecification newPart = new PartsSpecification();
         newPart.type = PartsSpecification.TYPE.STRING;
@@ -39,6 +61,12 @@ public class MultiPartBodyPublisher {
         return this;
     }
 
+    /**
+     * Add a part to the multipart body
+     * @param name part name
+     * @param value part value path
+     * @return MultiPartBodyPublisher
+     */
     public MultiPartBodyPublisher addPart(String name, Path value) {
         PartsSpecification newPart = new PartsSpecification();
         newPart.type = PartsSpecification.TYPE.FILE;
@@ -48,6 +76,14 @@ public class MultiPartBodyPublisher {
         return this;
     }
 
+    /**
+     * Add a part to the multipart body
+     * @param name part name
+     * @param value part value supplier
+     * @param filename filename
+     * @param contentType content type
+     * @return MultiPartBodyPublisher
+     */
     public MultiPartBodyPublisher addPart(String name, Supplier<InputStream> value, String filename, String contentType) {
         PartsSpecification newPart = new PartsSpecification();
         newPart.type = PartsSpecification.TYPE.STREAM;

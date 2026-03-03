@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistryService {
-    static PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
+
 
     private String serviceId;
 
@@ -91,10 +91,11 @@ public class PortalRegistryService {
     }
 
     public PortalRegistryService() {
-        if(config.httpCheck) {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"healthPath\":\"" + config.healthPath + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
+        PortalRegistryConfig config = PortalRegistryConfig.load();
+        if(config.isHttpCheck()) {
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.getDeregisterAfter() + ",\"healthPath\":\"" + config.getHealthPath() + "\",\"tlsSkipVerify\":true,\"interval\":" + config.getCheckInterval() + "}}";
         } else {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.getDeregisterAfter() + ",\"interval\":" + config.getCheckInterval() + "}}";
         }
     }
 

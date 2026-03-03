@@ -38,11 +38,22 @@ public class CircuitBreaker {
     private static AtomicInteger timeoutCount;
     private long lastErrorTime;
 
+    /**
+     * Constructs a CircuitBreaker with the given supplier of CompletableFuture.
+     * @param supplier the supplier of the asynchronous call to protect
+     */
     public CircuitBreaker(Supplier<CompletableFuture<ClientResponse>> supplier) {
         this.supplier = supplier;
         this.timeoutCount = new AtomicInteger(0);
     }
 
+    /**
+     * Executes the call protected by the circuit breaker.
+     * @return the result of the call
+     * @throws TimeoutException if the call times out
+     * @throws ExecutionException if the call fails with an exception
+     * @throws InterruptedException if the call is interrupted
+     */
     public ClientResponse call() throws TimeoutException, ExecutionException, InterruptedException {
         State state = checkState();
 

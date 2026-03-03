@@ -16,11 +16,9 @@
 
 package com.networknt.handler;
 
-import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.PathChain;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.PathTemplateMatcher;
 import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
@@ -68,7 +66,6 @@ public class Handler {
         initChains();
         initPaths();
         initDefaultHandlers();
-        ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HandlerConfig.CONFIG_NAME), null);
     }
 
     /**
@@ -419,21 +416,6 @@ public class Handler {
     }
 
     /**
-     * Detect if the handler is a MiddlewareHandler instance. If yes, then register it.
-     *
-     * @param handler
-     */
-    private static void registerMiddlewareHandler(Object handler) {
-
-        if (handler instanceof MiddlewareHandler) {
-
-            // register the middleware handler if it is enabled.
-            if (((MiddlewareHandler) handler).isEnabled())
-                ((MiddlewareHandler) handler).register();
-        }
-    }
-
-    /**
      * Helper method for generating the instance of a handler from its string
      * definition in config. Ie. No mapped values for setters, or list of
      * constructor fields. To note: It could either implement HttpHandler, or
@@ -470,7 +452,6 @@ public class Handler {
 
         else throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 
-        registerMiddlewareHandler(resolvedHandler);
         handlers.put(namedClass.first, resolvedHandler);
         handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
     }

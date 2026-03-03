@@ -16,8 +16,10 @@
 
 package com.networknt.config;
 
-import junit.framework.TestCase;
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,15 +27,15 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConfigPropertyPathTest extends TestCase {
+public class ConfigPropertyPathTest {
 
     private static Config config = null;
 
     private static final String homeDir = System.getProperty("user.home");
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
+        
 
         // the instance would already be created by other classes since the config is singleton, so need to using
         // reflection to inject field.
@@ -46,7 +48,7 @@ public class ConfigPropertyPathTest extends TestCase {
         writeConfigFile("value", "externalized dir2", homeDir + "/dir2");
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
         File test1 = new File(homeDir + "/test.json");
         File test2 = new File(homeDir + "/dir1/test.json");
@@ -66,7 +68,7 @@ public class ConfigPropertyPathTest extends TestCase {
     public void testGetConfig() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
-        Assert.assertEquals("default dir", configMap.get("value"));
+        Assertions.assertEquals("default dir", configMap.get("value"));
     }
 
     // test getting config from absolute path "/homeDir/src"
@@ -74,14 +76,14 @@ public class ConfigPropertyPathTest extends TestCase {
     	setExternalizedConfigDir("");
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/dir1");
-        Assert.assertEquals("externalized dir1", configMap.get("value"));
+        Assertions.assertEquals("externalized dir1", configMap.get("value"));
     }
 
     // test getting config from relative path "src"
     public void testGetConfigFromRelPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", "dir1");
-        Assert.assertEquals("externalized dir1", configMap.get("value"));
+        Assertions.assertEquals("externalized dir1", configMap.get("value"));
     }
 
     // test getting config from absolute path "/homeDir/src"
@@ -89,14 +91,14 @@ public class ConfigPropertyPathTest extends TestCase {
     	setExternalizedConfigDir("");
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/dir1");
-        Assert.assertEquals("externalized dir1", configObject.getValue());
+        Assertions.assertEquals("externalized dir1", configObject.getValue());
     }
 
     // test getting config from relative path "src"
     public void testGetObjectConfigFromRelPath() {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "dir1");
-        Assert.assertEquals("externalized dir1", configObject.getValue());
+        Assertions.assertEquals("externalized dir1", configObject.getValue());
     }
 
     // test getting config when the config dir is a list
@@ -104,7 +106,7 @@ public class ConfigPropertyPathTest extends TestCase {
         config.clear();
         setExternalizedConfigDir(homeDir + File.pathSeparator + homeDir + "/dir1"+ File.pathSeparator + homeDir + "/dir2");
         Map<String, Object> configMap = config.getJsonMapConfig("test");
-        Assert.assertEquals("externalized dir2", configMap.get("value"));
+        Assertions.assertEquals("externalized dir2", configMap.get("value"));
     }
 
     private void setExternalizedConfigDir(String externalizedDir) throws Exception {

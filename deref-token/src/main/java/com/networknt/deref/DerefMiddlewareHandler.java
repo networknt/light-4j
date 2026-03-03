@@ -18,10 +18,8 @@ package com.networknt.deref;
 
 import com.networknt.client.oauth.DerefRequest;
 import com.networknt.client.oauth.OauthHelper;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -42,17 +40,15 @@ import org.slf4j.LoggerFactory;
 public class DerefMiddlewareHandler implements MiddlewareHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DerefMiddlewareHandler.class);
-    private static final String CONFIG_NAME = "deref";
     private static final String MISSING_AUTH_TOKEN = "ERR10002";
     private static final String EMPTY_TOKEN_DEREFERENCE_RESPONSE = "ERR10044";
     private static final String TOKEN_DEREFERENCE_ERROR = "ERR10045";
 
-    public static DerefConfig config =
-            (DerefConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, DerefConfig.class);
 
     private volatile HttpHandler next;
 
     public DerefMiddlewareHandler() {
+        DerefConfig.load();
         if(logger.isInfoEnabled()) logger.info("DerefMiddlewareHandler is constructed.");
     }
 
@@ -101,18 +97,7 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return DerefConfig.load().isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DerefConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config = (DerefConfig)Config.getInstance().getJsonObjectConfigNoCache(DerefConfig.CONFIG_NAME, DerefConfig.class);
-        ModuleRegistry.registerModule(DerefConfig.CONFIG_NAME, DerefMiddlewareHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("DerefMiddlewareHandler is reloaded.");
-    }
 }

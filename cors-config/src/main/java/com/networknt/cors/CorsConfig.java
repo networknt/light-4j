@@ -19,8 +19,8 @@ package com.networknt.cors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +40,12 @@ public class CorsConfig {
     public static final String PATH_PREFIX_ALLOWED = "pathPrefixAllowed";
 
     private Map<String, Object> mappedConfig;
-    private final Config config;
+
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "Indicate if the CORS middleware is enabled or not."
     )
     boolean enabled;
@@ -54,7 +53,6 @@ public class CorsConfig {
     @ArrayField(
             configFieldName = ALLOWED_ORIGINS,
             externalizedKeyName = ALLOWED_ORIGINS,
-            externalized = true,
             description = "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\n" +
                     "configuration for all paths. If you want to have different configuration for different paths, you\n" +
                     "can use pathPrefixAllowed. The value is a list of strings.\n" +
@@ -66,7 +64,6 @@ public class CorsConfig {
     @ArrayField(
             configFieldName = ALLOWED_METHODS,
             externalizedKeyName = ALLOWED_METHODS,
-            externalized = true,
             description = "Allowed methods list. The value is a list of strings. The possible value is GET, POST, PUT, DELETE, PATCH\n" +
                     "This is the global configuration for all paths. If you want to have different configuration for different\n" +
                     "paths, you can use pathPrefixAllowed.\n - GET\n - POST",
@@ -78,7 +75,6 @@ public class CorsConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ALLOWED,
             externalizedKeyName = PATH_PREFIX_ALLOWED,
-            externalized = true,
             description = "cors configuration per path prefix on a shared gateway. You either have allowedOrigins and allowedMethods\n" +
                     "or you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.\n" +
                     "The value is a map with the key as the path prefix and the value is another map with allowedOrigins and\n" +
@@ -111,9 +107,10 @@ public class CorsConfig {
     )
     Map<String, CorsPathPrefix> pathPrefixAllowed;
 
+    private static volatile CorsConfig instance;
+
     private CorsConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
@@ -122,23 +119,28 @@ public class CorsConfig {
         this(CONFIG_NAME);
     }
 
-    public static CorsConfig load(String configName) {
-        return new CorsConfig(configName);
-    }
-
     public static CorsConfig load() {
-        return new CorsConfig();
+        return load(CONFIG_NAME);
     }
 
-    public void reload() {
-        this.reload(CONFIG_NAME);
-    }
-
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+    public static CorsConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (CorsConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new CorsConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, CorsConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new CorsConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -181,9 +183,7 @@ public class CorsConfig {
         return mappedConfig;
     }
 
-    Config getConfig() {
-        return config;
-    }
+
 
     private void setConfigData() {
         if(getMappedConfig() != null) {

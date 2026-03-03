@@ -90,7 +90,16 @@ public class MockConsulClient implements ConsulClient {
         List<ConsulService> list = new ArrayList<ConsulService>();
         for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
             if (entry.getValue()) {
-                list.add(services.get(entry.getKey()));
+                ConsulService service = services.get(entry.getKey());
+                if(service.getName().equals(serviceName)) {
+                    if(tag == null) {
+                        list.add(service);
+                    } else {
+                        if(service.getTags().contains(tag)) {
+                            list.add(service);
+                        }
+                    }
+                }
             }
         }
         res.setValue(list);

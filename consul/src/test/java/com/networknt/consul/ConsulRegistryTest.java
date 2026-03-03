@@ -21,10 +21,11 @@ import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import com.networknt.utility.Constants;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class ConsulRegistryTest {
     private String serviceid, serviceid2;
     private long sleepTime;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = (MockConsulClient)SingletonServiceFactory.getBean(ConsulClient.class);
         registry = (ConsulRegistry)SingletonServiceFactory.getBean(Registry.class);
@@ -50,7 +51,7 @@ public class ConsulRegistryTest {
         sleepTime = ConsulConstants.SWITCHER_CHECK_CIRCLE + 500;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         registry = null;
         client = null;
@@ -61,29 +62,29 @@ public class ConsulRegistryTest {
         // register
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
-        Assert.assertTrue(client.isRegistered(serviceid));
-        Assert.assertFalse(client.isWorking(serviceid));
-        Assert.assertTrue(client.isRegistered(serviceid2));
-        Assert.assertFalse(client.isWorking(serviceid2));
+        Assertions.assertTrue(client.isRegistered(serviceid));
+        Assertions.assertFalse(client.isWorking(serviceid));
+        Assertions.assertTrue(client.isRegistered(serviceid2));
+        Assertions.assertFalse(client.isWorking(serviceid2));
 
         // available
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertTrue(client.isWorking(serviceid));
-        Assert.assertTrue(client.isWorking(serviceid2));
+        Assertions.assertTrue(client.isWorking(serviceid));
+        Assertions.assertTrue(client.isWorking(serviceid2));
 
         // unavailable
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertFalse(client.isWorking(serviceid));
-        Assert.assertFalse(client.isWorking(serviceid2));
+        Assertions.assertFalse(client.isWorking(serviceid));
+        Assertions.assertFalse(client.isWorking(serviceid2));
 
         // unregister
         registry.doUnregister(serviceUrl);
-        Assert.assertFalse(client.isRegistered(serviceid));
-        Assert.assertTrue(client.isRegistered(serviceid2));
+        Assertions.assertFalse(client.isRegistered(serviceid));
+        Assertions.assertTrue(client.isRegistered(serviceid2));
         registry.doUnregister(serviceUrl2);
-        Assert.assertFalse(client.isRegistered(serviceid2));
+        Assertions.assertFalse(client.isRegistered(serviceid2));
     }
 
     private NotifyListener createNewNotifyListener(final URL serviceUrl) {
@@ -91,7 +92,7 @@ public class ConsulRegistryTest {
             @Override
             public void notify(URL registryUrl, List<URL> urls) {
                 if (!urls.isEmpty()) {
-                    Assert.assertTrue(urls.contains(serviceUrl));
+                    Assertions.assertTrue(urls.contains(serviceUrl));
                 }
             }
         };
@@ -105,8 +106,8 @@ public class ConsulRegistryTest {
         // subscribe
         registry.doSubscribe(clientUrl, notifyListener);
         registry.doSubscribe(clientUrl2, notifylistener2);
-        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
-        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
+        Assertions.assertTrue(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
+        Assertions.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
         // register
         registry.doRegister(serviceUrl);
@@ -122,11 +123,11 @@ public class ConsulRegistryTest {
 
         // unsubscrib
         registry.doUnsubscribe(clientUrl, notifyListener);
-        Assert.assertFalse(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
-        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
+        Assertions.assertFalse(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
+        Assertions.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
         registry.doUnsubscribe(clientUrl2, notifylistener2);
-        Assert.assertFalse(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
+        Assertions.assertFalse(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
     }
 
@@ -134,12 +135,12 @@ public class ConsulRegistryTest {
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discover(serviceUrl);
-        Assert.assertEquals(0, urls.size());
+        Assertions.assertEquals(0, urls.size());
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
         urls = registry.discover(serviceUrl);
-        Assert.assertTrue(urls.contains(serviceUrl));
+        Assertions.assertTrue(urls.contains(serviceUrl));
 
         // unavailable & unregister
         registry.doUnavailable(null);
@@ -150,6 +151,53 @@ public class ConsulRegistryTest {
     private Boolean containsNotifyListener(URL serviceUrl, URL clientUrl, NotifyListener listener) {
         String service = ConsulUtils.getUrlClusterInfo(serviceUrl);
         return registry.getNotifyListeners().get(service).get(clientUrl) == listener;
+    }
+
+    @Test
+    public void subAndUnsubServiceWithTag() throws Exception {
+        // Service 1: dev
+        URL serviceUrlDev = MockUtils.getMockUrl(8003);
+        serviceUrlDev.addParameter(Constants.TAG_ENVIRONMENT, "dev");
+        String serviceIdDev = ConsulUtils.convertConsulSerivceId(serviceUrlDev);
+
+        // Service 2: prod
+        URL serviceUrlProd = MockUtils.getMockUrl(8004);
+        serviceUrlProd.addParameter(Constants.TAG_ENVIRONMENT, "prod");
+        String serviceIdProd = ConsulUtils.convertConsulSerivceId(serviceUrlProd);
+
+        registry.doRegister(serviceUrlDev);
+        registry.doRegister(serviceUrlProd);
+
+        // Client 1: dev
+        URL clientUrlDev = MockUtils.getMockUrl("127.0.0.1", 0);
+        clientUrlDev.addParameter(Constants.TAG_ENVIRONMENT, "dev");
+
+        // Client 2: prod
+        URL clientUrlProd = MockUtils.getMockUrl("127.0.0.1", 0);
+        clientUrlProd.addParameter(Constants.TAG_ENVIRONMENT, "prod");
+
+        NotifyListener listenerDev = createNewNotifyListener(serviceUrlDev);
+        NotifyListener listenerProd = createNewNotifyListener(serviceUrlProd);
+
+        registry.doSubscribe(clientUrlDev, listenerDev);
+        registry.doSubscribe(clientUrlProd, listenerProd);
+
+        registry.doAvailable(null);
+        Thread.sleep(sleepTime);
+
+        List<URL> devUrls = registry.discover(clientUrlDev);
+        Assertions.assertTrue(devUrls.contains(serviceUrlDev));
+        Assertions.assertFalse(devUrls.contains(serviceUrlProd));
+
+        List<URL> prodUrls = registry.discover(clientUrlProd);
+        Assertions.assertTrue(prodUrls.contains(serviceUrlProd));
+        Assertions.assertFalse(prodUrls.contains(serviceUrlDev));
+
+        // Cleanup
+        registry.doUnregister(serviceUrlDev);
+        registry.doUnregister(serviceUrlProd);
+        registry.doUnsubscribe(clientUrlDev, listenerDev);
+        registry.doUnsubscribe(clientUrlProd, listenerProd);
     }
 
 }

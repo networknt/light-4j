@@ -16,7 +16,7 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.CachedGauge;
 import io.dropwizard.metrics.Gauge;

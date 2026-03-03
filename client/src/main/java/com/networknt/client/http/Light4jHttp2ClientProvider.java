@@ -47,7 +47,15 @@ import java.util.Set;
  */
 public class Light4jHttp2ClientProvider implements ClientProvider {
 
+    /**
+     * Constructor.
+     */
+    public Light4jHttp2ClientProvider() {
+    }
+
+    /** HTTP2 protocol */
     public static final String HTTP2 = "h2";
+    /** HTTP 1.1 protocol */
     public static final String HTTP_1_1 = "http/1.1";
 
     private static final ChannelListener<SslConnection> FAILED = new ChannelListener<SslConnection>() {
@@ -103,6 +111,11 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
 
     }
 
+    /**
+     * Create a notifier for the future.
+     * @param listener the client callback
+     * @return the notifier
+     */
     protected IoFuture.Notifier<StreamConnection, Object> createNotifier(final ClientCallback<ClientConnection> listener) {
         return new IoFuture.Notifier<StreamConnection, Object>() {
             @Override
@@ -114,6 +127,15 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
         };
     }
 
+    /**
+     * Create an open listener.
+     * @param listener the client callback
+     * @param uri the URI
+     * @param ssl the Xnio SSL
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @return the channel listener
+     */
     protected ChannelListener<StreamConnection> createOpenListener(final ClientCallback<ClientConnection> listener, final URI uri, final XnioSsl ssl, final ByteBufferPool bufferPool, final OptionMap options) {
         return new ChannelListener<StreamConnection>() {
             @Override
@@ -141,10 +163,26 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
         }, HTTP2);
     };
 
+    /**
+     * Handle the connected stream connection.
+     * @param connection the stream connection
+     * @param listener the client callback
+     * @param uri the URI
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     */
     protected void handleConnected(StreamConnection connection, final ClientCallback<ClientConnection> listener, URI uri,ByteBufferPool bufferPool, OptionMap options) {
     	Light4jALPNClientSelector.runAlpn((SslConnection) connection, FAILED, listener, alpnProtocol(listener, uri, bufferPool, options));
     }
 
+    /**
+     * Create an HTTP/2 channel.
+     * @param connection the stream connection
+     * @param bufferPool the buffer pool
+     * @param options the option map
+     * @param defaultHost the default host
+     * @return the HTTP/2 client connection
+     */
     protected static Http2ClientConnection createHttp2Channel(StreamConnection connection, ByteBufferPool bufferPool, OptionMap options, String defaultHost) {
 
         final ClientStatisticsImpl clientStatistics;
@@ -170,7 +208,16 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
         return new Http2ClientConnection(http2Channel, false, defaultHost, clientStatistics, true);
     }
 
+    /**
+     * Client statistics implementation.
+     */
     protected static class ClientStatisticsImpl implements ClientStatistics {
+
+        /**
+         * Constructor.
+         */
+        protected ClientStatisticsImpl() {
+        }
         private long requestCount, read, written;
         @Override
         public long getRequests() {

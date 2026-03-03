@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
  * Created by stevehu on 2017-01-27.
  */
 public class LightCluster implements Cluster {
-    private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
-    private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
-    private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
+    private static final Logger logger = LoggerFactory.getLogger(LightCluster.class);
+    private static final Registry registry = SingletonServiceFactory.getBean(Registry.class);
+    private static final LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
     private static final Set<URL> subscribedSet = new ConcurrentHashSet<>();
     private static final Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
 

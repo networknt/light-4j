@@ -17,8 +17,8 @@
 package com.networknt.utility;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
@@ -35,7 +35,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("564aa231f84039ce2b2b886e58f88dcee26fa3e3", fp);
+        Assertions.assertEquals("564aa231f84039ce2b2b886e58f88dcee26fa3e3", fp);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("0775dcf9193095e791307a115c192cc897753499", fp);
+        Assertions.assertEquals("0775dcf9193095e791307a115c192cc897753499", fp);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("0ea49f0d1f89ae839e96c3665beb4ff6d0033c33", fp);
+        Assertions.assertEquals("0ea49f0d1f89ae839e96c3665beb4ff6d0033c33", fp);
     }
 
     @Test
@@ -74,7 +74,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("921b97842f23474d8961bfd54911c298316aa558", fp);
+        Assertions.assertEquals("921b97842f23474d8961bfd54911c298316aa558", fp);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("da2794f442f08a73ac9eef7f9378dd7a5bbcf8c6", fp);
+        Assertions.assertEquals("da2794f442f08a73ac9eef7f9378dd7a5bbcf8c6", fp);
     }
 
     @Test
@@ -100,6 +100,6 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assert.assertEquals("f9d76aae4799610a3c904df073dc79f430b408b1", fp);
+        Assertions.assertEquals("f9d76aae4799610a3c904df073dc79f430b408b1", fp);
     }
 }

@@ -51,6 +51,10 @@ public class Http2ClientConnectionPool {
         connectionStatusMap = new ConcurrentHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f);
     }
 
+    /**
+     * Get the singleton instance of Http2ClientConnectionPool.
+     * @return the singleton instance
+     */
     public static Http2ClientConnectionPool getInstance() {
         if (http2ClientConnectionPool == null) {
             http2ClientConnectionPool = new Http2ClientConnectionPool();
@@ -58,6 +62,11 @@ public class Http2ClientConnectionPool {
         return http2ClientConnectionPool;
     }
 
+    /**
+     * Get a connection from the pool for the given URI.
+     * @param uri the URI
+     * @return the client connection, or null if not found
+     */
     public synchronized ClientConnection getConnection(URI uri) {
         if (uri == null) {
             return null;
@@ -80,6 +89,11 @@ public class Http2ClientConnectionPool {
         return null;
     }
 
+    /**
+     * Cache a connection for the given URI.
+     * @param uri the URI
+     * @param connection the connection to cache
+     */
     public synchronized void cacheConnection(URI uri, ClientConnection connection) {
         CachedConnection cachedConnection = getAndRemoveClosedConnection(uri);
         if (cachedConnection == null || getConnectionStatus(uri, cachedConnection) != ConnectionStatus.MULTIPLEX_SUPPORT) {
@@ -203,6 +217,10 @@ public class Http2ClientConnectionPool {
         return status;
     }
 
+    /**
+     * Reset the connection status in the pool.
+     * @param connection the connection to reset
+     */
     public void resetConnectionStatus(ClientConnection connection) {
         if (connection != null) {
             if (!connection.isOpen()) {
@@ -228,10 +246,17 @@ public class Http2ClientConnectionPool {
         }
     }
 
+    /**
+     * Get the number of connections in the pool.
+     * @return the number of connections
+     */
     public int numberOfConnections() {
         return connectionCount.get();
     }
 
+    /**
+     * Clear the connection pool.
+     */
     public void clear() {
         this.connectionCount = new AtomicInteger(0);
         connectionStatusMap.clear();

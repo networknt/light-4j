@@ -63,62 +63,70 @@ public enum ServerOption {
      * @return validated result
      */
     private static boolean setServerOption(ServerOption serverOption, Object value, ServerConfig serverConfig) {
-        switch (serverOption) {
-            case BACKLOG:
+        return switch (serverOption) {
+            case BACKLOG -> {
                 if (value == null || Config.loadIntegerValue(ServerConfig.BACKLOG, value) <= 0) {
                     serverConfig.setBacklog(10000);
-                    return false;
+                    yield false;
                 }
-                return true;
-            case IO_THREADS:
+                yield true;
+            }
+            case IO_THREADS -> {
                 if (value == null || Config.loadIntegerValue(ServerConfig.IO_THREADS, value) <= 0) {
                     serverConfig.setIoThreads(Runtime.getRuntime().availableProcessors() * 2);
-                    return false;
+                    yield false;
                 }
-                return true;
-            case WORKER_THREADS:
+                yield true;
+            }
+            case WORKER_THREADS -> {
                 if (value == null || Config.loadIntegerValue(ServerConfig.WORKER_THREADS, value) <= 0) {
                     serverConfig.setWorkerThreads(200);
-                    return false;
+                    yield false;
                 }
-                return true;
-            case BUFFER_SIZE:
+                yield true;
+            }
+            case BUFFER_SIZE -> {
                 if (value == null || Config.loadIntegerValue(ServerConfig.BUFFER_SIZE, value) <= 0) {
                     serverConfig.setBufferSize(1024 * 16);
-                    return false;
+                    yield false;
                 }
-                return true;
-            case SERVER_STRING:
+                yield true;
+            }
+            case SERVER_STRING -> {
                 if (value == null || value.equals("")) {
                     serverConfig.setServerString("L");
-                    return false;
+                    yield false;
                 }
-                return true;
-            case ALWAYS_SET_DATE:
+                yield true;
+            }
+            case ALWAYS_SET_DATE -> {
                 if (value == null) {
                     serverConfig.setAlwaysSetDate(true);
                 }
-                return true;
-            case MAX_TRANSFER_FILE_SIZE:
+                yield true;
+            }
+            case MAX_TRANSFER_FILE_SIZE -> {
                 if (value == null || Config.loadLongValue(ServerConfig.MAX_TRANSFER_FILE_SIZE, value) <= 0) {
                     serverConfig.setMaxTransferFileSize(1000000);
-                    return false;
+                    yield false;
                 }
-                return true;
-            case ALLOW_UNESCAPED_CHARACTERS_IN_URL:
+                yield true;
+            }
+            case ALLOW_UNESCAPED_CHARACTERS_IN_URL -> {
                 if (value == null) {
                     serverConfig.setAllowUnescapedCharactersInUrl(false);
                 }
-                return true;
-            case SHUTDOWN_TIMEOUT:
+                yield true;
+            }
+            case SHUTDOWN_TIMEOUT -> {
                 if (value == null || Config.loadIntegerValue(ServerConfig.SHUTDOWN_TIMEOUT, value) <= 0) {
-                    serverConfig.setShutdownTimeout(10);
-                    return false;
+                    serverConfig.setShutdownTimeout(null);
+                    yield false;
                 }
-                return true;
-            default:
-                return true;
-        }
+                yield true;
+            }
+            default -> true;
+        };
     }
 
     private static void setToDefaultServerOption(ServerOption serverOption, ServerConfig serverConfig) {

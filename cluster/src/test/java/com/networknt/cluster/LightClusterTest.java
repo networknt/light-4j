@@ -17,8 +17,8 @@
 package com.networknt.cluster;
 
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.List;
@@ -32,34 +32,34 @@ public class LightClusterTest {
     @Test
     public void testServiceToUrl() {
         String s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
-        Assert.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
+        Assertions.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
         s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
-        Assert.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
+        Assertions.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
     }
 
     @Test
     public void testServiceToUrlWithEnvironment() {
         String s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0000", null);
         System.out.println(s);
-        Assert.assertTrue("https://localhost:8440".equals(s));
+        Assertions.assertTrue("https://localhost:8440".equals(s));
         s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0001", null);
         System.out.println(s);
-        Assert.assertTrue("https://localhost:8441".equals(s));
+        Assertions.assertTrue("https://localhost:8441".equals(s));
         s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0002", null);
         System.out.println(s);
-        Assert.assertTrue("https://localhost:8442".equals(s));
+        Assertions.assertTrue("https://localhost:8442".equals(s));
 
     }
 
     @Test
     public void testServiceToSingleUrlWithEnv() {
         String s = cluster.serviceToUrl("https", "com.networknt.chainwriter-1.0.0", "0000", null);
-        Assert.assertTrue("https://localhost:8444".equals(s));
+        Assertions.assertTrue("https://localhost:8444".equals(s));
     }
 
     @Test
     public void testServices() {
         List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
-        Assert.assertEquals(2, l.size());
+        Assertions.assertEquals(2, l.size());
     }
 }

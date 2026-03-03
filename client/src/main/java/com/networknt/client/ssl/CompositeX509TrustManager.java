@@ -22,6 +22,10 @@ public class CompositeX509TrustManager implements X509TrustManager {
 
     private final List<X509TrustManager> trustManagers;
 
+    /**
+     * Constructs a CompositeX509TrustManager with the given list of trust managers.
+     * @param trustManagers the list of trust managers to compose
+     */
     public CompositeX509TrustManager(List<X509TrustManager> trustManagers) {
         this.trustManagers = trustManagers;
     }

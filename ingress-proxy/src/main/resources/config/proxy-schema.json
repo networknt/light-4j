@@ -21,12 +21,14 @@
     "connectionsPerThread" : {
       "type" : "integer",
       "description" : "Connections per thread to the target servers.",
-      "default" : 20
+      "default" : 20,
+      "format" : "int32"
     },
     "maxRequestTime" : {
       "type" : "integer",
       "description" : "Max request time in milliseconds before timeout.",
-      "default" : 1000
+      "default" : 1000,
+      "format" : "int32"
     },
     "rewriteHostHeader" : {
       "type" : "boolean",
@@ -41,12 +43,14 @@
     "maxConnectionRetries" : {
       "type" : "integer",
       "description" : "Max Connection Retries.",
-      "default" : 3
+      "default" : 3,
+      "format" : "int32"
     },
     "maxQueueSize" : {
       "type" : "integer",
       "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API.\n",
-      "default" : 0
+      "default" : 0,
+      "format" : "int32"
     },
     "forwardJwtClaims" : {
       "type" : "boolean",

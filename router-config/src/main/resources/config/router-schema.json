@@ -16,7 +16,8 @@
     "maxRequestTime" : {
       "type" : "integer",
       "description" : "Max request time in milliseconds before timeout to the server. This is the global setting shared\nby all backend services if they don't have service specific timeout.",
-      "default" : 1000
+      "default" : 1000,
+      "format" : "int32"
     },
     "pathPrefixMaxRequestTime" : {
       "type" : "object",
@@ -28,17 +29,20 @@
     "connectionsPerThread" : {
       "type" : "integer",
       "description" : "Connections per thread.",
-      "default" : 10
+      "default" : 10,
+      "format" : "int32"
     },
     "maxQueueSize" : {
       "type" : "integer",
       "description" : "The max queue size for the requests if there is no connection to the downstream API in the connection pool.\nThe default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no\nneed to use the request queue to increase the memory usage. It should only be used when you see 503 errors\nin the log after maxConnectionRetries to accommodate slow backend API.",
-      "default" : 0
+      "default" : 0,
+      "format" : "int32"
     },
     "softMaxConnectionsPerThread" : {
       "type" : "integer",
       "description" : "Soft max connections per thread.",
-      "default" : 5
+      "default" : 5,
+      "format" : "int32"
     },
     "rewriteHostHeader" : {
       "type" : "boolean",
@@ -53,7 +57,8 @@
     "maxConnectionRetries" : {
       "type" : "integer",
       "description" : "Max Connection Retries",
-      "default" : 3
+      "default" : 3,
+      "format" : "int32"
     },
     "preResolveFQDN2IP" : {
       "type" : "boolean",

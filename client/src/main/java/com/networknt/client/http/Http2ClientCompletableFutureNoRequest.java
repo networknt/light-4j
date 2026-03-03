@@ -12,7 +12,16 @@ import org.xnio.channels.StreamSinkChannel;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * A CompletableFuture that implements ClientCallback for requests with no body.
+ */
 public class Http2ClientCompletableFutureNoRequest extends CompletableFuture<ClientResponse> implements ClientCallback<ClientExchange> {
+    /**
+     * Default constructor
+     */
+    public Http2ClientCompletableFutureNoRequest() {
+    }
+
     private Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureNoRequest.class);
 
     @Override

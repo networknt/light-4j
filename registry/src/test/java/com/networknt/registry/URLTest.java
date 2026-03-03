@@ -22,12 +22,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.networknt.utility.Constants;
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  *
@@ -39,7 +38,7 @@ import static org.junit.Assert.fail;
 
 public class URLTest {
     @Test
-    @Ignore
+    @Disabled
     public void testCheckGetMethod() {
         Method[] methods = URL.class.getDeclaredMethods();
         for (Method m : methods) {
@@ -66,45 +65,45 @@ public class URLTest {
         URL url = new URLImpl("http", "localhost", 7080, "config", parameters);
 
         String p1 = url.getParameter("key1");
-        Assert.assertEquals("value1", p1);
+        Assertions.assertEquals("value1", p1);
         String p2 = url.getParameter("key6", "default");
-        Assert.assertEquals("default", p2);
+        Assertions.assertEquals("default", p2);
 
         Boolean b1 = url.getBooleanParameter("key2", true);
-        Assert.assertTrue(b1);
+        Assertions.assertTrue(b1);
 
         Boolean b2 = url.getBooleanParameter("key7", true);
-        Assert.assertTrue(b2);
+        Assertions.assertTrue(b2);
 
         Integer i1 = url.getIntParameter("key3", 0);
-        Assert.assertEquals(10, i1.intValue());
+        Assertions.assertEquals(10, i1.intValue());
 
         Integer i2 = url.getIntParameter("key8", 9);
-        Assert.assertEquals(9, i2.intValue());
+        Assertions.assertEquals(9, i2.intValue());
 
         //Float f1 = url.getFloatParameter("key4", 0.0f);
-        //Assert.assertEquals(Float.valueOf(3.14f), f1);
+        //Assertions.assertEquals(Float.valueOf(3.14f), f1);
 
         //Float f2 = url.getFloatParameter("key9", 0.01f);
-        //Assert.assertEquals(Float.valueOf(0.01f), f2);
+        //Assertions.assertEquals(Float.valueOf(0.01f), f2);
 
         String uri = url.getUri();
-        Assert.assertEquals("http://localhost:7080/config", uri);
+        Assertions.assertEquals("http://localhost:7080/config", uri);
 
         String identity = url.getIdentity();
-        Assert.assertEquals("http://localhost:7080/default/config/1.0/service", identity);
+        Assertions.assertEquals("http://localhost:7080/default/config/1.0/service", identity);
 
         URL refUrl = new URLImpl("http", "localhost", 7080, "config");
         boolean canServe = url.canServe(refUrl);
-        Assert.assertTrue(canServe);
+        Assertions.assertTrue(canServe);
 
         String fullStr = url.toFullStr();
-        Assert.assertEquals("http://localhost:7080/config?key1=value1&key2=true&key3=10&key4=3.14&key5=10L&nodeType=service&version=1.0&", fullStr);
+        Assertions.assertEquals("http://localhost:7080/config?key1=value1&key2=true&key3=10&key4=3.14&key5=10L&nodeType=service&version=1.0&", fullStr);
 
 
         URL newUrl = URLImpl.valueOf("http://localhost:7080/config?key1=value1&key2=true&key3=10&key4=3.14&key5=10L&nodeType=service&version=1.0&");
 
-        Assert.assertNotNull(newUrl);
+        Assertions.assertNotNull(newUrl);
     }
 
     @Test

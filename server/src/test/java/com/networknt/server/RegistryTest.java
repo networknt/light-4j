@@ -17,9 +17,11 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +42,14 @@ import java.util.Map;
  *
  * Created by steve on 29/01/17.
  */
+@Disabled
 public class RegistryTest {
     static final Logger logger = LoggerFactory.getLogger(RegistryTest.class);
     static final String homeDir = System.getProperty("user.home");
 
     static Server server = null;
 
-    //@BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         // inject server config here.
         Config config = Config.getInstance();
@@ -72,7 +75,7 @@ public class RegistryTest {
         }
     }
 
-    //@AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (server != null) {
             try {
@@ -102,10 +105,10 @@ public class RegistryTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testServer() {
         // server cannot be started as there is no spi routing handler provider
-        Assert.assertNull(server);
+        Assertions.assertNull(server);
         try {
             Thread.sleep(60000);
         } catch (InterruptedException ignored) {

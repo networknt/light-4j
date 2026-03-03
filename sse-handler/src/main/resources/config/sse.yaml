@@ -1,0 +1,26 @@
+# SSE Handler Configuration
+# Enable SSE Handler
+enabled: ${sse.enabled:true}
+# Default SSE Endpoint Path if there is only one endpoint for SSE Handler.
+path: ${sse.path:/sse}
+# Default keep-alive interval in milliseconds for path prefixes not defined in pathPrefixes or there is
+# only one endpoint for SSE Handler.
+keepAliveInterval: ${sse.keepAliveInterval:10000}
+# Define path prefix related configuration properties as a list of key/value pairs. Make sure that there is
+# a pathPrefix key in the config along with keepAliveInterval in milliseconds for the pathPrefix. If request
+# path cannot match to one of the pathPrefixes, the request will be skipped.
+#   - pathPrefix: /sse/abc
+#     keepAliveInterval: 20000
+#   - pathPrefix: /sse/def
+#     keepAliveInterval: 40000
+pathPrefixes: ${sse.pathPrefixes:}
+# When RouterHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the
+# total response time of the downstream API. With this value injected, users can quickly determine how much
+# time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including
+# the network latency. By default, it is false, and metrics will not be collected and injected into the metrics
+# handler configured in the request/response chain.
+metricsInjection: ${sse.metricsInjection:false}
+# When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the
+# metrics info can be categorized in a tree structure under the name. By default, it is router-response, and
+# users can change it.
+metricsName: ${sse.metricsName:router-response}

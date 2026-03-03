@@ -20,10 +20,18 @@ import java.util.List;
 public abstract class ByteBufferReadChannelListener implements ChannelListener<StreamSourceChannel> {
     private final ByteBufferPool bufferPool;
     private List<Byte> result = new ArrayList<>();
+    /**
+     * Constructs a ByteBufferReadChannelListener with the given buffer pool.
+     * @param bufferPool the pool to allocate buffers from
+     */
     public ByteBufferReadChannelListener(ByteBufferPool bufferPool) {
         this.bufferPool = bufferPool;
     }
 
+    /**
+     * Sets up the channel for reading.
+     * @param channel the channel to read from
+     */
     public void setup(StreamSourceChannel channel) {
         PooledByteBuffer resource = this.bufferPool.allocate();
         ByteBuffer buffer = resource.getBuffer();
@@ -90,7 +98,15 @@ public abstract class ByteBufferReadChannelListener implements ChannelListener<S
 
     }
 
+    /**
+     * Called when the buffer reading is done.
+     * @param out the list of bytes read
+     */
     protected abstract void bufferDone(List<Byte> out);
 
+    /**
+     * Called when an error occurs during reading.
+     * @param var1 the exception that occurred
+     */
     protected abstract void error(IOException var1);
 }

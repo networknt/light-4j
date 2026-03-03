@@ -16,9 +16,9 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.Counter;
 import io.dropwizard.metrics.Gauge;
@@ -64,7 +64,7 @@ public class JmxReporterTest {
     private final ObjectNameFactory mockObjectNameFactory = mock(ObjectNameFactory.class);
     private final ObjectNameFactory concreteObjectNameFactory = reporter.getObjectNameFactory();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         when(gauge.getValue()).thenReturn(1);
 
@@ -121,7 +121,7 @@ public class JmxReporterTest {
         reporter.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         reporter.stop();
     }

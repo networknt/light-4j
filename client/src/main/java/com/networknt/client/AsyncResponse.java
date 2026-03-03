@@ -18,37 +18,71 @@ package com.networknt.client;
 
 import io.undertow.client.ClientResponse;
 
+/**
+ * This class represents an asynchronous response from a client request.
+ * It contains the ClientResponse, the response body as a String, and the response time.
+ */
 public class AsyncResponse {
     private ClientResponse clientResponse;
     private String responseBody;
     private long responseTime;
 
+    /**
+     * Constructs an AsyncResponse with the given parameters.
+     * @param clientResponse the ClientResponse object
+     * @param responseBody the response body as a String
+     * @param responseTime the time taken to receive the response
+     */
     public AsyncResponse(ClientResponse clientResponse, String responseBody, long responseTime) {
         this.clientResponse = clientResponse;
         this.responseBody = responseBody;
         this.responseTime = responseTime;
     }
 
+    /**
+     * Returns the ClientResponse object.
+     * @return the ClientResponse object
+     */
     public ClientResponse getClientResponse() {
         return clientResponse;
     }
 
+    /**
+     * Sets the ClientResponse object.
+     * @param clientResponse the ClientResponse object to set
+     */
     public void setClientResponse(ClientResponse clientResponse) {
         this.clientResponse = clientResponse;
     }
 
+    /**
+     * Returns the response body as a String.
+     * @return the response body
+     */
     public String getResponseBody() {
         return responseBody;
     }
 
+    /**
+     * Sets the response body.
+     * @param responseBody the response body to set
+     */
     public void setResponseBody(String responseBody) {
         this.responseBody = responseBody;
     }
 
+    /**
+     * Returns the response time.
+     * @return the response time
+     */
     public long getResponseTime() {
         return responseTime;
     }
 
+    /**
+     * Sets the response time.
+     * @param responseTime the response time to set
+     */
     public void setResponseTime(long responseTime) {
         this.responseTime = responseTime;
     }

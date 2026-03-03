@@ -3,25 +3,24 @@ package com.networknt.audit;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Config.class})
-@PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
+@ExtendWith(MockitoExtension.class)
 public class AuditHandlerWithAuditOnErrorTestBase extends AuditHandlerTestBase {
-    @BeforeClass
+    private static MockedStatic<Config> mockedConfig;
+
+    @BeforeAll
     public static void init() {
         logger.info("starting server with auditOnError true");
 
@@ -31,10 +30,17 @@ public class AuditHandlerWithAuditOnErrorTestBase extends AuditHandlerTestBase {
         Map<String, Object> originAuditConfig = spyConfig.getDefaultJsonMapConfigNoCache("audit");
         originAuditConfig.put("auditOnError", Boolean.TRUE);
         doReturn(originAuditConfig).when(spyConfig).getDefaultJsonMapConfigNoCache(eq("audit"));
-        PowerMockito.mockStatic(Config.class);
-        PowerMockito.when(Config.getInstance()).thenReturn(spyConfig);
+        mockedConfig = mockStatic(Config.class);
+        mockedConfig.when(Config::getInstance).thenReturn(spyConfig);
 
         setUp();
+    }
+
+    @AfterAll
+    public static void close() {
+        if (mockedConfig != null) {
+            mockedConfig.close();
+        }
     }
 
     @Test
@@ -60,6 +66,6 @@ public class AuditHandlerWithAuditOnErrorTestBase extends AuditHandlerTestBase {
         ILoggingEvent event = captorLoggingEvent.getValue();
         Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
 
-        Assert.assertEquals("{statusCode=401, code=ERR10001, severity=ERROR, message=AUTH_TOKEN_EXPIRED, description=Jwt token in authorization header expired}", mapValue.get("Status").toString());
+        Assertions.assertEquals("{statusCode=401, code=ERR10001, severity=ERROR, message=AUTH_TOKEN_EXPIRED, description=Jwt token in authorization header expired}", mapValue.get("Status").toString());
     }
 }

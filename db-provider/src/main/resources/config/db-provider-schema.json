@@ -26,7 +26,8 @@
     "maximumPoolSize" : {
       "type" : "integer",
       "description" : "Maximum number of connections in the pool",
-      "default" : 3
+      "default" : 3,
+      "format" : "int32"
     }
   }
 }

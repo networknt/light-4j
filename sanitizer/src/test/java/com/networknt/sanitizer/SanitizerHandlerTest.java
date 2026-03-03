@@ -18,16 +18,17 @@ package com.networknt.sanitizer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.sanitizer.builder.ServerBuilder;
 import io.undertow.Undertow;
 import io.undertow.client.*;
 import io.undertow.util.*;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class SanitizerHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -60,7 +61,7 @@ public class SanitizerHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if(server != null) {
             try {
@@ -77,12 +78,19 @@ public class SanitizerHandlerTest {
     public void testGetHeader() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/header").setMethod(Methods.GET);
@@ -94,12 +102,14 @@ public class SanitizerHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
     }
 
     @Test
@@ -107,12 +117,19 @@ public class SanitizerHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "{\"key\":\"value\"}";
@@ -133,14 +150,16 @@ public class SanitizerHandlerTest {
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
+            Assertions.assertNotNull(body);
+            Assertions.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
         }
     }
 
@@ -149,12 +168,19 @@ public class SanitizerHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "{\"key\":\"<script>alert('test')</script>\"}";
@@ -174,15 +200,17 @@ public class SanitizerHandlerTest {
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
+            Assertions.assertNotNull(body);
             Map map = Config.getInstance().getMapper().readValue(body, new TypeReference<HashMap<String, Object>>() {});
-            Assert.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
+            Assertions.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
         }
     }
 
@@ -190,31 +218,32 @@ public class SanitizerHandlerTest {
     public void testEncodeNode() throws Exception {
         String data = "{\"s1\":\"<script>alert('test1')</script>\",\"s2\":[\"abc\",\"<script>alert('test2')</script>\"],\"s3\":{\"s4\":\"def\",\"s5\":\"<script>alert('test5')</script>\"},\"s6\":[{\"s7\":\"<script>alert('test7')</script>\"},{\"s8\":\"ghi\"}],\"s9\":[[\"<script>alert('test9')</script>\"],[\"jkl\"]]}";
         HashMap<String, Object> jsonMap = Config.getInstance().getMapper().readValue(data,new TypeReference<HashMap<String, Object>>(){});
-        SanitizerHandler handler = new SanitizerHandler();
-        handler.bodyEncoder.encodeNode(jsonMap);
-        Assert.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
+        SanitizerConfig config = SanitizerConfig.load();
+        org.owasp.encoder.EncoderWrapper bodyEncoder = new org.owasp.encoder.EncoderWrapper(org.owasp.encoder.Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        bodyEncoder.encodeNode(jsonMap);
+        Assertions.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
         ArrayList l2 = (ArrayList)jsonMap.get("s2");
         String s2 = (String)l2.get(1);
-        Assert.assertEquals(s2, "<script>alert(\\'test2\\')</script>");
+        Assertions.assertEquals(s2, "<script>alert(\\'test2\\')</script>");
         HashMap<String, Object> m3 = (HashMap<String,Object>)jsonMap.get("s3");
         String s5 = (String)m3.get("s5");
-        Assert.assertEquals(s5, "<script>alert(\\'test5\\')</script>");
+        Assertions.assertEquals(s5, "<script>alert(\\'test5\\')</script>");
         ArrayList l6 = (ArrayList)jsonMap.get("s6");
         HashMap<String,Object> m7 = (HashMap<String, Object>)l6.get(0);
         String s7 = (String)m7.get("s7");
-        Assert.assertEquals(s7, "<script>alert(\\'test7\\')</script>");
+        Assertions.assertEquals(s7, "<script>alert(\\'test7\\')</script>");
         ArrayList l9 = (ArrayList)jsonMap.get("s9");
         ArrayList l = (ArrayList)l9.get(0);
         String s9 = (String)l.get(0);
-        Assert.assertEquals(s9, "<script>alert(\\'test9\\')</script>");
+        Assertions.assertEquals(s9, "<script>alert(\\'test9\\')</script>");
     }
 
     @Test
     public void testEncoder() throws Exception {
         String s1 = "keep-alive";
         String s2 = "text/html";
-        Assert.assertEquals(Encode.forJavaScriptSource(s1), s1);
-        Assert.assertEquals(Encode.forJavaScriptSource(s2), s2);
+        Assertions.assertEquals(Encode.forJavaScriptSource(s1), s1);
+        Assertions.assertEquals(Encode.forJavaScriptSource(s2), s2);
 
         String s3 = "<script>alert('test')</script>";
         String e3 = Encode.forJavaScriptSource(s3);
@@ -225,7 +254,7 @@ public class SanitizerHandlerTest {
         System.out.println("block = " + e5);
         String e6 = Encode.forJavaScript(e3);
         System.out.println("script = " + e6);
-        Assert.assertNotEquals(e3, s3);
+        Assertions.assertNotEquals(e3, s3);
 
         String s7 = "<script>location.href=\"respources.html\"</script>";
         String e7 = Encode.forJavaScriptSource(s7);

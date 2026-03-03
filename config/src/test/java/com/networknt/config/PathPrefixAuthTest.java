@@ -1,8 +1,8 @@
 package com.networknt.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -21,8 +21,8 @@ public class PathPrefixAuthTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(pathPrefixAuths);
-        Assert.assertEquals(pathPrefixAuths.size(), 1);
+        Assertions.assertNotNull(pathPrefixAuths);
+        Assertions.assertEquals(pathPrefixAuths.size(), 1);
     }
 
 }

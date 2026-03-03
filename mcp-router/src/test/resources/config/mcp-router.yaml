@@ -1,0 +1,8 @@
+enabled: true
+# Path for MCP endpoint (Streamable HTTP)
+path: /mcp
+tools:
+  - name: weather
+    description: Get weather information
+    host: http://localhost:7081
+    path: /weather

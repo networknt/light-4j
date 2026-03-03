@@ -18,27 +18,51 @@ package com.networknt.client.model;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * TimeoutDef class.
+ */
 public class TimeoutDef {
     private long timeout;
     private TimeUnit unit;
 
+    /**
+     * Constructor.
+     * @param timeout the timeout
+     * @param timeUnit the time unit
+     */
     public TimeoutDef(long timeout, TimeUnit timeUnit) {
         this.timeout = timeout;
         this.unit = timeUnit;
     }
 
+    /**
+     * Get timeout.
+     * @return the timeout
+     */
     public long getTimeout() {
         return timeout;
     }
 
+    /**
+     * Set timeout.
+     * @param timeout the timeout
+     */
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
 
+    /**
+     * Get unit.
+     * @return the time unit
+     */
     public TimeUnit getUnit() {
         return unit;
     }
 
+    /**
+     * Set unit.
+     * @param unit the time unit
+     */
     public void setUnit(TimeUnit unit) {
         this.unit = unit;
     }

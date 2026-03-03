@@ -7,6 +7,7 @@ import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoGetHandler;
 import com.networknt.info.ServerInfoUtil;
 import com.networknt.utility.StringUtils;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -32,17 +33,38 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     private static final int UNUSUAL_STATUS_CODE = 300;
     private static OptionMap optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
     private static final String PROXY_INFO_KEY = "proxy_info";
-    static ProxyConfig proxyConfig;
-    static ServerInfoConfig serverInfoConfig;
+    private String proxyConfigName = ProxyConfig.CONFIG_NAME;
+    private String serverInfoConfigName = ServerInfoConfig.CONFIG_NAME;
 
+    /**
+     * Construct ProxyServerInfoHandler with default config name
+     */
     public ProxyServerInfoHandler() {
-        proxyConfig = ProxyConfig.load();
-        serverInfoConfig = ServerInfoConfig.load();
+    }
+
+    /**
+     * Construct ProxyServerInfoHandler with proxy config name
+     * @param proxyConfigName proxy config name
+     */
+    public ProxyServerInfoHandler(String proxyConfigName) {
+        this.proxyConfigName = proxyConfigName;
+    }
+
+    /**
+     * Construct ProxyServerInfoHandler with proxy and server info config name
+     * @param proxyConfigName proxy config name
+     * @param serverInfoConfigName server info config name
+     */
+    public ProxyServerInfoHandler(String proxyConfigName, String serverInfoConfigName) {
+        this.proxyConfigName = proxyConfigName;
+        this.serverInfoConfigName = serverInfoConfigName;
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ProxyServerInfoHandler.handleRequest starts.");
+        ProxyConfig proxyConfig = ProxyConfig.load(proxyConfigName);
+        ServerInfoConfig serverInfoConfig = ServerInfoConfig.load(serverInfoConfigName);
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> proxyInfo = ServerInfoUtil.getServerInfo(serverInfoConfig);
         result.put(PROXY_INFO_KEY, proxyInfo);
@@ -74,18 +96,18 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
     public static String getServerInfo(String url, String token) {
 
         String res = "{}";
-        ClientConnection connection = null;
+        SimpleConnectionState.ConnectionToken connectionToken = null;
         try {
             URI uri = new URI(url);
             switch(uri.getScheme()) {
                 case "http":
-                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+                    connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
                     break;
                 case "https":
-                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+                    connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
                     break;
             }
-
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
             AtomicReference<ClientResponse> reference = send(connection, Methods.GET, "/server/info", token, null);
             if(reference != null && reference.get() != null) {
                 int statusCode = reference.get().getResponseCode();
@@ -100,7 +122,7 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
             logger.error("Server info request exception", e);
             throw new RuntimeException("exception when getting server info", e);
         } finally {
-            client.returnConnection(connection);
+            if (connectionToken != null) client.restore(connectionToken);
         }
         return res;
     }

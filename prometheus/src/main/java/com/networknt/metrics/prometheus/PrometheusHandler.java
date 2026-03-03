@@ -22,7 +22,6 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.SimpleTimer;
@@ -49,8 +48,6 @@ import java.util.concurrent.ConcurrentMap;
  *
  */
 public class PrometheusHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "prometheus";
-    public static PrometheusConfig config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
 
     private CollectorRegistry registry;
 
@@ -70,6 +67,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
 
     public PrometheusHandler() {
+        PrometheusConfig.load();
         registry=  CollectorRegistry.defaultRegistry;
     }
 
@@ -106,7 +104,8 @@ public class PrometheusHandler implements MiddlewareHandler {
                         summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
 
                         incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
-                        if (config.enableHotspot) {
+                        PrometheusConfig config = PrometheusConfig.load();
+                        if (config.isEnableHotspot()) {
                             logger.info("Prometheus hotspot monitor enabled.");
                             DefaultExports.initialize();
                         }
@@ -126,17 +125,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(PrometheusConfig.CONFIG_NAME, PrometheusHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
+        return PrometheusConfig.load().isEnabled();
     }
 
     private void incCounterForStatusCode(int statusCode, List<String> labels,  List<String> labelValues) {

@@ -19,26 +19,31 @@ package com.networknt.dump;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * this class is to load dump.yml config file, and map settings to properties of this class.
  */
-@ConfigSchema(configKey = "dump",
+@ConfigSchema(
+        configKey = "dump",
         configName = "dump",
-        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD},
-        configDescription = "Dump middleware configuration.")
+        configDescription = "Dump middleware configuration.",
+        outputFormats = {
+                OutputFormat.JSON_SCHEMA,
+                OutputFormat.YAML,
+                OutputFormat.CLOUD
+        }
+)
 public class DumpConfig {
     public static final String CONFIG_NAME = "dump";
 
     @BooleanField(
             configFieldName = "enabled",
             externalizedKeyName = "enabled",
-            externalized = true,
             description = "Indicate if the dump middleware is enabled or not. It should only be enabled in test environment.",
             defaultValue = "false"
     )
@@ -47,7 +52,6 @@ public class DumpConfig {
     @BooleanField(
             configFieldName = "mask",
             externalizedKeyName = "mask",
-            externalized = true,
             description = "Indicate if the dump middleware should mask sensitive data.",
             defaultValue = "false"
     )
@@ -58,7 +62,6 @@ public class DumpConfig {
             externalizedKeyName = "logLevel",
             defaultValue = "INFO",
             pattern = "^(TRACE|DEBUG|INFO|WARN|ERROR)$",
-            externalized = true,
             description = "The log level for the dump middleware. ERROR | WARN | INFO | DEBUG | TRACE"
     )
     private String logLevel = "INFO";
@@ -67,7 +70,6 @@ public class DumpConfig {
             configFieldName = "indentSize",
             externalizedKeyName = "indentSize",
             defaultValue = "4",
-            externalized = true,
             description = "The indent size for the dump middleware."
     )
     private int indentSize;
@@ -75,7 +77,6 @@ public class DumpConfig {
     @BooleanField(
             configFieldName = "useJson",
             externalizedKeyName = "useJson",
-            externalized = true,
             description = "Indicate if the dump middleware should use JSON format. If use json, indentSize option will be ignored.",
             defaultValue = "false"
     )
@@ -84,7 +85,6 @@ public class DumpConfig {
     @BooleanField(
             configFieldName = "requestEnabled",
             externalizedKeyName = "requestEnabled",
-            externalized = true,
             description = "Indicate if the dump middleware should dump request.",
             defaultValue = "false"
     )
@@ -93,7 +93,6 @@ public class DumpConfig {
     @ObjectField(
             configFieldName = "request",
             externalizedKeyName = "request",
-            externalized = true,
             description = "The request settings for the dump middleware.\n" +
                     "request:\n" +
                     "  url: true\n" +
@@ -120,7 +119,6 @@ public class DumpConfig {
     @BooleanField(
             configFieldName = "responseEnabled",
             externalizedKeyName = "responseEnabled",
-            externalized = true,
             description = "Indicate if the dump middleware should dump response.",
             defaultValue = "false"
     )
@@ -129,7 +127,6 @@ public class DumpConfig {
     @ObjectField(
             configFieldName = "response",
             externalizedKeyName = "response",
-            externalized = true,
             description = "The response settings for the dump middleware.\n" +
                     "response:\n" +
                     "  headers: true\n" +
@@ -142,62 +139,64 @@ public class DumpConfig {
 
     private static Boolean DEFAULT = false;
 
-    //request settings:
-//    private boolean requestUrlEnabled ;
-//    private boolean requestHeaderEnabled ;
-//    private List<String> requestFilteredHeaders;
-//    private boolean requestCookieEnabled;
-//    private List<String> requestFilteredCookies;
-//    private boolean requestQueryParametersEnabled;
-//    private List<String> requestFilteredQueryParameters;
-//    private boolean requestBodyEnabled;
-//
-//    //response settings:
-//    private boolean responseHeaderEnabled;
-//    private List<String> responseFilteredHeaders;
-//    private boolean responseCookieEnabled;
-//    private List<String> responseFilteredCookies;
-//    private boolean responseStatusCodeEnabled;
-//    private boolean responseBodyEnabled;
 
+
+    private Map<String, Object> mappedConfig;
+
+    private static volatile DumpConfig instance;
+
+    private DumpConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+
+    private DumpConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static DumpConfig load() {
+        return load(CONFIG_NAME);
+    }
+
+    public static DumpConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (DumpConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new DumpConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, DumpConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
+        return new DumpConfig(configName);
+    }
 
     public void setResponse(Map<String, Object> response) {
         final var mapper = Config.getInstance().getMapper();
-        this.response = mapper.convertValue(response, new TypeReference<>() {});
+        this.response = mapper.convertValue(response, new TypeReference<>() {
+        });
     }
 
 
     public void setRequest(Map<String, Object> request) {
         final var mapper = Config.getInstance().getMapper();
-        this.request = mapper.convertValue(request, new TypeReference<>() {});
+        this.request = mapper.convertValue(request, new TypeReference<>() {
+        });
     }
 
-//    private void loadRequestConfig(Map<String, Object> request) {
-//        this.requestBodyEnabled = loadEnableConfig(request, DumpConstants.BODY);
-//        this.requestCookieEnabled = loadEnableConfig(request, DumpConstants.COOKIES);
-//        this.requestHeaderEnabled = loadEnableConfig(request, DumpConstants.HEADERS);
-//        this.requestQueryParametersEnabled = loadEnableConfig(request, DumpConstants.QUERY_PARAMETERS);
-//        this.requestUrlEnabled = loadEnableConfig(request, DumpConstants.URL);
-//        this.requestFilteredCookies = loadFilterConfig(request, DumpConstants.FILTERED_COOKIES);
-//        this.requestFilteredHeaders = loadFilterConfig(request, DumpConstants.FILTERED_HEADERS);
-//        this.requestFilteredQueryParameters = loadFilterConfig(request, DumpConstants.FILTERED_QUERY_PARAMETERS);
-//    }
-//
-//    private void loadResponseConfig(Map<String, Object> response) {
-//        this.responseBodyEnabled = loadEnableConfig(response, DumpConstants.BODY);
-//        this.responseCookieEnabled = loadEnableConfig(response, DumpConstants.COOKIES);
-//        this.responseHeaderEnabled = loadEnableConfig(response, DumpConstants.HEADERS);
-//        this.responseStatusCodeEnabled = loadEnableConfig(response, DumpConstants.STATUS_CODE);
-//        this.responseFilteredCookies = loadFilterConfig(response, DumpConstants.FILTERED_COOKIES);
-//        this.responseFilteredHeaders = loadFilterConfig(response, DumpConstants.HEADERS);
-//    }
-
     private boolean loadEnableConfig(Map<String, Object> config, String optionName) {
-        return config.get(optionName) instanceof Boolean ? (Boolean)config.get(optionName) : DEFAULT;
+        return config.get(optionName) instanceof Boolean ? (Boolean) config.get(optionName) : DEFAULT;
     }
 
     private List<String> loadFilterConfig(Map<String, Object> config, String filterOptionName) {
-        return config.get(filterOptionName) instanceof List ? (List<String>)config.get(filterOptionName) : new ArrayList();
+        return config.get(filterOptionName) instanceof List ? (List<String>) config.get(filterOptionName) : new ArrayList();
     }
 
     public boolean isEnabled() {
@@ -205,11 +204,11 @@ public class DumpConfig {
     }
 
     public boolean isRequestEnabled() {
-        return isEnabled() && !this.requestEnabled;
+        return isEnabled() && requestEnabled;
     }
 
     public boolean isResponseEnabled() {
-        return isEnabled() && !this.responseEnabled;
+        return isEnabled() && responseEnabled;
     }
 
     //auto-generated
@@ -233,7 +232,9 @@ public class DumpConfig {
         this.logLevel = logLevel;
     }
 
-    public int getIndentSize() { return indentSize; }
+    public int getIndentSize() {
+        return indentSize;
+    }
 
     public void setIndentSize(int indentSize) {
         this.indentSize = indentSize;
@@ -250,13 +251,15 @@ public class DumpConfig {
     @Deprecated(since = "2.2.1")
     public Map<String, Object> getRequest() {
         final var mapper = Config.getInstance().getMapper();
-        return mapper.convertValue(request, new TypeReference<>() {});
+        return mapper.convertValue(request, new TypeReference<>() {
+        });
     }
 
     @Deprecated(since = "2.2.1")
     public Map<String, Object> getResponse() {
         final var mapper = Config.getInstance().getMapper();
-        return mapper.convertValue(response, new TypeReference<>() {});
+        return mapper.convertValue(response, new TypeReference<>() {
+        });
     }
 
 
@@ -314,5 +317,37 @@ public class DumpConfig {
 
     public boolean isResponseBodyEnabled() {
         return response.isBody();
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    public void setConfigData() {
+        if (mappedConfig != null) {
+            Object object = mappedConfig.get("enabled");
+            if (object != null) enabled = Config.loadBooleanValue("enabled", object);
+            object = mappedConfig.get("mask");
+            if (object != null) mask = Config.loadBooleanValue("mask", object);
+            object = mappedConfig.get("logLevel");
+            if (object != null) logLevel = (String) object;
+            object = mappedConfig.get("indentSize");
+            if (object != null) indentSize = Config.loadIntegerValue("indentSize", object);
+            object = mappedConfig.get("useJson");
+            if (object != null) useJson = Config.loadBooleanValue("useJson", object);
+            object = mappedConfig.get("requestEnabled");
+            if (object != null) requestEnabled = Config.loadBooleanValue("requestEnabled", object);
+            object = mappedConfig.get("responseEnabled");
+            if (object != null) responseEnabled = Config.loadBooleanValue("responseEnabled", object);
+
+            object = mappedConfig.get("request");
+            if (object != null) {
+                request = Config.getInstance().getMapper().convertValue(object, DumpRequestConfig.class);
+            }
+            object = mappedConfig.get("response");
+            if (object != null) {
+                response = Config.getInstance().getMapper().convertValue(object, DumpResponseConfig.class);
+            }
+        }
     }
 }

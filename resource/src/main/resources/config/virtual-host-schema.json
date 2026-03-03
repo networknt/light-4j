@@ -1,0 +1,42 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "hosts" ],
+  "properties" : {
+    "hosts" : {
+      "type" : "array",
+      "description" : "List of virtual hosts",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string",
+            "description" : "The path of the virtual host",
+            "default" : "/"
+          },
+          "domain" : {
+            "type" : "string",
+            "description" : "The domain of the virtual host",
+            "default" : "localhost"
+          },
+          "base" : {
+            "type" : "string",
+            "description" : "The base directory of the virtual host",
+            "default" : "/opt/light-4j/public"
+          },
+          "transferMinSize" : {
+            "type" : "integer",
+            "description" : "The minimum size of the file to be transferred",
+            "default" : 1024,
+            "format" : "int32"
+          },
+          "directoryListingEnabled" : {
+            "type" : "boolean",
+            "description" : "If true, directory listing is enabled",
+            "default" : false
+          }
+        }
+      }
+    }
+  }
+}

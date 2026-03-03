@@ -17,6 +17,7 @@
 package com.networknt.audit;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.client.ClientConnection;
@@ -25,9 +26,9 @@ import io.undertow.client.ClientResponse;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AuditHandlerTest extends AuditHandlerTestBase{
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         setUp();
     }
@@ -56,12 +57,19 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "post";
@@ -83,9 +91,11 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
-        Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 
         try {
             Thread.sleep(100);
@@ -99,12 +109,19 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "post";
@@ -125,9 +142,11 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
-        Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assertions.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 
         try {
             Thread.sleep(100);
@@ -254,13 +273,13 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
     @Test //used for testing when doesn't specify timestampFormat
     public void testAuditWith200TimestampLong() throws Exception {
         Map<String, Object> map = testTimestampInitHelper(null);
-        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+        Assertions.assertEquals(1607639411945L, map.get("timestamp"));
     }
 
     @Test //used for testing when user specified a wrong format timestampFormat
     public void testAuditWith200TimestampInvalidFormat() throws Exception {
         Map<String, Object> map = testTimestampInitHelper("abc");
-        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+        Assertions.assertEquals(1607639411945L, map.get("timestamp"));
     }
 
     private Map<String, Object> testTimestampInitHelper(String o) throws Exception {

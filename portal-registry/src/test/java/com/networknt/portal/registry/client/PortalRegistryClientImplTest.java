@@ -17,14 +17,14 @@ package com.networknt.portal.registry.client;
 
 import com.networknt.config.Config;
 import com.networknt.portal.registry.PortalRegistryConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PortalRegistryClientImplTest {
 
-    private static final PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
+    private static final PortalRegistryConfig config = PortalRegistryConfig.load();
 
    @Test
     public void testWaitProperty() {

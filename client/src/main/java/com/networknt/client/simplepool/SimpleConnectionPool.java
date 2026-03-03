@@ -32,26 +32,42 @@ public final class SimpleConnectionPool {
     private final long expireTime;
     private final int poolSize;
 
+    /**
+     * Constructor.
+     * @param expireTime the expire time
+     * @param poolSize the pool size
+     * @param connectionMaker the connection maker
+     */
     public SimpleConnectionPool(long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         this.expireTime = expireTime;
         this.poolSize = poolSize;
         this.connectionMaker = connectionMaker;
     }
 
-    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri)
+    /**
+     * Borrow a connection token.
+     * @param createConnectionTimeout the create connection timeout
+     * @param uri the URI
+     * @return the connection token
+     * @throws RuntimeException RuntimeException
+     */
+    public SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, URI uri)
         throws RuntimeException
     {
-        if(!pools.containsKey(uri)) {
-            synchronized (pools) {
-                if (!pools.containsKey(uri))
-                    pools.put(uri, new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker));
-            }
-        }
-        return pools.get(uri).borrow(createConnectionTimeout);
+        SimpleURIConnectionPool pool = pools.computeIfAbsent(uri,
+            u -> new SimpleURIConnectionPool(u, expireTime, poolSize, connectionMaker));
+        return pool.borrow(createConnectionTimeout);
     }
 
-    public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
-        if(pools.containsKey(connectionToken.uri()))
-            pools.get(connectionToken.uri()).restore(connectionToken);
+    /**
+     * Restore a connection token.
+     * @param connectionToken the connection token
+     */
+    public void restore(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null)
+            return;
+        SimpleURIConnectionPool pool = pools.get(connectionToken.uri());
+        if(pool != null)
+            pool.restore(connectionToken);
     }
 }

@@ -16,12 +16,11 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,9 +38,6 @@ public class JwtConfig {
     public static final String VERSION = "version";
     public static final String EXPIRED_IN_MINUTES = "expiredInMinutes";
     public static final String PROVIDER_ID = "providerId";
-    private Map<String, Object> mappedConfig;
-    //private Map<String, Object> certificate;
-    private final Config config;
 
     @ObjectField(
             configFieldName = KEY,
@@ -54,7 +50,6 @@ public class JwtConfig {
                     "  filename: \"primary.jks\"                  # private key that is used to sign JWT tokens.\n" +
                     "  keyName: selfsigned                      # key name that is used to identify the right key in keystore.\n" +
                     "  password: password                       # private key store password and private key password is the same\n",
-            externalized =true,
             ref = Key.class
     )
     Key key;
@@ -63,7 +58,6 @@ public class JwtConfig {
             configFieldName = ISSUER,
             externalizedKeyName = ISSUER,
             defaultValue = "urn:com:networknt:oauth2:v1",
-            externalized = true,
             description = "issuer of the JWT token"
     )
     String issuer;
@@ -73,7 +67,6 @@ public class JwtConfig {
             configFieldName = AUDIENCE,
             externalizedKeyName = AUDIENCE,
             defaultValue = "urn:com.networknt",
-            externalized = true,
             description = "audience of the JWT token"
     )
     String audience;
@@ -82,7 +75,6 @@ public class JwtConfig {
             configFieldName = EXPIRED_IN_MINUTES,
             externalizedKeyName = EXPIRED_IN_MINUTES,
             defaultValue = "10",
-            externalized = true,
             description = "expired in 10 minutes by default for issued JWT tokens"
     )
     int expiredInMinutes;
@@ -90,7 +82,6 @@ public class JwtConfig {
     @StringField(
             configFieldName = VERSION,
             externalizedKeyName = VERSION,
-            externalized = true,
             defaultValue = "1.0",
             description = "JWT token version"
     )
@@ -100,30 +91,46 @@ public class JwtConfig {
     @StringField(
             configFieldName = PROVIDER_ID,
             externalizedKeyName = PROVIDER_ID,
-            externalized = true,
             description = "If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this\n" +
                     "value should be null so that the OAuth 2.0 provider is run as one instance"
     )
     String providerId;
 
+    private static volatile JwtConfig instance;
+    private final Map<String, Object> mappedConfig;
+    private final Config config;
+
     private JwtConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigMap();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+            setConfigMap();
+        }
     }
+
     public static JwtConfig load() {
-        return new JwtConfig(CONFIG_NAME);
+        return load(CONFIG_NAME);
     }
 
     public static JwtConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (JwtConfig.class) {
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new JwtConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, JwtConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new JwtConfig(configName);
     }
 
-    public void reload(String configName) {
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-    }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

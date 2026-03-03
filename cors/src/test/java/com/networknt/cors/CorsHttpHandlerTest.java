@@ -22,6 +22,7 @@
 package com.networknt.cors;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -36,10 +37,10 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -56,9 +57,6 @@ import static com.networknt.cors.CorsHeaders.*;
 import static com.networknt.cors.CorsHttpHandler.isCorsRequest;
 import static com.networknt.cors.CorsHttpHandler.matchOrigin;
 import static io.undertow.util.Headers.HOST;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
 
 /**
  * Created by stevehu on 2017-02-17.
@@ -68,7 +66,7 @@ public class CorsHttpHandlerTest {
 
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -84,7 +82,7 @@ public class CorsHttpHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -112,12 +110,19 @@ public class CorsHttpHandlerTest {
         String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.GET);
@@ -129,10 +134,12 @@ public class CorsHttpHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(403, statusCode);
+        Assertions.assertEquals(403, statusCode);
     }
 
     @Test
@@ -140,12 +147,19 @@ public class CorsHttpHandlerTest {
         String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
@@ -159,15 +173,17 @@ public class CorsHttpHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         HeaderMap headerMap = reference.get().getResponseHeaders();
         String header = headerMap.getFirst("Access-Control-Allow-Origin");
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertNull(header);
+            Assertions.assertNull(header);
         }
     }
 
@@ -176,12 +192,19 @@ public class CorsHttpHandlerTest {
         String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
@@ -195,15 +218,17 @@ public class CorsHttpHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         HeaderMap headerMap = reference.get().getResponseHeaders();
         String header = headerMap.getFirst("Access-Control-Allow-Origin");
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertNotNull(header);
+            Assertions.assertNotNull(header);
         }
     }
 
@@ -212,12 +237,19 @@ public class CorsHttpHandlerTest {
         String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
@@ -231,15 +263,17 @@ public class CorsHttpHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         HeaderMap headerMap = reference.get().getResponseHeaders();
         String header = headerMap.getFirst("Access-Control-Allow-Origin");
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertNotNull(header);
+            Assertions.assertNotNull(header);
         }
     }
 
@@ -249,16 +283,16 @@ public class CorsHttpHandlerTest {
     @Test
     public void testIsCorsRequest() {
         HeaderMap headers = new HeaderMap();
-        assertThat(isCorsRequest(headers), is(false));
+        Assertions.assertFalse(isCorsRequest(headers));
         headers = new HeaderMap();
         headers.add(new HttpString(ORIGIN), "");
-        assertThat(isCorsRequest(headers), is(true));
+        Assertions.assertTrue(isCorsRequest(headers));
         headers = new HeaderMap();
         headers.add(new HttpString(ACCESS_CONTROL_REQUEST_HEADERS), "");
-        assertThat(isCorsRequest(headers), is(true));
+        Assertions.assertTrue(isCorsRequest(headers));
         headers = new HeaderMap();
         headers.add(new HttpString(ACCESS_CONTROL_REQUEST_METHOD), "");
-        assertThat(isCorsRequest(headers), is(true));
+        Assertions.assertTrue(isCorsRequest(headers));
     }
 
     /**
@@ -273,21 +307,21 @@ public class CorsHttpHandlerTest {
         exchange.setRequestScheme("http");
         exchange.setRequestMethod(HttpString.EMPTY);
         Collection<String> allowedOrigins = null;
-        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
+        Assertions.assertEquals("http://localhost", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
         allowedOrigins = Collections.singletonList("http://www.example.com:9990");
         //Default origin
-        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
+        Assertions.assertEquals("http://localhost", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
         headerMap.clear();
         headerMap.add(HOST, "localhost:80");
         headerMap.add(new HttpString(ORIGIN), "http://www.example.com:9990");
-        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://www.example.com:9990"));
+        Assertions.assertEquals("http://www.example.com:9990", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
         headerMap.clear();
         headerMap.add(HOST, "localhost:80");
         headerMap.add(new HttpString(ORIGIN), "http://www.example.com");
-        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is(nullValue()));
+        Assertions.assertNull(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
         headerMap.addAll(new HttpString(ORIGIN), Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
         allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
-        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
+        Assertions.assertEquals("http://localhost", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
     }
 
 

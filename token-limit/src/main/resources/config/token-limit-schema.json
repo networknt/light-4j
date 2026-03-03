@@ -16,7 +16,8 @@
     "duplicateLimit" : {
       "type" : "integer",
       "description" : "The max number of duplicated token requests. Once this number is passed, the limit is triggered. This\nnumber is set based on the number of client instances as each instance might get its token if there\nis no distributed cache. The duplicated tokens are calculated based on the local in memory cache per\nlight-gateway or oauth-kafka instance. Note: cache.yml needs to be configured.",
-      "default" : 2
+      "default" : 2,
+      "format" : "int32"
     },
     "tokenPathTemplates" : {
       "type" : "array",

@@ -15,14 +15,12 @@
  */
 package com.networknt.registry.support;
 
-import com.networknt.config.Config;
 import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,23 +41,22 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DirectRegistry extends AbstractRegistry {
     private final static Logger logger = LoggerFactory.getLogger(DirectRegistry.class);
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
-    private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
-    private static Map<String, List<URL>> directUrls = new HashMap();
-    private static DirectRegistryConfig config;
+    private final ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap<>();
+    private Map<String, List<URL>> directUrls;
+    private volatile DirectRegistryConfig config;
 
     public DirectRegistry(URL url) {
         super(url);
         config = DirectRegistryConfig.load();
-        if(config.directUrls != null) {
-            ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
-        }
-        if(url.getParameters() != null && url.getParameters().size() > 0) {
+        if(url.getParameters() != null && !url.getParameters().isEmpty()) {
+            logger.warn("Parameter is used for DirectRegistry and it cannot be reloaded. Please switch to direct-registry.yml file.");
+            directUrls = new HashMap<>();
             // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
             for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
                 String tag = null;
                 try {
                     if (logger.isTraceEnabled())
-                        logger.trace("entry key = " + entry.getKey() + " entry value = " + entry.getValue());
+                        logger.trace("entry key = {} entry value = {}", entry.getKey(), entry.getValue());
                     if (entry.getValue().contains(",")) {
                         String[] directUrlArray = entry.getValue().split(",");
                         for (String directUrl : directUrlArray) {
@@ -138,6 +135,19 @@ public class DirectRegistry extends AbstractRegistry {
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
         String serviceId = subscribeUrl.getPath();
         String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
+        // reload DirectRegistryConfig to check if the cached object is changed.
+        DirectRegistryConfig newConfig = DirectRegistryConfig.load();
+        if (newConfig != config) {
+            synchronized (DirectRegistry.class) {
+                if (newConfig != config) {
+                    config = newConfig;
+                    directUrls = config.getDirectUrls();
+                    if(directUrls.isEmpty()) {
+                        logger.error("direct-registry.directUrls is empty in values.yml.");
+                    }
+                }
+            }
+        }
         return directUrls.get(serviceKey(serviceId, tag));
     }
 
@@ -151,10 +161,4 @@ public class DirectRegistry extends AbstractRegistry {
         // do nothing
     }
 
-    public static void reload() {
-        config.reload();
-        directUrls = config.getDirectUrls();
-        if(directUrls != null) ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
-        if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
-    }
 }

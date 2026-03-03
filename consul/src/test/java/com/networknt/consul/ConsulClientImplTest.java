@@ -17,13 +17,13 @@
 package com.networknt.consul;
 
 import com.networknt.config.Config;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ConsulClientImplTest {
 
-    private static final ConsulConfig config = (ConsulConfig) Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+    private static final ConsulConfig config = ConsulConfig.load();
 
    @Test
     public void testWaitProperty() {

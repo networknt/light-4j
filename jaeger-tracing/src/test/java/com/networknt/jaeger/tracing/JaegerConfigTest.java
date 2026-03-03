@@ -16,32 +16,32 @@
 package com.networknt.jaeger.tracing;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class JaegerConfigTest {
 
     @Test
     public void testTrue() {
         JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig("jaeger-tracing-true", JaegerConfig.class);
-        Assert.assertTrue(jaegerConfig.isEnabled());
+        Assertions.assertTrue(jaegerConfig.isEnabled());
     }
 
     @Test
     public void testFalse() {
         JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig("jaeger-tracing-false", JaegerConfig.class);
-        Assert.assertFalse(jaegerConfig.isEnabled());
+        Assertions.assertFalse(jaegerConfig.isEnabled());
     }
 
     @Test
     public void testParamInteger() {
         JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig("jaeger-tracing-true", JaegerConfig.class);
-        Assert.assertEquals(jaegerConfig.getParam(), 1000);
+        Assertions.assertEquals(jaegerConfig.getParam(), 1000);
     }
 
     @Test
     public void testParamDouble() {
         JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig("jaeger-tracing-false", JaegerConfig.class);
-        Assert.assertEquals(jaegerConfig.getParam(), 0.5);
+        Assertions.assertEquals(jaegerConfig.getParam(), 0.5);
     }
 }

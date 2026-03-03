@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.cors.CorsConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "cors",
     "configType" : "Handler",
     "updateUser" : "",

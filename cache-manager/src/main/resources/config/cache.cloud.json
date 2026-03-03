@@ -4,7 +4,7 @@
     "configId" : "",
     "updateTs" : "",
     "classPath" : "com.networknt.cache.CacheConfig",
-    "configDesc" : null,
+    "configDesc" : "",
     "configName" : "cache",
     "configType" : "Handler",
     "updateUser" : "",

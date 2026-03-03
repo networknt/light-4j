@@ -7,6 +7,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,6 @@ public class UnifiedSecurityConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "indicate if this handler is enabled. By default, it will be enabled if it is injected into the\n" +
                           "request/response chain in the handler.yml configuration."
     )
@@ -51,7 +51,6 @@ public class UnifiedSecurityConfig {
             configFieldName = ANONYMOUS_PREFIXES,
             externalizedKeyName = ANONYMOUS_PREFIXES,
             items = String.class,
-            externalized = true,
             description = "Anonymous prefixes configuration. A list of request path prefixes. The anonymous prefixes will be checked\n" +
                           "first, and if any path is matched, all other security checks will be bypassed, and the request goes to\n" +
                           "the next handler in the chain. You can use json array or string separated by comma or YAML format."
@@ -62,7 +61,6 @@ public class UnifiedSecurityConfig {
             configFieldName = PATH_PREFIX_AUTHS,
             externalizedKeyName = PATH_PREFIX_AUTHS,
             items = UnifiedPathPrefixAuth.class,
-            externalized = true,
             description =
                     "String format with comma separator\n" +
                     "/v1/pets,/v1/cats,/v1/dogs\n" +
@@ -98,8 +96,9 @@ public class UnifiedSecurityConfig {
     )
     List<UnifiedPathPrefixAuth> pathPrefixAuths;
 
+    private static volatile UnifiedSecurityConfig instance;
     private final Config config;
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     private UnifiedSecurityConfig() {
         this(CONFIG_NAME);
@@ -112,22 +111,33 @@ public class UnifiedSecurityConfig {
      */
     private UnifiedSecurityConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+            setConfigList();
+        }
     }
+
     public static UnifiedSecurityConfig load() {
-        return new UnifiedSecurityConfig();
+        return load(CONFIG_NAME);
     }
 
     public static UnifiedSecurityConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (UnifiedSecurityConfig.class) {
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new UnifiedSecurityConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, UnifiedSecurityConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new UnifiedSecurityConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {
@@ -152,6 +162,14 @@ public class UnifiedSecurityConfig {
 
     public void setPathPrefixAuths(List<UnifiedPathPrefixAuth> pathPrefixAuths) {
         this.pathPrefixAuths = pathPrefixAuths;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
     }
 
     private void setConfigData() {

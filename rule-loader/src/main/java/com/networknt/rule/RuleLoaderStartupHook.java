@@ -2,6 +2,7 @@ package com.networknt.rule;
 
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.monad.Failure;
@@ -12,7 +13,7 @@ import com.networknt.server.Server;
 import com.networknt.server.ServerConfig;
 import com.networknt.server.StartupHookProvider;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -52,7 +53,6 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     // shared rule map with ruleId as the key and Rule object as the value.
     public static Map<String, Object> endpointRules;
     public static Map<String, Rule> rules;
-    private static RuleLoaderConfig config = RuleLoaderConfig.load();
     static Http2Client client = Http2Client.getInstance();
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String DEFAULT_HOST = "lightapi.net";
@@ -61,9 +61,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
 
     @Override
     public void onStartup() {
-        config = RuleLoaderConfig.load();
-        List<String> masks = List.of(MASK_PORTAL_TOKEN);
-        ModuleRegistry.registerModule(RuleLoaderConfig.CONFIG_NAME, RuleLoaderStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
+        RuleLoaderConfig config = RuleLoaderConfig.load();
         if(config.isEnabled()) {
             // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
             if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {
@@ -193,18 +191,20 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     }
 
     public static Result<String> getServiceRule(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
-            conn = client.connect(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            SimpleConnectionState.ConnectionToken tokenConn = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+            conn = (ClientConnection) tokenConn.getRawConnection();
             // Create one CountDownLatch that will be reset in the callback function
             final CountDownLatch latch = new CountDownLatch(1);
             // Create an AtomicReference object to receive ClientResponse from callback function
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + config.getPortalToken());
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -223,18 +223,20 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     }
 
     public static Result<String> getServicePermission(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServicePermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getApiPermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
-            conn = client.connect(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            SimpleConnectionState.ConnectionToken tokenConn = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
+            conn = (ClientConnection) tokenConn.getRawConnection();
             // Create one CountDownLatch that will be reset in the callback function
             final CountDownLatch latch = new CountDownLatch(1);
             // Create an AtomicReference object to receive ClientResponse from callback function
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + config.getPortalToken());
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

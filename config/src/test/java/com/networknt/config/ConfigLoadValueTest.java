@@ -1,7 +1,7 @@
 package com.networknt.config;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * This is the test class to ensure that the load value methods are correct.
@@ -9,62 +9,76 @@ import org.junit.Test;
 public class ConfigLoadValueTest {
     @Test
     public void testLoadBoolean() {
-        Assert.assertTrue(Config.loadBooleanValue("test", "true"));
-        Assert.assertTrue(Config.loadBooleanValue("test", "TRUE"));
-        Assert.assertTrue(Config.loadBooleanValue("test", true));
-        Assert.assertFalse(Config.loadBooleanValue("test", false));
-        Assert.assertFalse(Config.loadBooleanValue("test", "false"));
-        Assert.assertFalse(Config.loadBooleanValue("test", "abc"));
+        Assertions.assertTrue(Config.loadBooleanValue("test", "true"));
+        Assertions.assertTrue(Config.loadBooleanValue("test", "TRUE"));
+        Assertions.assertTrue(Config.loadBooleanValue("test", true));
+        Assertions.assertFalse(Config.loadBooleanValue("test", false));
+        Assertions.assertFalse(Config.loadBooleanValue("test", "false"));
+        Assertions.assertFalse(Config.loadBooleanValue("test", "abc"));
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void testLoadBooleanException() {
-        Config.loadBooleanValue("test", 123);
+        Assertions.assertThrows(ConfigException.class, () -> {
+            Config.loadBooleanValue("test", 123);
+        });
     }
 
     @Test
     public void testLoadInteger() {
-        Assert.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", 123));
-        Assert.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", "123"));
+        Assertions.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", 123));
+        Assertions.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", "123"));
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void testLoadIntegerExceptionBoolean() {
-        Assert.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", true));
+        Assertions.assertThrows(ConfigException.class, () -> {
+            Assertions.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", true));
+        });
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void testLoadIntegerExceptionFloat() {
-        Assert.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", 123.45));
+        Assertions.assertThrows(ConfigException.class, () -> {
+            Assertions.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", 123.45));
+        });
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void testLoadIntegerNumberFormatException() {
-        Assert.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", "123.45"));
+        Assertions.assertThrows(NumberFormatException.class, () -> {
+            Assertions.assertEquals(Integer.valueOf(123), Config.loadIntegerValue("test", "123.45"));
+        });
     }
 
     @Test
     public void testLoadLong() {
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123L));
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123));
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", Integer.valueOf(123)));
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", Long.valueOf(123)));
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "123"));
+        Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123L));
+        Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123));
+        Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", Integer.valueOf(123)));
+        Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", Long.valueOf(123)));
+        Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "123"));
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void testLoadLongExceptionFloat() {
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123.45));
+        Assertions.assertThrows(ConfigException.class, () -> {
+            Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", 123.45));
+        });
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void testLoadLongExceptionStringFloat() {
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "123.45"));
+        Assertions.assertThrows(NumberFormatException.class, () -> {
+            Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "123.45"));
+        });
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void testLoadLongExceptionNotNumber() {
-        Assert.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "abc"));
+        Assertions.assertThrows(NumberFormatException.class, () -> {
+            Assertions.assertEquals(Long.valueOf(123), Config.loadLongValue("test", "abc"));
+        });
     }
 
 }

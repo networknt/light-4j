@@ -11,11 +11,19 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * A CompletableFuture that implements ClientCallback for requests with a body.
+ */
 public class Http2ClientCompletableFutureWithRequest extends CompletableFuture<ClientResponse> implements ClientCallback<ClientExchange> {
 
     private Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureWithRequest.class);
 
     private String requestBody;
+
+    /**
+     * Constructor with request body.
+     * @param requestBody the request body
+     */
     public Http2ClientCompletableFutureWithRequest(String requestBody) {
         this.requestBody = requestBody;
     }

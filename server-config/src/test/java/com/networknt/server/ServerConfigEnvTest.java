@@ -1,8 +1,8 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ServerConfigEnvTest {
     public static final String CONFIG_NAME = "server_env_0001";
@@ -14,6 +14,6 @@ public class ServerConfigEnvTest {
         config.clear();
         // ensure that env is "0001" instead of "1"
         ServerConfig serverConfig = ServerConfig.getInstance(CONFIG_NAME);
-        Assert.assertEquals("0001", serverConfig.getEnvironment());
+        Assertions.assertEquals("0001", serverConfig.getEnvironment());
     }
 }

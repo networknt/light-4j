@@ -1,0 +1,5 @@
+enabled: true
+concurrentRequest: 1
+errorCode: 429
+key: server
+rateLimit: 1/s

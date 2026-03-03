@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool;
 
 import io.undertow.connector.ByteBufferPool;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
@@ -30,11 +31,10 @@ import java.util.Set;
 
 /***
  * A factory that creates raw connections and wraps them in SimpleConnection objects.
- * SimpleConnectionMakers are used by SimpleConnectionHolders to create connections.
+ * SimpleConnectionMakers are used by SimpleConnectionStates to create connections.
  *
  */
 public interface SimpleConnectionMaker {
-    SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri, final Set<SimpleConnection> allCreatedConnections);
 
     /**
      * This is the method uses the XnioWorker to create the connection.
@@ -49,5 +49,5 @@ public interface SimpleConnectionMaker {
      * @return SimpleConnection the connection
      */
     SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections);
-    SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException;
+
 }

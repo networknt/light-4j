@@ -26,7 +26,7 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 public class SAMLTokenHandler implements MiddlewareHandler {
     public static final String CLIENT_CONFIG_NAME = "client";
     public static final String CONFIG_SECURITY = "security";
-    static final TokenConfig config = TokenConfig.load();
     static Logger logger = LoggerFactory.getLogger(SAMLTokenHandler.class);
     protected volatile HttpHandler next;
 
@@ -134,18 +133,7 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
+        return TokenConfig.load().isEnabled();
     }
 
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {

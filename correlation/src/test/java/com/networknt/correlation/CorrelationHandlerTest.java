@@ -17,6 +17,8 @@
 package com.networknt.correlation;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
+import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Handlers;
@@ -28,10 +30,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -53,7 +55,7 @@ public class CorrelationHandlerTest {
     private static final String DEFAULT_CORRELATION_MDC_FIELD = "cId";
     private static final String DEFAULT_TRACEABILITY_MDC_FIELD = "tId";
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
@@ -69,7 +71,7 @@ public class CorrelationHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -104,12 +106,19 @@ public class CorrelationHandlerTest {
     public void testWithCid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/with").setMethod(Methods.GET);
@@ -121,24 +130,34 @@ public class CorrelationHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("cid", body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertEquals("cid", body);
     }
 
     @Test
     public void testGetWithoutCid() throws Exception {
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/without").setMethod(Methods.GET);
@@ -149,30 +168,40 @@ public class CorrelationHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertNotNull(body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertNotNull(body);
         System.out.println("correlationId = " + body);
     }
 
     @Test
     public void testGetWithoutCidNoAutogen() throws Exception {
     	// reset the autogen of the correlation ID
-    	CorrelationHandler.config.setAutogenCorrelationID(false);
-        CorrelationHandler.config.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
-        CorrelationHandler.config.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setAutogenCorrelationID(false);
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/withoutNoAutogen").setMethod(Methods.GET);
@@ -183,17 +212,19 @@ public class CorrelationHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
 
         // set the autogen of the correlation ID to default value
-        CorrelationHandler.config.setAutogenCorrelationID(true);
+        correlationConfig.setAutogenCorrelationID(true);
 
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
-        Assert.assertNotNull(body);
-        Assert.assertEquals("noCID", body);
+        Assertions.assertEquals(200, statusCode);
+        Assertions.assertNotNull(body);
+        Assertions.assertEquals("noCID", body);
         System.out.println("correlationId = " + body);
     }
 
@@ -201,14 +232,29 @@ public class CorrelationHandlerTest {
     public void testGetWithTid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        CorrelationHandler.config.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
-        CorrelationHandler.config.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
-        final ClientConnection connection;
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
+
+        final SimpleConnectionState.ConnectionToken token;
+
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+
         } catch (Exception e) {
+
+
             throw new ClientException(e);
+
+
         }
+
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
@@ -220,16 +266,18 @@ public class CorrelationHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("get", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("get", body);
             String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
-            Assert.assertEquals("12345", tid);
+            Assertions.assertEquals("12345", tid);
         }
     }
 
@@ -237,14 +285,22 @@ public class CorrelationHandlerTest {
     public void testGetWithoutTid() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        CorrelationHandler.config.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
-        CorrelationHandler.config.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
-        final ClientConnection connection;
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
@@ -256,32 +312,42 @@ public class CorrelationHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("get", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("get", body);
             String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
-            Assert.assertNull(tid);
+            Assertions.assertNull(tid);
         }
     }
 
     @Test
     public void testPostWithTid() throws Exception {
-        CorrelationHandler.config.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
-        CorrelationHandler.config.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
+        CorrelationConfig correlationConfig = CorrelationConfig.load();
+        correlationConfig.setCorrelationMdcField(DEFAULT_CORRELATION_MDC_FIELD);
+        correlationConfig.setTraceabilityMdcField(DEFAULT_TRACEABILITY_MDC_FIELD);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
 
         try {
             String post = "post";
@@ -302,16 +368,18 @@ public class CorrelationHandlerTest {
             logger.error("IOException: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            Assert.assertNotNull(body);
-            Assert.assertEquals("post", body);
+            Assertions.assertNotNull(body);
+            Assertions.assertEquals("post", body);
             String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
-            Assert.assertEquals("12345", tid);
+            Assertions.assertEquals("12345", tid);
         }
     }
 }

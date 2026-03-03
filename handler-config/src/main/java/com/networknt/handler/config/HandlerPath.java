@@ -19,6 +19,8 @@ package com.networknt.handler.config;
 import java.util.List;
 
 /**
+ * Handler Path that maps to the paths in handler.yml
+ *
  * @author Nicholas Azar
  */
 public class HandlerPath {
@@ -28,42 +30,88 @@ public class HandlerPath {
     private Object endPoint;
     private String namedMiddlewareChain;
 
+    /**
+     * Constructor
+     */
+    public HandlerPath() {
+    }
+
+    /**
+     * Get the path
+     * @return the path
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * Set the path
+     * @param path request path
+     */
     public void setPath(String path) {
         this.path = path;
     }
 
+    /**
+     * Get the http verb
+     * @return the http verb
+     */
     public String getHttpVerb() {
         return httpVerb;
     }
 
+    /**
+     * Set the http verb
+     * @param httpVerb http verb
+     */
     public void setHttpVerb(String httpVerb) {
         this.httpVerb = httpVerb;
     }
 
+    /**
+     * Get the middleware list
+     * @return list of middleware
+     */
     public List<Object> getMiddleware() {
         return middleware;
     }
 
+    /**
+     * Set the middleware list
+     * @param middleware list of middleware
+     */
     public void setMiddleware(List<Object> middleware) {
         this.middleware = middleware;
     }
 
+    /**
+     * Get the endpoint object
+     * @return the end point
+     */
     public Object getEndPoint() {
         return endPoint;
     }
 
+    /**
+     * Set the endpoint object
+     * @param endPoint endpoint object
+     */
     public void setEndPoint(Object endPoint) {
         this.endPoint = endPoint;
     }
 
+    /**
+     * Get the named middleware chain
+     * @return the named middleware chain
+     */
     public String getNamedMiddlewareChain() {
         return namedMiddlewareChain;
     }
 
+    /**
+     * Set the named middleware chain
+     * @param namedMiddlewareChain named middleware chain
+     */
     public void setNamedMiddlewareChain(String namedMiddlewareChain) {
         this.namedMiddlewareChain = namedMiddlewareChain;
     }

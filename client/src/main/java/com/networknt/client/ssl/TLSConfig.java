@@ -23,6 +23,7 @@ package com.networknt.client.ssl;
  *
  */
 public class TLSConfig {
+    /** Verify hostname */
     public static final String VERIFY_HOSTNAME="verifyHostname";
 
     private final boolean checkServerIdentify;
@@ -31,6 +32,10 @@ public class TLSConfig {
     	this.checkServerIdentify = checkServerIdentify;
     }
 
+    /**
+     * Check if check server identity.
+     * @return true if check server identity
+     */
     public boolean getCheckServerIdentity() {
     	return checkServerIdentify;
     }

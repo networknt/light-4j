@@ -17,12 +17,12 @@ package com.networknt.portal.registry;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Steve Hu
@@ -37,7 +37,7 @@ public class PortalRegistryUtilsTest {
     String testServiceId;
     String testServiceTag;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         testServiceId = "com.networknt.apia-1.0.0";
         testServiceTag = "uat1";
@@ -47,7 +47,7 @@ public class PortalRegistryUtilsTest {
         url = new URLImpl(testProtocol, testHost, testPort, testServiceId);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 

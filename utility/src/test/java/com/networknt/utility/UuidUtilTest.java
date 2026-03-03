@@ -2,9 +2,9 @@ package com.networknt.utility;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 import com.networknt.config.JsonMapper;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +50,7 @@ public class UuidUtilTest {
         System.out.println("uuid = " + id7);
         System.out.println("uuid = " + id8);
         System.out.println("uuid = " + id9);
-        Assert.assertNotEquals(id1, id2);
+        Assertions.assertNotEquals(id1, id2);
     }
 
     @Test
@@ -72,11 +72,11 @@ public class UuidUtilTest {
         System.out.println("Decoded UUID:  " + decodedUuid);
 
         System.out.println("Match: " + uuid.equals(decodedUuid));
-        Assert.assertEquals(uuid, decodedUuid);
+        Assertions.assertEquals(uuid, decodedUuid);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testSqlUuidConverter() {
         String inputFilename = "/home/steve/lightapi/portal-db/postgres/cfg.sql";
         String outputFilename = "/home/steve/lightapi/portal-db/postgres/output.sql";
@@ -93,7 +93,7 @@ public class UuidUtilTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testEventUuidConverter() {
         String inputFilename = "/home/steve/lightapi/event-importer/local.json";
         String outputFilename = "/home/steve/lightapi/event-importer/local.txt";

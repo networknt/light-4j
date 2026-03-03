@@ -16,10 +16,10 @@
 
 package com.networknt.service;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ import java.util.Arrays;
 public class SingletonServiceFactoryTest {
     private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactoryTest.class);
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         InjectedBean injectedBean = new InjectedBean();
         SingletonServiceFactory.setBean(InjectedBean.class.getName(), injectedBean);
@@ -40,25 +40,25 @@ public class SingletonServiceFactoryTest {
     @Test
     public void testInjectedBean() {
         InjectedBean injectedBean = SingletonServiceFactory.getBean(InjectedBean.class);
-        Assert.assertEquals("Injected Bean", injectedBean.name());
+        Assertions.assertEquals("Injected Bean", injectedBean.name());
     }
 
     @Test
     public void testGetSingleBean() {
         A a = SingletonServiceFactory.getBean(A.class);
-        Assert.assertEquals("a real", a.a());
+        Assertions.assertEquals("a real", a.a());
 
         B b = SingletonServiceFactory.getBean(B.class);
-        Assert.assertEquals("b test", b.b());
+        Assertions.assertEquals("b test", b.b());
 
         C c = SingletonServiceFactory.getBean(C.class);
-        Assert.assertEquals("a realb test", c.c());
+        Assertions.assertEquals("a realb test", c.c());
     }
 
     @Test
     public void testGetMultipleBean() {
         Processor[] processors = SingletonServiceFactory.getBeans(Processor.class);
-        Assert.assertEquals(processors.length, 3);
+        Assertions.assertEquals(processors.length, 3);
         Arrays.stream(processors).forEach(processor -> logger.debug(processor.process()));
     }
 
@@ -66,7 +66,7 @@ public class SingletonServiceFactoryTest {
     public void testMultipleInterfaceOneBean() {
         D1 d1 = SingletonServiceFactory.getBean(D1.class);
         D2 d2 = SingletonServiceFactory.getBean(D2.class);
-        Assert.assertEquals(d1, d2);
+        Assertions.assertEquals(d1, d2);
     }
 
     @Test
@@ -80,13 +80,13 @@ public class SingletonServiceFactoryTest {
     @Test
     public void testSingleWithProperties() {
         G g = SingletonServiceFactory.getBean(G.class);
-        Assert.assertEquals("Sky Walker", g.getName());
-        Assert.assertEquals(23, g.getAge());
+        Assertions.assertEquals("Sky Walker", g.getName());
+        Assertions.assertEquals(23, g.getAge());
 
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testMultipleWithProperties() {
         J[] j = SingletonServiceFactory.getBeans(J.class);
         Arrays.stream(j).forEach(o -> logger.debug(o.getJack()));
@@ -98,68 +98,68 @@ public class SingletonServiceFactoryTest {
     @Test
     public void testMap() {
         LImpl l = (LImpl)SingletonServiceFactory.getBean(L.class);
-        Assert.assertEquals("https", l.getProtocol());
-        Assert.assertEquals(8080, l.getPort());
-        Assert.assertEquals(2, l.getParameters().size());
+        Assertions.assertEquals("https", l.getProtocol());
+        Assertions.assertEquals(8080, l.getPort());
+        Assertions.assertEquals(2, l.getParameters().size());
     }
 
     @Test
     public void testConstructorWithParameters() {
         MImpl m = (MImpl)SingletonServiceFactory.getBean(M.class);
-        Assert.assertEquals(5, m.getValue());
+        Assertions.assertEquals(5, m.getValue());
     }
 
     @Test
     public void testInfo() {
         Info info = SingletonServiceFactory.getBean(Info.class);
-        Assert.assertEquals("contact", info.getContact().getName());
-        Assert.assertEquals("license", info.getLicense().getName());
+        Assertions.assertEquals("contact", info.getContact().getName());
+        Assertions.assertEquals("license", info.getLicense().getName());
     }
 
     @Test
     public void testInfoValidator() {
         Validator<Info> infoValidator = SingletonServiceFactory.getBean(Validator.class, Info.class);
         Info info = SingletonServiceFactory.getBean(Info.class);
-        Assert.assertTrue(infoValidator.validate(info));
+        Assertions.assertTrue(infoValidator.validate(info));
     }
 
     @Test
     public void testArrayFromSingle() {
         // get an array with only one implementation.
         A[] a = SingletonServiceFactory.getBeans(A.class);
-        Assert.assertEquals(1, a.length);
+        Assertions.assertEquals(1, a.length);
     }
 
     @Test
     public void testSingleFromArray() {
         // get the first object from an array of impelementation in service.yml
         E e = SingletonServiceFactory.getBean(E.class);
-        Assert.assertEquals("e1", e.e());
+        Assertions.assertEquals("e1", e.e());
     }
 
     @Test
     public void testArrayNotDefined() {
         Dummy[] dummies = SingletonServiceFactory.getBeans(Dummy.class);
-        Assert.assertNull(dummies);
+        Assertions.assertNull(dummies);
     }
 
     @Test
     public void testObjectNotDefined() {
         Dummy dummy = SingletonServiceFactory.getBean(Dummy.class);
-        Assert.assertNull(dummy);
+        Assertions.assertNull(dummy);
     }
 
     @Test
     public void testInitializerInterfaceWithBuilder() {
         ChannelMapping channelMapping = SingletonServiceFactory.getBean(ChannelMapping.class);
-        Assert.assertNotNull(channelMapping);
-        Assert.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
+        Assertions.assertNotNull(channelMapping);
+        Assertions.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
     }
 
     @Test
     public void testTwoGenericTypes() {
         Pair p = SingletonServiceFactory.getBean(Pair.class);
-        Assert.assertEquals("key1", p.getKey());
-        Assert.assertEquals("value1", p.getValue());
+        Assertions.assertEquals("key1", p.getKey());
+        Assertions.assertEquals("value1", p.getValue());
     }
 }

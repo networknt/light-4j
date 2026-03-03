@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
 import com.networknt.utility.Constants;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,14 +59,13 @@ public class AuditConfig {
     private static final String REQUEST_BODY_MAX_SIZE = "requestBodyMaxSize";
     private static final String RESPONSE_BODY_MAX_SIZE = "responseBodyMaxSize";
 
-    private Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             description = "Enable Audit Logging",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean enabled;
@@ -74,7 +74,6 @@ public class AuditConfig {
             configFieldName = MASK,
             externalizedKeyName = MASK,
             description = "Enable mask in the audit log",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean mask;
@@ -83,7 +82,6 @@ public class AuditConfig {
             configFieldName = STATUS_CODE,
             externalizedKeyName = STATUS_CODE,
             description = "Output response status code.",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean statusCode;
@@ -92,12 +90,10 @@ public class AuditConfig {
             configFieldName = RESPONSE_TIME,
             externalizedKeyName = RESPONSE_TIME,
             description = "Output response time.",
-            externalized = true,
             defaultValue = "true"
     )
     private boolean responseTime;
 
-    private final Config config;
     // A customized logger appender defined in default logback.xml
     private Consumer<String> auditFunc;
 
@@ -109,7 +105,6 @@ public class AuditConfig {
                     "when auditOnError is false:\n" +
                     " - it will log on every request\n" +
                     "log level is controlled by logLevel",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean auditOnError;
@@ -118,7 +113,6 @@ public class AuditConfig {
             configFieldName = LOG_LEVEL_IS_ERROR,
             externalizedKeyName = LOG_LEVEL_IS_ERROR,
             description = "log level is error; by default the logging level is set to info. If you want to change it to error, set to true.",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean logLevelIsError;
@@ -127,8 +121,7 @@ public class AuditConfig {
             configFieldName = TIMESTAMP_FORMAT,
             externalizedKeyName = TIMESTAMP_FORMAT,
             description = "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\n" +
-                    "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.",
-            externalized = true
+                    "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format."
     )
     private String timestampFormat;
 
@@ -143,7 +136,6 @@ public class AuditConfig {
                     "- X-Traceability-Id\n" +
                     "caller id for metrics\n" +
                     "- caller_id\n",
-            externalized = true,
             items = String.class,
             defaultValue = "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
     )
@@ -168,7 +160,6 @@ public class AuditConfig {
                     "- requestBody\n" +
                     "Response payload, this is optional and must be set by the service in its implementation\n" +
                     "- responseBody\n",
-            externalized = true,
             items = String.class,
             defaultValue = "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
     )
@@ -179,7 +170,6 @@ public class AuditConfig {
             externalizedKeyName = REQUEST_BODY_MAX_SIZE,
             description = "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\n" +
                     "request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-            externalized = true,
             defaultValue = "4096"
     )
     private int requestBodyMaxSize;
@@ -189,39 +179,44 @@ public class AuditConfig {
             externalizedKeyName = RESPONSE_BODY_MAX_SIZE,
             description = "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\n" +
                     "response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
-            externalized = true,
             defaultValue = "4096"
     )
     private int responseBodyMaxSize;
 
 
+    private static AuditConfig instance;
+
+    private AuditConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setConfigData();
+    }
+
     private AuditConfig() {
         this(CONFIG_NAME);
     }
 
-    private AuditConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-
-        setLists();
-        setLogLevel();
-        setConfigData();
-    }
-
     public static AuditConfig load() {
-        return new AuditConfig();
+        return load(CONFIG_NAME);
     }
 
     public static AuditConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (AuditConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new AuditConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, AuditConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new AuditConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-
-        setLists();
-        setLogLevel();
-        setConfigData();
     }
 
     public List<String> getHeaderList() {
@@ -282,10 +277,6 @@ public class AuditConfig {
         return responseBodyMaxSize;
     }
 
-    Config getConfig() {
-        return config;
-    }
-
     private void setLogLevel() {
         auditFunc = auditOnError ? LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
     }
@@ -336,22 +327,26 @@ public class AuditConfig {
     }
 
     private void setConfigData() {
-        Object object = getMappedConfig().get(STATUS_CODE);
-        if (object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
-        object = getMappedConfig().get(RESPONSE_TIME);
-        if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
-        object = getMappedConfig().get(AUDIT_ON_ERROR);
-        if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
-        object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
-        if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
-        object = getMappedConfig().get(MASK);
-        if (object != null) mask = Config.loadBooleanValue(MASK, object);
-        object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
-        if (object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
-        object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
-        if (object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
-        object = getMappedConfig().get(ENABLED);
-        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
-        timestampFormat = (String) getMappedConfig().get(TIMESTAMP_FORMAT);
+        if (mappedConfig != null) {
+            Object object = getMappedConfig().get(STATUS_CODE);
+            if (object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
+            object = getMappedConfig().get(RESPONSE_TIME);
+            if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
+            object = getMappedConfig().get(AUDIT_ON_ERROR);
+            if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
+            object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
+            if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
+            object = getMappedConfig().get(MASK);
+            if (object != null) mask = Config.loadBooleanValue(MASK, object);
+            object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
+            if (object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
+            object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
+            if (object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
+            object = getMappedConfig().get(ENABLED);
+            if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            timestampFormat = (String) getMappedConfig().get(TIMESTAMP_FORMAT);
+            setLists();
+            setLogLevel();
+        }
     }
 }

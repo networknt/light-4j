@@ -23,7 +23,7 @@ import com.networknt.handler.config.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -60,11 +60,10 @@ import org.slf4j.LoggerFactory;
 public class PathPrefixServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathPrefixServiceHandler.class);
     protected volatile HttpHandler next;
-    protected static PathPrefixServiceConfig config;
 
     public PathPrefixServiceHandler() {
         logger.info("PathServiceHandler is constructed");
-        config = PathPrefixServiceConfig.load();
+        PathPrefixServiceConfig.load();
     }
 
     @Override
@@ -76,6 +75,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     }
 
     protected void pathPrefixService(HttpServerExchange exchange) throws Exception {
+        PathPrefixServiceConfig config = PathPrefixServiceConfig.load();
         String requestPath = exchange.getRequestURI();
         String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
 
@@ -117,18 +117,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathPrefixServiceConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathPrefixServiceConfig.CONFIG_NAME), null);
-        if (logger.isInfoEnabled()) logger.info("PathPrefixServiceHandler is reloaded.");
+        return PathPrefixServiceConfig.load().isEnabled();
     }
 }

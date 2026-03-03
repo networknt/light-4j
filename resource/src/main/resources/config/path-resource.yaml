@@ -1,0 +1,11 @@
+# Path Resource Config
+# The path of the resource
+path: ${path-resource.path:/public}
+# The base directory of the resource
+base: ${path-resource.base:/opt/light-4j/public}
+# If true, the path is a prefix
+prefix: ${path-resource.prefix:true}
+# The minimum size of the file to be transferred
+transferMinSize: ${path-resource.transferMinSize:1024}
+# If true, directory listing is enabled
+directoryListingEnabled: ${path-resource.directoryListingEnabled:false}

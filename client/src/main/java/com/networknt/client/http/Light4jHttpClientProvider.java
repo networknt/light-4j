@@ -47,8 +47,16 @@ import java.util.*;
  *
  */
 public class Light4jHttpClientProvider implements ClientProvider {
+
+    /**
+     * Constructor.
+     */
+    public Light4jHttpClientProvider() {
+    }
 	private static final Logger logger = LoggerFactory.getLogger(Light4jHttpClientProvider.class);
+    /** HTTP protocol */
 	public static final String HTTP = "http";
+    /** HTTPS protocol */
 	public static final String HTTPS = "https";
 
    @Override

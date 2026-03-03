@@ -45,11 +45,6 @@ public class Test1MiddlewareHandler implements MiddlewareHandler {
     }
 
     @Override
-    public void register() {
-
-    }
-
-    @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         System.out.println("Test1MiddlewareHandler is called");
 

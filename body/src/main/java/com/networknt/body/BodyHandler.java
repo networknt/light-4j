@@ -21,7 +21,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -64,13 +63,13 @@ public class BodyHandler implements MiddlewareHandler {
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
     public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
-    public static  BodyConfig config;
+    private String configName = BodyConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
     public BodyHandler() {
+        BodyConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
-        config = BodyConfig.load();
     }
 
     /**
@@ -79,8 +78,9 @@ public class BodyHandler implements MiddlewareHandler {
      * @deprecated
      */
     public BodyHandler(String configName) {
-        if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
-        config = BodyConfig.load(configName);
+        this.configName = configName;
+        BodyConfig.load(configName);
+        if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded with {}.", configName);
     }
 
     /**
@@ -94,7 +94,7 @@ public class BodyHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest starts.");
+        BodyConfig config = BodyConfig.load(configName);
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null) {
@@ -203,18 +203,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return BodyConfig.load(configName).isEnabled();
     }
 
-    @Override
-    public void register() {
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("BodyHandler is reloaded.");
-    }
 }

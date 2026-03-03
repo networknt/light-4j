@@ -16,9 +16,9 @@
 
 package io.dropwizard.metrics;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.dropwizard.metrics.MetricRegistry;
 import io.dropwizard.metrics.SharedMetricRegistries;
@@ -30,7 +30,7 @@ import java.lang.reflect.Modifier;
 
 public class SharedMetricRegistriesTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         SharedMetricRegistries.clear();
 
@@ -38,7 +38,7 @@ public class SharedMetricRegistriesTest {
                 .isEmpty();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         SharedMetricRegistries.clear();
 

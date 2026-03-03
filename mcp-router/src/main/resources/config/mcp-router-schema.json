@@ -1,0 +1,50 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "path", "tools" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable MCP Router Handler",
+      "default" : true
+    },
+    "path" : {
+      "type" : "string",
+      "description" : "Path for MCP endpoint (Streamable HTTP)",
+      "default" : "/mcp"
+    },
+    "tools" : {
+      "type" : "array",
+      "description" : "List of tools",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "Tool name"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Tool description"
+          },
+          "host" : {
+            "type" : "string",
+            "description" : "Tool host"
+          },
+          "path" : {
+            "type" : "string",
+            "description" : "Tool path"
+          },
+          "method" : {
+            "type" : "string",
+            "description" : "Tool method"
+          },
+          "inputSchema" : {
+            "type" : "string",
+            "description" : "Tool input schema"
+          }
+        }
+      }
+    }
+  }
+}

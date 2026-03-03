@@ -51,21 +51,25 @@ public class TableauConfig {
      */
     private TableauConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
+    /**
+     * Load config
+     * @return TableauConfig
+     */
     public static TableauConfig load() {
         return new TableauConfig();
     }
 
+    /**
+     * Load config
+     * @param configName config name
+     * @return TableauConfig
+     */
     public static TableauConfig load(String configName) {
         return new TableauConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public Map<String, Object> getMappedConfig() {

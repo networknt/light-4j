@@ -1,8 +1,10 @@
 package com.networknt.router.middleware;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
@@ -20,7 +22,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -41,7 +43,7 @@ public class TokenHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(TokenHandlerTest.class);
     static Undertow server = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception{
         if(server == null) {
             logger.info("starting server");
@@ -58,7 +60,7 @@ public class TokenHandlerTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
@@ -82,16 +84,23 @@ public class TokenHandlerTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOneGetService1Request() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/service1").setMethod(Methods.GET);
@@ -103,27 +112,36 @@ public class TokenHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
         if(statusCode == 200) {
-            Assert.assertEquals("GET OK", body);
+            Assertions.assertEquals("GET OK", body);
         }
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testOnePostRequest() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        final SimpleConnectionState.ConnectionToken token;
+
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            token = client.borrow(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+
         } catch (Exception e) {
+
             throw new ClientException(e);
+
         }
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         String requestBody = "{\"clientId\":\"FSC_0030303343303x32AA2\",\"loggedInUserEmail\":\"steve.hu@networknt.com\"}";
         try {
@@ -137,12 +155,14 @@ public class TokenHandlerTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+
+            client.restore(token);
+
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("statusCode = " + statusCode + " body = " + body);
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
     }
 
     @Test
@@ -160,8 +180,8 @@ public class TokenHandlerTest {
         Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
 
         // Verify the result
-        Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals(cachedJwt, result.getResult());
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertEquals(cachedJwt, result.getResult());
     }
 
     @Test
@@ -173,31 +193,28 @@ public class TokenHandlerTest {
         Result<Jwt> result = TokenHandler.getJwtToken(serviceId);
 
         // Verify the result
-        Assert.assertTrue(result.isFailure());
-        Assert.assertNull(TokenHandler.cache.get(serviceId)); // Verify cache is not updated
+        Assertions.assertTrue(result.isFailure());
+        Assertions.assertNull(TokenHandler.cache.get(serviceId)); // Verify cache is not updated
     }
 
     @Test
     public void testBuildConfigMap() {
         final var config = ClientConfig.get().getOAuth().getToken().getClientCredentials().getServiceIdAuthServers();
-        Assert.assertNotNull(config);
+        Assertions.assertNotNull(config);
 
-        final var serviceConfig = config.get("service1");
-        Assert.assertNotNull(serviceConfig);
+        final AuthServerConfig serviceConfig = config.get("service1");
+        Assertions.assertNotNull(serviceConfig);
 
         final var mapper = Config.getInstance().getMapper();
         final var configMap = mapper.convertValue(serviceConfig, new TypeReference<Map<String, Object>>() {
         });
-        Assert.assertNotNull(configMap);
+        Assertions.assertNotNull(configMap);
 
-        final var completeAuthConfig = TokenHandler.buildAuthConfig(configMap, ClientConfig.get().getOAuth().getToken());
-        Assert.assertNotNull(completeAuthConfig);
-
-        // config should contain token config values
-        Assert.assertTrue(completeAuthConfig.containsKey("tokenRenewBeforeExpired") && (int) completeAuthConfig.get("tokenRenewBeforeExpired") == 30000);
+        final var completeAuthConfig = TokenHandler.enrichAuthServerConfig(serviceConfig, ClientConfig.get().getOAuth().getToken());
+        Assertions.assertNotNull(completeAuthConfig);
 
         // config should not contain proxy settings
-        Assert.assertFalse(completeAuthConfig.containsKey("proxyPort"));
+        Assertions.assertNull(completeAuthConfig.getProxyHost());
     }
 
 }

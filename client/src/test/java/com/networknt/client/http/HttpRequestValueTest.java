@@ -1,8 +1,8 @@
 package com.networknt.client.http;
 
 import com.networknt.common.ContentType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
@@ -13,7 +13,7 @@ public class HttpRequestValueTest {
     private String  fileName;
     private byte[]  fileBody;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         fileName = "{\"filename\": \"sample.pdf\"}";
         String content = "sample pdf file input string";

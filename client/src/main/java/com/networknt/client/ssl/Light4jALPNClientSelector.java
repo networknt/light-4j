@@ -48,6 +48,12 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Light4jALPNClientSelector {
 
+    /**
+     * Constructor.
+     */
+    public Light4jALPNClientSelector() {
+    }
+
 	/**
 	 * A connection is first created by org.xnio.nio.WorkerThread.openTcpStreamConnection(). Once the connection is established, it is passed to io.undertow.protocols.ssl.UndertowXnioSsl.StreamConnectionChannelListener.
 	 * StreamConnectionChannelListener creates an io.undertow.protocols.ssl.UndertowSslConnection instance and passes it to this method.
@@ -59,7 +65,7 @@ public class Light4jALPNClientSelector {
 	 *    For the example above, if http2 is not supported on the server side, HttpClientConnection will be created in the fallback listener.
 	 *
 	 * @param sslConnection - an UndertowSslConnection instance
-	 * @param fallback - the callback used if the ALPN negotiation fails or no APLN provider can be found
+	 * @param fallback - the callback used if the ALPN negotiation fails or no ALPN provider can be found
 	 * @param failedListener - the callback for handling failures happened in the negotiations
 	 * @param details - callbacks used to create client connections when the negotiation succeeds. Ideally, one callback should be provided for each protocol in {@link javax.net.ssl.SSLEngine#getSupportedProtocols()}.
 	 */

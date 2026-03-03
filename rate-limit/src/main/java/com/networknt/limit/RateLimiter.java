@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RateLimiter {
     private static final String LIMIT_KEY_NOT_FOUND = "ERR10073";
-    protected LimitConfig config;
+
 
     private final Map<String, Map<Long, AtomicLong>> serverTimeMap = new ConcurrentHashMap<>();
 
@@ -46,60 +46,44 @@ public class RateLimiter {
     /**
      * Load config and initial model by Rate limit key.
      * @param config LimitConfig object
-     * @throws Exception runtime exception
      */
-    public RateLimiter(LimitConfig config) throws Exception {
-        this.config = config;
-        if (LimitKey.SERVER.equals(config.getKey())) {
-            if (this.config.getServer()!=null && !this.config.getServer().isEmpty()) {
-                this.config.getServer().forEach((k,v)->serverTimeMap.put(k, new ConcurrentHashMap<>()));
+    public RateLimiter(LimitConfig config) {
+        // Kept for backward compatibility if any, but logic moved to handleRequest
+    }
+
+    private void initResolvers(LimitConfig config) throws Exception {
+        if (LimitKey.ADDRESS.equals(config.getKey())) {
+            String addressKey = config.getAddressKeyResolver()==null? "com.networknt.limit.key.RemoteAddressKeyResolver":config.getAddressKeyResolver();
+            if(addressKeyResolver == null || !addressKeyResolver.getClass().getName().equals(addressKey)) {
+                addressKeyResolver = (KeyResolver)Class.forName(addressKey).getDeclaredConstructor().newInstance();
             }
-        } else if (LimitKey.ADDRESS.equals(config.getKey())) {
-            if (this.config.getAddress()!=null) {
-                if (this.config.getAddress().getDirectMaps()!=null && !this.config.getAddress().getDirectMaps().isEmpty()) {
-                    this.config.getAddress().getDirectMaps().forEach((k,v)->{
-                        Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
-                        v.forEach(i->{
-                            directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(k, directMap);
-                    });
-                }
-            }
-            String addressKey = this.config.getAddressKeyResolver()==null? "com.networknt.limit.key.RemoteAddressKeyResolver":this.config.getAddressKeyResolver();
-            addressKeyResolver = (KeyResolver)Class.forName(addressKey).getDeclaredConstructor().newInstance();
         } else if (LimitKey.CLIENT.equals(config.getKey())) {
-            if (this.config.getClient()!=null) {
-                if (this.config.getClient().getDirectMaps()!=null && !this.config.getClient().getDirectMaps().isEmpty()) {
-                    this.config.getClient().getDirectMaps().forEach((k,v)->{
-                        Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
-                        v.forEach(i->{
-                            directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(k, directMap);
-                    });
-                }
+            String clientIdKey = config.getClientIdKeyResolver()==null? "com.networknt.limit.key.JwtClientIdKeyResolver":config.getClientIdKeyResolver();
+            if(clientIdKeyResolver == null || !clientIdKeyResolver.getClass().getName().equals(clientIdKey)) {
+                clientIdKeyResolver = (KeyResolver)Class.forName(clientIdKey).getDeclaredConstructor().newInstance();
             }
-            String clientIdKey = this.config.getClientIdKeyResolver()==null? "com.networknt.limit.key.JwtClientIdKeyResolver":this.config.getClientIdKeyResolver();
-            clientIdKeyResolver = (KeyResolver)Class.forName(clientIdKey).getDeclaredConstructor().newInstance();
         } else if (LimitKey.USER.equals(config.getKey())) {
-            if (this.config.getUser()!=null) {
-                if (this.config.getUser().getDirectMaps()!=null && !this.config.getUser().getDirectMaps().isEmpty()) {
-                    this.config.getUser().getDirectMaps().forEach((k,v)->{
-                        Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
-                        v.forEach(i->{
-                            directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(k, directMap);
-                    });
-                }
+            String userIdKey = config.getUserIdKeyResolver()==null? "com.networknt.limit.key.JwtUserIdKeyResolver":config.getUserIdKeyResolver();
+            if(userIdKeyResolver == null || !userIdKeyResolver.getClass().getName().equals(userIdKey)) {
+                userIdKeyResolver = (KeyResolver)Class.forName(userIdKey).getDeclaredConstructor().newInstance();
             }
-            String userIdKey = this.config.getUserIdKeyResolver()==null? "com.networknt.limit.key.JwtUserIdKeyResolver":this.config.getUserIdKeyResolver();
-            userIdKeyResolver = (KeyResolver)Class.forName(userIdKey).getDeclaredConstructor().newInstance();
         }
     }
 
-    public RateLimitResponse handleRequest(final HttpServerExchange exchange, LimitKey limitKey) {
+    /**
+     * Handle the request with the rate limit logic.
+     * @param exchange HttpServerExchange
+     * @param config LimitConfig
+     * @return RateLimitResponse
+     */
+    public RateLimitResponse handleRequest(final HttpServerExchange exchange, LimitConfig config) {
+        try {
+            initResolvers(config);
+        } catch (Exception e) {
+            logger.error("Exception in initResolvers", e);
+            throw new FrameworkException(new Status(LIMIT_KEY_NOT_FOUND, "initResolvers"));
+        }
+        LimitKey limitKey = config.getKey();
         if (LimitKey.ADDRESS.equals(limitKey)) {
             String address = addressKeyResolver.resolve(exchange);
             if(address == null) {
@@ -108,16 +92,16 @@ public class RateLimiter {
                 throw new FrameworkException(status);
             }
             String path = exchange.getRequestPath();
-            return isAllowDirect(address, path, ADDRESS_TYPE);
+            return isAllowDirect(address, path, ADDRESS_TYPE, config);
         } else if (LimitKey.CLIENT.equals(limitKey)) {
             String clientId = clientIdKeyResolver.resolve(exchange);
             if(clientId == null) {
-                logger.error("Failed to resolve the clientId with the clientId resolver " + addressKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
+                logger.error("Failed to resolve the clientId with the clientId resolver " + clientIdKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
                 Status status = new Status(LIMIT_KEY_NOT_FOUND, LimitKey.CLIENT, clientIdKeyResolver.getClass().getPackageName());
                 throw new FrameworkException(status);
             }
             String path = exchange.getRequestPath();
-            return isAllowDirect(clientId, path, CLIENT_TYPE);
+            return isAllowDirect(clientId, path, CLIENT_TYPE, config);
         } else if (LimitKey.USER.equals(limitKey)) {
             String userId = userIdKeyResolver.resolve(exchange);
             if(userId == null) {
@@ -126,11 +110,11 @@ public class RateLimiter {
                 throw new FrameworkException(status);
             }
             String path = exchange.getRequestPath();
-            return isAllowDirect(userId, path, USER_TYPE);
+            return isAllowDirect(userId, path, USER_TYPE, config);
         } else  {
             //By default, the key is server
             String path = exchange.getRequestPath();
-            return isAllowByServer(path);
+            return isAllowByServer(path, config);
         }
     }
 
@@ -140,9 +124,10 @@ public class RateLimiter {
      * @param directKey direct key
      * @param path String
      * @param type String
+     * @param config LimitConfig
      * @return RateLimitResponse response
      */
-    protected RateLimitResponse isAllowDirect(String directKey, String path, String type) {
+    protected RateLimitResponse isAllowDirect(String directKey, String path, String type, LimitConfig config) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<TimeUnit, Map<Long, AtomicLong>> localTimeMap;
 
@@ -157,20 +142,7 @@ public class RateLimiter {
                 rateLimit = config.getAddress().directMaps.get(directKey);
             } else {
                 if(logger.isTraceEnabled()) logger.trace("both keyWithPath and directKey not found in the config, use the default rate limit");
-                rateLimit = config.rateLimit;
-                // check if the map is already created
-                synchronized(this) {
-                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
-                    if (directMap == null) {
-                        if (logger.isTraceEnabled())
-                            logger.trace("directMap is null, create a new one for the key {}", mapKey);
-                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
-                        this.config.getRateLimit().forEach(i -> {
-                            map.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(mapKey, map);
-                    }
-                }
+                rateLimit = config.getRateLimit();
             }
         } else if(CLIENT_TYPE.equalsIgnoreCase(type)) {
             if (config.getClient() != null && config.getClient().directMaps.containsKey(keyWithPath)) {
@@ -179,17 +151,7 @@ public class RateLimiter {
             } else if (config.getClient() != null && config.getClient().directMaps.containsKey(directKey)) {
                 rateLimit = config.getClient().directMaps.get(directKey);
             } else {
-                rateLimit = config.rateLimit;
-                synchronized(this) {
-                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
-                    if(directMap == null) {
-                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
-                        this.config.getRateLimit().forEach(i->{
-                            map.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(mapKey, map);
-                    }
-                }
+                rateLimit = config.getRateLimit();
             }
         } else {
             if (config.getUser() != null && config.getUser().directMaps.containsKey(keyWithPath)) {
@@ -198,20 +160,24 @@ public class RateLimiter {
             } else if (config.getUser() != null && config.getUser().directMaps.containsKey(directKey)) {
                 rateLimit = config.getUser().directMaps.get(directKey);
             } else {
-                rateLimit = config.rateLimit;
-                synchronized (this) {
-                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
-                    if(directMap == null) {
-                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
-                        this.config.getRateLimit().forEach(i->{
-                            map.put(i.getUnit(), new ConcurrentHashMap<>());
-                        });
-                        directTimeMap.put(mapKey, map);
-                    }
+                rateLimit = config.getRateLimit();
+            }
+        }
+
+        localTimeMap = directTimeMap.get(mapKey);
+        if (localTimeMap == null) {
+            synchronized (this) {
+                localTimeMap = directTimeMap.get(mapKey);
+                if (localTimeMap == null) {
+                    Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
+                    rateLimit.forEach(i -> {
+                        map.put(i.getUnit(), new ConcurrentHashMap<>());
+                    });
+                    directTimeMap.put(mapKey, map);
+                    localTimeMap = map;
                 }
             }
         }
-        localTimeMap = directTimeMap.get(mapKey);
         synchronized(this) {
             for (LimitQuota limitQuota: rateLimit) {
                 Map<Long, AtomicLong> timeMap =  localTimeMap.get(limitQuota.getUnit());
@@ -248,14 +214,15 @@ public class RateLimiter {
     /**
      * Handle logic for Server type (key = server) rate limit
      * @param path String
+     * @param config LimitConfig
      * @return RateLimitResponse rate limit response
      */
-    public synchronized RateLimitResponse isAllowByServer(String path) {
+    public synchronized RateLimitResponse isAllowByServer(String path, LimitConfig config) {
         long currentTimeWindow = Instant.now().getEpochSecond();
-        Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path);  // defined and unknown one if not defined.
-        LimitQuota limitQuota = config.getServer() != null ? lookupLimitQuota(path) : null;
+        Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path, config);  // defined and unknown one if not defined.
+        LimitQuota limitQuota = config.getServer() != null ? lookupLimitQuota(path, config) : null;
         if(limitQuota == null) {
-            limitQuota = this.config.getRateLimit().get(0);
+            limitQuota = config.getRateLimit().get(0);
         }
         if (timeMap.isEmpty()) {
             timeMap.put(currentTimeWindow, new AtomicLong(1L));
@@ -281,12 +248,14 @@ public class RateLimiter {
         return new RateLimitResponse(true, null);
     }
 
-    private Map<Long, AtomicLong> lookupServerTimeMap(String path) {
+    private Map<Long, AtomicLong> lookupServerTimeMap(String path, LimitConfig config) {
         String prefix = null;
-        for(String s: serverTimeMap.keySet()) {
-            if(path.startsWith(s)) {
-                prefix = s;
-                break;
+        if (config.getServer() != null) {
+            for (String s : config.getServer().keySet()) {
+                if (path.startsWith(s)) {
+                    prefix = s;
+                    break;
+                }
             }
         }
         if(prefix == null) {
@@ -299,14 +268,14 @@ public class RateLimiter {
                 return serverTimeMap.get(UNKNOWN_PREFIX);
             }
         } else {
-            return serverTimeMap.get(prefix);
+            return serverTimeMap.computeIfAbsent(prefix, k -> new ConcurrentHashMap<>());
         }
 
     }
 
-    private LimitQuota lookupLimitQuota(String path) {
+    private LimitQuota lookupLimitQuota(String path, LimitConfig config) {
         String prefix = null;
-        for(String s: this.config.getServer().keySet()) {
+        for(String s: config.getServer().keySet()) {
             if(path.startsWith(s)) {
                 prefix = s;
                 break;
@@ -315,7 +284,7 @@ public class RateLimiter {
         if(prefix == null) {
             return null;
         } else {
-            return this.config.getServer().get(prefix);
+            return config.getServer().get(prefix);
         }
     }
 
@@ -331,6 +300,13 @@ public class RateLimiter {
         return res;
     }
 
+    /**
+     * Get the Retry-After header value
+     * @param currentTimeWindow Current time window
+     * @param timeMap Time map
+     * @param limitQuota Limit quota
+     * @return String Retry-After header value
+     */
     public String getRetryAfter(Long currentTimeWindow, Map<Long, AtomicLong> timeMap,  LimitQuota limitQuota) {
         String retryAfter = null;
         if (TimeUnit.SECONDS.equals(limitQuota.unit)){

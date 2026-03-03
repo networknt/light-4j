@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.StringField; // REQUIRED IMPORT
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,52 +38,48 @@ public class LdapConfig {
     @StringField(
             configFieldName = URI,
             externalizedKeyName = URI,
-            description = "The LDAP server uri.",
-            externalized = true
+            description = "The LDAP server uri."
     )
     String uri;
 
     @StringField(
             configFieldName = DOMAIN,
             externalizedKeyName = DOMAIN,
-            description = "The LDAP domain name.",
-            externalized = true
+            description = "The LDAP domain name."
     )
     String domain;
 
     @StringField(
             configFieldName = PRINCIPAL,
             externalizedKeyName = PRINCIPAL,
-            description = "The user principal for binding (authentication).",
-            externalized = true
+            description = "The user principal for binding (authentication)."
     )
     String principal;
 
     @StringField(
             configFieldName = CREDENTIAL,
             externalizedKeyName = CREDENTIAL,
-            description = "The user credential (password) for binding.",
-            externalized = true
+            description = "The user credential (password) for binding."
     )
     String credential;
 
     @StringField(
             configFieldName = SEARCH_FILTER,
             externalizedKeyName = SEARCH_FILTER,
-            description = "The search filter (e.g., (&(objectClass=user)(sAMAccountName={0}))).",
-            externalized = true
+            description = "The search filter (e.g., (&(objectClass=user)(sAMAccountName={0})))."
     )
     String searchFilter;
 
     @StringField(
             configFieldName = SEARCH_BASE,
             externalizedKeyName = SEARCH_BASE,
-            description = "The search base DN (Distinguished Name).",
-            externalized = true
+            description = "The search base DN (Distinguished Name)."
     )
     String searchBase;
 
     // --- Constructor and Loading Logic ---
+
+    private static volatile LdapConfig instance;
 
     private LdapConfig() {
         this(CONFIG_NAME);
@@ -90,21 +87,32 @@ public class LdapConfig {
 
     private LdapConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData(); // Custom logic for loading string fields
     }
 
     public static LdapConfig load() {
-        return new LdapConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LdapConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (LdapConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LdapConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, LdapConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new LdapConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public Map<String, Object> getMappedConfig() {

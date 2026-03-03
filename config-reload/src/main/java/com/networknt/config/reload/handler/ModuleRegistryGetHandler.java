@@ -5,7 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.config.reload.model.ConfigReloadConfig;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.status.HttpStatus;
-import com.networknt.utility.ModuleRegistry;
+import com.networknt.server.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 
@@ -25,13 +25,13 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
     private static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
 
     public ModuleRegistryGetHandler() {
-
+        ConfigReloadConfig.load();
+        if(logger.isDebugEnabled()) logger.debug("ModuleRegistryGetHandler is constructed");
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
-
+        ConfigReloadConfig config = ConfigReloadConfig.load();
         if (config.isEnabled()) {
             List<String> modulePlugins = new ArrayList<>();
             modulePlugins.addAll(ModuleRegistry.getModuleClasses());

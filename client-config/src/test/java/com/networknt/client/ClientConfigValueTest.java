@@ -1,18 +1,18 @@
 package com.networknt.client;
 
 import com.networknt.config.JsonMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class ClientConfigValueTest {
     @Test
     public void testLoadConfig() {
         ClientConfig config = ClientConfig.get();
-        assertEquals(config.getConnectionExpireTime(), 1800000);
+        assertEquals(1800000L, config.getConnectionExpireTime());
     }
 
     @Test

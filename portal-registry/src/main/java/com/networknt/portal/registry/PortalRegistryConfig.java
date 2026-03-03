@@ -16,16 +16,72 @@
 
 package com.networknt.portal.registry;
 
+import com.networknt.config.Config;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
+
+import java.util.List;
+import java.util.Map;
 
 @ConfigSchema(configKey = "portalRegistry", configName = "portal-registry", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
 
+    private static final String PORTAL_URL = "portalUrl";
+    private static final String PORTAL_TOKEN = "portalToken";
+    private static final String MAX_REQ_PER_CONN = "maxReqPerConn";
+    private static final String DEREGISTER_AFTER = "deregisterAfter";
+    private static final String CHECK_INTERVAL = "checkInterval";
+    private static final String HTTP_CHECK = "httpCheck";
+    private static final String TTL_CHECK = "ttlCheck";
+    private static final String HEALTH_PATH = "healthPath";
+
+    private static volatile PortalRegistryConfig instance;
+    private final Config config;
+    private java.util.Map<String, Object> mappedConfig;
+
+    private PortalRegistryConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+        }
+    }
+
+    private PortalRegistryConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static PortalRegistryConfig load() {
+        return load(CONFIG_NAME);
+    }
+
+    public static PortalRegistryConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (PortalRegistryConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new PortalRegistryConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, PortalRegistryConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(PORTAL_TOKEN));
+                return instance;
+            }
+        }
+        return new PortalRegistryConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
     @StringField(
             configFieldName = "portalUrl",
             externalizedKeyName = "portalUrl",
-            externalized = true,
             defaultValue = "https://lightapi.net",
             description = "Portal URL for accessing controller API. Default to lightapi.net public portal, and it can be pointed to a standalone\n" +
                     "light-controller instance for testing in the same Kubernetes cluster or docker-compose."
@@ -35,7 +91,6 @@ public class PortalRegistryConfig {
     @StringField(
             configFieldName = "portalToken",
             externalizedKeyName = "portalToken",
-            externalized = true,
             description = "Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0\n" +
                     "provider during the deployment. And then pass the token to the container with an environment variable. The other\n" +
                     "option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In\n" +
@@ -46,7 +101,6 @@ public class PortalRegistryConfig {
     @IntegerField(
             configFieldName = "maxReqPerConn",
             externalizedKeyName = "maxReqPerConn",
-            externalized = true,
             defaultValue = "1000000",
             description = "number of requests before resetting the shared connection to work around HTTP/2 limitation"
     )
@@ -55,7 +109,6 @@ public class PortalRegistryConfig {
     @IntegerField(
             configFieldName = "deregisterAfter",
             externalizedKeyName = "deregisterAfter",
-            externalized = true,
             defaultValue = "120000",
             description = "De-register the service after the amount of time with health check failed. Once a health check is failed, the\n" +
                     "service will be put into a critical state. After the deregisterAfter, the service will be removed from discovery.\n" +
@@ -66,7 +119,6 @@ public class PortalRegistryConfig {
     @IntegerField(
             configFieldName = "checkInterval",
             externalizedKeyName = "checkInterval",
-            externalized = true,
             defaultValue = "10000",
             description = "health check interval for HTTP check. Or it will be the TTL for TTL check. Every 10 seconds, an HTTP check\n" +
                     "request will be sent from the light-portal controller. Or if there is no heartbeat TTL request from service\n" +
@@ -77,7 +129,6 @@ public class PortalRegistryConfig {
     @BooleanField(
             configFieldName = "httpCheck",
             externalizedKeyName = "httpCheck",
-            externalized = true,
             defaultValue = "false",
             description = "enable health check HTTP. An HTTP get request will be sent to the service to ensure that 200 response status is\n" +
                     "coming back. This is suitable for service that depending on the database or other infrastructure services. You should\n" +
@@ -89,7 +140,6 @@ public class PortalRegistryConfig {
     @BooleanField(
             configFieldName = "ttlCheck",
             externalizedKeyName = "ttlCheck",
-            externalized = true,
             defaultValue = "true",
             description = "enable health check TTL. When this is enabled, The light-portal controller won't actively check your service to\n" +
                     "ensure it is healthy, but your service will call check endpoint with a heartbeat to indicate it is alive. This\n" +
@@ -103,7 +153,6 @@ public class PortalRegistryConfig {
     @StringField(
             configFieldName = "healthPath",
             externalizedKeyName = "healthPath",
-            externalized = true,
             defaultValue = "/health/",
             description = "The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;\n" +
                     "however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/\n" +
@@ -173,5 +222,24 @@ public class PortalRegistryConfig {
 
     public void setHealthPath(String healthPath) {
         this.healthPath = healthPath;
+    }
+
+    private void setConfigData() {
+        Object object = mappedConfig.get(PORTAL_URL);
+        if (object != null) portalUrl = (String) object;
+        object = mappedConfig.get(PORTAL_TOKEN);
+        if (object != null) portalToken = (String) object;
+        object = mappedConfig.get(MAX_REQ_PER_CONN);
+        if (object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
+        object = mappedConfig.get(DEREGISTER_AFTER);
+        if (object != null) deregisterAfter = Config.loadIntegerValue(DEREGISTER_AFTER, object);
+        object = mappedConfig.get(CHECK_INTERVAL);
+        if (object != null) checkInterval = Config.loadIntegerValue(CHECK_INTERVAL, object);
+        object = mappedConfig.get(HTTP_CHECK);
+        if (object != null) httpCheck = Config.loadBooleanValue(HTTP_CHECK, object);
+        object = mappedConfig.get(TTL_CHECK);
+        if (object != null) ttlCheck = Config.loadBooleanValue(TTL_CHECK, object);
+        object = mappedConfig.get(HEALTH_PATH);
+        if (object != null) healthPath = (String) object;
     }
 }

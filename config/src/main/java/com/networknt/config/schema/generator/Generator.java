@@ -1,14 +1,11 @@
 package com.networknt.config.schema.generator;
 
-import com.networknt.config.schema.AnnotationUtils;
-import com.networknt.config.schema.MetadataParser;
-import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.*;
 
 import javax.tools.FileObject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 /**
@@ -21,7 +18,7 @@ public abstract class Generator {
     protected final String configKey;
     protected final String configName;
 
-    public Generator(final String configKey, final String configName) {
+    protected Generator(final String configKey, final String configName) {
         this.configName = configName;
         this.configKey = configKey;
     }
@@ -29,109 +26,124 @@ public abstract class Generator {
     /**
      * Writes the schema to a file based on a provided FileObject.
      *
-     * @param object   The file object to write the schema to.
-     * @param metadata The metadata to write.
+     * @param object         The file object to write the schema to.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
      * @throws IOException If an error occurs while writing the schema.
      */
-    public abstract void writeSchemaToFile(final FileObject object, final LinkedHashMap<String, Object> metadata) throws IOException;
+    public abstract void writeSchemaToFile(final FileObject object, final FieldNode annotatedField) throws IOException;
 
     /**
      * Writes the schema to a file based on a provided Writer.
      *
-     * @param writer   The writer to write the schema to.
-     * @param metadata The metadata to write.
+     * @param writer         The writer to write the schema to.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
      * @throws IOException If an error occurs while writing the schema.
      */
-    public abstract void writeSchemaToFile(final Writer writer, final LinkedHashMap<String, Object> metadata) throws IOException;
+    public abstract void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) throws IOException;
 
     /**
      * Writes the schema to a file based on a provided OutputStream.
      *
-     * @param os       The output stream to write the schema to.
-     * @param metadata The metadata to write.
+     * @param os             The output stream to write the schema to.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
      */
-    public abstract void writeSchemaToFile(final OutputStream os, final LinkedHashMap<String, Object> metadata) throws IOException;
+    public abstract void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException;
 
     /**
-     * Parses an array field.
+     * Converts an array field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted array node entry.
+     * @see FieldNode
      */
-    protected abstract void parseArray(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertArrayNode(final FieldNode annotatedField);
 
     /**
-     * Parses a boolean field.
+     * Converts a boolean field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted boolean node entry.
+     * @see FieldNode
      */
-    protected abstract void parseBoolean(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertBooleanNode(final FieldNode annotatedField);
 
     /**
-     * Parses an integer field.
+     * Converts an integer field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted integer node entry.
+     * @see FieldNode
      */
-    protected abstract void parseInteger(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertIntegerNode(final FieldNode annotatedField);
 
     /**
-     * Parses a number field.
+     * Converts a number field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted number node entry.
+     * @see FieldNode
      */
-    protected abstract void parseNumber(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertNumberNode(final FieldNode annotatedField);
 
     /**
      * Parses an object field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted object node entry.
+     * @see FieldNode
      */
-    protected abstract void parseObject(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertObjectNode(final FieldNode annotatedField);
 
     /**
-     * Parses a string field.
+     * Converts a string field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
+     * @return Converted string node entry.
+     * @see FieldNode
      */
-    protected abstract void parseString(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertStringNode(final FieldNode annotatedField);
 
     /**
-     * Parses a null field.
+     * Converts a null field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
      * @param property The property to update.
+     * @return Converted null node entry.
+     * @see FieldNode
      */
-    protected abstract void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertNullNode(final FieldNode property);
 
     /**
-     * Parses a map field.
+     * Converts a map field.
+     * The input node is converted into the properties required for the generator.
      * How the field gets parsed depends on the generator implementation.
      *
-     * @param field    The field to parse.
-     * @param property The property to update.
+     * @param property Contains all the data parsed from our annotated config field.
+     * @see FieldNode
      */
-    protected abstract void parseMapField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property);
+    protected abstract LinkedHashMap<String, Object> convertMapNode(final FieldNode property);
 
     /**
-     * Gets the root schema properties.
-     * How the field gets parsed depends on the generator implementation.
+     * Converts the root {@link ConfigSchema} class into the root of the output format defined by the generator.
      *
-     * @param metadata The metadata to get the properties from.
+     * @param annotatedField Contains all the data parsed from our annotated config field.
      * @return The root schema properties.
+     * @see FieldNode
      */
-    protected abstract LinkedHashMap<String, Object> getRootSchemaProperties(final LinkedHashMap<String, Object> metadata);
+    protected abstract LinkedHashMap<String, Object> convertConfigRoot(final FieldNode annotatedField);
 
 
     /**
@@ -139,89 +151,45 @@ public abstract class Generator {
      *
      * @param format    The output format to get the generator for.
      * @param configKey The configuration key to use.
+     * @param configName The name of the configuration file.
      * @return The generator for the specified output format.
+     *
+     * @see OutputFormat
      */
     public static Generator getGenerator(final OutputFormat format, final String configKey, final String configName) {
-        switch (format) {
-            case JSON_SCHEMA:
-                return new JsonSchemaGenerator(configKey, configName);
-            case YAML:
-                return new YamlGenerator(configKey, configName);
-            case CLOUD:
-                return new CloudEventGenerator(configKey, configName);
-            case DEBUG:
-                return new DebugGenerator(configKey, configName);
-            default:
-                throw new IllegalArgumentException("Unsupported output format: " + format);
-        }
+        return format.getGenerator(configKey, configName);
     }
 
     /**
-     * Common check to see if a hashmap contains a hashmap at the specified key.
+     * Converts a {@link FieldNode} into a hash entry.
+     * How the node data gets ingested and the output structure are determined by the generator implementation.
      *
-     * @param map   The map to check.
-     * @param field The field to check.
-     * @return True if the map contains the field and is a hashmap.
+     * @param annotatedField The property to update.
+     *
+     * @see FieldNode
      */
-    protected static boolean fieldIsSubMap(final LinkedHashMap<String, Object> map, final String field) {
-        return map.containsKey(field) && map.get(field) instanceof LinkedHashMap;
-    }
+    protected LinkedHashMap<String, Object> convertNode(final FieldNode annotatedField) {
 
-    /**
-     * Common check to see if a hashmap contains an array at the specified key.
-     *
-     * @param map - map to check
-     * @param field - field to check
-     * @return True if the map contains the field and is an array.
-     */
-    protected static boolean fieldIsSubArray(final LinkedHashMap<String, Object> map, final String field) {
-        return map.containsKey(field) && map.get(field) instanceof ArrayList;
-    }
-
-    /**
-     * Parses a field.
-     * How the field gets parsed depends on the generator implementation.
-     *
-     * @param field    The field to parse.
-     * @param property The property to update.
-     */
-    protected void parseField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
-        final var type = AnnotationUtils.getAsType(field.get(MetadataParser.TYPE_KEY), String.class);
+        final var type = annotatedField.getType();
         switch (type) {
-            case MetadataParser.ARRAY_TYPE:
-                this.parseArray(field, property);
-                break;
-
-            case MetadataParser.MAP_TYPE:
-                this.parseMapField(field, property);
-                break;
-
-            case MetadataParser.BOOLEAN_TYPE:
-                this.parseBoolean(field, property);
-                break;
-
-            case MetadataParser.INTEGER_TYPE:
-                this.parseInteger(field, property);
-                break;
-
-            case MetadataParser.NUMBER_TYPE:
-                this.parseNumber(field, property);
-                break;
-
-            case MetadataParser.OBJECT_TYPE:
-                this.parseObject(field, property);
-                break;
-
-            case MetadataParser.STRING_TYPE:
-                this.parseString(field, property);
-                break;
-
-            case MetadataParser.NULL_TYPE:
-                this.parseNullField(field, property);
-                break;
-
+            case ARRAY:
+                return this.convertArrayNode(annotatedField);
+            case MAP:
+                return this.convertMapNode(annotatedField);
+            case BOOLEAN:
+                return this.convertBooleanNode(annotatedField);
+            case INTEGER:
+                return this.convertIntegerNode(annotatedField);
+            case NUMBER:
+                return this.convertNumberNode(annotatedField);
+            case OBJECT:
+                return this.convertObjectNode(annotatedField);
+            case STRING:
+                return this.convertStringNode(annotatedField);
+            case NULL:
+                return this.convertNullNode(annotatedField);
             default:
-                throw new IllegalArgumentException("Unsupported type: " + type + " - Metadata: " + field);
+                throw new IllegalArgumentException("Unsupported type: " + type);
         }
     }
 

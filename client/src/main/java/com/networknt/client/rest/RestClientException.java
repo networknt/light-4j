@@ -19,6 +19,9 @@ package com.networknt.client.rest;
 
 import com.networknt.exception.ClientException;
 
+/**
+ * RestClientException class.
+ */
 public class RestClientException extends ClientException {
 
     /**

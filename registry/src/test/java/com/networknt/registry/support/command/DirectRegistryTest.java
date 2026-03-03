@@ -19,8 +19,8 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -34,11 +34,11 @@ public class DirectRegistryTest {
 
         URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/token");
         List<URL> urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(1, urls.size());
+        Assertions.assertEquals(1, urls.size());
 
         subscribeUrl = URLImpl.valueOf("light://localhost:7080/code");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(2, urls.size());
+        Assertions.assertEquals(2, urls.size());
 
 
     }
@@ -50,18 +50,18 @@ public class DirectRegistryTest {
         URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0000");
 
         List<URL> urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(1, urls.size());
-        Assert.assertTrue(urls.get(0).getPort() == 8440);
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertTrue(urls.get(0).getPort() == 8440);
 
         subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0001");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(1, urls.size());
-        Assert.assertTrue(urls.get(0).getPort() == 8441);
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertTrue(urls.get(0).getPort() == 8441);
 
         subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0002");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(1, urls.size());
-        Assert.assertTrue(urls.get(0).getPort() == 8442);
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertTrue(urls.get(0).getPort() == 8442);
     }
 
 }

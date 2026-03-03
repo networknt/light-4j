@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ public class RequestInjectionConfig {
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicator of enabled"
     )
@@ -32,7 +32,6 @@ public class RequestInjectionConfig {
     @ArrayField(
             configFieldName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
             externalizedKeyName = APPLIED_BODY_INJECTION_PATH_PREFIXES,
-            externalized = true,
             description = "request body injection applied path prefixes. Injecting the request body and output into the audit log is very heavy operation,\n" +
                     "and it should only be enabled when necessary or for diagnose session to resolve issues. This list can be updated on the config\n" +
                     "server or local values.yml, then an API call to the config-reload endpoint to apply the changes from light-portal control pane.\n" +
@@ -52,7 +51,6 @@ public class RequestInjectionConfig {
     @IntegerField(
             configFieldName = MAX_BUFFERS,
             externalizedKeyName = MAX_BUFFERS,
-            externalized = true,
             defaultValue = "1024",
             description = "Max number of buffers for the interceptor. The default value is 1024. If the number of buffers exceeds this value, the large\n" +
                     "request body will be truncated. The buffer size is 16K, so the max size of the body can be intercepted is 16M. If you want to\n" +
@@ -62,31 +60,41 @@ public class RequestInjectionConfig {
     )
     private int maxBuffers;
     private Map<String, Object> mappedConfig;
-    private final Config config;
 
-    public RequestInjectionConfig() {
+    private static volatile RequestInjectionConfig instance;
+
+    private RequestInjectionConfig() {
         this(CONFIG_NAME);
     }
 
-    public RequestInjectionConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+    private RequestInjectionConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
-    static RequestInjectionConfig load() {
-        return new RequestInjectionConfig();
+    public static RequestInjectionConfig load() {
+        return load(CONFIG_NAME);
     }
 
-    static RequestInjectionConfig load(String configName) {
+    public static RequestInjectionConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (RequestInjectionConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new RequestInjectionConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, RequestInjectionConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new RequestInjectionConfig(configName);
-    }
-
-    void reload() {
-        this.mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
     }
 
     public boolean isEnabled() {

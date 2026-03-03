@@ -21,6 +21,7 @@ import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.StringField;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -38,53 +39,57 @@ public class ContentConfig {
   private static final String ENABLED = "enabled";
   private static final String CONTENT_TYPE = "contentType";
   private Map<String, Object> mappedConfig;
-  private final Config config;
 
 
   @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             description = "Indicate if the content middleware is enabled or not.",
             defaultValue = "true"
   )
-  boolean enabled;
+  private boolean enabled;
 
   @StringField(
             configFieldName = CONTENT_TYPE,
             externalizedKeyName = CONTENT_TYPE,
             pattern = ".*/.*",
-            externalized = true,
             description = "The content type to be used in the response.",
             defaultValue = "application/json"
   )
-  String contentType;
+  private String contentType;
+
+  private static volatile ContentConfig instance;
 
   private ContentConfig(String configName) {
-    config = Config.getInstance();
-    mappedConfig = config.getJsonMapConfigNoCache(configName);
+    mappedConfig = Config.getInstance().getJsonMapConfig(configName);
     setConfigData();
   }
   private ContentConfig() {
     this(CONFIG_NAME);
   }
 
-  public static ContentConfig load(String configName) {
-    return new ContentConfig(configName);
-  }
-
   public static ContentConfig load() {
-    return new ContentConfig();
+    return load(CONFIG_NAME);
   }
 
-  public void reload() {
-    mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-    setConfigData();
-  }
-
-  public void reload(String configName) {
-    mappedConfig = config.getJsonMapConfigNoCache(configName);
-    setConfigData();
+  public static ContentConfig load(String configName) {
+    if (CONFIG_NAME.equals(configName)) {
+      Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+      if (instance != null && instance.getMappedConfig() == mappedConfig) {
+        return instance;
+      }
+      synchronized (ContentConfig.class) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        if (instance != null && instance.getMappedConfig() == mappedConfig) {
+          return instance;
+        }
+        instance = new ContentConfig(configName);
+        // Register the module with the configuration.
+        ModuleRegistry.registerModule(configName, ContentConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+        return instance;
+      }
+    }
+    return new ContentConfig(configName);
   }
 
   public boolean isEnabled() {
@@ -107,9 +112,7 @@ public class ContentConfig {
     return mappedConfig;
   }
 
-  Config getConfig() {
-    return config;
-  }
+
 
   private void setConfigData() {
     if(getMappedConfig() != null) {

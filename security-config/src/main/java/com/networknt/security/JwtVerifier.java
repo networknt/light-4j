@@ -17,7 +17,10 @@
 package com.networknt.security;
 
 import com.networknt.cache.CacheManager;
+import com.networknt.client.AuthServerConfig;
 import com.networknt.client.ClientConfig;
+import com.networknt.client.OAuthTokenConfig;
+import com.networknt.client.OAuthTokenKeyConfig;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
@@ -598,24 +601,24 @@ public class JwtVerifier extends TokenVerifier {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK. We need to figure out only one jwk server or multiple.
         ClientConfig clientConfig = ClientConfig.get();
-        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-        Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-        if (clientConfig.isMultipleAuthServers()) {
+        OAuthTokenConfig tokenConfig = clientConfig.getOAuth().getToken();
+        OAuthTokenKeyConfig keyConfig = tokenConfig.getKey();
+        if (clientConfig.getOAuth().isMultipleAuthServers()) {
             // iterate all the configured auth server to get JWK.
-            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
-            if (serviceIdAuthServers != null && serviceIdAuthServers.size() > 0) {
+            Map<String, AuthServerConfig> serviceIdAuthServers = keyConfig.getServiceIdAuthServers();
+            if (serviceIdAuthServers != null && !serviceIdAuthServers.isEmpty()) {
                 audienceMap = new HashMap<>();
-                for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
+                for (Map.Entry<String, AuthServerConfig> entry : serviceIdAuthServers.entrySet()) {
                     String serviceId = entry.getKey();
-                    Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
+                    AuthServerConfig authServerConfig = entry.getValue();
                     // based on the configuration, we can identify if the entry is for jwk retrieval for jwt or swt introspection. For jwk,
                     // there is no clientId and clientSecret. For token introspection, clientId and clientSecret is in the config.
-                    if(authServerConfig.get(ClientConfig.CLIENT_ID) != null && authServerConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+                    if(authServerConfig.getClientId() != null && authServerConfig.getClientSecret() != null) {
                         // this is the entry for swt introspection, skip here.
                         continue;
                     }
                     // construct audience map for audience validation.
-                    String audience = (String) authServerConfig.get(ClientConfig.AUDIENCE);
+                    String audience = authServerConfig.getAudience();
                     if (audience != null) {
                         if (logger.isTraceEnabled()) logger.trace("audience {} is mapped to serviceId {}", audience, serviceId);
                         audienceMap.put(serviceId, audience);
@@ -626,8 +629,7 @@ public class JwtVerifier extends TokenVerifier {
                         if (logger.isDebugEnabled())
                             logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
                         String key = OauthHelper.getKey(keyRequest);
-                        if (logger.isDebugEnabled())
-                            logger.debug("Got Json Web Key = " + key);
+                        if (logger.isDebugEnabled()) logger.debug("Got Json Web Key = {}", key);
                         // find all use = sig keys
                         List<JsonWebKey> jwkList = new JsonWebKeySet(key).findJsonWebKeys(null, null, SIG, null);
                         if(jwkList == null || jwkList.isEmpty()) {
@@ -661,7 +663,7 @@ public class JwtVerifier extends TokenVerifier {
             }
         } else {
             // get audience from the key config
-            audience = (String) keyConfig.get(ClientConfig.AUDIENCE);
+            audience = keyConfig.getAudience();
             if(logger.isTraceEnabled()) logger.trace("A single audience {} is configured in client.yml", audience);
             // there is only one jwk server.
             TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, null);
@@ -671,8 +673,7 @@ public class JwtVerifier extends TokenVerifier {
 
                 String key = OauthHelper.getKey(keyRequest);
 
-                if (logger.isDebugEnabled())
-                    logger.debug("Got Json Web Key = " + key);
+                if (logger.isDebugEnabled()) logger.debug("Got Json Web Key = {}", key);
                 // find all use = sig keys
                 List<JsonWebKey> jwkList = new JsonWebKeySet(key).findJsonWebKeys(null, null, SIG, null);
                 if(jwkList == null || jwkList.isEmpty()) {
@@ -714,20 +715,20 @@ public class JwtVerifier extends TokenVerifier {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
         if (logger.isTraceEnabled()) {
-            logger.trace("kid = " + kid + " requestPathOrJwkServiceIds = " + requestPathOrJwkServiceIds);
+            logger.trace("kid = {} requestPathOrJwkServiceIds = {}", kid, requestPathOrJwkServiceIds);
             if(requestPathOrJwkServiceIds instanceof List) {
                 ((List<String>)requestPathOrJwkServiceIds).forEach(logger::trace);
             }
         }
         ClientConfig clientConfig = ClientConfig.get();
         JsonWebKey jwk = null;
-        Map<String, Object> config = null;
+        AuthServerConfig authServerConfig = null;
 
-        if (requestPathOrJwkServiceIds != null && clientConfig.isMultipleAuthServers()) {
+        if (requestPathOrJwkServiceIds != null && clientConfig.getOAuth().isMultipleAuthServers()) {
             if(requestPathOrJwkServiceIds instanceof String) {
                 String requestPath = (String)requestPathOrJwkServiceIds;
                 Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
-                if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
+                if (pathPrefixServices == null || pathPrefixServices.isEmpty()) {
                     throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
                 }
                 // lookup the serviceId based on the full path and the prefix mapping by iteration here.
@@ -740,13 +741,13 @@ public class JwtVerifier extends TokenVerifier {
                 if (serviceId == null) {
                     throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
                 }
-                config = getJwkConfig(clientConfig, serviceId);
-                jwk = retrieveJwk(kid, config);
+                authServerConfig = getJwkConfig(clientConfig, serviceId);
+                jwk = retrieveJwk(kid, authServerConfig);
             } else if (requestPathOrJwkServiceIds instanceof List) {
                 List<String> jwkServiceIds = (List<String>)requestPathOrJwkServiceIds;
                 for(String serviceId: jwkServiceIds) {
-                    config = getJwkConfig(clientConfig, serviceId);
-                    jwk = retrieveJwk(kid, config);
+                    authServerConfig = getJwkConfig(clientConfig, serviceId);
+                    jwk = retrieveJwk(kid, authServerConfig);
                     if(jwk != null) break;
                 }
             } else {
@@ -760,7 +761,7 @@ public class JwtVerifier extends TokenVerifier {
     }
 
 
-    private JsonWebKey retrieveJwk(String kid, Map<String, Object> config) {
+    private JsonWebKey retrieveJwk(String kid, AuthServerConfig config) {
         // get the jwk with the kid and config map.
         if (logger.isTraceEnabled() && config != null)
             logger.trace("multiple oauth config based on path = {}", JsonMapper.toJson(config));

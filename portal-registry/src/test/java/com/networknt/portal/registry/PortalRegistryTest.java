@@ -22,11 +22,11 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.StringUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.List;
@@ -38,7 +38,7 @@ public class PortalRegistryTest {
     private URL serviceUrl, serviceUrl2, clientUrl, clientUrl2;
     private long sleepTime;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = (MockPortalRegistryClient)SingletonServiceFactory.getBean(PortalRegistryClient.class);
         registry = (PortalRegistry)SingletonServiceFactory.getBean(Registry.class);
@@ -51,7 +51,7 @@ public class PortalRegistryTest {
         sleepTime = PortalRegistryConstants.SWITCHER_CHECK_CIRCLE + 500;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         registry = null;
         client = null;
@@ -63,33 +63,33 @@ public class PortalRegistryTest {
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         PortalRegistryService service1 = PortalRegistryUtils.buildService(serviceUrl);
-        Assert.assertTrue(client.isRegistered(service1));
-        Assert.assertFalse(client.isWorking(service1));
+        Assertions.assertTrue(client.isRegistered(service1));
+        Assertions.assertFalse(client.isWorking(service1));
         PortalRegistryService service2 = PortalRegistryUtils.buildService(serviceUrl2);
-        Assert.assertTrue(client.isRegistered(service2));
-        Assert.assertFalse(client.isWorking(service2));
+        Assertions.assertTrue(client.isRegistered(service2));
+        Assertions.assertFalse(client.isWorking(service2));
 
         // available
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertTrue(client.isWorking(service1));
-        Assert.assertTrue(client.isWorking(service2));
+        Assertions.assertTrue(client.isWorking(service1));
+        Assertions.assertTrue(client.isWorking(service2));
 
         // unavailable
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertFalse(client.isWorking(service1));
-        Assert.assertFalse(client.isWorking(service2));
+        Assertions.assertFalse(client.isWorking(service1));
+        Assertions.assertFalse(client.isWorking(service2));
 
         // unregister
         registry.doUnregister(serviceUrl);
-        Assert.assertFalse(client.isRegistered(service1));
-        Assert.assertTrue(client.isRegistered(service2));
+        Assertions.assertFalse(client.isRegistered(service1));
+        Assertions.assertTrue(client.isRegistered(service2));
         registry.doUnregister(serviceUrl2);
-        Assert.assertFalse(client.isRegistered(service2));
+        Assertions.assertFalse(client.isRegistered(service2));
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void subAndUnsubService() throws Exception {
         //registry.doSubscribe(clientUrl, null);
@@ -115,7 +115,7 @@ public class PortalRegistryTest {
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.doDiscover(serviceUrl);
-        Assert.assertTrue(urls.isEmpty());
+        Assertions.assertTrue(urls.isEmpty());
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
@@ -125,7 +125,7 @@ public class PortalRegistryTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Assert.assertTrue(urls.contains(serviceUrl));
+        Assertions.assertTrue(urls.contains(serviceUrl));
 
         // unavailable & unregister
         registry.doUnavailable(null);
@@ -137,7 +137,7 @@ public class PortalRegistryTest {
     public void testWssUrl() {
         String s = "https://localhost:8438";
         String u = "wss" + s.substring(s.indexOf("://"));
-        Assert.assertEquals("wss://localhost:8438", u);
+        Assertions.assertEquals("wss://localhost:8438", u);
 
     }
 
@@ -150,14 +150,14 @@ public class PortalRegistryTest {
         Map.Entry<String, Object> entry = iterator.next();
         String key = entry.getKey();
         List nodes = (List)entry.getValue();
-        Assert.assertEquals(nodes.size(), 0);
-        Assert.assertEquals("com.networknt.ab-1.0.0|test1", key);
+        Assertions.assertEquals(nodes.size(), 0);
+        Assertions.assertEquals("com.networknt.ab-1.0.0|test1", key);
 
         String[] parts = StringUtils.split(key, "|");
         String serviceId = parts[0];
         String tag = parts[1];
-        Assert.assertEquals("com.networknt.ab-1.0.0", serviceId);
-        Assert.assertEquals("test1", tag);
+        Assertions.assertEquals("com.networknt.ab-1.0.0", serviceId);
+        Assertions.assertEquals("test1", tag);
     }
 
     @Test
@@ -167,8 +167,8 @@ public class PortalRegistryTest {
             String[] parts = StringUtils.split(s, "|");
             String serviceId = parts[0];
             String tag = parts[1];
-            Assert.assertEquals(s, serviceId);
-            Assert.assertNull(tag);
+            Assertions.assertEquals(s, serviceId);
+            Assertions.assertNull(tag);
         } else {
 
         }

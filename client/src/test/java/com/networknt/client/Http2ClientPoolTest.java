@@ -24,6 +24,7 @@ import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.io.Receiver;
@@ -43,8 +44,7 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.lang.JoseException;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
@@ -108,15 +108,13 @@ public class Http2ClientPoolTest {
         sender.send(message);
     }
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         slowCount = 0;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
         // Create xnio worker
@@ -153,10 +151,10 @@ public class Http2ClientPoolTest {
                             .addExactPath(KEY, exchange -> sendMessage(exchange))
                             .addExactPath(API, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
-                                Assert.assertTrue(hasScopeToken);
+                                Assertions.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0);
                                 boolean expired = isTokenExpired(scopeToken);
-                                Assert.assertFalse(expired);
+                                Assertions.assertFalse(expired);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
@@ -216,7 +214,7 @@ public class Http2ClientPoolTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         worker.shutdown();
         if(server != null) {
@@ -248,7 +246,8 @@ public class Http2ClientPoolTest {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -257,10 +256,10 @@ public class Http2ClientPoolTest {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
-            Assert.assertEquals(false, connection.isOpen());
+            Assertions.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals(false, connection.isOpen());
         } finally {
-            client.returnConnection(connection);
+            client.restore(token);
         }
 
     }
@@ -271,7 +270,8 @@ public class Http2ClientPoolTest {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -281,22 +281,22 @@ public class Http2ClientPoolTest {
             latch.await();
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
-                Assert.assertEquals(message, ar.result().getResponseBody());
+                Assertions.assertEquals(message, ar.result().getResponseBody());
                 System.out.println("responseBody = " + ar.result().getResponseBody() + " responseTime = " + ar.result().getResponseTime());
                 // we used to check the response time greater than 0, but it is not always true on a faster machine.
-                Assert.assertNotNull(ar.result().getResponseBody());
+                Assertions.assertNotNull(ar.result().getResponseBody());
             } else {
                 ar.cause().printStackTrace();
             }
-            Assert.assertEquals(false, connection.isOpen());
+            Assertions.assertEquals(false, connection.isOpen());
         } finally {
-            client.returnConnection(connection);
+            client.restore(token);
         }
     }
 
 
     @Test
-    @Ignore
+    @Disabled
     public void testSingleAsych() throws Exception {
         callApiAsync();
     }
@@ -304,7 +304,8 @@ public class Http2ClientPoolTest {
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        SimpleConnectionState.ConnectionToken token = client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -314,10 +315,10 @@ public class Http2ClientPoolTest {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
-            Assert.assertEquals(false, connection.isOpen());
+            Assertions.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            Assertions.assertEquals(false, connection.isOpen());
         } finally {
-            client.returnConnection(connection);
+            client.restore(token);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }

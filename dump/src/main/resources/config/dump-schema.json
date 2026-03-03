@@ -22,7 +22,8 @@
     "indentSize" : {
       "type" : "integer",
       "description" : "The indent size for the dump middleware.",
-      "default" : 4
+      "default" : 4,
+      "format" : "int32"
     },
     "useJson" : {
       "type" : "boolean",

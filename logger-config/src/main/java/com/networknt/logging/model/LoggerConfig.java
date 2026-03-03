@@ -17,8 +17,8 @@
 package com.networknt.logging.model;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -43,7 +43,6 @@ public class LoggerConfig {
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            externalized = true,
             description = "Indicate if the logging info is enabled or not."
     )
     boolean enabled;
@@ -52,7 +51,6 @@ public class LoggerConfig {
             configFieldName = LOG_START,
             externalizedKeyName = LOG_START,
             defaultValue = "600000",
-            externalized = true,
             description = "Indicate the default time period backward in millisecond for log content retrieve.\n" +
                           "Default is an hour which indicate system will retrieve one hour log by default"
     )
@@ -61,7 +59,6 @@ public class LoggerConfig {
     @BooleanField(
             configFieldName = DOWNSTREAM_ENABLED,
             externalizedKeyName = DOWNSTREAM_ENABLED,
-            externalized = true,
             description = "if the logger access needs to invoke down streams API. It is false by default.",
             defaultValue = "false"
     )
@@ -70,7 +67,6 @@ public class LoggerConfig {
     @StringField(
             configFieldName = DOWNSTREAM_HOST,
             externalizedKeyName = DOWNSTREAM_HOST,
-            externalized = true,
             defaultValue = "http://localhost:8081",
             description = "down stream API host. http://localhost is the default when used with http-sidecar and kafka-sidecar."
     )
@@ -79,7 +75,6 @@ public class LoggerConfig {
     @StringField(
             configFieldName = DOWNSTREAM_FRAMEWORK,
             externalizedKeyName = DOWNSTREAM_FRAMEWORK,
-            externalized = true,
             defaultValue = "Light4j",
             description = "down stream API framework that has the admin endpoints. Light4j, SpringBoot, Quarkus, Micronaut, Helidon, etc. If the adm endpoints are different between\n" +
                           "different versions, you can use the framework plus version as the identifier. For example, Light4j-1.6.0, SpringBoot-2.4.0, etc."
@@ -87,30 +82,42 @@ public class LoggerConfig {
     String downstreamFramework;
 
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
+
+    private final Map<String, Object> mappedConfig;
+
+    private static volatile LoggerConfig instance;
 
     private LoggerConfig() {
         this(CONFIG_NAME);
     }
 
     private LoggerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static LoggerConfig load() {
-        return new LoggerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LoggerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (LoggerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LoggerConfig(configName);
+                // Register the module with the configuration.
+                ModuleRegistry.registerModule(configName, LoggerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new LoggerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
     }
 
     public void setConfigData() {

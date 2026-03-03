@@ -1,7 +1,8 @@
 package com.networknt.sanitizer;
 
 import org.owasp.encoder.EncoderWrapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.owasp.encoder.*;
 
@@ -123,21 +124,9 @@ public class EncoderWrapperTest {
         Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
     }
 
-    @Test(expected = UnsupportedContextException.class)
+    @Test
     public void shouldThrowExceptionForIncorrectEncoder() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("data1", "value1");
-        map.put("data2", "value2");
-        map.put("data3", "value3");
-        map.put("data4", "value4");
-        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("fake"), Arrays.asList("data2"), Arrays.asList("data3")));
-
-        encoder.encodeNode(map);
-
-        Mockito.verify(encoder, Mockito.never()).applyEncoding("value1");
-        Mockito.verify(encoder).applyEncoding("value3");
-        Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
-        Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
+        Assertions.assertThrows(UnsupportedContextException.class, () -> Encoders.forName("fake"));
     }
 
     @Test

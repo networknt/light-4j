@@ -18,7 +18,6 @@ package com.networknt.info;
 
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -39,15 +38,20 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
 
     static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandler.class);
-    static ServerInfoConfig config;
+    private String configName = ServerInfoConfig.CONFIG_NAME;
+
     public ServerInfoGetHandler() {
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
-        config = ServerInfoConfig.load();
-        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerInfoConfig.CONFIG_NAME),null);
+    }
+
+    public ServerInfoGetHandler(String configName) {
+        this.configName = configName;
+        if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed with {}", configName);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        ServerInfoConfig config = ServerInfoConfig.load(configName);
         if(config.isEnableServerInfo()) {
             Map<String,Object> infoMap = ServerInfoUtil.getServerInfo(config);
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");

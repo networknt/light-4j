@@ -1,0 +1,29 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "enabled", "accessRuleLogic", "defaultDeny", "skipPathPrefixes" ],
+  "properties" : {
+    "enabled" : {
+      "type" : "boolean",
+      "description" : "Enable Access Control Handler",
+      "default" : true
+    },
+    "accessRuleLogic" : {
+      "type" : "string",
+      "description" : "If there are multiple rules, the logic to combine them can be any or all. The default is any, and it\nmeans that any rule is satisfied, the access is granted. If all is set, all rules must be satisfied.",
+      "default" : "any"
+    },
+    "defaultDeny" : {
+      "type" : "boolean",
+      "description" : "If there is no access rule defined for the endpoint, default access is denied. Users can overwrite\nthis default action by setting this config value to false. If true, the handle will force users to\ndefine the rules for each endpoint when the access control handler is enabled.",
+      "default" : true
+    },
+    "skipPathPrefixes" : {
+      "type" : "array",
+      "description" : "Define a list of path prefixes to skip the access-control to ease the configuration for the handler.yml\nso that users can define some endpoint without fine-grained access-control security even through it uses\nthe default chain. This is useful if some endpoints want to skip the fine-grained access control in the\napplication. The format is a list of strings separated with commas or a JSON list in values.yml definition\nfrom config server, or you can use yaml format in externalized access-control.yml file.",
+      "items" : {
+        "type" : "string"
+      }
+    }
+  }
+}

@@ -3,14 +3,15 @@ package com.networknt.client;
 import com.networknt.exception.ClientException;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
@@ -21,19 +22,19 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Ignore
+@Disabled
 public class HttpRequestSSLContextTest {
 
     static final Logger logger = LoggerFactory.getLogger(HttpRequestSSLContextTest.class);
     public static final String CONFIG_NAME = "client";
     static ClientConfig config;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
     }
 
-    @Test (expected = NullPointerException.class)
+    @Test
     public void testGetRequestSSlContextError() throws Exception{
 
         Map<String, Object>  tlsConfig = config.getTlsConfig();
@@ -41,9 +42,11 @@ public class HttpRequestSSLContextTest {
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionState.ConnectionToken token;
         final ClientConnection connection;
         try {
-            connection = client.borrowConnection(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            token = client.borrow(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+            connection = (ClientConnection) token.getRawConnection();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -62,7 +65,7 @@ public class HttpRequestSSLContextTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            client.returnConnection(connection);
+            client.restore(token);
         }
         int statusCode = reference.get().getResponseCode();
     }
@@ -76,9 +79,11 @@ public class HttpRequestSSLContextTest {
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionState.ConnectionToken token;
         final ClientConnection connection;
         try {
-            connection = client.borrowConnection(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            token = client.borrow(new URI("https://www.google.com"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+            connection = (ClientConnection) token.getRawConnection();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -96,10 +101,10 @@ public class HttpRequestSSLContextTest {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            client.returnConnection(connection);
+            client.restore(token);
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
+        Assertions.assertEquals(200, statusCode);
     }
 
 }

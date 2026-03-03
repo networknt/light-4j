@@ -5,6 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,13 +33,13 @@ public class RequestTransformerConfig {
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
     private static final String PATH_PREFIX_ENCODING = "pathPrefixEncoding";
 
+    private static volatile RequestTransformerConfig instance;
     private Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if this interceptor is enabled or not."
     )
@@ -47,7 +48,6 @@ public class RequestTransformerConfig {
     @BooleanField(
             configFieldName = REQUIRED_CONTENT,
             externalizedKeyName = REQUIRED_CONTENT,
-            externalized = true,
             defaultValue = "true",
             description = "indicate if the transform interceptor needs to change the request body."
     )
@@ -56,7 +56,6 @@ public class RequestTransformerConfig {
     @StringField(
             configFieldName = DEFAULT_BODY_ENCODING,
             externalizedKeyName = DEFAULT_BODY_ENCODING,
-            externalized = true,
             defaultValue = "UTF-8",
             description = "default body encoding for the request body. The default value is UTF-8. Other options is ISO-8859-1."
     )
@@ -65,7 +64,6 @@ public class RequestTransformerConfig {
     @ArrayField(
             configFieldName = APPLIED_PATH_PREFIXES,
             externalizedKeyName = APPLIED_PATH_PREFIXES,
-            externalized = true,
             description = "A list of applied request path prefixes, other requests will skip this handler. The value can be a string\n" +
                     "if there is only one request path prefix needs this handler. or a list of strings if there are multiple.",
             items = String.class
@@ -75,7 +73,6 @@ public class RequestTransformerConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ENCODING,
             externalizedKeyName = PATH_PREFIX_ENCODING,
-            externalized = true,
             description = "For certain path prefixes that are not using the defaultBodyEncoding UTF-8, you can define the customized\n" +
                     "encoding like ISO-8859-1 for the path prefixes here. This is only for the legacy APIs that can only accept\n" +
                     "ISO-8859-1 request body but the consumer is sending the request in UTF-8 as it is standard on the Web.\n" +
@@ -92,25 +89,33 @@ public class RequestTransformerConfig {
 
     private RequestTransformerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if(mappedConfig != null) {
+            setConfigData();
+            setConfigList();
+            setConfigMap();
+        }
     }
 
     public static RequestTransformerConfig load() {
-        return new RequestTransformerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static RequestTransformerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (RequestTransformerConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new RequestTransformerConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, RequestTransformerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new RequestTransformerConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
-        setConfigMap();
     }
 
 

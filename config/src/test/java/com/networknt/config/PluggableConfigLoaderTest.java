@@ -1,9 +1,11 @@
 package com.networknt.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,21 +15,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PluggableConfigLoaderTest extends TestCase {
+public class PluggableConfigLoaderTest {
 
     private final String homeDir = System.getProperty("user.home");
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
+        
         System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
-        super.tearDown();
+        
         // Remove the config.yml from home directory
         File test = new File(homeDir + "/config.yml");
         test.delete();
@@ -50,7 +52,7 @@ public class PluggableConfigLoaderTest extends TestCase {
         Config config = (Config) ctr.newInstance();
 
         Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
-        Assert.assertEquals(mapConfig.get("ttlCheck"), true);
+        Assertions.assertEquals(mapConfig.get("ttlCheck"), true);
     }
 
     @Test
@@ -70,7 +72,7 @@ public class PluggableConfigLoaderTest extends TestCase {
         Config config = (Config) ctr.newInstance();
 
         Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
-        Assert.assertEquals(mapConfig.get("ttlCheck"), false);
+        Assertions.assertEquals(mapConfig.get("ttlCheck"), false);
     }
 
     @Test
@@ -90,7 +92,7 @@ public class PluggableConfigLoaderTest extends TestCase {
         Config config = (Config) ctr.newInstance();
 
         TestConsulConfig objectConfig = (TestConsulConfig) config.getJsonObjectConfig("consul", TestConsulConfig.class);
-        Assert.assertEquals(objectConfig.isTtlCheck(), false);
+        Assertions.assertEquals(objectConfig.isTtlCheck(), false);
     }
 
     @Test
@@ -111,7 +113,7 @@ public class PluggableConfigLoaderTest extends TestCase {
 
         try {
             Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
-            Assert.fail();
+            Assertions.fail();
         } catch (Exception e) {
         }
     }

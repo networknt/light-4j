@@ -16,9 +16,9 @@
 
 package com.networknt.router;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -28,7 +28,7 @@ public class RouterConfigTest {
 
     private static RouterConfig routerConfig;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         routerConfig = RouterConfig.load();
     }
@@ -36,37 +36,37 @@ public class RouterConfigTest {
 
     @Test
     public void testConfig() {
-        Assert.assertFalse(routerConfig.isHttp2Enabled());
-        Assert.assertTrue(routerConfig.isHttpsEnabled());
-        Assert.assertTrue(routerConfig.isRewriteHostHeader());
-        Assert.assertEquals(routerConfig.getMaxRequestTime(), 1000);
-        Assert.assertEquals(routerConfig.getMaxConnectionRetries(), 3);
-        Assert.assertEquals(routerConfig.getMaxQueueSize(), 0);
+        Assertions.assertFalse(routerConfig.isHttp2Enabled());
+        Assertions.assertTrue(routerConfig.isHttpsEnabled());
+        Assertions.assertTrue(routerConfig.isRewriteHostHeader());
+        Assertions.assertEquals(routerConfig.getMaxRequestTime(), 1000);
+        Assertions.assertEquals(routerConfig.getMaxConnectionRetries(), 3);
+        Assertions.assertEquals(routerConfig.getMaxQueueSize(), 0);
     }
 
     @Test
     public void testConfigList() {
-        Assert.assertNotNull(routerConfig.getHostWhitelist());
-        Assert.assertEquals(routerConfig.getHostWhitelist().size(), 2);
+        Assertions.assertNotNull(routerConfig.getHostWhitelist());
+        Assertions.assertEquals(routerConfig.getHostWhitelist().size(), 2);
     }
 
     @Test
     public void testQueryParamRewriteRules() {
-        Assert.assertNotNull(routerConfig.getQueryParamRewriteRules());
-        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 4);
+        Assertions.assertNotNull(routerConfig.getQueryParamRewriteRules());
+        Assertions.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 4);
     }
 
     @Test
     public void testHeaderRewriteRules() {
-        Assert.assertNotNull(routerConfig.getHeaderRewriteRules());
-        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 4);
+        Assertions.assertNotNull(routerConfig.getHeaderRewriteRules());
+        Assertions.assertEquals(routerConfig.getHeaderRewriteRules().size(), 4);
     }
 
 
     @Test
     public void testUrlRewriteRules() {
-        Assert.assertNotNull(routerConfig.getUrlRewriteRules());
-        Assert.assertEquals(routerConfig.getUrlRewriteRules().size(), 3);
+        Assertions.assertNotNull(routerConfig.getUrlRewriteRules());
+        Assertions.assertEquals(routerConfig.getUrlRewriteRules().size(), 3);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class RouterConfigTest {
         if(matcher.matches()) {
             s = matcher.replaceAll(replace);
         }
-        Assert.assertEquals(targetURL, s);
+        Assertions.assertEquals(targetURL, s);
         System.out.println(s);
     }
 
@@ -94,7 +94,7 @@ public class RouterConfigTest {
 
         Matcher matcher = pattern.matcher(sourceURL);
         String s = matcher.replaceAll(replace);
-        Assert.assertEquals(targetURL, s);
+        Assertions.assertEquals(targetURL, s);
         System.out.println(s);
     }
 
@@ -107,7 +107,7 @@ public class RouterConfigTest {
 
         Matcher matcher = pattern.matcher(sourceURL);
         String s = matcher.replaceAll(replace);
-        Assert.assertEquals(targetURL, s);
+        Assertions.assertEquals(targetURL, s);
         System.out.println(s);
     }
 

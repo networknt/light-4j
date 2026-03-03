@@ -23,9 +23,9 @@ import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.Map;
 
 public class HandlerTest {
 
-    @Before()
+    @BeforeEach
     public void setUp() throws Exception {
         // Resetting HandlerConfig to default Config before each test run
         Handler.setConfig("handler");
@@ -42,23 +42,23 @@ public class HandlerTest {
     @Test
     public void validClassNameWithoutAt_split_returnsCorrect() throws Exception {
         Tuple<String, Class> sample1 = Handler.splitClassAndName("com.networknt.handler.sample.SampleHttpHandler1");
-        Assert.assertEquals("com.networknt.handler.sample.SampleHttpHandler1", sample1.first);
-        Assert.assertEquals(Class.forName("com.networknt.handler.sample.SampleHttpHandler1"), sample1.second);
+        Assertions.assertEquals("com.networknt.handler.sample.SampleHttpHandler1", sample1.first);
+        Assertions.assertEquals(Class.forName("com.networknt.handler.sample.SampleHttpHandler1"), sample1.second);
     }
 
     @Test
     public void validClassNameWithAt_split_returnsCorrect() throws Exception {
         Tuple<String, Class> sample1 = Handler.splitClassAndName("com.networknt.handler.sample.SampleHttpHandler1@Hello");
-        Assert.assertEquals("Hello", sample1.first);
-        Assert.assertEquals(Class.forName("com.networknt.handler.sample.SampleHttpHandler1"), sample1.second);
+        Assertions.assertEquals("Hello", sample1.first);
+        Assertions.assertEquals(Class.forName("com.networknt.handler.sample.SampleHttpHandler1"), sample1.second);
     }
 
     @Test
     public void validConfig_init_handlersCreated() {
     	Handler.init();
         Map<String, List<HttpHandler>> handlers = Handler.handlerListById;
-        Assert.assertEquals(1, handlers.get("third").size());
-        Assert.assertEquals(2, handlers.get("secondBeforeFirst").size());
+        Assertions.assertEquals(1, handlers.get("third").size());
+        Assertions.assertEquals(2, handlers.get("secondBeforeFirst").size());
     }
 
     private PathChain mkPathChain(String source, String path, String method, String... exec) {
@@ -95,11 +95,11 @@ public class HandlerTest {
 
         PathTemplateMatcher<String> getMatcher = methodToMatcher.get(Methods.GET);
         PathTemplateMatcher.PathMatchResult<String> getFirst = getMatcher.match("/my-api/first");
-        Assert.assertNotNull(getFirst);
+        Assertions.assertNotNull(getFirst);
         PathTemplateMatcher.PathMatchResult<String> getSecond = getMatcher.match("/my-api/second");
-        Assert.assertNotNull(getSecond);
+        Assertions.assertNotNull(getSecond);
         PathTemplateMatcher.PathMatchResult<String> getThird = getMatcher.match("/my-api/third");
-        Assert.assertNull(getThird);
+        Assertions.assertNull(getThird);
     }
 
     @Test
@@ -115,17 +115,19 @@ public class HandlerTest {
         // Not adding(exception=) to @Test since we care _where_ the exception is thrown
         try {
             Handler.init();
-            Assert.fail("Expected an exception to be thrown");
+            Assertions.fail("Expected an exception to be thrown");
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains("Conflicting source"));
-            Assert.assertTrue(e.getMessage().contains("and path"));
-            Assert.assertTrue(e.getMessage().contains("and method"));
+            Assertions.assertTrue(e.getMessage().contains("Conflicting source"));
+            Assertions.assertTrue(e.getMessage().contains("and path"));
+            Assertions.assertTrue(e.getMessage().contains("and method"));
         }
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void invalidMethod_init_throws() throws Exception {
-        Handler.setConfig("invalid-method");
+        Assertions.assertThrows(Exception.class, () -> {
+            Handler.setConfig("invalid-method");
+        });
     }
 
     @Test
@@ -137,8 +139,8 @@ public class HandlerTest {
         collector.initNextHandlerMeasurement("handler2");
         Thread.sleep(25);
         final var report = collector.finalizeHandlerMetrics();
-        Assert.assertTrue(report.contains("handler1"));
-        Assert.assertTrue(report.contains("handler2"));
+        Assertions.assertTrue(report.contains("handler1"));
+        Assertions.assertTrue(report.contains("handler2"));
     }
 
 

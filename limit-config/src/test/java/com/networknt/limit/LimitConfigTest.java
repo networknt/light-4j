@@ -15,9 +15,9 @@
  */
 package com.networknt.limit;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 import java.util.Arrays;
@@ -30,53 +30,53 @@ public class LimitConfigTest {
 
     private static LimitConfig limitConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         limitConfig = LimitConfig.load();
     }
 
     @Test
     public void testConfigData() {
-        Assert.assertTrue(limitConfig.isEnabled());
-        Assert.assertEquals(limitConfig.getConcurrentRequest(), 1);
-        Assert.assertEquals(limitConfig.getQueueSize(), 1);
-        Assert.assertEquals(limitConfig.getErrorCode(), 429);
+        Assertions.assertTrue(limitConfig.isEnabled());
+        Assertions.assertEquals(limitConfig.getConcurrentRequest(), 1);
+        Assertions.assertEquals(limitConfig.getQueueSize(), 1);
+        Assertions.assertEquals(limitConfig.getErrorCode(), 429);
     }
 
     @Test
     public void testLimitKey() {
-        Assert.assertEquals(limitConfig.getKey(), LimitKey.SERVER);
+        Assertions.assertEquals(limitConfig.getKey(), LimitKey.SERVER);
     }
 
     @Test
     public void testRateLimit() {
         List<LimitQuota> limitQuotaList =  limitConfig.getRateLimit();
-        Assert.assertEquals(limitQuotaList.size(), 2);
+        Assertions.assertEquals(limitQuotaList.size(), 2);
     }
 
     @Test
     public void testServer() {
         Map<String, LimitQuota> limitServer =  limitConfig.getServer();
-        Assert.assertEquals(limitServer.size(), 2);
+        Assertions.assertEquals(limitServer.size(), 2);
     }
 
     @Test
     public void testAddress() {
         RateLimitSet limitAddress =  limitConfig.getAddress();
-        Assert.assertEquals(limitAddress.getDirectMaps().size(), 4);
+        Assertions.assertEquals(limitAddress.getDirectMaps().size(), 4);
     }
 
     @Test
     public void testClient() {
         RateLimitSet limitClient =  limitConfig.getClient();
-        Assert.assertEquals(limitClient.getDirectMaps().size(), 4);
+        Assertions.assertEquals(limitClient.getDirectMaps().size(), 4);
 
     }
 
     @Test
     public void testUser() {
         RateLimitSet limitUser =  limitConfig.getUser();
-        Assert.assertEquals(limitUser.getDirectMaps().size(), 3);
+        Assertions.assertEquals(limitUser.getDirectMaps().size(), 3);
 
     }
 

@@ -6,6 +6,8 @@ import com.networknt.config.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
+
 import java.util.List;
 import java.util.Map;
 
@@ -27,13 +29,13 @@ public class RuleLoaderConfig {
     private static final String PORTAL_TOKEN = "portalToken";
     private static final String ENDPOINT_RULES = "endpointRules";
 
-    private Map<String, Object> mappedConfig;
+    private static volatile RuleLoaderConfig instance;
+    private final Map<String, Object> mappedConfig;
     private final Config config;
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
-            externalized = true,
             defaultValue = "true",
             description = "A flag to enable the rule loader to get rules for the service from portal"
     )
@@ -43,7 +45,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = PORTAL_HOST,
             externalizedKeyName = PORTAL_HOST,
-            externalized = true,
             defaultValue = "https://localhost",
             description = "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal"
     )
@@ -52,7 +53,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = PORTAL_TOKEN,
             externalizedKeyName = PORTAL_TOKEN,
-            externalized = true,
             description = "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\n" +
                     "is light-portal."
     )
@@ -61,7 +61,6 @@ public class RuleLoaderConfig {
     @StringField(
             configFieldName = RULE_SOURCE,
             externalizedKeyName = RULE_SOURCE,
-            externalized = true,
             defaultValue = "light-portal",
             description = "Source of the rule. light-portal or config-folder and default to light-portal. If config folder is set,\n" +
                     "a rules.yml must be in the externalized folder to load rules from it. The config-folder option should\n" +
@@ -73,7 +72,6 @@ public class RuleLoaderConfig {
     @MapField(
             configFieldName = ENDPOINT_RULES,
             externalizedKeyName = ENDPOINT_RULES,
-            externalized = true,
             description = "When ruleSource is config-folder, then we can load the endpoint to rules mapping here instead of portal\n" +
                     "service details. Each endpoint will have a list of rules and the type of the rules.",
             valueType = List.class
@@ -86,23 +84,32 @@ public class RuleLoaderConfig {
 
     private RuleLoaderConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setMapData();
+        mappedConfig = config.getJsonMapConfig(configName);
+        if (mappedConfig != null) {
+            setConfigData();
+            setMapData();
+        }
     }
 
     public static RuleLoaderConfig load() {
-        return new RuleLoaderConfig();
+        return load(CONFIG_NAME);
     }
 
     public static RuleLoaderConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                return instance;
+            }
+            synchronized (RuleLoaderConfig.class) {
+                if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
+                    return instance;
+                }
+                instance = new RuleLoaderConfig(configName);
+                ModuleRegistry.registerModule(CONFIG_NAME, RuleLoaderConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
+            }
+        }
         return new RuleLoaderConfig(configName);
-    }
-
-    public void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setMapData();
     }
 
     public boolean isEnabled() {
