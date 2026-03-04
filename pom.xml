@@ -1163,6 +1163,17 @@
         <!-- Enable this profile to generate the config resource files. -->
         <profile>
             <id>schema-generation</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <compilerArgument>-proc:full</compilerArgument>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>dev</id>
