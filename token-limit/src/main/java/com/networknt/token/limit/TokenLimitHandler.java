@@ -48,6 +48,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final String SCOPE = "scope";
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
+    static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String BASIC_PREFIX = "BASIC";
 
 
@@ -133,6 +134,12 @@ public class TokenLimitHandler implements MiddlewareHandler {
             // this assumes that either BodyHandler(oauth-kafka) or RequestBodyInterceptor(light-gateway) is used in the chain.
             String requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
             if (logger.isTraceEnabled()) logger.trace("requestBodyString = {}", requestBodyString);
+            if (requestBodyString == null || requestBodyString.trim().length() == 0) {
+                logger.error("Empty token request. Request body {} could not be parsed.", requestBodyString);
+                // return an error to the caller.
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH);
+                return;
+            }
             // grant_type=client_credentials&client_id=0oa6wgbkbcF27GoqA1d7&client_secret=GInDco_MGt6Fz0oHxmgk1LluEHb6qJ4RQY0MvH3Q&scope=lg.localoauth.corp
             // convert the string to a hashmap via a converter. We need to consider both x-www-urlencoded and json request body.
             // grant_type and scope will always be sent on body

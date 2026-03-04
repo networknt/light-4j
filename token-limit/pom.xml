@@ -77,7 +77,20 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>handler</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>http-string</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>body</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>response-transformer</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -88,16 +101,6 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>server</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>request-transformer</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>response-transformer</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
