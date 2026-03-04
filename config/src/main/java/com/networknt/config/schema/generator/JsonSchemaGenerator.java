@@ -60,19 +60,24 @@ public class JsonSchemaGenerator extends Generator {
     @Override
     public void writeSchemaToFile(OutputStream os, FieldNode annotatedField) throws IOException {
         final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
-        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, schemaMap);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(schemaMap);
+        os.write((json + "\n").getBytes());
     }
 
     @Override
     public void writeSchemaToFile(final FileObject source, final FieldNode annotatedField) throws IOException {
         final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
-        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(source.openOutputStream(), schemaMap);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(schemaMap);
+        try (var os = source.openOutputStream()) {
+            os.write((json + "\n").getBytes());
+        }
     }
 
     @Override
     public void writeSchemaToFile(final Writer br, final FieldNode annotatedField) throws IOException {
         final var schemaMap = this.addJsonSchemaRootInfo(annotatedField);
-        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(br, schemaMap);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(schemaMap);
+        br.write(json + "\n");
     }
 
 

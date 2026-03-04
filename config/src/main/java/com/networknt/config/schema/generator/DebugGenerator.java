@@ -26,17 +26,22 @@ public class DebugGenerator extends Generator {
 
     @Override
     public void writeSchemaToFile(final FileObject path, final FieldNode annotatedField) throws IOException {
-        writeSchemaToFile(path.openOutputStream(), annotatedField);
+        final var json = this.objectWriter.writerWithDefaultPrettyPrinter().writeValueAsString(annotatedField);
+        try (var os = path.openOutputStream()) {
+            os.write((json + "\n").getBytes());
+        }
     }
 
     @Override
     public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) throws IOException {
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(writer, annotatedField);
+        final var json = this.objectWriter.writerWithDefaultPrettyPrinter().writeValueAsString(annotatedField);
+        writer.write(json + "\n");
     }
 
     @Override
     public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
-        this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(os, annotatedField);
+        final var json = this.objectWriter.writerWithDefaultPrettyPrinter().writeValueAsString(annotatedField);
+        os.write((json + "\n").getBytes());
     }
 
     @Override

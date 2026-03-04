@@ -39,19 +39,25 @@ public class CloudEventGenerator extends Generator {
 
     @Override
     public void writeSchemaToFile(final FileObject object, final FieldNode annotatedField) throws IOException {
-        writeSchemaToFile(object.openOutputStream(), annotatedField);
+        final var cloudEvent = convertConfigRoot(annotatedField);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(cloudEvent);
+        try (var os = object.openOutputStream()) {
+            os.write((json + "\n").getBytes());
+        }
     }
 
     @Override
     public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) throws IOException {
         final var cloudEvent = convertConfigRoot(annotatedField);
-        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(writer, cloudEvent);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(cloudEvent);
+        writer.write(json + "\n");
     }
 
     @Override
     public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
         final var cloudEvent = convertConfigRoot(annotatedField);
-        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(os, cloudEvent);
+        final var json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(cloudEvent);
+        os.write((json + "\n").getBytes());
     }
 
     @Override
