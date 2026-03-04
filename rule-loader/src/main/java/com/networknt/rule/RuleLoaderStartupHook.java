@@ -1,6 +1,5 @@
 package com.networknt.rule;
 
-import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
@@ -10,9 +9,7 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.server.DefaultConfigLoader;
 import com.networknt.server.Server;
-import com.networknt.server.ServerConfig;
 import com.networknt.server.StartupHookProvider;
-import com.networknt.status.Status;
 import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -36,9 +33,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
-
 
 /**
  * This is the startup hook to load YAML rules from the light-portal during the server startup. Currently,
