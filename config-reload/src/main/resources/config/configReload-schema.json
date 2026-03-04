@@ -5,7 +5,8 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "config reload from config server.\nIndicate if the config reload from config server  is enabled or not."
+      "description" : "config reload from config server.\nIndicate if the config reload from config server  is enabled or not.",
+      "default" : true
     }
   }
 }

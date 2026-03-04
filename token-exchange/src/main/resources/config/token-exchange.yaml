@@ -1,3 +1,5 @@
+# Token Exchange Handler configuration
+# Enable Token Exchange Handler
 enabled: ${token-exchange.enabled:true}
 # Default proxy port.
 proxyPort: ${token-exchange.proxyPort:}

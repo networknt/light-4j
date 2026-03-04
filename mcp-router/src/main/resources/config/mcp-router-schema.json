@@ -42,6 +42,11 @@
           "inputSchema" : {
             "type" : "string",
             "description" : "Tool input schema"
+          },
+          "protocol" : {
+            "type" : "string",
+            "description" : "Backend protocol (http or mcp)",
+            "default" : "http"
           }
         }
       }

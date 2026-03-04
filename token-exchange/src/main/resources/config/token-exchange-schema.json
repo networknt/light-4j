@@ -5,6 +5,7 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
+      "description" : "Enable Token Exchange Handler",
       "default" : true
     },
     "proxyPort" : {

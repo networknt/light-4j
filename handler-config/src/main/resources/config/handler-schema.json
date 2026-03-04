@@ -10,15 +10,18 @@
     },
     "auditOnError" : {
       "type" : "boolean",
-      "description" : "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\nset the Status Object in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false"
+      "description" : "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\nset the Status Object in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false",
+      "default" : false
     },
     "auditStackTrace" : {
       "type" : "boolean",
-      "description" : "set the StackTrace in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false"
+      "description" : "set the StackTrace in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false",
+      "default" : false
     },
     "reportHandlerDuration" : {
       "type" : "boolean",
-      "description" : "Indicate if the handler middleware should report handler duration."
+      "description" : "Indicate if the handler middleware should report handler duration.",
+      "default" : false
     },
     "handlerMetricsLogLevel" : {
       "type" : "string",

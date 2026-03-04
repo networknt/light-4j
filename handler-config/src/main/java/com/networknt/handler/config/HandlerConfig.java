@@ -69,6 +69,7 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = AUDIT_ON_ERROR,
             externalizedKeyName = AUDIT_ON_ERROR,
+            defaultValue = "false",
             description = """
                     Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
                     set the Status Object in the AUDIT_INFO, for auditing purposes
@@ -79,6 +80,7 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = AUDIT_STACK_TRACE,
             externalizedKeyName = AUDIT_STACK_TRACE,
+            defaultValue = "false",
             description = """
                     set the StackTrace in the AUDIT_INFO, for auditing purposes
                     default, if not set:false"""
@@ -88,6 +90,7 @@ public class HandlerConfig {
     @BooleanField(
             configFieldName = REPORT_HANDLER_DURATION,
             externalizedKeyName = REPORT_HANDLER_DURATION,
+            defaultValue = "false",
             description = "Indicate if the handler middleware should report handler duration."
     )
     private boolean enabledHandlerMetrics;
