@@ -264,6 +264,38 @@ public class TokenLimitHandlerTest {
         }
     }
 
+    @Test
+    public void testEmptyBodyRequest() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionState.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, ""));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assertions.assertEquals(400, statusCode);
+        if(statusCode == 400) {
+            Assertions.assertTrue(body.length() > 0);
+        }
+    }
+
     /**
      * For non-legacy client, the token limit should be applied. And we should have at least one 400 response.
      * @throws Exception exception
