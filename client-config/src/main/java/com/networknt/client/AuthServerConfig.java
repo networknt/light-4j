@@ -31,9 +31,10 @@ public class AuthServerConfig {
     private Integer proxyPort = null;
 
     @BooleanField(
-            configFieldName = "enableHttp2"
+            configFieldName = "enableHttp2",
+            defaultValue = "false"
     )
-    private Boolean enableHttp2 = null;
+    private Boolean enableHttp2 = false;
 
     @StringField(
             configFieldName = "uri"

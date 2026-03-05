@@ -208,7 +208,8 @@
                         "format" : "int32"
                       },
                       "enableHttp2" : {
-                        "type" : "boolean"
+                        "type" : "boolean",
+                        "default" : false
                       },
                       "uri" : {
                         "type" : "string"
@@ -347,7 +348,8 @@
                         "format" : "int32"
                       },
                       "enableHttp2" : {
-                        "type" : "boolean"
+                        "type" : "boolean",
+                        "default" : false
                       },
                       "uri" : {
                         "type" : "string"
