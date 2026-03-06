@@ -80,6 +80,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
 
     public static final String HOST = "host";
+    public static final String SERVICE_ID = "serviceId";
     public static final String PRODUCT_ID = "productId";
     public static final String PRODUCT_VERSION = "productVersion";
     public static final String API_ID = "apiId";
@@ -298,7 +299,7 @@ public class DefaultConfigLoader implements IConfigLoader{
 
         Map<String, Object> configs = new HashMap<>();
 
-        if(logger.isDebugEnabled()) logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
+        if(logger.isDebugEnabled()) logger.debug("Calling Config Server host{} path{}", configServerUri, configServerPath);
         String acceptHeader = "application/json";
         if(startupConfig.get(ACCEPT_HEADER) != null) acceptHeader = (String)startupConfig.get(ACCEPT_HEADER);
 
@@ -466,6 +467,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         StringBuilder qs = new StringBuilder();
         String host = startupConfig.get(HOST) != null ? (String)startupConfig.get(HOST) : "lightapi.net";
         qs.append("?").append(HOST).append("=").append(host);
+        if(startupConfig.get(SERVICE_ID) != null) qs.append("&").append(SERVICE_ID).append("=").append(startupConfig.get(SERVICE_ID));
         if(startupConfig.get(PRODUCT_ID) != null) qs.append("&").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
