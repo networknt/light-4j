@@ -529,7 +529,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         return sslContext;
     }
 
-    private static String getPropertyOrEnv(String key) {
+    public static String getPropertyOrEnv(String key) {
         // The key should be in lower case and separated with hyphen.
         // Always check the -D and then env variable for the key with lower and upper case.
         String s = System.getProperty(key);

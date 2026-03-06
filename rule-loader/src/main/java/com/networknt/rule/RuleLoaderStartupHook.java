@@ -69,10 +69,10 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             } else {
                 // by default, load from light-portal
                 Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(Server.STARTUP_CONFIG_NAME);
-                String hostId = (String)startupConfig.get("hostId");
+                String host = (String)startupConfig.get("host");
                 String apiId = (String)startupConfig.get("apiId");
                 String apiVersion = (String)startupConfig.get("apiVersion");
-                Result<String> result = getServiceRule(config.getPortalHost(), hostId, apiId, apiVersion);
+                Result<String> result = getServiceRule(DefaultConfigLoader.configServerUri == null ? config.getPortalHost() : DefaultConfigLoader.configServerUri, host, apiId, apiVersion);
                 if(result.isSuccess()) {
                     String serviceRuleString = result.getResult();
                     if(logger.isDebugEnabled()) logger.debug("getServiceRule result = {}", serviceRuleString);
@@ -80,9 +80,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                     List<Map<String, Object>> ruleList = (List<Map<String, Object>>)objectMap.get("rules");
                     // TODO move to config server for persistence in values.yml.
                     endpointRules = convertRuleList(ruleList);
-                    if(logger.isTraceEnabled()) logger.trace("endpointRules = " + JsonMapper.toJson(endpointRules));
+                    if(logger.isTraceEnabled()) logger.trace("endpointRules = {}", JsonMapper.toJson(endpointRules));
                     // enrich the endpointRules to add permission for each endpoint.
-                    result = getServicePermission(config.getPortalHost(), hostId, apiId, apiVersion);
+                    result = getServicePermission(DefaultConfigLoader.configServerUri == null ? config.getPortalHost() : DefaultConfigLoader.configServerUri, host, apiId, apiVersion);
                     if(result.isSuccess()) {
                         String servicePermissionString = result.getResult();
                         if(logger.isDebugEnabled()) logger.debug("getServicePermission result = {}", servicePermissionString);
@@ -96,7 +96,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                             }
                         }
                     } else {
-                        logger.error("Could not load permission for hostId {} apiId {} apiVersion {} error {}", hostId, apiId, apiVersion, result.getError());
+                        logger.error("Could not load permission for host {} apiId {} apiVersion {} error {}", host, apiId, apiVersion, result.getError());
                     }
                     Map<String, Object> ruleBodies = (Map<String, Object>)objectMap.get("ruleBodies");
                     // save ruleMap into rules.yml in case the portal server is not available.
@@ -120,7 +120,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                     if(logger.isInfoEnabled())
                         logger.info("Load YAML rules from light-portal with size = {}", ruleBodies.size());
                 } else {
-                    logger.error("Could not load rule for hostId {} apiId {} apiVersion {} error {}", hostId, apiId, apiVersion, result.getError());
+                    logger.error("Could not load rule for host {} apiId {} apiVersion {} error {}", host, apiId, apiVersion, result.getError());
                 }
             }
             if(rules != null) {
@@ -184,8 +184,8 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         return endpointRules;
     }
 
-    public static Result<String> getServiceRule(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+    public static Result<String> getServiceRule(String url, String host, String apiId, String apiVersion) {
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"host\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", host, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
@@ -198,7 +198,8 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
+            String authorization = DefaultConfigLoader.getPropertyOrEnv(DefaultConfigLoader.AUTHORIZATION);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization == null ? "Bearer " + RuleLoaderConfig.load().getPortalToken() : authorization);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -216,8 +217,8 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         return result;
     }
 
-    public static Result<String> getServicePermission(String url, String hostId, String apiId, String apiVersion) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getApiPermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
+    public static Result<String> getServicePermission(String url, String host, String apiId, String apiVersion) {
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"service\",\"action\":\"getApiPermission\",\"version\":\"0.1.0\",\"data\":{\"host\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", host, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
@@ -230,7 +231,8 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + RuleLoaderConfig.load().getPortalToken());
+            String authorization = DefaultConfigLoader.getPropertyOrEnv(DefaultConfigLoader.AUTHORIZATION);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization == null ? "Bearer " + RuleLoaderConfig.load().getPortalToken() : authorization);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

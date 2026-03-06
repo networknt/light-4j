@@ -46,7 +46,8 @@ public class RuleLoaderConfig {
             configFieldName = PORTAL_HOST,
             externalizedKeyName = PORTAL_HOST,
             defaultValue = "https://localhost",
-            description = "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal"
+            description = "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal.\n" +
+                    "If the server is started from the light-portal, then light-config-server-uri is used instead."
     )
     String portalHost;
 
@@ -54,7 +55,7 @@ public class RuleLoaderConfig {
             configFieldName = PORTAL_TOKEN,
             externalizedKeyName = PORTAL_TOKEN,
             description = "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\n" +
-                    "is light-portal."
+                    "is light-portal. If the server is started from the light-portal, then env CONFIG_SERVER_AUTHORIZATION is used instead."
     )
     String portalToken;
 

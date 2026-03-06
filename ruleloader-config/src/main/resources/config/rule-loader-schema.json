@@ -10,12 +10,12 @@
     },
     "portalHost" : {
       "type" : "string",
-      "description" : "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal",
+      "description" : "The portal host with port number if it is not default TLS port 443. Used when ruleSource is light-portal.\nIf the server is started from the light-portal, then light-config-server-uri is used instead.",
       "default" : "https://localhost"
     },
     "portalToken" : {
       "type" : "string",
-      "description" : "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\nis light-portal."
+      "description" : "An authorization token that allows the rule loader to connect to the light-portal. Only used if ruleSource\nis light-portal. If the server is started from the light-portal, then env CONFIG_SERVER_AUTHORIZATION is used instead."
     },
     "ruleSource" : {
       "type" : "string",
