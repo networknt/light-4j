@@ -237,6 +237,7 @@
         <module>sse-handler</module>
         <module>mcp-router</module>
         <module>token-exchange</module>
+        <module>rule-config</module>
     </modules>
 
     <dependencyManagement>
@@ -670,6 +671,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>mcp-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>token-exchange</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>rule-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->

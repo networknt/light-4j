@@ -1,0 +1,45 @@
+# rule.yml
+
+# This configuration is used for the rule-engine based on YAML rules.
+# It contains rule definitions (ruleBodies) and rule assignments (rules)
+# that map to endpoints and aggregate versions.
+#
+# Usually this configuration is merged from the config server using the values.yml
+# injected into the application.
+#
+# Rule configurations are maps of strings to objects, where the key is the ruleId.
+ruleBodies:
+#  example-rule:
+#    hostId: "example-host"
+#    ruleType: "req-acc"
+#    ruleOwner: "admin"
+#    common: "Y"
+#    ruleId: "example-rule"
+#    ruleName: "Example Role-Based Access Control"
+#    ruleVersion: "1.0.0"
+#    ruleDesc: "Checks if a role exists in the JWT token"
+#    conditions:
+#      - operatorCode: "isNotNull"
+#        conditionId: "role-is-not-null"
+#        conditionDesc: "role property should not be null"
+#        propertyPath: "auditInfo.subject_claims.ClaimsMap.role"
+#        index: 1
+#    actions:
+#      - conditionResult: false
+#        actionId: "example-action"
+#        actionDesc: "Call action to verify role"
+#        actionClassName: "com.networknt.rule.RoleBasedAccessControlAction"
+#        actionValues:
+#          - valueTypeCode: "STRING"
+#            actionValueId: "permission-roles"
+#            value: "$roles"
+
+rules:
+#  - endpoint: "example_endpoint@call"
+#    apiVersion: "1.0.0"
+#    endpointId: "example-endpoint-id"
+#    ruleType: "req-acc"
+#    hostId: "example-host"
+#    ruleId: "example-rule"
+#    apiId: "EXAMPLE0001"
+#    aggregateVersion: 1

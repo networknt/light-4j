@@ -1,0 +1,5 @@
+# Rule configuration
+# Map of rule definitions, keyed by ruleId
+ruleBodies: ${rule.ruleBodies:}
+# List of rule assignments mapping endpoints to rules
+rules: ${rule.rules:}

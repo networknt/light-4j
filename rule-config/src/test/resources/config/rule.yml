@@ -1,0 +1,12 @@
+---
+ruleBodies:
+  test-rule-id:
+    ruleId: test-rule-id
+    ruleType: req-acc
+    conditions:
+      - conditionId: cond-1
+    actions:
+      - actionId: act-1
+rules:
+  - endpoint: "/v1/test@post"
+    ruleId: "test-rule-id"
