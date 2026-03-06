@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "accessRuleLogic", "defaultDeny", "skipPathPrefixes" ],
+  "required" : [ "enabled", "accessRuleLogic", "defaultDeny", "skipPathPrefixes", "endpointPermissions" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -23,6 +23,16 @@
       "description" : "Define a list of path prefixes to skip the access-control to ease the configuration for the handler.yml\nso that users can define some endpoint without fine-grained access-control security even through it uses\nthe default chain. This is useful if some endpoints want to skip the fine-grained access control in the\napplication. The format is a list of strings separated with commas or a JSON list in values.yml definition\nfrom config server, or you can use yaml format in externalized access-control.yml file.",
       "items" : {
         "type" : "string"
+      }
+    },
+    "endpointPermissions" : {
+      "type" : "array",
+      "description" : "A list of endpoint permissions mapping endpoints to roles and groups.",
+      "items" : {
+        "type" : "object",
+        "additionalProperties" : {
+          "type" : "string"
+        }
       }
     }
   }

@@ -15,3 +15,5 @@ defaultDeny: ${access-control.defaultDeny:true}
 # application. The format is a list of strings separated with commas or a JSON list in values.yml definition
 # from config server, or you can use yaml format in externalized access-control.yml file.
 skipPathPrefixes: ${access-control.skipPathPrefixes:}
+# A list of endpoint permissions mapping endpoints to roles and groups.
+endpointPermissions: ${access-control.endpointPermissions:}
