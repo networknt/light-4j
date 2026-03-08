@@ -155,7 +155,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 // iterate the rules and execute them in sequence. Break only if one rule is successful.
                 for(Map<String, Object> ruleMap: responseTransformRules) {
                     ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                    result = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
+                    result = ruleExecutor.executeRule(ruleId, objMap);
                     boolean res = (Boolean)result.get(RuleConstants.RESULT);
                     if(!res) {
                         finalResult = false;
