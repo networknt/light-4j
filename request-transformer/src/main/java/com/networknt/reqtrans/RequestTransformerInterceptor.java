@@ -86,6 +86,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                     Map<String, Object> endpointRules = ruleExecutor.getEndpointRules();
                     if(endpointRules == null) {
                         logger.error("RuleExecutor.getEndpointRules() is null");
+                        return;
                     }
                     // need to get the rule/rules to execute from the RuleExecutor. First, get the endpoint.
                     String endpoint, serviceEntry = null;
