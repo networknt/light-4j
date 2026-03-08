@@ -209,13 +209,9 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             if (permissionMap.containsKey(Constants.ROW)) objMap.put(Constants.ROW, permissionMap.get(Constants.ROW));
         }
 
-        // Logic might be provided from config or default based on ruleType
-        String logic = "parallel"; // Default for transformation/filtering
-        if (ruleType.equals("req-acc")) {
-            // For access control, we probably want "any" or "all" based on config.
-            // But we don't have the config here. We should probably pass it or rely on executeRules(List, String, Map).
-            // RequestTransformerInterceptor uses sequential execution implicitely for req-tra.
-        }
+        // Use sequential "all" logic for transformation types so each rule sees the result of prior transforms.
+        // For other types (e.g. access control), default to parallel execution.
+        String logic = (ruleType.equals("req-tra") || ruleType.equals("res-tra")) ? "all" : "parallel";
 
         return executeRules(ruleIds, logic, objMap);
     }
