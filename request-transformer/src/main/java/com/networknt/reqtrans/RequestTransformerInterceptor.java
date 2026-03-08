@@ -149,7 +149,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                             for(Map<String, Object> ruleMap: requestTransformRules) {
                                 ruleId = (String)ruleMap.get(Constants.RULE_ID);
                                 if(logger.isDebugEnabled()) logger.debug("ruleID found: " + ruleId);
-                                result = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
+                                result = ruleExecutor.executeRule(ruleId, objMap);
                                 boolean res = (Boolean)result.get(RuleConstants.RESULT);
                                 if(logger.isDebugEnabled() && res) logger.debug("ruleID result is true");
                                 if(!res) {
