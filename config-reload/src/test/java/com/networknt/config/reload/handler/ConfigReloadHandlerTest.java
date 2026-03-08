@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
-import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -29,7 +28,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;

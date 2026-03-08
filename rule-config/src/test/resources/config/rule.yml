@@ -7,6 +7,7 @@ ruleBodies:
       - conditionId: cond-1
     actions:
       - actionId: act-1
-rules:
-  - endpoint: "/v1/test@post"
-    ruleId: "test-rule-id"
+endpointRules:
+  "/v1/test@post":
+    req-acc:
+      - "test-rule-id"

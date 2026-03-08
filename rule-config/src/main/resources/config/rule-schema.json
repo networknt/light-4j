@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "ruleBodies", "rules" ],
+  "required" : [ "ruleBodies", "endpointRules" ],
   "properties" : {
     "ruleBodies" : {
       "type" : "object",
@@ -10,14 +10,11 @@
         "type" : "object"
       }
     },
-    "rules" : {
-      "type" : "array",
-      "description" : "List of rule assignments mapping endpoints to rules",
-      "items" : {
-        "type" : "object",
-        "additionalProperties" : {
-          "type" : "string"
-        }
+    "endpointRules" : {
+      "type" : "object",
+      "description" : "Map of rule assignments mapping endpoints to rules",
+      "additionalProperties" : {
+        "type" : "object"
       }
     }
   }

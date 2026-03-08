@@ -7,9 +7,10 @@ import com.networknt.config.reload.model.ConfigReloadConfig;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.IAction;
-import com.networknt.rule.RuleLoaderStartupHook;
+import com.networknt.rule.RuleExecutor;
 import com.networknt.server.DefaultConfigLoader;
 import com.networknt.server.IConfigLoader;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.HttpStatus;
 import com.networknt.server.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
@@ -105,13 +106,14 @@ public class ConfigReloadHandler implements LightHttpHandler {
             Config.getInstance().clearConfigCache(configName);
             logger.info("Reload plugin {} with config {}", plugin, configName);
         }
-        // remove from the RuleLoaderStartupHook.ruleEngine.actionClassCache
-        Object object = RuleLoaderStartupHook.ruleEngine.actionClassCache.remove(plugin);
+
+        RuleExecutor ruleExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
+        Object object = ruleExecutor.getRuleEngine().actionClassCache.remove(plugin);
         if (object != null) {
             // recreate the module and put it into the cache.
             try {
                 IAction ia = (IAction)Class.forName(plugin).getDeclaredConstructor().newInstance();
-                RuleLoaderStartupHook.ruleEngine.actionClassCache.put(plugin, ia);
+                ruleExecutor.getRuleEngine().actionClassCache.put(plugin, ia);
             } catch (Exception e) {
                 throw new RuntimeException("Handler class: " + plugin + " has not been found");
             }

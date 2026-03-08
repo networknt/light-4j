@@ -4,13 +4,11 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.config.schema.MapField;
-import com.networknt.config.schema.ArrayField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.networknt.server.ModuleRegistry;
 
-import java.util.List;
 import java.util.Map;
 
 @ConfigSchema(
@@ -23,25 +21,28 @@ public class RuleConfig {
     private static final Logger logger = LoggerFactory.getLogger(RuleConfig.class);
 
     public static final String CONFIG_NAME = "rule";
+    public static final String RULE_BODIES = "ruleBodies";
+    public static final String ENDPOINT_RULES = "endpointRules";
 
     private static volatile RuleConfig instance;
     private final Map<String, Object> mappedConfig;
     private final Config config;
+
     @MapField(
-            configFieldName = "ruleBodies",
-            externalizedKeyName = "ruleBodies",
+            configFieldName = RULE_BODIES,
+            externalizedKeyName = RULE_BODIES,
             description = "Map of rule definitions, keyed by ruleId",
             valueType = Object.class
     )
     private Map<String, Object> ruleBodies;
-    
-    @ArrayField(
-            configFieldName = "rules",
-            externalizedKeyName = "rules",
-            description = "List of rule assignments mapping endpoints to rules",
-            items = Map.class
+
+    @MapField(
+            configFieldName = ENDPOINT_RULES,
+            externalizedKeyName = ENDPOINT_RULES,
+            description = "Map of rule assignments mapping endpoints to rules",
+            valueType = Object.class
     )
-    private List<Map<String, Object>> rules;
+    private Map<String, Object> endpointRules;
 
     private RuleConfig() {
         this(CONFIG_NAME);
@@ -77,15 +78,12 @@ public class RuleConfig {
         return new RuleConfig(configName);
     }
 
-
-
-
     public Map<String, Object> getRuleBodies() {
         return ruleBodies;
     }
 
-    public List<Map<String, Object>> getRules() {
-        return rules;
+    public Map<String, Object> getEndpointRules() {
+        return endpointRules;
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -96,13 +94,13 @@ public class RuleConfig {
     }
 
     private void setMapData() {
-        Object object = getMappedConfig().get("ruleBodies");
+        Object object = getMappedConfig().get(RULE_BODIES);
         if(object != null) {
             ruleBodies = (Map<String, Object>)object;
         }
-        object = getMappedConfig().get("rules");
+        object = getMappedConfig().get(ENDPOINT_RULES);
         if(object != null) {
-            rules = (List<Map<String, Object>>)object;
+            endpointRules = (Map<String, Object>)object;
         }
     }
 }

@@ -7,7 +7,8 @@ import com.networknt.handler.ResponseInterceptor;
 import com.networknt.http.UndertowConverter;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
-import com.networknt.rule.RuleLoaderStartupHook;
+import com.networknt.rule.RuleExecutor;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.StringUtils;
@@ -106,7 +107,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 HttpString method = exchange.getRequestMethod();
                 Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
                 Map<String, Object> objMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
-                // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
+                // need to get the rule/rules to execute from the RuleExecutor. First, get the endpoint.
                 String endpoint, serviceEntry = null;
                 if (auditInfo != null) {
                     if (logger.isDebugEnabled())
@@ -118,36 +119,40 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                     endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
                 }
 
-                // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
-                if (RuleLoaderStartupHook.endpointRules == null) {
-                    logger.error("RuleLoaderStartupHook endpointRules is null");
+                // checked the RuleExecutor to ensure it is loaded. If not, return an error to the caller.
+                RuleExecutor ruleExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
+                assert ruleExecutor != null;
+                Map<String, Object> endpointRules = ruleExecutor.getEndpointRules();
+
+                if (endpointRules == null) {
+                    logger.error("ruleExecutor.getEndpointRule() is null");
                 }
 
                 // Grab ServiceEntry from config
                 endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
                 if(logger.isDebugEnabled()) logger.debug("request endpoint: {}", endpoint);
-                serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
+                serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), endpointRules);
                 if(logger.isDebugEnabled()) logger.debug("request serviceEntry: {}", serviceEntry);
 
                 // get the rules (maybe multiple) based on the endpoint.
-                Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(serviceEntry);
-                if (endpointRules == null) {
+                Map<String, List> serviceEntryRules = (Map<String, List>) endpointRules.get(serviceEntry);
+                if (serviceEntryRules == null) {
                     if (logger.isDebugEnabled())
-                        logger.debug("endpointRules iS NULL");
+                        logger.debug("serviceEntryRules iS NULL");
                 } else {
                     // chances are there is not response transform rules for this endpoint.
-                    if (logger.isDebugEnabled() && endpointRules.get(RESPONSE_TRANSFORM) != null)
-                        logger.debug("endpointRules {}", endpointRules.get(RESPONSE_TRANSFORM).size());
+                    if (logger.isDebugEnabled() && serviceEntryRules.get(RESPONSE_TRANSFORM) != null)
+                        logger.debug("serviceEntryRules {}", serviceEntryRules.get(RESPONSE_TRANSFORM).size());
                 }
 
                 boolean finalResult = true;
-                List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
+                List<Map<String, Object>> responseTransformRules = serviceEntryRules.get(RESPONSE_TRANSFORM);
                 Map<String, Object> result = null;
                 String ruleId = null;
                 // iterate the rules and execute them in sequence. Break only if one rule is successful.
                 for(Map<String, Object> ruleMap: responseTransformRules) {
                     ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                    result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
+                    result = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
                     boolean res = (Boolean)result.get(RuleConstants.RESULT);
                     if(!res) {
                         finalResult = false;

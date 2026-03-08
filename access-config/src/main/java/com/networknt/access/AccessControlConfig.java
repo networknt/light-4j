@@ -49,7 +49,6 @@ public class AccessControlConfig {
     private static final String ACCESS_RULE_LOGIC = "accessRuleLogic";
     private static final String DEFAULT_DENY = "defaultDeny";
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
-    public static final String ENDPOINT_PERMISSIONS = "endpointPermissions";
 
     private final Map<String, Object> mappedConfig;
 
@@ -95,14 +94,6 @@ public class AccessControlConfig {
             items = String.class
     )
     private List<String> skipPathPrefixes;
-
-    @ArrayField(
-            configFieldName = ENDPOINT_PERMISSIONS,
-            externalizedKeyName = ENDPOINT_PERMISSIONS,
-            description = "A list of endpoint permissions mapping endpoints to roles and groups.",
-            items = Map.class
-    )
-    private List<Map<String, Object>> endpointPermissions;
 
     private static volatile AccessControlConfig instance;
 
@@ -213,22 +204,6 @@ public class AccessControlConfig {
         return mappedConfig;
     }
 
-    /**
-     * Gets the endpoint permissions map list.
-     * @return a list of maps containing endpoint, roles, and groups
-     */
-    public List<Map<String, Object>> getEndpointPermissions() {
-        return endpointPermissions;
-    }
-
-    /**
-     * Sets the endpoint permissions map list.
-     * @param endpointPermissions a list of maps
-     */
-    public void setEndpointPermissions(List<Map<String, Object>> endpointPermissions) {
-        this.endpointPermissions = endpointPermissions;
-    }
-
     private void setConfigData() {
         if(getMappedConfig() != null) {
             Object object = getMappedConfig().get(ENABLED);
@@ -266,29 +241,6 @@ public class AccessControlConfig {
                 });
             } else {
                 throw new ConfigException("skipPathPrefixes must be a string or a list of strings.");
-            }
-        }
-        if (mappedConfig != null && mappedConfig.get(ENDPOINT_PERMISSIONS) != null) {
-            Object object = mappedConfig.get(ENDPOINT_PERMISSIONS);
-            endpointPermissions = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
-                s = s.trim();
-                if(s.startsWith("[")) {
-                    // json format
-                    try {
-                        endpointPermissions = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Map<String, Object>>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the endpointPermissions json with a list of maps.");
-                    }
-                } else {
-                    throw new ConfigException("endpointPermissions must be a list of maps (JSON array).");
-                }
-            } else if (object instanceof List) {
-                // the object is directly parsed as a list of maps
-                endpointPermissions = (List<Map<String, Object>>)object;
-            } else {
-                throw new ConfigException("endpointPermissions must be a list of maps.");
             }
         }
     }

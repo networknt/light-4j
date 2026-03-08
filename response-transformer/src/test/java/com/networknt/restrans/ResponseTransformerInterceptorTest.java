@@ -4,7 +4,8 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.ResponseInterceptorInjectionHandler;
-import com.networknt.rule.RuleLoaderStartupHook;
+import com.networknt.rule.MultiThreadRuleExecutor;
+import com.networknt.rule.RuleExecutor;
 import com.networknt.server.StartupHookProvider;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
@@ -48,8 +49,7 @@ public class ResponseTransformerInterceptorTest {
                     .setHandler(handler)
                     .build();
             server.start();
-            RuleLoaderStartupHook startupHook = (RuleLoaderStartupHook) SingletonServiceFactory.getBean(StartupHookProvider.class);
-            startupHook.onStartup();
+            SingletonServiceFactory.getBean(RuleExecutor.class);
         }
     }
 
