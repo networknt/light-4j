@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class MultiThreadRuleExecutorTest {
         Map<String, Object> input = new HashMap<>();
         input.put("input", "test");
 
-        List<String> ruleIds = new ArrayList<>(rules.keySet());
+        List<String> ruleIds = List.of("r1", "r2");
         Map<String, Object> result = executor.executeRules(ruleIds, "parallel", input);
 
         Assertions.assertTrue((Boolean) result.get(RuleConstants.RESULT));
@@ -82,7 +81,7 @@ public class MultiThreadRuleExecutorTest {
         Mockito.when(engine.executeRule(eq("r2"), anyMap())).thenReturn(res2);
 
         MultiThreadRuleExecutor executor = new MultiThreadRuleExecutor(rules, engine);
-        List<String> ruleIds = new ArrayList<>(rules.keySet());
+        List<String> ruleIds = List.of("r1", "r2");
         Map<String, Object> result = executor.executeRules(ruleIds, "parallel", new HashMap<>());
 
         Assertions.assertFalse((Boolean) result.get(RuleConstants.RESULT));
