@@ -61,7 +61,7 @@ public class MeterApproximationTest {
 
     private Meter simulateMetronome(
             long introDelay, TimeUnit introDelayUnit,
-            long duration, TimeUnit durationUnit, 
+            long duration, TimeUnit durationUnit,
             long ratePerMinute) {
 
         final ManualClock clock = new ManualClock();
