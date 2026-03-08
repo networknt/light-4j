@@ -108,6 +108,14 @@ public class ConfigReloadHandler implements LightHttpHandler {
         }
 
         RuleExecutor ruleExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
+        if (ruleExecutor == null) {
+            logger.warn("RuleExecutor is not available, skipping plugin reload for {}", plugin);
+            return null;
+        }
+        if (ruleExecutor.getRuleEngine() == null) {
+            logger.warn("RuleEngine is not available, skipping plugin reload for {}", plugin);
+            return null;
+        }
         Object object = ruleExecutor.getRuleEngine().actionClassCache.remove(plugin);
         if (object != null) {
             // recreate the module and put it into the cache.
