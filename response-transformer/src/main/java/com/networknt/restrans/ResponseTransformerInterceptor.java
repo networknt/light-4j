@@ -129,6 +129,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
                 if (endpointRules == null) {
                     logger.error("ruleExecutor.getEndpointRule() is null");
+                    return;
                 }
 
                 // Grab ServiceEntry from config
@@ -141,15 +142,21 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 Map<String, List> serviceEntryRules = (Map<String, List>) endpointRules.get(serviceEntry);
                 if (serviceEntryRules == null) {
                     if (logger.isDebugEnabled())
-                        logger.debug("serviceEntryRules iS NULL");
-                } else {
-                    // chances are there is not response transform rules for this endpoint.
-                    if (logger.isDebugEnabled() && serviceEntryRules.get(RESPONSE_TRANSFORM) != null)
-                        logger.debug("serviceEntryRules {}", serviceEntryRules.get(RESPONSE_TRANSFORM).size());
+                        logger.debug("serviceEntryRules is null for endpoint: {}", serviceEntry);
+                    return;
                 }
 
-                boolean finalResult = true;
+                // chances are there are no response transform rules for this endpoint.
                 List<Map<String, Object>> responseTransformRules = serviceEntryRules.get(RESPONSE_TRANSFORM);
+                if (responseTransformRules == null) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("no response transform rules found for endpoint: {}", serviceEntry);
+                    return;
+                }
+                if (logger.isDebugEnabled())
+                    logger.debug("responseTransformRules size: {}", responseTransformRules.size());
+
+                boolean finalResult = true;
                 Map<String, Object> result = null;
                 String ruleId = null;
                 // iterate the rules and execute them in sequence. Break only if one rule is successful.
