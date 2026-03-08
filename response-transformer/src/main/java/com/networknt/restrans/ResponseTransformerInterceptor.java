@@ -121,7 +121,10 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
                 // checked the RuleExecutor to ensure it is loaded. If not, return an error to the caller.
                 RuleExecutor ruleExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
-                assert ruleExecutor != null;
+                if (ruleExecutor == null) {
+                    logger.error("RuleExecutor bean is not available. Response transformation is skipped.");
+                    return;
+                }
                 Map<String, Object> endpointRules = ruleExecutor.getEndpointRules();
 
                 if (endpointRules == null) {
@@ -152,7 +155,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 // iterate the rules and execute them in sequence. Break only if one rule is successful.
                 for(Map<String, Object> ruleMap: responseTransformRules) {
                     ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                    result = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
+                    result = ruleExecutor.executeRule(ruleId, objMap);
                     boolean res = (Boolean)result.get(RuleConstants.RESULT);
                     if(!res) {
                         finalResult = false;
