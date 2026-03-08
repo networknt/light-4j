@@ -8,7 +8,7 @@
 # injected into the application.
 #
 # Rule configurations are maps of strings to objects, where the key is the ruleId.
-ruleBodies:
+ruleBodies: ${rule.ruleBodies:}
 #  example-rule:
 #    hostId: "example-host"
 #    ruleType: "req-acc"
@@ -34,7 +34,7 @@ ruleBodies:
 #            actionValueId: "permission-roles"
 #            value: "$roles"
 
-rules:
+endpointRules: ${rule.endpointRules:}
 #  - endpoint: "example_endpoint@call"
 #    apiVersion: "1.0.0"
 #    endpointId: "example-endpoint-id"

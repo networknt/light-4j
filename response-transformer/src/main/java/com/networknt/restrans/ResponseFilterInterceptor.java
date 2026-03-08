@@ -7,7 +7,8 @@ import com.networknt.handler.ResponseInterceptor;
 import com.networknt.http.UndertowConverter;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
-import com.networknt.rule.RuleLoaderStartupHook;
+import com.networknt.rule.RuleExecutor;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.Constants;
 import com.networknt.server.ModuleRegistry;
@@ -95,10 +96,12 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
             // check if the path prefix has the second part of encoding to overwrite the defaultBodyEncoding.
             Optional<String> match = findMatchingPrefix(requestPath, config.getAppliedPathPrefixes());
             if(match.isPresent()) {
-                // first we need to make sure that the RuleLoaderStartupHook.endpointRules is not empty.
-                if(RuleLoaderStartupHook.endpointRules == null) {
-                    logger.error("RuleLoaderStartupHook.endpointRules is null. ResponseFilterInterceptor.handlerRequest ends.");
-                    // TODO should we replace the response body with an error message to indicate the endpointRules map is empty?
+                // first we need to make sure that the endpointRules is not empty.
+                RuleExecutor ruleExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
+                assert ruleExecutor != null;
+                Map<String, Object> endpointRules = ruleExecutor.getEndpointRules();
+                if(endpointRules == null) {
+                    logger.error("RuleExecutor.getEndpointRules() is null. ResponseFilterInterceptor.handlerRequest ends.");
                     return;
                 }
                 String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
@@ -121,32 +124,27 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                     endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
                 }
 
-                // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
-                if (RuleLoaderStartupHook.endpointRules == null) {
-                    logger.error("RuleLoaderStartupHook endpointRules is null");
-                }
-
                 // Grab ServiceEntry from config
                 // endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
                 if(logger.isDebugEnabled()) logger.debug("request endpoint: {}", endpoint);
-                serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
+                serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), endpointRules);
                 if(logger.isDebugEnabled()) logger.debug("request serviceEntry: {}", serviceEntry);
 
                 // get the rules (maybe multiple) based on the endpoint.
-                Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(serviceEntry);
-                if (endpointRules == null) {
+                Map<String, List> serviceEntryRules = (Map<String, List>) endpointRules.get(serviceEntry);
+                if (serviceEntryRules == null) {
                     if (logger.isDebugEnabled())
-                        logger.debug("endpointRules iS NULL");
+                        logger.debug("serviceEntryRules iS NULL");
                     return;
                 } else {
-                    // endpointRules is not null.
-                    if (logger.isTraceEnabled() && endpointRules.get(RESPONSE_FILTER) != null) {
-                        logger.trace("endpointRules size {}", endpointRules.get(RESPONSE_FILTER).size());
+                    // serviceEntryRules is not null.
+                    if (logger.isTraceEnabled() && serviceEntryRules.get(RESPONSE_FILTER) != null) {
+                        logger.trace("serviceEntryRules size {}", serviceEntryRules.get(RESPONSE_FILTER).size());
                     }
                 }
 
                 boolean finalResult = true;
-                List<String> responseRules = endpointRules.get(RESPONSE_FILTER);
+                List<String> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
                 if(responseRules == null) {
                     if(logger.isTraceEnabled()) logger.trace("response filter rules is null");
                     return;
@@ -157,14 +155,14 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                 for(String ruleId: responseRules) {
                     // copy the col and row objects to the objMap.
                     if(logger.isTraceEnabled()) logger.trace("ruleId: {}", ruleId);
-                    Map<String, Object> permissionMap = (Map<String, Object>)endpointRules.get(PERMISSION);
+                    Map<String, Object> permissionMap = (Map<String, Object>)serviceEntryRules.get(PERMISSION);
                     if(logger.isTraceEnabled()) logger.trace("permissionMap: {}", permissionMap);
                     if(permissionMap != null) {
                         objMap.put(Constants.COL, permissionMap.get(Constants.COL));
                         objMap.put(Constants.ROW, permissionMap.get(Constants.ROW));
                     }
                     if(logger.isTraceEnabled()) logger.trace("objMap: {}", objMap);
-                    result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
+                    result = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
                     boolean res = (Boolean)result.get(RuleConstants.RESULT);
                     if(!res) {
                         finalResult = false;

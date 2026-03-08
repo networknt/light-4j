@@ -53,7 +53,11 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>ruleloader-config</artifactId>
+            <artifactId>rule-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>access-config</artifactId>
         </dependency>
 
         <dependency>
@@ -76,6 +80,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

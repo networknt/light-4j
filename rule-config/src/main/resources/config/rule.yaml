@@ -1,5 +1,37 @@
 # Rule configuration
 # Map of rule definitions, keyed by ruleId
+#  example-rule:
+#    hostId: "example-host"
+#    ruleType: "req-acc"
+#    ruleOwner: "admin"
+#    common: "Y"
+#    ruleId: "example-rule"
+#    ruleName: "Example Role-Based Access Control"
+#    ruleVersion: "1.0.0"
+#    ruleDesc: "Checks if a role exists in the JWT token"
+#    conditions:
+#      - operatorCode: "isNotNull"
+#        conditionId: "role-is-not-null"
+#        conditionDesc: "role property should not be null"
+#        propertyPath: "auditInfo.subject_claims.ClaimsMap.role"
+#        index: 1
+#    actions:
+#      - conditionResult: false
+#        actionId: "example-action"
+#        actionDesc: "Call action to verify role"
+#        actionClassName: "com.networknt.rule.RoleBasedAccessControlAction"
+#        actionValues:
+#          - valueTypeCode: "STRING"
+#            actionValueId: "permission-roles"
+#            value: "$roles"
 ruleBodies: ${rule.ruleBodies:}
-# List of rule assignments mapping endpoints to rules
-rules: ${rule.rules:}
+# Map of rule assignments mapping endpoints to rules
+#  - endpoint: "example_endpoint@call"
+#    apiVersion: "1.0.0"
+#    endpointId: "example-endpoint-id"
+#    ruleType: "req-acc"
+#    hostId: "example-host"
+#    ruleId: "example-rule"
+#    apiId: "EXAMPLE0001"
+#    aggregateVersion: 1
+endpointRules: ${rule.endpointRules:}

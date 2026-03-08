@@ -41,7 +41,7 @@ public class ConfigDefaultTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        
+
         config = Config.getInstance();
         testMap = new HashMap<>();
         testMap.put("key1", "element1");
@@ -50,7 +50,7 @@ public class ConfigDefaultTest {
 
     @AfterEach
     public void tearDown() throws Exception {
-        
+
     }
 
     public void testGetStringFromFile() throws Exception {
