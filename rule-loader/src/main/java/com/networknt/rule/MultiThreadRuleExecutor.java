@@ -170,11 +170,19 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             return allOf.thenApply(v -> {
                 Map<String, Object> mergedResult = new HashMap<>();
+                boolean anyFailed = false;
                 for (CompletableFuture<Map<String, Object>> future : futures) {
                     Map<String, Object> result = future.join();
                     if (result != null) {
                         mergedResult.putAll(result);
+                        if (Boolean.FALSE.equals(result.get(RuleConstants.RESULT))) {
+                            anyFailed = true;
+                        }
                     }
+                }
+                // Ensure that if any individual rule failed, the merged RESULT is false
+                if (anyFailed) {
+                    mergedResult.put(RuleConstants.RESULT, false);
                 }
                 return mergedResult;
             }).join();
