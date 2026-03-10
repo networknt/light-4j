@@ -13,7 +13,10 @@ responseTime: ${audit.responseTime:true}
 # when auditOnError is false:
 #  - it will log on every request
 # log level is controlled by logLevel
-auditOnError: ${audit.auditOnError:false}
+auditOnError: ${audit.auditOnError:true}
+# set the StackTrace in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditStackTrace: ${audit.auditStackTrace:false}
 # log level is error; by default the logging level is set to info. If you want to change it to error, set to true.
 logLevelIsError: ${audit.logLevelIsError:false}
 # the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.

@@ -16,9 +16,8 @@
 
 package com.networknt.handler;
 
+import com.networknt.audit.AuditConfig;
 import com.networknt.common.ContentType;
-import com.networknt.config.Config;
-import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
@@ -46,15 +45,9 @@ public interface LightHttpHandler extends HttpHandler {
     String ERROR_NOT_DEFINED = "ERR10042";
 
     // Handler can save errors and stack traces for auditing. Default: false
-    String CONFIG_NAME = "handler";
-    String AUDIT_CONFIG_NAME = "audit";
-    String AUDIT_ON_ERROR = "auditOnError";
-    String AUDIT_STACK_TRACE = "auditStackTrace";
-
-    // the reason we are not using the AuditConfig is to avoid the dependency on audit module.
-    Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfig(AUDIT_CONFIG_NAME);
-    boolean auditOnError = auditConfig != null && auditConfig.get(AUDIT_ON_ERROR) != null ? Config.loadBooleanValue(AUDIT_ON_ERROR, auditConfig.get(AUDIT_ON_ERROR)) : false;
-    boolean auditStackTrace = auditConfig != null && auditConfig.get(AUDIT_STACK_TRACE) != null ? Config.loadBooleanValue(AUDIT_STACK_TRACE, auditConfig.get(AUDIT_STACK_TRACE)) : false;
+    AuditConfig auditConfig = AuditConfig.load();
+    boolean AUDIT_ON_ERROR = auditConfig.isAuditOnError();
+    boolean AUDIT_STACK_TRACE = auditConfig.isAuditStackTrace();
 
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
@@ -134,10 +127,10 @@ public interface LightHttpHandler extends HttpHandler {
         }
 
         // save info for auditing purposes in case of an error
-        if (auditOnError)
+        if (AUDIT_ON_ERROR)
             auditInfo.put(Constants.STATUS, status);
 
-        if (auditStackTrace)
+        if (AUDIT_STACK_TRACE)
             auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
 
         ex.getResponseSender().send(status.toStringConditionally());

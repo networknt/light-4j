@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AuditAttachmentUtil {
+    private AuditAttachmentUtil() {
+        /* This utility class should not be instantiated */
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(AuditAttachmentUtil.class);
 
     public static void populateAuditAttachmentField(final HttpServerExchange exchange, String fieldName, String fieldValue) {

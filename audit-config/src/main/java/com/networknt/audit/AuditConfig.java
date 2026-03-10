@@ -52,6 +52,7 @@ public class AuditConfig {
     private static final String STATUS_CODE = "statusCode";
     private static final String RESPONSE_TIME = "responseTime";
     private static final String AUDIT_ON_ERROR = "auditOnError";
+    private static final String AUDIT_STACK_TRACE = "auditStackTrace";
     private static final String LOG_LEVEL_IS_ERROR = "logLevelIsError";
     private static final String MASK = "mask";
     private static final String TIMESTAMP_FORMAT = "timestampFormat";
@@ -105,9 +106,20 @@ public class AuditConfig {
                     "when auditOnError is false:\n" +
                     " - it will log on every request\n" +
                     "log level is controlled by logLevel",
-            defaultValue = "false"
+            defaultValue = "true"
     )
     private boolean auditOnError;
+
+    @BooleanField(
+            configFieldName = AUDIT_STACK_TRACE,
+            externalizedKeyName = AUDIT_STACK_TRACE,
+            defaultValue = "false",
+            description = """
+                    set the StackTrace in the AUDIT_INFO, for auditing purposes
+                    default, if not set:false"""
+    )
+    private boolean auditStackTrace;
+
 
     @BooleanField(
             configFieldName = LOG_LEVEL_IS_ERROR,
@@ -235,6 +247,10 @@ public class AuditConfig {
         return auditOnError;
     }
 
+    public boolean isAuditStackTrace() {
+        return auditStackTrace;
+    }
+
     public boolean isLogLevelIsError() { return logLevelIsError; }
 
     public boolean isMask() {
@@ -334,6 +350,8 @@ public class AuditConfig {
             if (object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
             object = getMappedConfig().get(AUDIT_ON_ERROR);
             if (object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
+            object = getMappedConfig().get(AUDIT_STACK_TRACE);
+            if (object != null) auditStackTrace = Config.loadBooleanValue(AUDIT_STACK_TRACE, object);
             object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
             if (object != null) logLevelIsError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
             object = getMappedConfig().get(MASK);

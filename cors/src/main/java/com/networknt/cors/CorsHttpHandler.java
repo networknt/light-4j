@@ -22,16 +22,16 @@ package com.networknt.cors;
 
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.util.*;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.networknt.cors.CorsHeaders.*;
 import static com.networknt.cors.CorsUtil.*;
@@ -43,7 +43,7 @@ import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
  * @author <a href="mailto:ehugonne@redhat.com">Emmanuel Hugonnet</a> (c) 2014 Red Hat, inc.
  */
 public class CorsHttpHandler implements MiddlewareHandler {
-
+    public static final String CORS_PREFLIGHT_REQUEST_FAILED =  "ERR10092";
     private String configName = CorsConfig.CONFIG_NAME;
     private volatile HttpHandler next;
     private boolean isNonPreflightReqAllowed = true;
@@ -156,7 +156,8 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins, CorsHttpHandler handler) throws Exception {
         HeaderMap headers = exchange.getRequestHeaders();
         String[] origins = headers.get(Headers.ORIGIN).toArray();
-        if(logger.isTraceEnabled()) logger.trace("origins from the request header = " + Arrays.toString(origins) + " allowedOrigins = " + allowedOrigins);
+        if(logger.isTraceEnabled())
+            logger.trace("origins from the request header = {} allowedOrigins = {}", Arrays.toString(origins), allowedOrigins);
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
             for (String allowedOrigin : allowedOrigins) {
                 for (String origin : origins) {
@@ -176,6 +177,17 @@ public class CorsHttpHandler implements MiddlewareHandler {
             }
         }
         logger.debug("Request rejected due to HOST/ORIGIN mis-match.");
+
+        // save info for auditing purposes in case of an error
+        if (AUDIT_ON_ERROR) {
+            // Populate audit attachment so the AuditHandler records this CORS 403 rejection
+            Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+            if (auditInfo == null) {
+                auditInfo = new HashMap<>();
+                exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+            }
+            auditInfo.put(Constants.STATUS, new Status(CORS_PREFLIGHT_REQUEST_FAILED));
+        }
         ResponseCodeHandler.HANDLE_403.handleRequest(exchange);
         handler.isNonPreflightReqAllowed = false;
         return null;

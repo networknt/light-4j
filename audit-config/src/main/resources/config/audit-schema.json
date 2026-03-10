@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "mask", "statusCode", "responseTime", "auditOnError", "logLevelIsError", "timestampFormat", "headers", "audit", "requestBodyMaxSize", "responseBodyMaxSize" ],
+  "required" : [ "enabled", "mask", "statusCode", "responseTime", "auditOnError", "auditStackTrace", "logLevelIsError", "timestampFormat", "headers", "audit", "requestBodyMaxSize", "responseBodyMaxSize" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -26,6 +26,11 @@
     "auditOnError" : {
       "type" : "boolean",
       "description" : "when auditOnError is true:\n - it will only log when status code >= 400\nwhen auditOnError is false:\n - it will log on every request\nlog level is controlled by logLevel",
+      "default" : true
+    },
+    "auditStackTrace" : {
+      "type" : "boolean",
+      "description" : "set the StackTrace in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false",
       "default" : false
     },
     "logLevelIsError" : {
