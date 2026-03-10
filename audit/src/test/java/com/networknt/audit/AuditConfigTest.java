@@ -38,7 +38,6 @@ public class AuditConfigTest {
         Assertions.assertEquals(11, config.getAuditList().size());
         Assertions.assertTrue(config.isStatusCode());
         Assertions.assertTrue(config.isResponseTime());
-        Assertions.assertFalse(config.isAuditOnError());
         Assertions.assertFalse(config.isMask());
         Assertions.assertNotNull(config.getTimestampFormat());
     }

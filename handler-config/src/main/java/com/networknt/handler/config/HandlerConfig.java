@@ -47,8 +47,6 @@ public class HandlerConfig {
     private static final String PATHS = "paths";
     private static final String ADDITIONAL_PATHS = "additionalPaths";
     private static final String DEFAULT_HANDLERS = "defaultHandlers";
-    private static final String AUDIT_ON_ERROR = "auditOnError";
-    private static final String AUDIT_STACK_TRACE = "auditStackTrace";
     private static final String BASE_PATH = "basePath";
     private static final String REPORT_HANDLER_DURATION = "reportHandlerDuration";
     private static final String HANDLER_METRICS_LOG_LEVEL = "handlerMetricsLogLevel";
@@ -65,27 +63,6 @@ public class HandlerConfig {
             description = "Indicate if the handler middleware is enabled or not."
     )
     private boolean enabled;
-
-    @BooleanField(
-            configFieldName = AUDIT_ON_ERROR,
-            externalizedKeyName = AUDIT_ON_ERROR,
-            defaultValue = "false",
-            description = """
-                    Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
-                    set the Status Object in the AUDIT_INFO, for auditing purposes
-                    default, if not set:false"""
-    )
-    private boolean auditOnError;
-
-    @BooleanField(
-            configFieldName = AUDIT_STACK_TRACE,
-            externalizedKeyName = AUDIT_STACK_TRACE,
-            defaultValue = "false",
-            description = """
-                    set the StackTrace in the AUDIT_INFO, for auditing purposes
-                    default, if not set:false"""
-    )
-    private boolean auditStackTrace;
 
     @BooleanField(
             configFieldName = REPORT_HANDLER_DURATION,
@@ -334,39 +311,6 @@ public class HandlerConfig {
     }
 
     /**
-     * Get audit on error status
-     * @return audit on error
-     */
-    public boolean getAuditOnError() {
-    	return auditOnError;
-    }
-
-    /**
-     * Set audit on error status
-     * @param auditOnError audit on error
-     */
-    public void setAuditOnError(boolean auditOnError) {
-    	this.auditOnError = auditOnError;
-    }
-
-    /**
-     * Get audit stack trace status
-     * @return audit stack trace
-     */
-    public boolean getAuditStackTrace() {
-    	return auditStackTrace;
-    }
-
-    /**
-     * Set audit stack trace status
-     * @param auditStackTrace audit stack trace
-     */
-    public void setAuditStackTrace(boolean auditStackTrace) {
-    	this.auditStackTrace = auditStackTrace;
-    }
-
-
-    /**
      * Get base path
      * @return base path
      */
@@ -383,22 +327,6 @@ public class HandlerConfig {
     }
 
     /**
-     * Check if audit on error is enabled
-     * @return true if audit on error is enabled
-     */
-    public boolean isAuditOnError() {
-        return auditOnError;
-    }
-
-    /**
-     * Check if audit stack trace is enabled
-     * @return true if audit stack trace is enabled
-     */
-    public boolean isAuditStackTrace() {
-        return auditStackTrace;
-    }
-
-    /**
      * Get the mapped config object
      * @return map of config
      */
@@ -412,10 +340,6 @@ public class HandlerConfig {
             if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
             object = mappedConfig.get(REPORT_HANDLER_DURATION);
             if(object != null) enabledHandlerMetrics = Config.loadBooleanValue(REPORT_HANDLER_DURATION, object);
-            object = mappedConfig.get(AUDIT_ON_ERROR);
-            if(object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
-            object = mappedConfig.get(AUDIT_STACK_TRACE);
-            if(object != null) auditStackTrace = Config.loadBooleanValue(AUDIT_STACK_TRACE, object);
             object = mappedConfig.get(BASE_PATH);
             if(object != null) basePath = (String)object;
         }

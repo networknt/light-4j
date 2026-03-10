@@ -1,22 +1,12 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "auditOnError", "auditStackTrace", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "handlers", "chains", "paths", "defaultHandlers" ],
+  "required" : [ "enabled", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "handlers", "chains", "paths", "defaultHandlers" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
       "description" : "Indicate if the handler middleware is enabled or not.",
       "default" : true
-    },
-    "auditOnError" : {
-      "type" : "boolean",
-      "description" : "Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers\nset the Status Object in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false",
-      "default" : false
-    },
-    "auditStackTrace" : {
-      "type" : "boolean",
-      "description" : "set the StackTrace in the AUDIT_INFO, for auditing purposes\ndefault, if not set:false",
-      "default" : false
     },
     "reportHandlerDuration" : {
       "type" : "boolean",
