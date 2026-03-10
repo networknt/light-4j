@@ -181,7 +181,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
         // save info for auditing purposes in case of an error
         if (AUDIT_ON_ERROR) {
             // Populate audit attachment so the AuditHandler records this CORS 403 rejection
-            @SuppressWarnings("unchecked")
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             if (auditInfo == null) {
                 auditInfo = new HashMap<>();
