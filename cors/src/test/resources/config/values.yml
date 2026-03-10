@@ -12,3 +12,6 @@ cors.allowedMethods:
   - POST
   - DELETE
   - PATCH
+
+# audit.yml
+audit.auditOnError: true
