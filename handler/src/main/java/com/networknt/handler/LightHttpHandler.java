@@ -18,7 +18,6 @@ package com.networknt.handler;
 
 import com.networknt.audit.AuditConfig;
 import com.networknt.common.ContentType;
-import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
