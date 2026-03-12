@@ -24,6 +24,9 @@ package com.networknt.cors;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -50,6 +53,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -319,6 +323,10 @@ public class CorsHttpHandlerTest {
         headerMap.add(HOST, "localhost:80");
         headerMap.add(new HttpString(ORIGIN), "http://www.example.com");
         Assertions.assertNull(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
+        // Verify that the audit attachment is populated with STATUS on CORS rejection
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        Assertions.assertNotNull(auditInfo, "Audit info should be set on CORS rejection");
+        Assertions.assertInstanceOf(Status.class, auditInfo.get(Constants.STATUS), "Audit info should contain a Status instance under Constants.STATUS key on CORS rejection");
         headerMap.addAll(new HttpString(ORIGIN), Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
         allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
         Assertions.assertEquals("http://localhost", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
