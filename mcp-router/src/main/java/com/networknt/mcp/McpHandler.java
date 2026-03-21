@@ -1,7 +1,5 @@
 package com.networknt.mcp;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.access.AccessControlConfig;
 import com.networknt.config.Config;
@@ -11,7 +9,6 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleExecutor;
-import com.networknt.server.ModuleRegistry;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -70,8 +67,10 @@ public class McpHandler implements MiddlewareHandler {
                 String inputSchema = toolData.getInputSchema();
                 String protocol = toolData.getProtocol();
                 String apiType = toolData.getApiType();
+                String targetHost = toolData.getTargetHost();
+                String serviceId = toolData.getServiceId();
 
-                if (name != null && (endpoint != null || toolData.getServiceId() != null) && path != null && method != null) {
+                if (name != null && endpoint != null && ((serviceId != null && protocol != null) || targetHost != null)) {
                     McpTool tool;
                     if ("mcp".equalsIgnoreCase(apiType)) {
                         tool = new McpProxyTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost());

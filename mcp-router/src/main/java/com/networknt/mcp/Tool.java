@@ -5,7 +5,7 @@ import com.networknt.config.schema.StringField;
 public class Tool {
     @StringField(
             configFieldName = "apiType",
-            description = "API type (openapi, graphql, hybrid)"
+            description = "API type (openapi, graphql, hybrid, mcp)"
     )
     String apiType;
 

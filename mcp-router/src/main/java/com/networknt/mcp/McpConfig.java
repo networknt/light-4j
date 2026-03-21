@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.ConfigException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
@@ -162,18 +160,18 @@ public class McpConfig {
         List<Tool> tools = new ArrayList<>();
         for (Map<String, Object> value : values) {
             Tool tool = new Tool();
-            tool.setName(value.get("name") != null ? (String) value.get("name") : (String) value.get("endpointName"));
-            tool.setDescription(value.get("description") != null ? (String) value.get("description") : (String) value.get("endpointDesc"));
-            tool.setPath(value.get("path") != null ? (String) value.get("path") : (String) value.get("endpointPath"));
-            tool.setMethod(value.get("method") != null ? (String) value.get("method") : (String) value.get("httpMethod"));
-            tool.setProtocol(value.get("protocol") != null ? (String) value.get("protocol") : "http");
+            tool.setName((String)value.get("name"));
+            tool.setDescription((String) value.get("description"));
+            tool.setPath((String) value.get("path"));
+            tool.setMethod((String) value.get("method"));
+            tool.setProtocol((String) value.get("protocol"));
             tool.setServiceId((String) value.get("serviceId"));
             tool.setEnvTag((String) value.get("envTag"));
             tool.setTargetHost((String) value.get("targetHost"));
             tool.setApiType((String) value.get("apiType"));
             tool.setEndpoint((String) value.get("endpoint"));
 
-            Object schemaObj = value.get("inputSchema") != null ? value.get("inputSchema") : value.get("toolSchema");
+            Object schemaObj = value.get("inputSchema");
             if (schemaObj != null) {
                 if (schemaObj instanceof Map) {
                     try {
