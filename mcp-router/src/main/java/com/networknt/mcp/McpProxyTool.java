@@ -11,7 +11,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
@@ -25,42 +24,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * McpProxyTool routes MCP tool calls to a backend MCP server.
  * It wraps the arguments in a JSON-RPC "tools/call" request.
  */
-public class McpProxyTool implements McpTool {
+public class McpProxyTool extends AbstractRemoteMcpTool {
     private static final Logger logger = LoggerFactory.getLogger(McpProxyTool.class);
     private static final String JSONRpc_VERSION = "2.0";
-    private final String name;
-    private final String description;
-    private final String host;
-    private final String path;
-    private final String method; // usually POST for MCP
-    private final String inputSchema;
     private final ObjectMapper mapper = Config.getInstance().getMapper();
 
-    public McpProxyTool(String name, String description, String host, String path, String method, String inputSchema) {
-        this.name = name;
-        this.description = description;
-        this.host = host;
-        this.path = path;
-        this.method = method;
-        this.inputSchema = inputSchema;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public String getInputSchema() {
-        if(inputSchema != null) {
-            return inputSchema;
-        }
-        return "{\"type\": \"object\"}";
+    public McpProxyTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
+        super(name, description, endpoint, path, method, inputSchema, protocol, serviceId, envTag, targetHost);
     }
 
     @Override
@@ -79,19 +49,15 @@ public class McpProxyTool implements McpTool {
         SimpleConnectionState.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
-            URI uri = new URI(host);
+            String url = resolveTargetUrl();
+            URI uri = new URI(url);
             token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
             connection = (ClientConnection) token.getRawConnection();
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
             ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
-            String hostHeader = uri.getHost();
-            int port = uri.getPort();
-            if (port != -1 && port != 80 && port != 443) {
-                hostHeader += ":" + port;
-            }
-            request.getRequestHeaders().put(Headers.HOST, hostHeader);
+            request.getRequestHeaders().put(Headers.HOST, buildHostHeader(uri));
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 
@@ -102,23 +68,27 @@ public class McpProxyTool implements McpTool {
             latch.await(3000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            int statusCode = response.getResponseCode();
-            String responseBody = response.getAttachment(Http2Client.RESPONSE_BODY);
+            if (response != null) {
+                int statusCode = response.getResponseCode();
+                String responseBody = response.getAttachment(Http2Client.RESPONSE_BODY);
 
-            if(logger.isDebugEnabled()) logger.debug("Backend MCP response: {}", responseBody);
+                if(logger.isDebugEnabled()) logger.debug("Backend MCP response: {}", responseBody);
 
-            if (statusCode >= 200 && statusCode < 300) {
-                // Parse backend JSON-RPC response
-                Map<String, Object> jsonRpcResponse = mapper.readValue(responseBody, Map.class);
-                if (jsonRpcResponse.containsKey("error")) {
-                   Map<String, Object> error = (Map<String, Object>) jsonRpcResponse.get("error");
-                   throw new RuntimeException("Backend MCP error: " + error.get("message"));
+                if (statusCode >= 200 && statusCode < 300) {
+                    // Parse backend JSON-RPC response
+                    Map<String, Object> jsonRpcResponse = mapper.readValue(responseBody, Map.class);
+                    if (jsonRpcResponse.containsKey("error")) {
+                       Map<String, Object> error = (Map<String, Object>) jsonRpcResponse.get("error");
+                       throw new RuntimeException("Backend MCP error: " + error.get("message"));
+                    }
+                    // extract result
+                    Map<String, Object> result = (Map<String, Object>) jsonRpcResponse.get("result");
+                    return result;
+                } else {
+                    throw new RuntimeException("Backend service " + name + " failed with status " + statusCode + ": " + responseBody);
                 }
-                // extract result
-                Map<String, Object> result = (Map<String, Object>) jsonRpcResponse.get("result");
-                return result;
             } else {
-                throw new RuntimeException("Backend service failed with status " + statusCode + ": " + responseBody);
+                throw new RuntimeException("Timeout waiting for backend service " + name);
             }
         } catch (Exception e) {
             logger.error("Error executing McpProxyTool", e);

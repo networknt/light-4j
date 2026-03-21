@@ -1,12 +1,15 @@
 package com.networknt.mcp;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.access.AccessControlConfig;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.server.ModuleRegistry;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.rule.RuleConstants;
+import com.networknt.rule.RuleExecutor;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -27,10 +30,12 @@ import java.util.*;
 public class McpHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(McpHandler.class);
     private static final String JSONRpc_VERSION = "2.0";
+    private static final String REQUEST_ACCESS = "req-acc";
 
     private volatile HttpHandler next;
     private volatile McpConfig config;
     private ObjectMapper mapper = Config.getInstance().getMapper();
+    private final RuleExecutor ruleExecutor;
 
     /**
      * Default constructor
@@ -38,6 +43,13 @@ public class McpHandler implements MiddlewareHandler {
     public McpHandler() {
         config = McpConfig.load();
         refreshTools(config);
+        RuleExecutor re = null;
+        try {
+            re = SingletonServiceFactory.getBean(RuleExecutor.class);
+        } catch (Exception e) {
+            logger.info("RuleExecutor is not available, access control for MCP tools is disabled.");
+        }
+        this.ruleExecutor = re;
         if(logger.isInfoEnabled()) logger.info("McpHandler initialized.");
     }
 
@@ -49,18 +61,21 @@ public class McpHandler implements MiddlewareHandler {
             for (Tool toolData : tools) {
                 String name = toolData.getName();
                 String description = toolData.getDescription();
-                String host = toolData.getHost();
+                String endpoint = toolData.getEndpoint();
                 String path = toolData.getPath();
                 String method = toolData.getMethod();
                 String inputSchema = toolData.getInputSchema();
                 String protocol = toolData.getProtocol();
+                String apiType = toolData.getApiType();
+                String targetHost = toolData.getTargetHost();
+                String serviceId = toolData.getServiceId();
 
-                if (name != null && host != null && path != null && method != null) {
+                if (name != null && endpoint != null && ((serviceId != null && protocol != null) || targetHost != null)) {
                     McpTool tool;
-                    if ("mcp".equalsIgnoreCase(protocol)) {
-                        tool = new McpProxyTool(name, description, host, path, method, inputSchema);
+                    if ("mcp".equalsIgnoreCase(apiType)) {
+                        tool = new McpProxyTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost());
                     } else {
-                        tool = new HttpMcpTool(name, description, host, path, method, inputSchema);
+                        tool = new HttpMcpTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost());
                     }
                     McpToolRegistry.registerTool(tool);
                     if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
@@ -186,6 +201,13 @@ public class McpHandler implements MiddlewareHandler {
 
                     McpTool tool = McpToolRegistry.getTool(toolName);
                     if (tool != null) {
+                        // Fine-grained access control check before tool execution
+                        if (!checkAccessControl(exch, tool.getEndpoint(), args, response)) {
+                            // Access denied, response already populated with error
+                            exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                            exch.getResponseSender().send(mapper.writeValueAsString(response));
+                            return;
+                        }
                         try {
                             Map<String, Object> result = tool.execute(args);
                             response.put("result", result);
@@ -209,6 +231,76 @@ public class McpHandler implements MiddlewareHandler {
                 exch.getResponseSender().send("{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Parse error\"}, \"id\": null}");
             }
         });
+    }
+
+    /**
+     * Check fine-grained access control for a tool call using the RuleExecutor.
+     * Returns true if access is allowed, false if denied.
+     * When denied, the response map is populated with a JSON-RPC error.
+     *
+     * @param exchange the current exchange
+     * @param endpoint the endpoint of the tool being called
+     * @param args the tool arguments
+     * @param response the JSON-RPC response map to populate on denial
+     * @return true if access is allowed, false if denied
+     */
+    @SuppressWarnings("unchecked")
+    private boolean checkAccessControl(HttpServerExchange exchange, String endpoint, Map<String, Object> args, Map<String, Object> response) {
+        AccessControlConfig accessControlConfig;
+        try {
+            accessControlConfig = AccessControlConfig.load();
+        } catch (Exception e) {
+            // access-control.yml not present or not parseable — skip access control
+            if(logger.isTraceEnabled()) logger.trace("AccessControlConfig not available, skipping access control for endpoint {}", endpoint);
+            return true;
+        }
+        if (!accessControlConfig.isEnabled()) {
+            if(logger.isTraceEnabled()) logger.trace("Access control is disabled, skipping for endpoint {}", endpoint);
+            return true;
+        }
+        if (ruleExecutor == null) {
+            if(logger.isTraceEnabled()) logger.trace("RuleExecutor not available, skipping access control for endpoint {}", endpoint);
+            return true;
+        }
+
+        // Check skipPathPrefixes against toolName
+        if (accessControlConfig.getSkipPathPrefixes() != null &&
+                accessControlConfig.getSkipPathPrefixes().stream().anyMatch(endpoint::startsWith)) {
+            if(logger.isTraceEnabled()) logger.trace("Skipping access control for tool {} based on skipPathPrefixes", endpoint);
+            return true;
+        }
+
+        // Build the rule engine payload
+        Map<String, Object> ruleEnginePayload = new HashMap<>();
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo != null) {
+            ruleEnginePayload.put("auditInfo", auditInfo);
+        }
+        ruleEnginePayload.put("headers", exchange.getRequestHeaders());
+        ruleEnginePayload.put("endpoint", endpoint);
+        ruleEnginePayload.put("toolArguments", args);
+
+        // Execute rules
+        Map<String, Object> result = ruleExecutor.executeRules(endpoint, REQUEST_ACCESS, ruleEnginePayload);
+        if (result == null) {
+            if (accessControlConfig.isDefaultDeny()) {
+                logger.error("Access control rule is missing and default deny is true for tool endpoint {}", endpoint);
+                response.put("error", Map.of("code", -32001, "message", "Access denied: no access control rule defined for " + endpoint));
+                return false;
+            } else {
+                // No rules defined and default allow — proceed
+                return true;
+            }
+        } else {
+            boolean res = (Boolean) result.getOrDefault(RuleConstants.RESULT, false);
+            if (res) {
+                return true;
+            } else {
+                logger.error("Access denied for tool endpoint {}: {}", endpoint, JsonMapper.toJson(result));
+                response.put("error", Map.of("code", -32001, "message", "Access denied by access control rule for " + endpoint));
+                return false;
+            }
+        }
     }
 
     @Override

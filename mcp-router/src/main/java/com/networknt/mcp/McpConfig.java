@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.ConfigException;
 import java.util.ArrayList;
-
 import java.util.Map;
 import java.util.List;
 
@@ -161,12 +160,17 @@ public class McpConfig {
         List<Tool> tools = new ArrayList<>();
         for (Map<String, Object> value : values) {
             Tool tool = new Tool();
-            tool.setName((String) value.get("name"));
+            tool.setName((String)value.get("name"));
             tool.setDescription((String) value.get("description"));
-            tool.setHost((String) value.get("host"));
             tool.setPath((String) value.get("path"));
             tool.setMethod((String) value.get("method"));
             tool.setProtocol((String) value.get("protocol"));
+            tool.setServiceId((String) value.get("serviceId"));
+            tool.setEnvTag((String) value.get("envTag"));
+            tool.setTargetHost((String) value.get("targetHost"));
+            tool.setApiType((String) value.get("apiType"));
+            tool.setEndpoint((String) value.get("endpoint"));
+
             Object schemaObj = value.get("inputSchema");
             if (schemaObj != null) {
                 if (schemaObj instanceof Map) {
@@ -177,6 +181,19 @@ public class McpConfig {
                     }
                 } else if (schemaObj instanceof String) {
                     tool.setInputSchema((String) schemaObj);
+                }
+            }
+
+            Object metadataObj = value.get("toolMetadata");
+            if (metadataObj != null) {
+                if (metadataObj instanceof Map) {
+                    try {
+                        tool.setToolMetadata(Config.getInstance().getMapper().writeValueAsString(metadataObj));
+                    } catch (Exception e) {
+                        logger.error("Failed to serialize toolMetadata for tool " + tool.getName(), e);
+                    }
+                } else if (metadataObj instanceof String) {
+                    tool.setToolMetadata((String) metadataObj);
                 }
             }
             tools.add(tool);

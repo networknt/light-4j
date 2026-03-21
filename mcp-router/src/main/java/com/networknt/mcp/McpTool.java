@@ -21,6 +21,12 @@ public interface McpTool {
     String getDescription();
 
     /**
+     * Get tool endpoint
+     * @return String
+     */
+    String getEndpoint();
+
+    /**
      * Get input schema
      * @return String
      */
