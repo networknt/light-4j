@@ -5,7 +5,6 @@ import com.networknt.utility.Constants;
 import org.jose4j.jwt.JwtClaims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.scanner.Constant;
 
 import java.util.Collection;
 import java.util.Map;

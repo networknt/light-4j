@@ -4,6 +4,18 @@ import com.networknt.config.schema.StringField;
 
 public class Tool {
     @StringField(
+            configFieldName = "apiType",
+            description = "API type (openapi, graphql, hybrid)"
+    )
+    String apiType;
+
+    @StringField(
+            configFieldName = "endpoint",
+            description = "Tool endpoint with method"
+    )
+    String endpoint;
+
+    @StringField(
             configFieldName = "name",
             description = "Tool name"
     )
@@ -45,6 +57,46 @@ public class Tool {
             defaultValue = "http"
     )
     String protocol;
+
+    @StringField(
+            configFieldName = "serviceId",
+            description = "Service ID for discovery"
+    )
+    String serviceId;
+
+    @StringField(
+            configFieldName = "envTag",
+            description = "Environment tag for discovery"
+    )
+    String envTag;
+
+    @StringField(
+            configFieldName = "targetHost",
+            description = "Target host for discovery"
+    )
+    String targetHost;
+
+    @StringField(
+            configFieldName = "toolMetadata",
+            description = "Tool metadata"
+    )
+    String toolMetadata;
+
+    public String getApiType() {
+        return apiType;
+    }
+
+    public void setApiType(String apiType) {
+        this.apiType = apiType;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
 
     public String getName() {
         return name;
@@ -100,5 +152,37 @@ public class Tool {
 
     public void setProtocol(String protocol) {
         this.protocol = protocol;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public String getEnvTag() {
+        return envTag;
+    }
+
+    public void setEnvTag(String envTag) {
+        this.envTag = envTag;
+    }
+
+    public String getTargetHost() {
+        return targetHost;
+    }
+
+    public void setTargetHost(String targetHost) {
+        this.targetHost = targetHost;
+    }
+
+    public String getToolMetadata() {
+        return toolMetadata;
+    }
+
+    public void setToolMetadata(String toolMetadata) {
+        this.toolMetadata = toolMetadata;
     }
 }

@@ -3,7 +3,9 @@ package com.networknt.mcp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
+import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -11,7 +13,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
@@ -28,21 +29,31 @@ import java.util.concurrent.atomic.AtomicReference;
 public class McpProxyTool implements McpTool {
     private static final Logger logger = LoggerFactory.getLogger(McpProxyTool.class);
     private static final String JSONRpc_VERSION = "2.0";
+    private static final Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+
     private final String name;
     private final String description;
-    private final String host;
+    private final String endpoint;
     private final String path;
     private final String method; // usually POST for MCP
     private final String inputSchema;
+    private final String protocol;
+    private final String serviceId;
+    private final String envTag;
+    private final String targetHost;
     private final ObjectMapper mapper = Config.getInstance().getMapper();
 
-    public McpProxyTool(String name, String description, String host, String path, String method, String inputSchema) {
+    public McpProxyTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
         this.name = name;
         this.description = description;
-        this.host = host;
+        this.endpoint = endpoint;
         this.path = path;
         this.method = method;
         this.inputSchema = inputSchema;
+        this.protocol = protocol;
+        this.serviceId = serviceId;
+        this.envTag = envTag;
+        this.targetHost = targetHost;
     }
 
     @Override
@@ -53,6 +64,11 @@ public class McpProxyTool implements McpTool {
     @Override
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getEndpoint() {
+        return endpoint;
     }
 
     @Override
@@ -79,7 +95,8 @@ public class McpProxyTool implements McpTool {
         SimpleConnectionState.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
-            URI uri = new URI(host);
+            String url = resolveTargetUrl();
+            URI uri = new URI(url);
             token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
             connection = (ClientConnection) token.getRawConnection();
             final CountDownLatch latch = new CountDownLatch(1);
@@ -102,23 +119,27 @@ public class McpProxyTool implements McpTool {
             latch.await(3000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
-            int statusCode = response.getResponseCode();
-            String responseBody = response.getAttachment(Http2Client.RESPONSE_BODY);
+            if (response != null) {
+                int statusCode = response.getResponseCode();
+                String responseBody = response.getAttachment(Http2Client.RESPONSE_BODY);
 
-            if(logger.isDebugEnabled()) logger.debug("Backend MCP response: {}", responseBody);
+                if(logger.isDebugEnabled()) logger.debug("Backend MCP response: {}", responseBody);
 
-            if (statusCode >= 200 && statusCode < 300) {
-                // Parse backend JSON-RPC response
-                Map<String, Object> jsonRpcResponse = mapper.readValue(responseBody, Map.class);
-                if (jsonRpcResponse.containsKey("error")) {
-                   Map<String, Object> error = (Map<String, Object>) jsonRpcResponse.get("error");
-                   throw new RuntimeException("Backend MCP error: " + error.get("message"));
+                if (statusCode >= 200 && statusCode < 300) {
+                    // Parse backend JSON-RPC response
+                    Map<String, Object> jsonRpcResponse = mapper.readValue(responseBody, Map.class);
+                    if (jsonRpcResponse.containsKey("error")) {
+                       Map<String, Object> error = (Map<String, Object>) jsonRpcResponse.get("error");
+                       throw new RuntimeException("Backend MCP error: " + error.get("message"));
+                    }
+                    // extract result
+                    Map<String, Object> result = (Map<String, Object>) jsonRpcResponse.get("result");
+                    return result;
+                } else {
+                    throw new RuntimeException("Backend service " + name + " failed with status " + statusCode + ": " + responseBody);
                 }
-                // extract result
-                Map<String, Object> result = (Map<String, Object>) jsonRpcResponse.get("result");
-                return result;
             } else {
-                throw new RuntimeException("Backend service failed with status " + statusCode + ": " + responseBody);
+                throw new RuntimeException("Timeout waiting for backend service " + name);
             }
         } catch (Exception e) {
             logger.error("Error executing McpProxyTool", e);
@@ -126,5 +147,22 @@ public class McpProxyTool implements McpTool {
         } finally {
             client.restore(token);
         }
+    }
+
+    private String resolveTargetUrl() {
+        if (targetHost != null && !targetHost.isBlank()) {
+            return targetHost;
+        }
+        if (serviceId != null && !serviceId.isBlank()) {
+            if (cluster == null) {
+                throw new RuntimeException("Cluster service is not available for serviceId-based resolution for tool " + name);
+            }
+            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
+            if (url == null || url.isBlank()) {
+                throw new RuntimeException("Unable to resolve serviceId " + serviceId + " for tool " + name);
+            }
+            return url;
+        }
+        throw new RuntimeException("No targetHost or serviceId provided for tool " + name);
     }
 }

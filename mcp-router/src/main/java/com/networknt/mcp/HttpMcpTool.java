@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
+import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -12,7 +14,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
@@ -30,21 +31,30 @@ public class HttpMcpTool implements McpTool {
     private static final Logger logger = LoggerFactory.getLogger(HttpMcpTool.class);
     private static final Http2Client client = Http2Client.getInstance();
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
+    private static final Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
 
     private final String name;
     private final String description;
-    private final String host;
+    private final String endpoint;
     private final String path;
     private final String method;
     private final String inputSchema;
+    private final String protocol;
+    private final String serviceId;
+    private final String envTag;
+    private final String targetHost;
 
-    public HttpMcpTool(String name, String description, String host, String path, String method, String inputSchema) {
+    public HttpMcpTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
         this.name = name;
         this.description = description;
-        this.host = host;
+        this.endpoint = endpoint;
         this.path = path;
         this.method = method;
         this.inputSchema = inputSchema;
+        this.protocol = protocol;
+        this.serviceId = serviceId;
+        this.envTag = envTag;
+        this.targetHost = targetHost;
     }
 
     @Override
@@ -55,6 +65,11 @@ public class HttpMcpTool implements McpTool {
     @Override
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getEndpoint() {
+        return endpoint;
     }
 
     @Override
@@ -71,7 +86,8 @@ public class HttpMcpTool implements McpTool {
         SimpleConnectionState.ConnectionToken token = null;
         ClientConnection connection = null;
         try {
-            URI uri = new URI(host);
+            String url = resolveTargetUrl();
+            URI uri = new URI(url);
             token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
             connection = (ClientConnection) token.getRawConnection();
 
@@ -124,9 +140,6 @@ public class HttpMcpTool implements McpTool {
                              return mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                          } catch (Exception e) {
                              // If not JSON, return generic content wrapper? Or just error?
-                             // Specification says result is text/image content.
-                             // For flexibility, let's wrap non-JSON string in a simple map or try to return as map if possible.
-                             // Example: { "content": [{ "type": "text", "text": body }] }
                              return Map.of("content", java.util.List.of(Map.of("type", "text", "text", body)));
                          }
                      }
@@ -144,5 +157,22 @@ public class HttpMcpTool implements McpTool {
         } finally {
             client.restore(token);
         }
+    }
+
+    private String resolveTargetUrl() {
+        if (targetHost != null && !targetHost.isBlank()) {
+            return targetHost;
+        }
+        if (serviceId != null && !serviceId.isBlank()) {
+            if (cluster == null) {
+                throw new RuntimeException("Cluster service is not available for serviceId-based resolution for tool " + name);
+            }
+            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
+            if (url == null || url.isBlank()) {
+                throw new RuntimeException("Unable to resolve serviceId " + serviceId + " for tool " + name);
+            }
+            return url;
+        }
+        throw new RuntimeException("No targetHost or serviceId provided for tool " + name);
     }
 }

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import com.networknt.sse.SseConnectionRegistry;
@@ -40,10 +39,6 @@ public class McpHandlerTest {
         if (server == null) {
             logger.info("starting server");
             McpHandler handler = new McpHandler();
-            // Manually register tool for test reliability
-            McpTool weatherTool = new HttpMcpTool("weather", "Get weather information", "http://localhost:" + BACKEND_PORT, "/weather", "GET", null);
-            McpToolRegistry.registerTool(weatherTool);
-
             handler.setNext(Handlers.routing().add(Methods.GET, "/health", exchange -> exchange.getResponseSender().send("OK")));
             server = Undertow.builder()
                     .addHttpListener(PORT, "localhost")
@@ -78,6 +73,8 @@ public class McpHandlerTest {
 
     @Test
     public void testToolCall() throws Exception {
+        Assertions.assertNotNull(McpToolRegistry.getTool("weather"));
+
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final SimpleConnectionState.ConnectionToken token;
@@ -227,6 +224,8 @@ public class McpHandlerTest {
             @Override
             public String getDescription() { return "A test tool"; }
             @Override
+            public String getEndpoint() { return "testTool@call"; }
+            @Override
             public String getInputSchema() { return "{\"type\": \"object\"}"; }
             @Override
             public Map<String, Object> execute(Map<String, Object> arguments) { return null; }
@@ -287,7 +286,7 @@ public class McpHandlerTest {
     @Test
     public void testMcpProxy() throws Exception {
         // Register an MCP proxy tool
-        McpTool proxyTool = new McpProxyTool("mcpTool", "Proxy to backend MCP", "http://localhost:" + BACKEND_PORT, "/mcp-backend", "POST", null);
+        McpTool proxyTool = new McpProxyTool("mcpTool", "Proxy to backend MCP", "mcpTool@call", "/mcp-backend", "POST", null, null, null, null, "http://localhost:7081");
         McpToolRegistry.registerTool(proxyTool);
 
         final Http2Client client = Http2Client.getInstance();
@@ -329,5 +328,21 @@ public class McpHandlerTest {
 
 
         }
+    }
+
+    @Test
+    public void testServiceIdWithoutClusterFailsGracefully() {
+        HttpMcpTool tool = new HttpMcpTool("weatherByService", "Get weather information", "weatherByService@call", "/weather", "GET", null, "http", "weather-service", null, null);
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> tool.execute(Map.of()));
+        Assertions.assertTrue(exception.getMessage().contains("Cluster service is not available"));
+    }
+
+    @Test
+    public void testMcpProxyServiceIdWithoutClusterFailsGracefully() {
+        McpProxyTool tool = new McpProxyTool("mcpByService", "Proxy to backend MCP", "mcpByService@call", "/mcp-backend", "POST", null, "http", "mcp-service", null, null);
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> tool.execute(Map.of()));
+        Assertions.assertTrue(exception.getMessage().contains("Cluster service is not available"));
     }
 }
