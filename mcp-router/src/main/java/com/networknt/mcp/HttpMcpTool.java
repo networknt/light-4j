@@ -4,9 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
-import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
-import com.networknt.service.SingletonServiceFactory;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -27,58 +25,13 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Steve Hu
  */
-public class HttpMcpTool implements McpTool {
+public class HttpMcpTool extends AbstractRemoteMcpTool {
     private static final Logger logger = LoggerFactory.getLogger(HttpMcpTool.class);
     private static final Http2Client client = Http2Client.getInstance();
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
-    private static final Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-
-    private final String name;
-    private final String description;
-    private final String endpoint;
-    private final String path;
-    private final String method;
-    private final String inputSchema;
-    private final String protocol;
-    private final String serviceId;
-    private final String envTag;
-    private final String targetHost;
 
     public HttpMcpTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
-        this.name = name;
-        this.description = description;
-        this.endpoint = endpoint;
-        this.path = path;
-        this.method = method;
-        this.inputSchema = inputSchema;
-        this.protocol = protocol;
-        this.serviceId = serviceId;
-        this.envTag = envTag;
-        this.targetHost = targetHost;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    @Override
-    public String getInputSchema() {
-        if (inputSchema != null) {
-            return inputSchema;
-        }
-        // For now, return a generic schema as we don't have validation info from config yet
-        return "{\"type\": \"object\"}";
+        super(name, description, endpoint, path, method, inputSchema, protocol, serviceId, envTag, targetHost);
     }
 
     @Override
@@ -112,12 +65,7 @@ public class HttpMcpTool implements McpTool {
                 request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                 // Body will be sent in callback
             }
-            String hostHeader = uri.getHost();
-            int port = uri.getPort();
-            if (port != -1 && port != 80 && port != 443) {
-                hostHeader += ":" + port;
-            }
-            request.getRequestHeaders().put(Headers.HOST, hostHeader);
+            request.getRequestHeaders().put(Headers.HOST, buildHostHeader(uri));
 
             if ("GET".equalsIgnoreCase(method)) {
                  connection.sendRequest(request, client.createClientCallback(reference, latch));
@@ -157,22 +105,5 @@ public class HttpMcpTool implements McpTool {
         } finally {
             client.restore(token);
         }
-    }
-
-    private String resolveTargetUrl() {
-        if (targetHost != null && !targetHost.isBlank()) {
-            return targetHost;
-        }
-        if (serviceId != null && !serviceId.isBlank()) {
-            if (cluster == null) {
-                throw new RuntimeException("Cluster service is not available for serviceId-based resolution for tool " + name);
-            }
-            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
-            if (url == null || url.isBlank()) {
-                throw new RuntimeException("Unable to resolve serviceId " + serviceId + " for tool " + name);
-            }
-            return url;
-        }
-        throw new RuntimeException("No targetHost or serviceId provided for tool " + name);
     }
 }

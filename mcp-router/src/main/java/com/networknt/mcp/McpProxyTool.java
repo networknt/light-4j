@@ -3,9 +3,7 @@ package com.networknt.mcp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
-import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
-import com.networknt.service.SingletonServiceFactory;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -26,57 +24,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * McpProxyTool routes MCP tool calls to a backend MCP server.
  * It wraps the arguments in a JSON-RPC "tools/call" request.
  */
-public class McpProxyTool implements McpTool {
+public class McpProxyTool extends AbstractRemoteMcpTool {
     private static final Logger logger = LoggerFactory.getLogger(McpProxyTool.class);
     private static final String JSONRpc_VERSION = "2.0";
-    private static final Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-
-    private final String name;
-    private final String description;
-    private final String endpoint;
-    private final String path;
-    private final String method; // usually POST for MCP
-    private final String inputSchema;
-    private final String protocol;
-    private final String serviceId;
-    private final String envTag;
-    private final String targetHost;
     private final ObjectMapper mapper = Config.getInstance().getMapper();
 
     public McpProxyTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
-        this.name = name;
-        this.description = description;
-        this.endpoint = endpoint;
-        this.path = path;
-        this.method = method;
-        this.inputSchema = inputSchema;
-        this.protocol = protocol;
-        this.serviceId = serviceId;
-        this.envTag = envTag;
-        this.targetHost = targetHost;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    @Override
-    public String getInputSchema() {
-        if(inputSchema != null) {
-            return inputSchema;
-        }
-        return "{\"type\": \"object\"}";
+        super(name, description, endpoint, path, method, inputSchema, protocol, serviceId, envTag, targetHost);
     }
 
     @Override
@@ -103,12 +57,7 @@ public class McpProxyTool implements McpTool {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
             ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
-            String hostHeader = uri.getHost();
-            int port = uri.getPort();
-            if (port != -1 && port != 80 && port != 443) {
-                hostHeader += ":" + port;
-            }
-            request.getRequestHeaders().put(Headers.HOST, hostHeader);
+            request.getRequestHeaders().put(Headers.HOST, buildHostHeader(uri));
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 
@@ -147,22 +96,5 @@ public class McpProxyTool implements McpTool {
         } finally {
             client.restore(token);
         }
-    }
-
-    private String resolveTargetUrl() {
-        if (targetHost != null && !targetHost.isBlank()) {
-            return targetHost;
-        }
-        if (serviceId != null && !serviceId.isBlank()) {
-            if (cluster == null) {
-                throw new RuntimeException("Cluster service is not available for serviceId-based resolution for tool " + name);
-            }
-            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
-            if (url == null || url.isBlank()) {
-                throw new RuntimeException("Unable to resolve serviceId " + serviceId + " for tool " + name);
-            }
-            return url;
-        }
-        throw new RuntimeException("No targetHost or serviceId provided for tool " + name);
     }
 }
