@@ -59,22 +59,38 @@ public class ConfigInjection {
     // Define the injection pattern which represents the injection points
     private static final Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    public static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
-    public static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+    private static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
+    private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
     private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
-    public static volatile Map<String, Object> decryptedValueMap;
-    public static volatile Map<String, Object> undecryptedValueMap;
+    private static volatile Map<String, Object> decryptedValueMap;
+    private static volatile Map<String, Object> undecryptedValueMap;
 
     static {
         // Pass 1: Load from file (injects Environment Variables only as maps are still null)
-        decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-        undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        Map<String, Object> decryptedMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        Map<String, Object> undecryptedMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        setDecryptedValueMap(decryptedMap);
+        setUndecryptedValueMap(undecryptedMap);
+    }
 
-        // Pass 2: Perform self-injection (now that maps are assigned, ${key} will resolve to map entries)
+    public static Map<String, Object> getDecryptedValueMap() {
+        return decryptedValueMap;
+    }
+
+    public static void setDecryptedValueMap(Map<String, Object> decryptedValueMap) {
+        ConfigInjection.decryptedValueMap = decryptedValueMap;
         if (decryptedValueMap != null) {
             CentralizedManagement.mergeMap(true, decryptedValueMap);
         }
+    }
+
+    public static Map<String, Object> getUndecryptedValueMap() {
+        return undecryptedValueMap;
+    }
+
+    public static void setUndecryptedValueMap(Map<String, Object> undecryptedValueMap) {
+        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
         if (undecryptedValueMap != null) {
             CentralizedManagement.mergeMap(false, undecryptedValueMap);
         }
