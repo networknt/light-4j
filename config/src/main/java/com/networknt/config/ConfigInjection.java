@@ -79,10 +79,10 @@ public class ConfigInjection {
     }
 
     public static void setDecryptedValueMap(Map<String, Object> decryptedValueMap) {
-        ConfigInjection.decryptedValueMap = decryptedValueMap;
         if (decryptedValueMap != null) {
             CentralizedManagement.mergeMap(true, decryptedValueMap);
         }
+        ConfigInjection.decryptedValueMap = decryptedValueMap;
     }
 
     public static Map<String, Object> getUndecryptedValueMap() {
@@ -90,10 +90,10 @@ public class ConfigInjection {
     }
 
     public static void setUndecryptedValueMap(Map<String, Object> undecryptedValueMap) {
-        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
         if (undecryptedValueMap != null) {
             CentralizedManagement.mergeMap(false, undecryptedValueMap);
         }
+        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
     }
 
 
