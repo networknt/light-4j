@@ -67,7 +67,11 @@ public class ConfigInjection {
     private static volatile Map<String, Object> undecryptedValueMap;
 
     static {
-        // Pass 1: Load from file (injects Environment Variables only as maps are still null)
+        // Two-pass initialization:
+        // Pass 1: Load values.yml as-is (no injection applied, since values.yml is excluded
+        //         from ConfigInjection via isExclusionConfigFile to avoid circular dependency).
+        // Pass 2: The setters below merge the loaded maps into CentralizedManagement so that
+        //         subsequent config loads can resolve ${...} references from values.yml.
         Map<String, Object> decryptedMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
         Map<String, Object> undecryptedMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
         setDecryptedValueMap(decryptedMap);
