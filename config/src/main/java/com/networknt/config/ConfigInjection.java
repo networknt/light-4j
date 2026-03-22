@@ -59,12 +59,26 @@ public class ConfigInjection {
     // Define the injection pattern which represents the injection points
     private static final Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    private static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
-    private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+    public static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
+    public static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
     private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
-    public static volatile Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-    public static volatile Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    public static volatile Map<String, Object> decryptedValueMap;
+    public static volatile Map<String, Object> undecryptedValueMap;
+
+    static {
+        // Pass 1: Load from file (injects Environment Variables only as maps are still null)
+        decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+
+        // Pass 2: Perform self-injection (now that maps are assigned, ${key} will resolve to map entries)
+        if (decryptedValueMap != null) {
+            CentralizedManagement.mergeMap(true, decryptedValueMap);
+        }
+        if (undecryptedValueMap != null) {
+            CentralizedManagement.mergeMap(false, undecryptedValueMap);
+        }
+    }
 
 
     // Method used to generate the values from environment variables or "values.yaml"
@@ -94,6 +108,7 @@ public class ConfigInjection {
     public static boolean isExclusionConfigFile(String configName) {
         List<Object> exclusionConfigFileList = (exclusionMap == null || exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return SCALABLE_CONFIG.equals(configName)
+                || CENTRALIZED_MANAGEMENT.equals(configName)
                 || exclusionConfigFileList.contains(configName);
     }
 
