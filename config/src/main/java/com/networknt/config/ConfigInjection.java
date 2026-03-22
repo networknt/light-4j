@@ -124,7 +124,6 @@ public class ConfigInjection {
     public static boolean isExclusionConfigFile(String configName) {
         List<Object> exclusionConfigFileList = (exclusionMap == null || exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return SCALABLE_CONFIG.equals(configName)
-                || CENTRALIZED_MANAGEMENT.equals(configName)
                 || exclusionConfigFileList.contains(configName);
     }
 
