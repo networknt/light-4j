@@ -5,6 +5,10 @@ package com.networknt.handler;
  * indicators.
  */
 public interface RequestInterceptor extends Interceptor {
+    /**
+     * Indicates if the interceptor requires the request content.
+     * @return true if required, false otherwise.
+     */
     boolean isRequiredContent();
 
 }

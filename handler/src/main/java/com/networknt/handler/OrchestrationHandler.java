@@ -20,16 +20,26 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
 /**
+ * OrchestrationHandler is the entry point for the handler chain execution.
+ * It uses the Handler class to match requests to chains and execute them.
+ *
  * @author Nicholas Azar
  */
 public class OrchestrationHandler implements LightHttpHandler {
 
     static final String MISSING_HANDlER = "ERR10048";
 
+    /**
+     * Default constructor for OrchestrationHandler.
+     */
     public OrchestrationHandler() {
 
     }
 
+    /**
+     * Constructor for OrchestrationHandler that sets the last handler in the chain.
+     * @param lastHandler The HttpHandler to be executed at the end of the chain.
+     */
     public OrchestrationHandler(HttpHandler lastHandler) {
         Handler.setLastHandler(lastHandler);
     }

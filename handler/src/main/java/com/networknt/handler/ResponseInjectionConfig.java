@@ -23,6 +23,7 @@ import java.util.Map;
 public class ResponseInjectionConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseInjectionConfig.class);
 
+    /** Config name constant */
     public static final String CONFIG_NAME = "response-injection";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
@@ -56,23 +57,43 @@ public class ResponseInjectionConfig {
 
     private Map<String, Object> mappedConfig;
 
-
+    /**
+     * Instance of ResponseInjectionConfig.
+     */
     private static volatile ResponseInjectionConfig instance;
 
+    /**
+     * Default constructor for ResponseInjectionConfig.
+     */
     public ResponseInjectionConfig() {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Constructor for ResponseInjectionConfig with a custom config name.
+     * @param configName name of the configuration file
+     */
     private ResponseInjectionConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
+    /**
+     * Loads the default response injection configuration.
+     *
+     * @return An instance of ResponseInjectionConfig.
+     */
     public static ResponseInjectionConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the response injection configuration by name.
+     *
+     * @param configName The name of the configuration.
+     * @return An instance of ResponseInjectionConfig.
+     */
     public static ResponseInjectionConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -93,14 +114,29 @@ public class ResponseInjectionConfig {
         return new ResponseInjectionConfig(configName);
     }
 
+    /**
+     * Returns true if the response injection is enabled.
+     *
+     * @return true if enabled, false otherwise.
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Returns the list of applied body injection path prefixes.
+     *
+     * @return A list of strings representing the path prefixes.
+     */
     public List<String> getAppliedBodyInjectionPathPrefixes() {
         return appliedBodyInjectionPathPrefixes;
     }
 
+    /**
+     * Returns the mapped config.
+     *
+     * @return A map of configuration values.
+     */
     Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

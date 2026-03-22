@@ -16,6 +16,7 @@
 
 package com.networknt.handler.config;
 
+import com.networknt.config.JsonMapper;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.StringField;
 import com.networknt.utility.Util;
@@ -138,7 +139,7 @@ public class PathChain {
      *
      * @param origin the origin
      */
-    public void validate(String origin) {
+    public void validate(String origin, List<PathChain> paths) {
         List<String> problems = new ArrayList<>();
 
         if (source == null) {
@@ -146,6 +147,7 @@ public class PathChain {
             if (path == null) {
                 problems.add("You must specify either path or source");
                 problems.add("It is possible that serviceId is missing from the values.yml and it is mandatory.");
+                problems.add("The paths are " + JsonMapper.toJson(paths));
 
             } else if (method == null)
                 problems.add("You must specify method along with path: " + path);

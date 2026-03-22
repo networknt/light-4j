@@ -41,20 +41,25 @@ import java.util.stream.Collectors;
  * @author Steve Hu
  */
 public interface LightHttpHandler extends HttpHandler {
+    /** Logger instance */
     Logger logger = LoggerFactory.getLogger(LightHttpHandler.class);
+    /** Error code for not defined error */
     String ERROR_NOT_DEFINED = "ERR10042";
 
-    // Handler can save errors and stack traces for auditing. Default: false
+    /** Audit configuration instance */
     AuditConfig auditConfig = AuditConfig.load();
+    /** Indicator of audit on error */
     boolean AUDIT_ON_ERROR = auditConfig.isAuditOnError();
+    /** Indicator of audit stack trace */
     boolean AUDIT_STACK_TRACE = auditConfig.isAuditStackTrace();
+
 
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
      *
-     * @param exchange HttpServerExchange
-     * @param code     error code
-     * @param args     arguments for error description
+     * @param exchange The HttpServerExchange to set the status on.
+     * @param code     The error code from status.yml.
+     * @param args     Arguments for formatting the error description.
      */
     default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
         var status = new Status(code, args);
@@ -69,10 +74,10 @@ public interface LightHttpHandler extends HttpHandler {
     /**
      * This method is used to construct a standard error status with metadata in JSON format from an error code.
      *
-     * @param exchange HttpServerExchange
-     * @param code     error code
-     * @param metadata additional metadata info
-     * @param args     arguments for error description
+     * @param exchange The HttpServerExchange to set the status on.
+     * @param code     The error code from status.yml.
+     * @param metadata Additional metadata to include in the response.
+     * @param args     Arguments for formatting the error description.
      */
     default void setExchangeStatus(HttpServerExchange exchange, String code, Map<String, Object> metadata, final Object... args) {
         var status = new Status(code, args);
@@ -89,8 +94,8 @@ public interface LightHttpHandler extends HttpHandler {
      * There are situations that the downstream service returns an error status response and we just
      * want to bubble up to the caller and eventually to the original caller.
      *
-     * @param ex HttpServerExchange
-     * @param status   error status
+     * @param ex     The HttpServerExchange to set the status on.
+     * @param status The Status object containing error details.
      */
     default void setExchangeStatus(HttpServerExchange ex, Status status) {
         // Wrap default status into custom status if the implementation of StatusWrapper was provided

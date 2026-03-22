@@ -20,7 +20,11 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * A conduit that allows modification of the response content before it is written to the next conduit.
+ */
 public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
+    /** Maximum number of buffers allowed for modifiable content */
     public static int MAX_BUFFERS = 1024;
 
     static final Logger LOG = LoggerFactory.getLogger(ModifiableContentSinkConduit.class);
@@ -248,6 +252,16 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         });
     }
 
+    /**
+     * Performs the actual write operation to the next conduit.
+     *
+     * @param buffers The pooled byte buffers.
+     * @param buffer  The current pooled byte buffer to write.
+     * @param written The number of bytes already written.
+     * @param index   The index of the current buffer.
+     * @return true if this was the last write, false otherwise.
+     * @throws IOException If an I/O error occurs.
+     */
     private boolean doWrite(PooledByteBuffer[] buffers, PooledByteBuffer buffer, int written, int index) throws IOException {
         boolean lastWrite = false;
         while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
@@ -273,6 +287,14 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         return lastWrite;
     }
 
+    /**
+     * Checks if the buffer has been fully consumed.
+     *
+     * @param buffer The pooled byte buffer to check.
+     * @param res    The result of the last write operation.
+     * @param index  The index of the buffer.
+     * @return true if consumed, false otherwise.
+     */
     private boolean isBufferConsumed(PooledByteBuffer buffer, long res, int index) {
 
         if (LOG.isTraceEnabled())
@@ -281,6 +303,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         return !(res == 0L) && (buffer.getBuffer().position() >= buffer.getBuffer().limit());
     }
 
+    /**
+     * Checks if this is the last write for the given buffers.
+     *
+     * @param buffers The pooled byte buffers.
+     * @param index   The current index.
+     * @return true if last write, false otherwise.
+     */
     private boolean isLastWrite(PooledByteBuffer[] buffers, int index) {
 
         if (LOG.isTraceEnabled())
@@ -289,6 +318,11 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         return buffers[index + 1] == null || buffers[index + 1].getBuffer() == null;
     }
 
+    /**
+     * Returns true if the conduit is currently writing a response.
+     *
+     * @return true if writing response, false otherwise.
+     */
     private boolean isWritingResponse() {
         return writingResponse;
     }

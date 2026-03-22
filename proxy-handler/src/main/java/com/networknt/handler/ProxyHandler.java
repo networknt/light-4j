@@ -78,8 +78,6 @@ import java.util.stream.Collectors;
  * request will proceed as normal.
  * <p>
  * This handler uses non-blocking IO
- *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class ProxyHandler implements HttpHandler {
 
@@ -195,6 +193,7 @@ public class ProxyHandler implements HttpHandler {
 
         else exchange.dispatch(exchange.getIoThread(), clientHandler);
     }
+
 
     /**
      * Copies headers from one HeaderMap to another.
@@ -474,6 +473,7 @@ public class ProxyHandler implements HttpHandler {
 
             return remoteHost;
         }
+
 
         /**
          * Builds a complete URI string for our proxy request.

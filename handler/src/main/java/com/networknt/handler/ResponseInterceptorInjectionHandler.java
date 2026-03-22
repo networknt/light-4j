@@ -21,20 +21,31 @@ import java.util.Arrays;
  * the response content for interceptor handlers to update the response before returning to client.
  */
 public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
+    /** Logger instance */
     private static final Logger LOG = LoggerFactory.getLogger(ResponseInterceptorInjectionHandler.class);
 
+    /** Original accept encodings attachment key */
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
     private ResponseInterceptor[] interceptors = null;
     private volatile HttpHandler next;
     private String configName = ResponseInjectionConfig.CONFIG_NAME;
 
+    /**
+     * Default constructor for ResponseInterceptorInjectionHandler.
+     * @throws Exception if any exception happens during initialization
+     */
     public ResponseInterceptorInjectionHandler() throws Exception {
         ResponseInjectionConfig.load(configName);
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         LOG.info("SinkConduitInjectorHandler is loaded!");
     }
 
+    /**
+     * Constructor for ResponseInterceptorInjectionHandler with a custom config name.
+     * @param configName name of the configuration file
+     * @throws Exception if any exception happens during initialization
+     */
     public ResponseInterceptorInjectionHandler(String configName) throws Exception {
         this.configName = configName;
         ResponseInjectionConfig.load(configName);
@@ -86,6 +97,8 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     /**
+     * Handles the HTTP request by injecting the sink conduit if required.
+     *
      * @param exchange HttpServerExchange
      * @throws Exception if any exception happens
      */
@@ -109,6 +122,12 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
+    /**
+     * Checks if the response is compressed.
+     *
+     * @param exchange The HttpServerExchange to check.
+     * @return true if compressed, false otherwise.
+     */
     private boolean isCompressed(HttpServerExchange exchange) {
 
         // check if the request has a header accept encoding with gzip and deflate.
@@ -122,6 +141,13 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         return false;
     }
 
+    /**
+     * Checks if a content sink conduit is required based on interceptors and config.
+     *
+     * @param exchange The HttpServerExchange to check.
+     * @param config   The ResponseInjectionConfig.
+     * @return true if required, false otherwise.
+     */
     private boolean requiresContentSinkConduit(final HttpServerExchange exchange, ResponseInjectionConfig config) {
         if(logger.isTraceEnabled()) {
             logger.trace("requiresContentSinkConduit: requiredContent {}, pathPrefix {} and isNotCompressed {}", this.interceptorsRequireContent()
@@ -133,6 +159,13 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
                 && !isCompressed(exchange);
     }
 
+    /**
+     * Checks if the request path matches any of the applied body injection path prefixes.
+     *
+     * @param requestPath The path to check.
+     * @param config      The ResponseInjectionConfig.
+     * @return true if it matches, false otherwise.
+     */
     private boolean isAppliedBodyInjectionPathPrefix(String requestPath, ResponseInjectionConfig config) {
         return config.getAppliedBodyInjectionPathPrefixes() != null
                 && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);

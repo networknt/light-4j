@@ -30,17 +30,32 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
+ * Utility class for working with PooledByteBuffer and ByteBuffer.
  *
  * @author Andrea Di Cesare {@literal <andrea@softinstigate.com>}
  */
 public class BuffersUtils {
+    /**
+     * Default constructor for BuffersUtils.
+     */
+    public BuffersUtils() {
+    }
+
+    /**
+     * Configuration for request injection, used for max buffers.
+     */
     public static final RequestInjectionConfig config = RequestInjectionConfig.load();
+
+    /**
+     * Maximum content size allowed based on configuration.
+     */
     public static final int MAX_CONTENT_SIZE = 16 * 1024 * config.getMaxBuffers(); // 16KB * maxBuffers
 
     private static final Logger LOG = LoggerFactory.getLogger(BuffersUtils.class);
 
     /**
-     * @param srcs PooledByteBuffer[]
+     * Converts an array of PooledByteBuffers to a single ByteBuffer.
+     * @param srcs An array of PooledByteBuffer to be converted.
      * @return a ByteBuffer containing the content of the srcs
      * @throws IOException If the content exceeds the MAX_CONTENT_SIZE
      */
@@ -73,6 +88,12 @@ public class BuffersUtils {
         return dst.flip();
     }
 
+    /**
+     * Converts an array of PooledByteBuffers to a byte array.
+     * @param src An array of PooledByteBuffer to be converted.
+     * @return a byte array containing the content of the src
+     * @throws IOException If the content exceeds the MAX_CONTENT_SIZE
+     */
     public static byte[] toByteArray(final PooledByteBuffer[] src) throws IOException {
         ByteBuffer content = toByteBuffer(src);
 
@@ -88,11 +109,11 @@ public class BuffersUtils {
     }
 
     /**
-     * Returns the actual byte array of the PooledByteBuffer
+     * Returns the actual byte array of the PooledByteBuffer.
      *
-     * @param src
-     * @return
-     * @throws IOException
+     * @param src An array of PooledByteBuffer to get the byte array from.
+     * @return a byte array containing the content of the src
+     * @throws IOException If the content exceeds the MAX_CONTENT_SIZE
      */
     public static byte[] getByteArray(final PooledByteBuffer[] src) throws IOException {
         ByteBuffer content = toByteBuffer(src);
@@ -103,14 +124,35 @@ public class BuffersUtils {
         return new byte[]{};
     }
 
+    /**
+     * Converts an array of PooledByteBuffers to a String using the specified charset.
+     * @param srcs An array of PooledByteBuffer to be converted.
+     * @param cs The Charset to be used for decoding.
+     * @return The resulting String.
+     * @throws IOException If an I/O error occurs.
+     */
     public static String toString(final PooledByteBuffer[] srcs, Charset cs) throws IOException {
         return new String(toByteArray(srcs), cs);
     }
 
+    /**
+     * Converts an array of PooledByteBuffers to a String using the specified charset name.
+     * @param srcs An array of PooledByteBuffer to be converted.
+     * @param charsetName The name of the charset to be used for decoding.
+     * @return The resulting String.
+     * @throws IOException If an I/O error occurs.
+     */
     public static String toString(final PooledByteBuffer[] srcs, String charsetName) throws IOException {
         return new String(toByteArray(srcs), charsetName);
     }
 
+    /**
+     * Converts a byte array to a String using the specified charset.
+     * @param src The byte array to be converted.
+     * @param cs The Charset to be used for decoding.
+     * @return The resulting String.
+     * @throws IOException If an I/O error occurs.
+     */
     public static String toString(final byte[] src, Charset cs) throws IOException {
         return new String(src, cs);
     }
@@ -156,6 +198,11 @@ public class BuffersUtils {
         return copied;
     }
 
+    /**
+     * Dumps the content of pooled buffers for debugging purposes.
+     * @param msg A message to be prefixed to the dump output.
+     * @param data An array of PooledByteBuffer to be dumped.
+     */
     public static void dump(String msg, PooledByteBuffer[] data) {
         int nbuf = 0;
 
@@ -220,6 +267,13 @@ public class BuffersUtils {
         return copied;
     }
 
+    /**
+     * Transfers data from one array of pooled buffers to another.
+     * @param src The source array of PooledByteBuffer.
+     * @param dest The destination array of PooledByteBuffer.
+     * @param exchange The current HttpServerExchange.
+     * @return The number of bytes transferred.
+     */
     public static int transfer(final PooledByteBuffer[] src, final PooledByteBuffer[] dest, final HttpServerExchange exchange) {
         int copied = 0;
         int idx = 0;

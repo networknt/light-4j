@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * A conduit that allows intercepting and potentially modifying the content being written to the sink.
+ */
 public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContentStreamSinkConduit.class);

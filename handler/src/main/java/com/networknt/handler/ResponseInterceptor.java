@@ -11,25 +11,44 @@ import io.undertow.server.HttpServerExchange;
  */
 public interface ResponseInterceptor extends Interceptor {
 
+    /** Response headers constant */
     String RESPONSE_HEADERS = "responseHeaders";
+    /** Request headers constant */
     String REQUEST_HEADERS = "requestHeaders";
+    /** Response body constant */
     String RESPONSE_BODY = "responseBody";
+    /** Remove operation constant */
     String REMOVE = "remove";
+    /** Update operation constant */
     String UPDATE = "update";
+    /** Query parameters constant */
     String QUERY_PARAMETERS = "queryParameters";
+    /** Path parameters constant */
     String PATH_PARAMETERS = "pathParameters";
+    /** HTTP method constant */
     String METHOD = "method";
+    /** Request URL constant */
     String REQUEST_URL = "requestURL";
+    /** Request URI constant */
     String REQUEST_URI = "requestURI";
+    /** Request path constant */
     String REQUEST_PATH = "requestPath";
+    /** POST method constant */
     String POST = "post";
+    /** PUT method constant */
     String PUT = "put";
+    /** PATCH method constant */
     String PATCH = "patch";
+    /** Request body constant */
     String REQUEST_BODY = "requestBody";
+    /** Audit info constant */
     String AUDIT_INFO = "auditInfo";
+    /** Status code constant */
     String STATUS_CODE = "statusCode";
 
+    /** Error code for startup hook not loaded */
     String STARTUP_HOOK_NOT_LOADED = "ERR11019";
+    /** Response transform constant */
     String RESPONSE_TRANSFORM = "response-transform";
 
     /**

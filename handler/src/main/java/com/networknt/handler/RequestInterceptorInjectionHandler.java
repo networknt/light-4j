@@ -27,19 +27,28 @@ import java.util.Arrays;
  * @author Kalev Gonvick
  */
 public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
+    /** Generic exception error code */
     public static final String GENERIC_EXCEPTION = "ERR10014";
+    /** Payload too large error code */
     public static final String PAYLOAD_TOO_LARGE = "ERR10068";
     private static final Logger LOG = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
     private volatile HttpHandler next;
     private String configName = RequestInjectionConfig.CONFIG_NAME;
     private RequestInterceptor[] interceptors = null;
 
+    /**
+     * Default constructor for RequestInterceptorInjectionHandler.
+     */
     public RequestInterceptorInjectionHandler() {
         RequestInjectionConfig.load(configName);
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
         LOG.info("RequestInterceptorInjectionHandler is loaded!");
     }
 
+    /**
+     * Constructor for RequestInterceptorInjectionHandler with a custom config name.
+     * @param configName name of the configuration file
+     */
     public RequestInterceptorInjectionHandler(String configName) {
         this.configName = configName;
         RequestInjectionConfig.load(configName);
@@ -165,11 +174,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     /**
      * Create a new read channel listener for the request channel. This is needed for 'chunked' requests larger than our server buffer set.
      *
-     * @param c            - the request channel.
-     * @param cPooledBuffer  - pool buffer.
-     * @param cRead  - our read.
-     * @param bufferedData       - total buffered data.
-     * @param ex - current exchange.
+     * @param c            the request channel.
+     * @param cPooledBuffer the pooled byte buffer to read from.
+     * @param cRead        the number of bytes already read.
+     * @param bufferedData total buffered data array.
+     * @param ex           current httpServerExchange.
+     * @param config       RequestInjectionConfig to use.
      */
     private void setChannelRead(final StreamSourceChannel c, final PooledByteBuffer cPooledBuffer, final int cRead, final PooledByteBuffer[] bufferedData, final HttpServerExchange ex, RequestInjectionConfig config) {
         c.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
@@ -216,8 +226,8 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     /**
      * Close our buffers when issue occurs
      *
-     * @param buffers - the total buffer
-     * @param buf    - the current data buffer
+     * @param buffers the array of pooled byte buffers to close.
+     * @param buf     the current pooled byte buffer to close.
      */
     private static void safeCloseBuffers(final PooledByteBuffer[] buffers, PooledByteBuffer buf) {
         for (var b : buffers)
@@ -230,10 +240,10 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     /**
      * Suspend our reads and remove the channel listener we created.
      *
-     * @param ex - current exchange
-     * @param bufferedData       - total buffered data.
-     * @param c            - request channel
-     * @param next               - next http handler
+     * @param ex           current httpServerExchange.
+     * @param bufferedData total buffered data array.
+     * @param c            request channel.
+     * @param next         next http handler.
      */
     private void suspendReads(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData, StreamSourceChannel c, HttpHandler next) {
         saveBufferAndResetUndertowConnector(ex, bufferedData);
@@ -251,8 +261,8 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     /**
      * Save the total buffer as an attachment. Update content length just in case
      *
-     * @param ex - current exchange
-     * @param bufferedData       - total buffered data
+     * @param ex           current httpServerExchange.
+     * @param bufferedData total buffered data array.
      */
     private void saveBufferAndResetUndertowConnector(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData) {
         if(logger.isTraceEnabled()) logger.trace("saveBufferAndResetUndertowConnector is called.");

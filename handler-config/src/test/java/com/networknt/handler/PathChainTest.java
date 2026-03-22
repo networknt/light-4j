@@ -20,30 +20,39 @@ import com.networknt.handler.config.PathChain;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PathChainTest {
 
     @Test
     public void validate_Path() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setPath("/my/path");
         chain.setMethod("GET");
-        chain.validate("unit test config");
+        paths.add(chain);
+        chain.validate("unit test config", paths);
     }
 
     @Test
     public void validate_Source() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setSource("a.source.Class");
-        chain.validate("unit test config");
+        paths.add(chain);
+        chain.validate("unit test config", paths);
     }
 
     @Test
     public void validate_NeitherPathNorSource() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setPath("/my/path");
         chain.setMethod("MAGIC");
+        paths.add(chain);
         try {
-            chain.validate("unit test config");
+            chain.validate("unit test config", paths);
             Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -54,26 +63,30 @@ public class PathChainTest {
 
     @Test
     public void validate_BadMethod() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setMethod("GET");
+        paths.add(chain);
         try {
-            chain.validate("unit test config");
+            chain.validate("unit test config", paths);
             Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
-            String ex_message = "Bad paths element in unit test config [ You must specify either path or source | It is possible that serviceId is missing from the values.yml and it is mandatory. ]";
+            String ex_message = "Bad paths element in unit test config [ You must specify either path or source | It is possible that serviceId is missing from the values.yml and it is mandatory. | The paths are [{\"method\":\"GET\"}] ]";
             Assertions.assertEquals(ex_message, e.getMessage());
         }
     }
 
     @Test
     public void validate_SourceWithPathAndMethod() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setSource("some.source.Class");
         chain.setPath("/some/path");
         chain.setMethod("GET");
+        paths.add(chain);
         try {
-            chain.validate("some unit test");
+            chain.validate("some unit test", paths);
             Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -86,11 +99,13 @@ public class PathChainTest {
 
     @Test
     public void validate_SourceWithPath() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setSource("some.source.Class");
         chain.setPath("/some/path");
+        paths.add(chain);
         try {
-            chain.validate("some unit test");
+            chain.validate("some unit test", paths);
             Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -101,11 +116,13 @@ public class PathChainTest {
 
     @Test
     public void validate_SourceWithMethod() {
+        List<PathChain> paths = new ArrayList<>();
         PathChain chain = new PathChain();
         chain.setSource("some.source.Class");
         chain.setMethod("GET");
+        paths.add(chain);
         try {
-            chain.validate("some unit test");
+            chain.validate("some unit test", paths);
             Assertions.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());

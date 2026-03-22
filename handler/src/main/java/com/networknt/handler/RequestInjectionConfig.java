@@ -13,9 +13,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Configuration for request injection.
+ */
 @ConfigSchema(configKey = "request-injection", configName = "request-injection", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class RequestInjectionConfig {
     private static final Logger LOG = LoggerFactory.getLogger(RequestInjectionConfig.class);
+    /**
+     * Configuration name for request injection.
+     */
     public static final String CONFIG_NAME = "request-injection";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
@@ -58,25 +64,44 @@ public class RequestInjectionConfig {
                     "Please be aware that the memory usage will be increased as well. So please use it with caution and test it with load test. Also,\n" +
                     "please make sure that you update the server.maxTransferFileSize to a larger value that matches the maxBuffers * 1024."
     )
+    /**
+     * Max number of buffers for the interceptor.
+     */
     private int maxBuffers;
     private Map<String, Object> mappedConfig;
 
     private static volatile RequestInjectionConfig instance;
 
-    private RequestInjectionConfig() {
+    /**
+     * Default constructor for RequestInjectionConfig.
+     */
+    public RequestInjectionConfig() {
         this(CONFIG_NAME);
     }
 
-    private RequestInjectionConfig(String configName) {
+    /**
+     * Constructor for RequestInjectionConfig with a specific config name.
+     * @param configName The name of the configuration to load.
+     */
+    public RequestInjectionConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
+    /**
+     * Loads the configuration for request injection.
+     * @return An instance of RequestInjectionConfig.
+     */
     public static RequestInjectionConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the configuration for request injection with a specific config name.
+     * @param configName The name of the configuration to load.
+     * @return An instance of RequestInjectionConfig.
+     */
     public static RequestInjectionConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -97,12 +122,26 @@ public class RequestInjectionConfig {
         return new RequestInjectionConfig(configName);
     }
 
+    /**
+     * Returns true if the request injection is enabled.
+     * @return true if enabled, false otherwise.
+     */
     public boolean isEnabled() {
         return enabled;
     }
+
+    /**
+     * Returns the max number of buffers.
+     * @return The max number of buffers.
+     */
     public int getMaxBuffers() {
         return maxBuffers;
     }
+
+    /**
+     * Returns the list of applied body injection path prefixes.
+     * @return A list of path prefixes.
+     */
     public List<String> getAppliedBodyInjectionPathPrefixes() {
         return appliedBodyInjectionPathPrefixes;
     }

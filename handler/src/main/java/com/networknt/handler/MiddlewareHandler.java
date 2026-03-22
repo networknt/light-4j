@@ -40,25 +40,32 @@ public interface MiddlewareHandler extends LightHttpHandler {
     /**
      * Get the next handler in the chain
      *
-     * @return HttpHandler
+     * @return The next HttpHandler in the chain.
      */
     HttpHandler getNext();
 
     /**
      * Set the next handler in the chain
      *
-     * @param next HttpHandler
-     * @return MiddlewareHandler
+     * @param next The next HttpHandler to be set.
+     * @return The MiddlewareHandler itself for chaining.
      */
     MiddlewareHandler setNext(final HttpHandler next);
 
     /**
      * Indicate if this handler is enabled or not.
      *
-     * @return boolean true if enabled
+     * @return true if the handler is enabled, false otherwise.
      */
     boolean isEnabled();
 
+    /**
+     * Adds a field and value to the MDC context for the handler.
+     *
+     * @param exchange HttpServerExchange to add the context to.
+     * @param field    The field name.
+     * @param value    The value for the field.
+     */
     default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
         var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
         if (context != null) {

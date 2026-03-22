@@ -37,9 +37,17 @@ import static io.undertow.Handlers.websocket;
 import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
 
 /**
+ * This class provides utility methods for managing and executing handler chains.
+ *
  * @author Nicholas Azar
  */
 public class Handler {
+
+    /**
+     * Default constructor for Handler.
+     */
+    public Handler() {
+    }
 
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
@@ -47,6 +55,9 @@ public class Handler {
     private static final AttachmentKey<String> METRICS_REPORT = AttachmentKey.create(String.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
+    /**
+     * Handler configuration object loaded from handler.yml
+     */
     public static HandlerConfig config = HandlerConfig.load();
 
     // each handler keyed by a name.
@@ -57,10 +68,17 @@ public class Handler {
     // this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
     static HttpHandler lastHandler;
 
+    /**
+     * Sets the last handler in the orchestration chain.
+     * @param handler The HttpHandler to be set as the last handler.
+     */
     public static void setLastHandler(HttpHandler handler) {
         lastHandler = handler;
     }
 
+    /**
+     * Initializes the handler system by loading configurations and setting up chains.
+     */
     public static void init() {
         initHandlers();
         initChains();
@@ -118,7 +136,7 @@ public class Handler {
         if (config != null && config.getPaths() != null) {
 
             for (var pathChain : config.getPaths()) {
-                pathChain.validate(HandlerConfig.CONFIG_NAME + " config"); // raises exception on misconfiguration
+                pathChain.validate(HandlerConfig.CONFIG_NAME + " config path " + pathChain.getPath(), config.getPaths()); // raises exception on misconfiguration
 
                 if (pathChain.getPath() == null)
                     addSourceChain(pathChain);
@@ -152,7 +170,6 @@ public class Handler {
                 sourcedPath.setPath(endpoint.getPath());
                 sourcedPath.setMethod(endpoint.getMethod());
                 sourcedPath.setExec(sourceChain.getExec());
-                sourcedPath.validate(sourceChain.getSource());
                 addPathChain(sourcedPath);
             }
         } catch (Exception e) {
@@ -539,14 +556,30 @@ public class Handler {
         initPaths();
     }
 
+    /**
+     * Returns the map of all registered handlers.
+     * @return A map of handler names to HttpHandler instances.
+     */
     public static Map<String, HttpHandler> getHandlers() {
         return handlers;
     }
 
+    /**
+     * Collector for handler execution metrics.
+     */
     protected static class HandlerMetricsCollector {
+        /**
+         * Default constructor for HandlerMetricsCollector.
+         */
+        protected HandlerMetricsCollector() {
+        }
         private boolean completed = false;
         private final ArrayList<StopWatch> metrics = new ArrayList<>();
 
+        /**
+         * Initializes the measurement for the next handler in the chain.
+         * @param handlerName The name of the handler being measured.
+         */
         public void initNextHandlerMeasurement(final String handlerName) {
             this.stopPreviousHandler();
             final var nextHandler = new StopWatch(handlerName);
@@ -561,6 +594,10 @@ public class Handler {
             }
         }
 
+        /**
+         * Finalizes the collected metrics and returns a report string.
+         * @return A string representing the collected metrics report.
+         */
         public String finalizeHandlerMetrics() {
 
             if (this.completed)
