@@ -67,11 +67,20 @@ public class ConfigInjection {
     private static volatile Map<String, Object> undecryptedValueMap;
 
     static {
-        // Pass 1: Load from file (injects Environment Variables only as maps are still null)
+        // JVM class-initialization is single-threaded (JLS 12.4.2), so no other thread can
+        // read these fields until the static block completes.  We therefore assign both
+        // volatiles before merging so that self-references between entries in values.yml
+        // (e.g. apiUrl: ${baseUrl}/api) resolve correctly during the initial merge.
         Map<String, Object> decryptedMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
         Map<String, Object> undecryptedMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-        setDecryptedValueMap(decryptedMap);
-        setUndecryptedValueMap(undecryptedMap);
+        decryptedValueMap = decryptedMap;
+        undecryptedValueMap = undecryptedMap;
+        if (decryptedMap != null) {
+            CentralizedManagement.mergeMap(true, decryptedMap);
+        }
+        if (undecryptedMap != null) {
+            CentralizedManagement.mergeMap(false, undecryptedMap);
+        }
     }
 
     public static Map<String, Object> getDecryptedValueMap() {
@@ -79,10 +88,10 @@ public class ConfigInjection {
     }
 
     public static void setDecryptedValueMap(Map<String, Object> decryptedValueMap) {
-        ConfigInjection.decryptedValueMap = decryptedValueMap;
         if (decryptedValueMap != null) {
             CentralizedManagement.mergeMap(true, decryptedValueMap);
         }
+        ConfigInjection.decryptedValueMap = decryptedValueMap;
     }
 
     public static Map<String, Object> getUndecryptedValueMap() {
@@ -90,10 +99,10 @@ public class ConfigInjection {
     }
 
     public static void setUndecryptedValueMap(Map<String, Object> undecryptedValueMap) {
-        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
         if (undecryptedValueMap != null) {
             CentralizedManagement.mergeMap(false, undecryptedValueMap);
         }
+        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
     }
 
 
