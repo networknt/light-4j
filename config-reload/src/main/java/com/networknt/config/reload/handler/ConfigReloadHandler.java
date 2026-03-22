@@ -63,8 +63,8 @@ public class ConfigReloadHandler implements LightHttpHandler {
 
             if(!modulePlugins.isEmpty()) {
                 // reload values.yml first to avoid conflicts
-                ConfigInjection.decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-                ConfigInjection.undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+                ConfigInjection.setDecryptedValueMap(Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
+                ConfigInjection.setUndecryptedValueMap(Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
                 if (logger.isInfoEnabled()) logger.info("Centralized config values.yml is reloaded.");
             }
 

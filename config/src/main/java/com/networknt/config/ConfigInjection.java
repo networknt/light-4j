@@ -63,8 +63,47 @@ public class ConfigInjection {
     private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
     private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
-    public static volatile Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-    public static volatile Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    private static volatile Map<String, Object> decryptedValueMap;
+    private static volatile Map<String, Object> undecryptedValueMap;
+
+    static {
+        // JVM class-initialization is single-threaded (JLS 12.4.2), so no other thread can
+        // read these fields until the static block completes.  We therefore assign both
+        // volatiles before merging so that self-references between entries in values.yml
+        // (e.g. apiUrl: ${baseUrl}/api) resolve correctly during the initial merge.
+        Map<String, Object> decryptedMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        Map<String, Object> undecryptedMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        decryptedValueMap = decryptedMap;
+        undecryptedValueMap = undecryptedMap;
+        if (decryptedMap != null) {
+            CentralizedManagement.mergeMap(true, decryptedMap);
+        }
+        if (undecryptedMap != null) {
+            CentralizedManagement.mergeMap(false, undecryptedMap);
+        }
+    }
+
+    public static Map<String, Object> getDecryptedValueMap() {
+        return decryptedValueMap;
+    }
+
+    public static void setDecryptedValueMap(Map<String, Object> decryptedValueMap) {
+        if (decryptedValueMap != null) {
+            CentralizedManagement.mergeMap(true, decryptedValueMap);
+        }
+        ConfigInjection.decryptedValueMap = decryptedValueMap;
+    }
+
+    public static Map<String, Object> getUndecryptedValueMap() {
+        return undecryptedValueMap;
+    }
+
+    public static void setUndecryptedValueMap(Map<String, Object> undecryptedValueMap) {
+        if (undecryptedValueMap != null) {
+            CentralizedManagement.mergeMap(false, undecryptedValueMap);
+        }
+        ConfigInjection.undecryptedValueMap = undecryptedValueMap;
+    }
 
 
     // Method used to generate the values from environment variables or "values.yaml"
@@ -94,6 +133,7 @@ public class ConfigInjection {
     public static boolean isExclusionConfigFile(String configName) {
         List<Object> exclusionConfigFileList = (exclusionMap == null || exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return SCALABLE_CONFIG.equals(configName)
+                || CENTRALIZED_MANAGEMENT.equals(configName)
                 || exclusionConfigFileList.contains(configName);
     }
 

@@ -230,8 +230,8 @@ public class DefaultConfigLoader implements IConfigLoader{
         Config.getNoneDecryptedInstance().clear();
         // Reload the values.yml for both decrypted and un-decrypted values so that they can be merged to the templates.
         // The cached values.yml can avoid reload the values.yml file for each property merge.
-        ConfigInjection.decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-        ConfigInjection.undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        ConfigInjection.setDecryptedValueMap(Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
+        ConfigInjection.setUndecryptedValueMap(Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
 
         //You can call Server.getServerConfig() now.
     }
