@@ -150,7 +150,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     if(role != null) auditInfo.put(Constants.ROLE, role);
 
                     if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
-                        Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                        Status status = new Status(STATUS_METHOD_NOT_ALLOWED, exchange.getRequestMethod(), exchange.getRequestPath());
                         if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
                         return status;
                     }
