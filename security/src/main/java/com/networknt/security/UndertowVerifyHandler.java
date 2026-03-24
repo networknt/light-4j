@@ -15,9 +15,11 @@ public class UndertowVerifyHandler {
      */
     public boolean checkForH2CRequest(HeaderMap headerMap) {
         String upgrade = headerMap.getFirst(Headers.UPGRADE);
-        return  upgrade != null && upgrade.toLowerCase().startsWith("h2")
-                && headerMap.getFirst(Headers.CONNECTION) != null
-                && headerMap.getFirst(Headers.CONNECTION).equalsIgnoreCase("upgrade");
+        String connection = headerMap.getFirst(Headers.CONNECTION);
+        return  upgrade != null
+                && upgrade.regionMatches(true, 0, "h2", 0, 2)
+                && connection != null
+                && connection.equalsIgnoreCase("upgrade");
     }
 
 }
