@@ -137,7 +137,7 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 String issuer = tokenInfo.getIss();
                 auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
                 if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
-                    Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                    Status status = new Status(STATUS_METHOD_NOT_ALLOWED, exchange.getRequestMethod(), exchange.getRequestPath());
                     if (logger.isTraceEnabled()) logger.trace("SwtVerifyHandler.handleRequest ends with an error {}", status);
                     return status;
                 }

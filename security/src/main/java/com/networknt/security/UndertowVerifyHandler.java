@@ -14,7 +14,8 @@ public class UndertowVerifyHandler {
      * @return - returns true if the request is an Upgrade request.
      */
     public boolean checkForH2CRequest(HeaderMap headerMap) {
-        return  headerMap.getFirst(Headers.UPGRADE) != null
+        String upgrade = headerMap.getFirst(Headers.UPGRADE);
+        return  upgrade != null && upgrade.toLowerCase().startsWith("h2")
                 && headerMap.getFirst(Headers.CONNECTION) != null
                 && headerMap.getFirst(Headers.CONNECTION).equalsIgnoreCase("upgrade");
     }
