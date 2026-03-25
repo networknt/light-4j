@@ -13,81 +13,129 @@ import java.util.stream.Collectors;
 public class MultiThreadRuleExecutor implements RuleExecutor {
     private static final Logger logger = LoggerFactory.getLogger(MultiThreadRuleExecutor.class);
     private static MultiThreadRuleExecutor instance;
-    private Map<String, Object> endpointRules;
-    private Map<String, Rule> rules;
-    private RuleEngine ruleEngine;
+
+    private static final class RuntimeState {
+        private final Map<String, Object> endpointRules;
+        private final Map<String, Rule> rules;
+        private final RuleEngine ruleEngine;
+
+        private RuntimeState(Map<String, Object> endpointRules, Map<String, Rule> rules, RuleEngine ruleEngine) {
+            this.endpointRules = endpointRules;
+            this.rules = rules;
+            this.ruleEngine = ruleEngine;
+        }
+    }
+
+    private volatile RuleConfig config;
+    private volatile RuntimeState state;
 
     public MultiThreadRuleExecutor() {
-        RuleConfig ruleConfig = RuleConfig.load();
+        config = RuleConfig.load();
+        state = buildRuntimeState(config);
+    }
+
+    private RuntimeState buildRuntimeState(RuleConfig ruleConfig) {
         // Load rule bodies from RuleConfig
+        Map<String, Rule> localRules = null;
         Map<String, Object> ruleBodies = ruleConfig.getRuleBodies();
         if (ruleBodies != null && !ruleBodies.isEmpty()) {
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             String ruleString = new Yaml(options).dump(ruleBodies);
-            rules = RuleMapper.string2RuleMap(ruleString);
-            if (logger.isInfoEnabled()) logger.info("Load YAML rules from RuleConfig with size = {}", rules.size());
+            localRules = RuleMapper.string2RuleMap(ruleString);
+            if (logger.isInfoEnabled()) logger.info("Load YAML rules from RuleConfig with size = {}", localRules.size());
         }
 
         // Load endpoint rules from RuleConfig (now a Map directly)
-        endpointRules = ruleConfig.getEndpointRules();
-        if (endpointRules == null) {
-            endpointRules = new HashMap<>();
+        Map<String, Object> localEndpointRules = ruleConfig.getEndpointRules();
+        if (localEndpointRules == null) {
+            localEndpointRules = new HashMap<>();
         }
 
-        if (rules != null) {
+        RuleEngine localRuleEngine = null;
+        if (localRules != null) {
             // create the rule engine with the rule map.
-            ruleEngine = new RuleEngine(rules, null);
+            localRuleEngine = new RuleEngine(localRules, null);
             // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
-            loadPluginClass();
+            loadPluginClass(localRules, localRuleEngine);
+        }
+
+        return new RuntimeState(localEndpointRules, localRules, localRuleEngine);
+    }
+
+    /**
+     * Check if the RuleConfig has been reloaded from the centralized config cache.
+     * If the config object reference has changed, re-initialize endpointRules, rules, and ruleEngine.
+     */
+    private void checkConfigReload() {
+        // Skip reload check if config was not set (e.g., when using the test constructor)
+        if (config == null) return;
+        RuleConfig newConfig = RuleConfig.load();
+        if (newConfig != config) {
+            synchronized (this) {
+                if (newConfig != config) {
+                    if (logger.isInfoEnabled()) logger.info("RuleConfig has been reloaded, re-initializing rules and ruleEngine.");
+                    RuntimeState newState = buildRuntimeState(newConfig);
+                    state = newState;
+                    config = newConfig;
+                }
+            }
         }
     }
 
     protected MultiThreadRuleExecutor(Map<String, Rule> rules, RuleEngine ruleEngine) {
-        this.rules = rules;
-        this.ruleEngine = ruleEngine;
+        this.state = new RuntimeState(new HashMap<>(), rules, ruleEngine);
     }
 
     @Override
     public Map<String, Rule> getRules() {
-        return rules;
+        RuntimeState currentState = state;
+        return currentState == null ? null : currentState.rules;
     }
 
     @Override
     public void setRules(Map<String, Rule> rules) {
-        this.rules = rules;
+        RuntimeState currentState = state;
+        Map<String, Object> endpointRules = currentState == null ? new HashMap<>() : currentState.endpointRules;
+        RuleEngine ruleEngine = currentState == null ? null : currentState.ruleEngine;
+        this.state = new RuntimeState(endpointRules, rules, ruleEngine);
     }
 
     @Override
     public Map<String, Object> getEndpointRules() {
-        return endpointRules;
+        RuntimeState currentState = state;
+        return currentState == null ? null : currentState.endpointRules;
     }
 
     @Override
     public void setEndpointRules(Map<String, Object> endpointRules) {
-        this.endpointRules = endpointRules;
+        RuntimeState currentState = state;
+        Map<String, Rule> rules = currentState == null ? null : currentState.rules;
+        RuleEngine ruleEngine = currentState == null ? null : currentState.ruleEngine;
+        this.state = new RuntimeState(endpointRules, rules, ruleEngine);
     }
 
     @Override
     public RuleEngine getRuleEngine() {
-        return ruleEngine;
+        RuntimeState currentState = state;
+        return currentState == null ? null : currentState.ruleEngine;
     }
 
-    private void loadPluginClass() {
+    private void loadPluginClass(Map<String, Rule> rules, RuleEngine ruleEngine) {
         // iterate the rules map to find the action classes.
         if(rules != null) {
             for(Rule rule: rules.values()) {
                 if(rule.getActions() != null) {
                     for (RuleAction action : rule.getActions()) {
                         String actionClass = action.getActionClassName();
-                        loadActionClass(actionClass);
+                        loadActionClass(actionClass, ruleEngine);
                     }
                 }
             }
         }
     }
 
-    private void loadActionClass(String actionClass) {
+    private void loadActionClass(String actionClass, RuleEngine ruleEngine) {
         if(logger.isDebugEnabled()) logger.debug("load action class {}", actionClass);
         try {
             IAction ia = (IAction)Class.forName(actionClass).getDeclaredConstructor().newInstance();
@@ -101,6 +149,8 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRule(String ruleId, Map<String, Object> input) {
+        checkConfigReload();
+        RuleEngine ruleEngine = getRuleEngine();
         try {
             return ruleEngine.executeRule(ruleId, input);
         } catch (Exception e) {
@@ -114,9 +164,15 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRules(List<String> ruleIds, String logic, Map<String, Object> objMap) {
+        checkConfigReload();
+        return executeRules(ruleIds, logic, objMap, state);
+    }
+
+    private Map<String, Object> executeRules(List<String> ruleIds, String logic, Map<String, Object> objMap, RuntimeState currentState) {
         if (ruleIds == null || ruleIds.isEmpty()) {
             return null;
         }
+        RuleEngine ruleEngine = currentState == null ? null : currentState.ruleEngine;
 
         if (logic != null && logic.equalsIgnoreCase("all")) {
             // Sequential execution for "all" logic as rules might depend on each other's outcomes
@@ -191,6 +247,9 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRules(String serviceEntry, String ruleType, Map<String, Object> objMap) {
+        checkConfigReload();
+        RuntimeState currentState = state;
+        Map<String, Object> endpointRules = currentState == null ? null : currentState.endpointRules;
         if (endpointRules == null) {
             logger.error("endpointRules is null");
             return null;
@@ -221,6 +280,6 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         // For other types (e.g. access control), default to parallel execution.
         String logic = (ruleType.equals("req-tra") || ruleType.equals("res-tra")) ? "all" : "parallel";
 
-        return executeRules(ruleIds, logic, objMap);
+        return executeRules(ruleIds, logic, objMap, currentState);
     }
 }
