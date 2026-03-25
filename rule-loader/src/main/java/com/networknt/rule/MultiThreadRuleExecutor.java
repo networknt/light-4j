@@ -13,12 +13,17 @@ import java.util.stream.Collectors;
 public class MultiThreadRuleExecutor implements RuleExecutor {
     private static final Logger logger = LoggerFactory.getLogger(MultiThreadRuleExecutor.class);
     private static MultiThreadRuleExecutor instance;
-    private Map<String, Object> endpointRules;
-    private Map<String, Rule> rules;
-    private RuleEngine ruleEngine;
+    private volatile RuleConfig config;
+    private volatile Map<String, Object> endpointRules;
+    private volatile Map<String, Rule> rules;
+    private volatile RuleEngine ruleEngine;
 
     public MultiThreadRuleExecutor() {
-        RuleConfig ruleConfig = RuleConfig.load();
+        config = RuleConfig.load();
+        initializeFromConfig(config);
+    }
+
+    private void initializeFromConfig(RuleConfig ruleConfig) {
         // Load rule bodies from RuleConfig
         Map<String, Object> ruleBodies = ruleConfig.getRuleBodies();
         if (ruleBodies != null && !ruleBodies.isEmpty()) {
@@ -40,6 +45,25 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             ruleEngine = new RuleEngine(rules, null);
             // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
             loadPluginClass();
+        }
+    }
+
+    /**
+     * Check if the RuleConfig has been reloaded from the centralized config cache.
+     * If the config object reference has changed, re-initialize endpointRules, rules, and ruleEngine.
+     */
+    private void checkConfigReload() {
+        // Skip reload check if config was not set (e.g., when using the test constructor)
+        if (config == null) return;
+        RuleConfig newConfig = RuleConfig.load();
+        if (newConfig != config) {
+            synchronized (this) {
+                if (newConfig != config) {
+                    if (logger.isInfoEnabled()) logger.info("RuleConfig has been reloaded, re-initializing rules and ruleEngine.");
+                    config = newConfig;
+                    initializeFromConfig(config);
+                }
+            }
         }
     }
 
@@ -101,6 +125,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRule(String ruleId, Map<String, Object> input) {
+        checkConfigReload();
         try {
             return ruleEngine.executeRule(ruleId, input);
         } catch (Exception e) {
@@ -114,6 +139,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRules(List<String> ruleIds, String logic, Map<String, Object> objMap) {
+        checkConfigReload();
         if (ruleIds == null || ruleIds.isEmpty()) {
             return null;
         }
@@ -191,6 +217,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> executeRules(String serviceEntry, String ruleType, Map<String, Object> objMap) {
+        checkConfigReload();
         if (endpointRules == null) {
             logger.error("endpointRules is null");
             return null;
