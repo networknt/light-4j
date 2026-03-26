@@ -33,6 +33,14 @@ public class UndertowVerifyHandlerTest {
     }
 
     @Test
+    public void testCheckForH2CRequest_NonWebSocketUpgrade() {
+        HeaderMap headerMap = new HeaderMap();
+        headerMap.put(Headers.UPGRADE, "foo/2");
+        headerMap.put(Headers.CONNECTION, "Upgrade");
+        Assertions.assertTrue(handler.checkForH2CRequest(headerMap));
+    }
+
+    @Test
     public void testCheckForH2CRequest_NoUpgrade() {
         HeaderMap headerMap = new HeaderMap();
         headerMap.put(Headers.CONNECTION, "Upgrade");

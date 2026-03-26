@@ -17,7 +17,7 @@ public class UndertowVerifyHandler {
         String upgrade = headerMap.getFirst(Headers.UPGRADE);
         String connection = headerMap.getFirst(Headers.CONNECTION);
         return  upgrade != null
-                && upgrade.regionMatches(true, 0, "h2", 0, 2)
+                && !upgrade.equalsIgnoreCase("websocket")
                 && connection != null
                 && connection.equalsIgnoreCase("upgrade");
     }
