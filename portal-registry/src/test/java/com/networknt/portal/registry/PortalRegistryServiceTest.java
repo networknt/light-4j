@@ -16,11 +16,8 @@
 
 package com.networknt.portal.registry;
 
-import com.networknt.config.Config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistryServiceTest {
     static PortalRegistryConfig config = PortalRegistryConfig.load();
@@ -41,5 +38,21 @@ public class PortalRegistryServiceTest {
         } else {
             Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"interval\":10000}}", s);
         }
+    }
+
+    @Test
+    public void testControllerRsRegisterParamsUseVersionAndJwtPayload() {
+        PortalRegistryService service = new PortalRegistryService();
+        service.setServiceId("com.networknt.apib-1.0.0");
+        service.setProtocol("https");
+        service.setAddress("127.0.0.1");
+        service.setPort(7442);
+        service.setTag("uat1");
+        service.setVersion("1.2.3");
+
+        Assertions.assertEquals("1.2.3", service.toRegisterParams().get("version"));
+        Assertions.assertEquals("raw-jwt", service.toControllerRsRegisterParams("raw-jwt").get("jwt"));
+        Assertions.assertEquals("uat1", service.toControllerRsRegisterParams("raw-jwt").get("envTag"));
+        Assertions.assertEquals("1.2.3", service.toControllerRsRegisterParams("raw-jwt").get("version"));
     }
 }

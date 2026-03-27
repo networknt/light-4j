@@ -6,6 +6,8 @@ portalUrl: ${portalRegistry.portalUrl:https://lightapi.net}
 # option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In
 # that case, you can use portalRegistry.portalToken as the key instead of the environment variable.
 portalToken: ${portal.authorization:}
+# Bearer token used for controller-rs discovery websocket authentication. If blank, portalToken is reused.
+controllerDiscoveryToken: ${portalRegistry.controllerDiscoveryToken:}
 # number of requests before resetting the shared connection to work around HTTP/2 limitation
 maxReqPerConn: ${portalRegistry.maxReqPerConn:1000000}
 # De-register the service after the amount of time with health check failed. Once a health check is failed, the

@@ -117,12 +117,11 @@ public class PortalRegistryWebSocketClient {
     }
 
     public Map<String, Object> sendRequest(String method, Map<String, Object> params) {
+        String id = String.valueOf(nextId.getAndIncrement());
+        CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
+        pending.put(id, future);
         try {
             connect();
-            String id = String.valueOf(nextId.getAndIncrement());
-            CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
-            pending.put(id, future);
-
             Map<String, Object> request = new LinkedHashMap<>();
             request.put("jsonrpc", "2.0");
             request.put("id", id);
@@ -140,8 +139,13 @@ public class PortalRegistryWebSocketClient {
                 return castMap(resultMap);
             }
             return Collections.emptyMap();
-        } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException("Failed to invoke websocket method " + method, e);
+        } catch (IOException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException("Failed to invoke websocket method " + method, e);
+        } finally {
+            pending.remove(id);
         }
     }
 
@@ -184,7 +188,13 @@ public class PortalRegistryWebSocketClient {
     }
 
     private void handleMessage(String message) {
-        Map<String, Object> envelope = JsonMapper.string2Map(message);
+        Map<String, Object> envelope;
+        try {
+            envelope = JsonMapper.string2Map(message);
+        } catch (RuntimeException e) {
+            logger.warn("Unable to parse websocket message {}", message, e);
+            return;
+        }
         if (envelope == null) {
             return;
         }

@@ -1,132 +1,69 @@
 package com.networknt.portal.registry.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
-import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.portal.registry.PortalRegistryConfig;
 import com.networknt.portal.registry.PortalRegistryService;
 import com.networknt.utility.StringUtils;
-import io.undertow.UndertowOptions;
-import io.undertow.client.ClientConnection;
-import com.networknt.client.simplepool.SimpleConnectionState;
-import io.undertow.client.ClientRequest;
-import io.undertow.client.ClientResponse;
-import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
-import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.OptionMap;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
-import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistryClientImpl implements PortalRegistryClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryClientImpl.class);
-    private static final int UNUSUAL_STATUS_CODE = 300;
-    private Http2Client client = Http2Client.getInstance();
-
-    private OptionMap optionMap;
-    private URI uri;
-    private URI wsUri;
-    private volatile PortalRegistryWebSocketClient webSocketClient;
-    private volatile Consumer<Map<String, Object>> notificationHandler;
-    private volatile String currentToken;
+    private final PortalRegistryConfig config;
+    private final URI discoveryWsUri;
+    private final URI microserviceWsUri;
     private final Map<String, PortalRegistryService> registeredServices = new ConcurrentHashMap<>();
+    private final Map<String, PortalRegistryWebSocketClient> registrationClients = new ConcurrentHashMap<>();
     private final Map<String, SubscriptionState> subscriptions = new ConcurrentHashMap<>();
+    private final Set<String> registrationReconnects = ConcurrentHashMap.newKeySet();
     private final ScheduledExecutorService reconnectExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "portal-registry-ws-reconnect");
         thread.setDaemon(true);
         return thread;
     });
     private final AtomicBoolean reconnectScheduled = new AtomicBoolean(false);
+
+    private volatile PortalRegistryWebSocketClient webSocketClient;
+    private volatile Consumer<Map<String, Object>> notificationHandler;
+    private volatile String currentToken;
     private volatile boolean replayInProgress;
 
-    /**
-     * Construct PortalRegistryClient with all parameters from portal-registry.yml config file. The other two constructors are
-     * just for backward compatibility.
-     */
     public PortalRegistryClientImpl() {
-        PortalRegistryConfig config = PortalRegistryConfig.load();
+        this.config = PortalRegistryConfig.load();
         String portalUrl = config.getPortalUrl().toLowerCase();
-        optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
         logger.debug("url = {}", portalUrl);
         try {
-            uri = new URI(portalUrl);
-            wsUri = new URI(toWebSocketUrl(portalUrl) + "/ws");
+            this.discoveryWsUri = new URI(toWebSocketUrl(portalUrl) + "/ws/discovery");
+            this.microserviceWsUri = new URI(toWebSocketUrl(portalUrl) + "/ws/microservice");
         } catch (URISyntaxException e) {
-            logger.error("Invalid URI " + portalUrl, e);
+            logger.error("Invalid URI {}", portalUrl, e);
             throw new RuntimeException("Invalid URI " + portalUrl, e);
         }
     }
 
     @Override
     public void checkPass(PortalRegistryService service, String token) {
-        String key = service.getTag() == null ? service.getServiceId() : service.getServiceId() + "|"  + service.getTag();
-        String checkId = String.format("%s:%s:%s", key, service.getAddress(), service.getPort());
-        if(logger.isTraceEnabled()) logger.trace("checkPass id = {}", checkId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", checkId);
-        map.put("pass", true);
-        map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
-        String path = "/services/check";
-        SimpleConnectionState.ConnectionToken connectionToken = null;
-        try {
-            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
-            AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, JsonMapper.toJson(map));
-            int statusCode = reference.get().getResponseCode();
-            if (statusCode >= UNUSUAL_STATUS_CODE) {
-                logger.error("checkPass error: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-            }
-        } catch (Exception e) {
-            logger.error("CheckPass request exception", e);
-        } finally {
-            if (connectionToken != null) client.restore(connectionToken);
-        }
+        logger.debug("checkPass ignored for controller-rs backend serviceId={}", service.getServiceId());
     }
 
     @Override
     public void checkFail(PortalRegistryService service, String token) {
-        String key = service.getTag() == null ? service.getServiceId() : service.getServiceId() + "|"  + service.getTag();
-        String checkId = String.format("%s:%s:%s", key, service.getAddress(), service.getPort());
-        if(logger.isTraceEnabled()) logger.trace("checkFail id = {}", checkId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", checkId);
-        map.put("pass", false);
-        map.put("checkInterval", PortalRegistryConfig.load().getCheckInterval());
-        String path = "/services/check";
-        SimpleConnectionState.ConnectionToken connectionToken = null;
-        try {
-            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
-            AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, JsonMapper.toJson(map));
-            int statusCode = reference.get().getResponseCode();
-            if (statusCode >= UNUSUAL_STATUS_CODE) {
-                logger.error("checkFail error: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-            }
-        } catch (Exception e) {
-            logger.error("CheckFail request exception", e);
-        } finally {
-            if (connectionToken != null) client.restore(connectionToken);
-        }
+        logger.debug("checkFail ignored for controller-rs backend serviceId={}", service.getServiceId());
     }
 
     @Override
@@ -134,72 +71,33 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         currentToken = token;
         registeredServices.put(service.getInstanceId(), service);
         try {
-            ensureWebSocketConnected(token, notificationHandler);
-            webSocketClient.sendRequest("controller.register", service.toRegisterParams());
+            registerControllerRsService(service, token);
         } catch (Exception e) {
-            logger.error("Failed to register on portal controller websocket uri = {}", wsUri, e);
-            scheduleReconnect();
-            throw new RuntimeException(e.getMessage());
+            logger.error("Failed to register service {}", service.getServiceId(), e);
+            scheduleServiceReconnect(service.getInstanceId());
+            throw new RuntimeException("Failed to register service " + service.getServiceId(), e);
         }
     }
 
     @Override
     public void unregisterService(PortalRegistryService service, String token) {
         registeredServices.remove(service.getInstanceId());
-        try {
-            ensureWebSocketConnected(token, notificationHandler);
-            Map<String, Object> params = new HashMap<>();
-            params.put("serviceId", service.getServiceId());
-            params.put("protocol", service.getProtocol());
-            params.put("address", service.getAddress());
-            params.put("port", service.getPort());
-            if(service.getTag() != null) {
-                params.put("tag", service.getTag());
-            }
-            webSocketClient.sendRequest("controller.deregister", params);
-        } catch (Exception e) {
-            logger.error("Failed to unregister on portal controller, Exception:", e);
+
+        PortalRegistryWebSocketClient registrationClient = registrationClients.remove(service.getInstanceId());
+        if (registrationClient != null) {
+            registrationClient.close();
         }
+        registrationReconnects.remove(service.getInstanceId());
     }
 
-    /**
-     * to lookup health services based on serviceId and optional tag,
-     *
-     * @param serviceId       serviceId
-     * @param tag             tag that is used for filtering
-     * @param token           jwt token for security
-     * @return null if serviceId is blank
-     */
     @Override
     public List<Map<String, Object>> lookupHealthService(String serviceId, String tag, String token) {
-        List<Map<String, Object>> services = null;
         if (StringUtils.isBlank(serviceId)) {
             return null;
         }
-        SimpleConnectionState.ConnectionToken connectionToken = null;
-        String path = "/services/lookup" + "?serviceId=" + serviceId;
-        if (tag != null) {
-            path = path + "&tag=" + tag;
-        }
-        if(logger.isTraceEnabled()) logger.trace("path = {}", path);
-        try {
-            connectionToken = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
-            AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
-            int statusCode = reference.get().getResponseCode();
-            if (statusCode >= UNUSUAL_STATUS_CODE) {
-                logger.error("Failed to look up service on Portal with serviceId {} tag {} response code {} and body {}", serviceId, tag, statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-                throw new Exception("Failed to lookup service on Portal: " + statusCode);
-            } else {
-                String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-                services = JsonMapper.string2List(body);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        } finally {
-            if (connectionToken != null) client.restore(connectionToken);
-        }
-        return services;
+        ensureWebSocketConnected(token, notificationHandler);
+        Map<String, Object> result = webSocketClient.sendRequest("discovery/lookup", discoveryParams(serviceId, tag, null));
+        return extractNodes(result);
     }
 
     @Override
@@ -212,7 +110,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         currentToken = token;
         this.notificationHandler = notificationHandler;
         if (webSocketClient == null || !webSocketClient.isOpen()) {
-            webSocketClient = new PortalRegistryWebSocketClient(wsUri, token);
+            webSocketClient = new PortalRegistryWebSocketClient(discoveryWsUri, targetDiscoveryAuthorization(token));
             webSocketClient.setDisconnectHandler(this::scheduleReconnect);
             webSocketClient.setConnectHandler(this::handleReconnectSuccess);
         }
@@ -231,80 +129,52 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         if (current != null) {
             current.close();
         }
+        registrationClients.values().forEach(PortalRegistryWebSocketClient::close);
+        registrationClients.clear();
+        registeredServices.clear();
+        subscriptions.clear();
+        registrationReconnects.clear();
+        notificationHandler = null;
+        currentToken = null;
         reconnectScheduled.set(false);
     }
 
     @Override
     public List<Map<String, Object>> subscribeService(String serviceId, String tag, String token) {
+        return subscribeService(serviceId, tag, null, token);
+    }
+
+    @Override
+    public List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
         currentToken = token;
-        subscriptions.put(subscriptionKey(serviceId, tag), new SubscriptionState(serviceId, tag));
+        subscriptions.put(subscriptionKey(serviceId, tag, protocol), new SubscriptionState(serviceId, tag, protocol));
         ensureWebSocketConnected(token, notificationHandler);
-        Map<String, Object> params = new HashMap<>();
-        params.put("serviceId", serviceId);
-        if (tag != null) {
-            params.put("tag", tag);
-        }
         try {
-            Map<String, Object> result = webSocketClient.sendRequest("controller.subscribe", params);
-            Object nodes = result.get("nodes");
-            if (nodes instanceof List<?> list) {
-                return (List<Map<String, Object>>) list;
-            }
+            return extractNodes(webSocketClient.sendRequest("discovery/subscribe", discoveryParams(serviceId, tag, protocol)));
         } catch (RuntimeException e) {
             scheduleReconnect();
             throw e;
         }
-        return Collections.emptyList();
     }
 
     @Override
     public void unsubscribeService(String serviceId, String tag, String token) {
-        subscriptions.remove(subscriptionKey(serviceId, tag));
+        unsubscribeService(serviceId, tag, null, token);
+    }
+
+    @Override
+    public void unsubscribeService(String serviceId, String tag, String protocol, String token) {
+        subscriptions.remove(subscriptionKey(serviceId, tag, protocol));
         PortalRegistryWebSocketClient current = webSocketClient;
         if (current == null || !current.isOpen()) {
             return;
         }
-        Map<String, Object> params = new HashMap<>();
-        params.put("serviceId", serviceId);
-        if (tag != null) {
-            params.put("tag", tag);
-        }
         try {
-            current.sendRequest("controller.unsubscribe", params);
+            current.sendRequest("discovery/unsubscribe", discoveryParams(serviceId, tag, protocol));
         } catch (RuntimeException e) {
             scheduleReconnect();
             throw e;
         }
-    }
-
-    /**
-     * send to portal controller with the passed in connection
-     *
-     * @param connection ClientConnection
-     * @param method     http method to use
-     * @param path       path to send to controller
-     * @param token      token to put in header
-     * @param json       request body to send
-     * @return AtomicReference<ClientResponse> response
-     */
-    AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json) throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
-        ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
-        request.getRequestHeaders().put(Headers.HOST, "localhost");
-        if (token != null) request.getRequestHeaders().put(Headers.AUTHORIZATION, token); // token is a JWT with Bearer prefix
-        logger.trace("The request sent to controller: {} = request header: {}, request body is empty", uri.toString(), request.toString());
-        if (StringUtils.isBlank(json)) {
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-        } else {
-            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
-        }
-        latch.await();
-        logger.trace("The response got from controller: {} = {}", uri.toString(), reference.get().toString());
-        return reference;
     }
 
     private static String toWebSocketUrl(String portalUrl) {
@@ -330,7 +200,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
                 try {
                     TimeUnit.MILLISECONDS.sleep(delay);
                     synchronized (this) {
-                        webSocketClient = new PortalRegistryWebSocketClient(wsUri, currentToken);
+                        webSocketClient = new PortalRegistryWebSocketClient(discoveryWsUri, targetDiscoveryAuthorization(currentToken));
                         webSocketClient.setNotificationHandler(notificationHandler);
                         webSocketClient.setDisconnectHandler(this::scheduleReconnect);
                         webSocketClient.setConnectHandler(this::handleReconnectSuccess);
@@ -347,10 +217,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     }
 
     private void handleReconnectSuccess() {
-        if (!reconnectScheduled.get()) {
-            return;
-        }
-        if (replayInProgress) {
+        if (!reconnectScheduled.get() || replayInProgress) {
             return;
         }
         replayInProgress = true;
@@ -367,24 +234,137 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             return;
         }
 
+        registrationClients.values().forEach(PortalRegistryWebSocketClient::close);
+        registrationClients.clear();
         for (PortalRegistryService service : registeredServices.values()) {
-            current.sendRequest("controller.register", service.toRegisterParams());
+            try {
+                registerControllerRsService(service, currentToken);
+            } catch (RuntimeException e) {
+                logger.warn("Failed to replay microservice registration for {}", service.getServiceId(), e);
+                scheduleServiceReconnect(service.getInstanceId());
+            }
         }
 
         for (SubscriptionState subscription : subscriptions.values()) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("serviceId", subscription.serviceId());
-            if (subscription.tag() != null) {
-                params.put("tag", subscription.tag());
-            }
-            current.sendRequest("controller.subscribe", params);
+            current.sendRequest("discovery/subscribe", discoveryParams(subscription.serviceId(), subscription.tag(), subscription.protocol()));
         }
     }
 
-    private static String subscriptionKey(String serviceId, String tag) {
-        return tag == null ? serviceId : serviceId + "|" + tag;
+    private void registerControllerRsService(PortalRegistryService service, String token) {
+        PortalRegistryWebSocketClient existing = registrationClients.remove(service.getInstanceId());
+        if (existing != null) {
+            existing.close();
+        }
+
+        PortalRegistryWebSocketClient registrationClient = new PortalRegistryWebSocketClient(microserviceWsUri, null);
+        registrationClient.setDisconnectHandler(() -> scheduleServiceReconnect(service.getInstanceId()));
+        try {
+            registrationClient.connect();
+            registrationClient.sendRequest("service/register", service.toControllerRsRegisterParams(stripBearerPrefix(token)));
+        } catch (IOException e) {
+            registrationClient.close();
+            throw new RuntimeException("Failed to connect controller-rs microservice websocket", e);
+        }
+        registrationClients.put(service.getInstanceId(), registrationClient);
+        registrationReconnects.remove(service.getInstanceId());
     }
 
-    private record SubscriptionState(String serviceId, String tag) {
+    private void scheduleServiceReconnect(String instanceId) {
+        if (currentToken == null || !registrationReconnects.add(instanceId)) {
+            return;
+        }
+        reconnectExecutor.execute(() -> {
+            long delay = 1000L;
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    PortalRegistryService service = registeredServices.get(instanceId);
+                    if (service == null || currentToken == null) {
+                        return;
+                    }
+                    PortalRegistryWebSocketClient current = registrationClients.get(instanceId);
+                    if (current != null && current.isOpen()) {
+                        return;
+                    }
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(delay);
+                        registerControllerRsService(service, currentToken);
+                        return;
+                    } catch (Exception e) {
+                        logger.warn("Failed to reconnect controller-rs microservice websocket for {}, retrying in {} ms", service.getServiceId(), delay, e);
+                        delay = Math.min(delay * 2, 30000L);
+                    }
+                }
+            } finally {
+                registrationReconnects.remove(instanceId);
+            }
+        });
+    }
+
+    private String targetDiscoveryAuthorization(String token) {
+        String discoveryToken = config.getControllerDiscoveryToken();
+        return normalizeBearerToken(StringUtils.isBlank(discoveryToken) ? token : discoveryToken);
+    }
+
+    private Map<String, Object> discoveryParams(String serviceId, String tag, String protocol) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("serviceId", serviceId);
+        if (tag != null) {
+            params.put("envTag", tag);
+        }
+        if (protocol != null) {
+            params.put("protocol", protocol);
+        }
+        return params;
+    }
+
+    private List<Map<String, Object>> extractNodes(Map<String, Object> result) {
+        Object nodes = result.get("nodes");
+        if (!(nodes instanceof List<?> list)) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> converted = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof Map<?, ?> map) {
+                converted.add(castMap(map));
+            }
+        }
+        return converted;
+    }
+
+    private Map<String, Object> castMap(Map<?, ?> map) {
+        Map<String, Object> converted = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            converted.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return converted;
+    }
+
+    private String normalizeBearerToken(String token) {
+        if (StringUtils.isBlank(token)) {
+            return null;
+        }
+        if (token.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return "Bearer " + token.substring(7);
+        }
+        return "Bearer " + token;
+    }
+
+    private String stripBearerPrefix(String token) {
+        if (StringUtils.isBlank(token)) {
+            return token;
+        }
+        if (token.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return token.substring(7);
+        }
+        return token;
+    }
+
+    private static String subscriptionKey(String serviceId, String tag, String protocol) {
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        return protocol == null ? key : key + "|" + protocol;
+    }
+
+    private record SubscriptionState(String serviceId, String tag, String protocol) {
     }
 }

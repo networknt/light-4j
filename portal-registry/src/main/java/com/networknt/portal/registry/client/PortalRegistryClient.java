@@ -80,7 +80,15 @@ public interface PortalRegistryClient {
 		return Collections.emptyList();
 	}
 
+	default List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
+		return subscribeService(serviceId, tag, token);
+	}
+
 	default void unsubscribeService(String serviceId, String tag, String token) {
+	}
+
+	default void unsubscribeService(String serviceId, String tag, String protocol, String token) {
+		unsubscribeService(serviceId, tag, token);
 	}
 
 }
