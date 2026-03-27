@@ -28,7 +28,15 @@ import java.util.List;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
+/**
+ * Date utility class for parsing and formatting ISO 8601 dates.
+ */
 public class DateUtil {
+    /**
+     * Default constructor for DateUtil.
+     */
+    public DateUtil() {
+    }
 
     /** Alternate ISO 8601 format without fractional seconds. */
     static final DateTimeFormatter ALTERNATE_ISO_8601_DATE_FORMAT =

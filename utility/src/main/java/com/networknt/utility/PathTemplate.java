@@ -55,6 +55,11 @@ public class PathTemplate implements Comparable<PathTemplate> {
         this.trailingSlash = trailingSlash;
     }
 
+    /**
+     * Creates a PathTemplate from a path string.
+     * @param inputPath path string
+     * @return PathTemplate
+     */
     public static PathTemplate create(final String inputPath) {
         // a path is required
         if(inputPath == null) {
@@ -335,14 +340,26 @@ public class PathTemplate implements Comparable<PathTemplate> {
         }
     }
 
+    /**
+     * Gets the base path.
+     * @return String base path
+     */
     public String getBase() {
         return base;
     }
 
+    /**
+     * Gets the template string.
+     * @return String template string
+     */
     public String getTemplateString() {
         return templateString;
     }
 
+    /**
+     * Gets the parameter names.
+     * @return Set of parameter names
+     */
     public Set<String> getParameterNames() {
         return parameterNames;
     }

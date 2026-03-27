@@ -54,36 +54,65 @@ import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
  *
  */
 public class UrlConfigLoader implements IConfigLoader {
+	/**
+	 * Default constructor for UrlConfigLoader.
+	 */
+	public UrlConfigLoader() {
+	}
 	static final Logger logger = LoggerFactory.getLogger(UrlConfigLoader.class);
 
+	/** config server URI property name */
 	public static final String CONFIG_SERVER_URI = "light-config-server-uri";
+	/** config server path property name */
 	public static final String CONFIG_SERVER_PATH = "light-config-server-path";
+	/** config server URI */
 	public static String configServerUri = System.getProperty(CONFIG_SERVER_URI);
+	/** config server path */
 	public static String configServerPath = System.getProperty(CONFIG_SERVER_PATH, "/light-service-configs");
 
+	/** light environment property name */
 	public static final String LIGHT_ENV = "light-env";
+	/** default environment */
 	public static final String DEFAULT_ENV = "dev";
+	/** default target configs directory */
 	public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY = "src/main/resources/config";
+	/** light environment */
 	public static String lightEnv = System.getProperty(LIGHT_ENV, DEFAULT_ENV);
+	/** target configs directory */
 	public static String targetConfigsDirectory = System.getProperty(Config.LIGHT_4J_CONFIG_DIR,
 			DEFAULT_TARGET_CONFIGS_DIRECTORY);
 
+	/** startup configuration */
 	public static Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
+	/** project name property name */
 	public static final String PROJECT_NAME = "projectName";
+	/** project version property name */
 	public static final String PROJECT_VERSION = "projectVersion";
+	/** service name property name */
 	public static final String SERVICE_NAME = "serviceName";
+	/** service version property name */
 	public static final String SERVICE_VERSION = "serviceVersion";
 
+	/** authorization property name */
 	public static final String AUTHORIZATION = "config_server_authorization";
+	/** client truststore password property name */
 	public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
+	/** client truststore location property name */
 	public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
+	/** verify host name property name */
 	public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
+	/** client token */
 	public static final String clientToken = System.getenv(AUTHORIZATION);
 
+	/** configs directory name */
 	public static final String CONFIGS = "configs";
+	/** files directory name */
 	public static final String FILES = "files";
+	/** certs directory name */
 	public static final String CERTS = "certs";
+	/** globals directory name */
 	public static final String GLOBALS = "globals";
+	/** slash separator */
 	public static final String SLASH = "/";
 
 	static final String CONFIGS_FILE_NAME = "values";

@@ -29,7 +29,11 @@ import java.util.Map;
         configDescription = "Virtual Host Config",
         outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD}
 )
+/**
+ * Virtual host configuration class.
+ */
 public class VirtualHostConfig {
+    /** Configuration name for virtual host */
     public static final String CONFIG_NAME = "virtual-host";
 
     @ArrayField(
@@ -56,10 +60,19 @@ public class VirtualHostConfig {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Loads the virtual host configuration.
+     * @return VirtualHostConfig
+     */
     public static VirtualHostConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the virtual host configuration with a specific name.
+     * @param configName configuration name
+     * @return VirtualHostConfig
+     */
     public static VirtualHostConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             if (instance != null && instance.getMappedConfig() == com.networknt.config.Config.getInstance().getJsonMapConfig(configName)) {
@@ -77,6 +90,10 @@ public class VirtualHostConfig {
         return new VirtualHostConfig(configName);
     }
 
+    /**
+     * Gets the mapped configuration.
+     * @return Map mapped configuration
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -96,10 +113,18 @@ public class VirtualHostConfig {
         }
     }
 
+    /**
+     * Gets the list of virtual hosts.
+     * @return List of VirtualHost
+     */
     public List<VirtualHost> getHosts() {
         return hosts;
     }
 
+    /**
+     * Sets the list of virtual hosts.
+     * @param hosts list of virtual hosts
+     */
     public void setHosts(List<VirtualHost> hosts) {
         this.hosts = hosts;
     }

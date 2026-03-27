@@ -21,8 +21,10 @@ public class DecryptConstructor extends Constructor {
 
 	private final Decryptor decryptor;
 
-	public static final String CONFIG_ITEM_DECRYPTOR_CLASS = "decryptorClass";
-	public static final String DEFAULT_DECRYPTOR_CLASS = AutoAESSaltDecryptor.class.getCanonicalName();
+    /** Constant for decryptor class configuration entry */
+    public static final String CONFIG_ITEM_DECRYPTOR_CLASS = "decryptorClass";
+    /** Constant for default decryptor class */
+    public static final String DEFAULT_DECRYPTOR_CLASS = AutoAESSaltDecryptor.class.getCanonicalName();
 
 	private DecryptConstructor() {
 		this(DEFAULT_DECRYPTOR_CLASS);
@@ -36,13 +38,24 @@ public class DecryptConstructor extends Constructor {
 		this.yamlConstructors.put(YmlConstants.CRYPT_TAG, new ConstructYamlDecryptedStr());
 	}
 
-	public static DecryptConstructor getInstance() {
-		return new DecryptConstructor();
-	}
+    /**
+     * Gets an instance of DecryptConstructor using the default decryptor class.
+     *
+     * @return DecryptConstructor instance
+     */
+    public static DecryptConstructor getInstance() {
+        return new DecryptConstructor();
+    }
 
-	public static DecryptConstructor getInstance(String decryptorClass) {
-		return new DecryptConstructor(decryptorClass);
-	}
+    /**
+     * Gets an instance of DecryptConstructor using a specific decryptor class.
+     *
+     * @param decryptorClass The decryptor class to use
+     * @return DecryptConstructor instance
+     */
+    public static DecryptConstructor getInstance(String decryptorClass) {
+        return new DecryptConstructor(decryptorClass);
+    }
 
 	private Decryptor createDecryptor(String decryptorClass) {
 		// do not create a new decryptor if it is already created.
@@ -70,11 +83,19 @@ public class DecryptConstructor extends Constructor {
 		return null;
 	}
 
-	public Decryptor getDecryptor() {
-		return decryptor;
-	}
+    /**
+     * Gets the decryptor used by this constructor.
+     *
+     * @return Decryptor instance
+     */
+    public Decryptor getDecryptor() {
+        return decryptor;
+    }
 
-	public class ConstructYamlDecryptedStr extends AbstractConstruct {
+    /**
+     * Inner class for constructing decrypted strings from YAML nodes.
+     */
+    public class ConstructYamlDecryptedStr extends AbstractConstruct {
         @Override
         public Object construct(Node node) {
             return constructDecryptedScalar((ScalarNode) node);

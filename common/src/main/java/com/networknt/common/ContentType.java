@@ -22,18 +22,31 @@ package com.networknt.common;
  */
 public enum ContentType {
 
+    /** Any content type */
     ANY_TYPE("*/*"),
+    /** Application JSON content type */
     APPLICATION_JSON("application/json"),
+    /** Text XML content type */
     XML("text/xml"),
+    /** Application XML content type */
     APPLICATION_XML("application/xml"),
+    /** Application YAML content type */
     APPLICATION_YAML("application/yaml"),
+    /** Application form urlencoded content type */
     APPLICATION_FORM_URLENCODED("application/x-www-form-urlencoded"),
+    /** Application PDF content type */
     APPLICATION_PDF("application/pdf"),
+    /** Multipart mixed content type */
     MULTIPART_MIXED("multipart/mixed"),
+    /** Multipart form data content type */
     MULTIPART_FORM_DATA("multipart/form-data"),
+    /** Text plain content type */
     TEXT_PLAIN("text/plain"),
+    /** Image PNG content type */
     IMAGE_PNG("image/png"),
+    /** Image JPEG content type */
     IMAGE_JPEG("image/jpeg"),
+    /** Image GIF content type */
     IMAGE_GIF("image/gif");
 
     private final String value;
@@ -42,13 +55,20 @@ public enum ContentType {
         this.value = contentType;
     }
 
+    /**
+     * Returns the string value of the content type.
+     *
+     * @return String value
+     */
     public String value() {
         return this.value;
     }
 
     /**
+     * Converts a string to a ContentType enum.
+     *
      * @param value content type str eg: application/json
-     * @return ContentType
+     * @return ContentType enum
      */
     public static ContentType toContentType(String value) {
         for(ContentType v : values()){

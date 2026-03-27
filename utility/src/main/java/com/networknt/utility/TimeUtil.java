@@ -2,7 +2,15 @@ package com.networknt.utility;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Time utility class.
+ */
 public class TimeUtil {
+    /**
+     * Default constructor for TimeUtil.
+     */
+    public TimeUtil() {
+    }
     /**
      * Return the number of milliseconds per time unit.
      *

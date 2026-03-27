@@ -48,6 +48,12 @@ public class ConsulHeartbeatManager {
 	// switcher check times
 	private int switcherCheckTimes = 0;
 
+    /**
+     * Constructs a ConsulHeartbeatManager with a client and token.
+     *
+     * @param client Consul client
+     * @param token Consul token
+     */
 	public ConsulHeartbeatManager(ConsulClient client, String token) {
 		this.client = client;
 		this.token = token;
@@ -58,6 +64,9 @@ public class ConsulHeartbeatManager {
 				TimeUnit.MILLISECONDS, workQueue);
 	}
 
+    /**
+     * Starts the heartbeat scheduled executor.
+     */
 	public void start() {
 		heartbeatExecutor.scheduleAtFixedRate(
 				new Runnable() {
@@ -107,6 +116,11 @@ public class ConsulHeartbeatManager {
 		return ret;
 	}
 
+    /**
+     * Processes heartbeats for all registered services.
+     *
+     * @param isPass true to set passing status, false to set failing status
+     */
 	protected void processHeartbeat(boolean isPass) {
 		for (String serviceId : serviceIds) {
 			try {
@@ -118,6 +132,9 @@ public class ConsulHeartbeatManager {
 		}
 	}
 
+    /**
+     * Stops the heartbeat manager and its executors.
+     */
 	public void close() {
 		heartbeatExecutor.shutdown();
 		jobExecutor.shutdown();
@@ -142,11 +159,20 @@ public class ConsulHeartbeatManager {
 		serviceIds.remove(serviceId);
 	}
 
-	// check if heart beat switcher is on
+    /**
+     * Checks if the heartbeat switcher is open.
+     *
+     * @return true if open
+     */
 	private boolean isHeartbeatOpen() {
 		return currentHeartBeatSwitcherStatus;
 	}
 
+    /**
+     * Sets the heartbeat switcher status.
+     *
+     * @param open true for open, false for closed
+     */
 	public void setHeartbeatOpen(boolean open) {
 		currentHeartBeatSwitcherStatus = open;
 	}
@@ -179,6 +205,11 @@ public class ConsulHeartbeatManager {
 
 	}
 
+    /**
+     * Sets the Consul client.
+     *
+     * @param client Consul client
+     */
 	public void setClient(ConsulClient client) {
 		this.client = client;
 	}

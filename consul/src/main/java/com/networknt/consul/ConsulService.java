@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
 
 import static com.networknt.consul.ConsulConstants.CONFIG_NAME;
 
+/**
+ * Model class representing a service in Consul.
+ */
 public class ConsulService {
 
 	private String id;
@@ -37,44 +40,98 @@ public class ConsulService {
 
 	private String checkString;
 
+    /**
+     * Gets the service ID.
+     *
+     * @return String service ID
+     */
 	public String getId() {
 		return id;
 	}
 
+    /**
+     * Sets the service ID.
+     *
+     * @param id service ID
+     */
 	public void setId(String id) {
 		this.id = id;
 	}
 
+    /**
+     * Gets the service name.
+     *
+     * @return String service name
+     */
 	public String getName() {
 		return name;
 	}
 
+    /**
+     * Sets the service name.
+     *
+     * @param name service name
+     */
 	public void setName(String name) {
 		this.name = name;
 	}
 
+    /**
+     * Gets the service tags.
+     *
+     * @return List of tags
+     */
 	public List<String> getTags() {
 		return tags;
 	}
 
+    /**
+     * Sets the service tags.
+     *
+     * @param tags list of tags
+     */
 	public void setTags(List<String> tags) {
 		this.tags = tags;
 	}
 
+    /**
+     * Gets the service address.
+     *
+     * @return String service address
+     */
 	public String getAddress() {
 		return address;
 	}
 
+    /**
+     * Sets the service address.
+     *
+     * @param address service address
+     */
 	public void setAddress(String address) {
 		this.address = address;
 	}
 
+    /**
+     * Gets the service port.
+     *
+     * @return Integer service port
+     */
 	public Integer getPort() {
 		return port;
 	}
 
+    /**
+     * Sets the service port.
+     *
+     * @param port service port
+     */
 	public void setPort(Integer port) { this.port = port; }
 
+    /**
+     * Default constructor for ConsulService.
+     * Initializes checkString based on ConsulConfig.
+     */
 	public ConsulService() {
                 ConsulConfig config = ConsulConfig.load();
 		if(config.tcpCheck) {

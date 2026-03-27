@@ -31,6 +31,11 @@ package com.networknt.config;
  *
  */
 public class ConfigException extends RuntimeException {
+    /**
+     * Constructs a ConfigException with the specified message.
+     *
+     * @param message String error message
+     */
     public ConfigException(String message) {
         super(message);
     }

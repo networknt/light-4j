@@ -28,6 +28,12 @@ import java.util.Map;
 public class QueryParametersDumper extends AbstractDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
+    /**
+     * Constructs a QueryParametersDumper with config and exchange.
+     *
+     * @param config dump configuration
+     * @param exchange HTTP server exchange
+     */
     public QueryParametersDumper(DumpConfig config, HttpServerExchange exchange) {
         super(config, exchange);
     }

@@ -17,15 +17,23 @@
 package com.networknt.utility;
 
 /**
+ * A generic tuple class to hold two elements.
  * @param <T> The type of the first element
  * @param <T2> The type of the second element.
  *
  * @author Nicholas Azar
  */
 public class Tuple<T, T2> {
+    /** First element of the tuple */
     public final T first;
+    /** Second element of the tuple */
     public final T2 second;
 
+    /**
+     * Constructs a Tuple.
+     * @param first first element
+     * @param second second element
+     */
     public Tuple(T first, T2 second) {
         this.first = first;
         this.second = second;

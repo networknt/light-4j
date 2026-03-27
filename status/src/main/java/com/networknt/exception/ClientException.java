@@ -25,32 +25,67 @@ import com.networknt.status.Status;
  */
 public class ClientException extends Exception {
     private static final long serialVersionUID = 1L;
+    /** The status object associated with this exception type */
     private static Status status = new Status();
 
+    /**
+     * Default constructor for ClientException.
+     */
     public ClientException() {
         super();
     }
 
+    /**
+     * Constructs a ClientException with a message.
+     *
+     * @param message error message
+     */
     public ClientException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs a ClientException with a status.
+     *
+     * @param status Status object
+     */
     public ClientException(Status status) {
-        this.status = status;
+        ClientException.status = status;
     }
 
+    /**
+     * Constructs a ClientException with a message and a cause.
+     *
+     * @param message error message
+     * @param cause   Throwable cause
+     */
     public ClientException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs a ClientException with a cause.
+     *
+     * @param cause Throwable cause
+     */
     public ClientException(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Gets the status object.
+     *
+     * @return Status object
+     */
     public static Status getStatus() {
         return status;
     }
 
+    /**
+     * Sets the status object.
+     *
+     * @param status Status object
+     */
     public static void setStatus(Status status) {
         ClientException.status = status;
     }

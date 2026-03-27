@@ -28,6 +28,17 @@ import java.util.Map;
  * For the same form key, there might be multiple form values, we handle it differently based on the size.
  */
 public class BodyConverter {
+    /**
+     * Private constructor to prevent instantiation of utility class.
+     */
+    private BodyConverter() {
+    }
+
+    /**
+     * Converts FormData into a Map.
+     * @param data FormData to be converted
+     * @return Map containing converted FormData
+     */
     public static Map<String, Object> convert(FormData data) {
         Map<String, Object> map = new HashMap<>();
         for (String key : data) {

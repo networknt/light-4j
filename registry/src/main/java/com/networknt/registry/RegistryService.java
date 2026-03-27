@@ -54,5 +54,10 @@ public interface RegistryService {
      */
     void unavailable(URL url);
 
+    /**
+     * Gets all registered service URLs.
+     *
+     * @return Collection of registered service URLs
+     */
     Collection<URL> getRegisteredServiceUrls();
 }

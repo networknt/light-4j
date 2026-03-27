@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Monitor thread for Consul heartbeat/checkins to detect frozen threads.
+ */
 public class ConsulThreadMonitor extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(ConsulThreadMonitor.class);
     private final ConcurrentHashMap<String,Long> checkins;
@@ -13,6 +16,11 @@ public class ConsulThreadMonitor extends Thread {
     // MIN_TIME_BETWEEN_CHECKINS_MS accounts for queue-wait time to enter connection pool synchronized methods (for up to 12 queued threads)
     private static final long MIN_TIME_BETWEEN_CHECKINS_MS = 12 * 10 * 1000;
 
+    /**
+     * Constructs a ConsulThreadMonitor with a map of checkins.
+     *
+     * @param checkins map of service IDs to last checkin timestamps
+     */
     public ConsulThreadMonitor(final ConcurrentHashMap<String,Long> checkins) {
         this.checkins = checkins;
     }

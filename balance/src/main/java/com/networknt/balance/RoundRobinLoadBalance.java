@@ -44,6 +44,9 @@ public class RoundRobinLoadBalance implements LoadBalance {
     // cache the idx for each service so that the index is per service for the round robin.
     Map<String, AtomicInteger> serviceIdx = new ConcurrentHashMap<>();
 
+    /**
+     * Default constructor for RoundRobinLoadBalance.
+     */
     public RoundRobinLoadBalance() {
         if(logger.isInfoEnabled()) logger.info("A RoundRobinLoadBalance instance is started");
     }
@@ -71,6 +74,13 @@ public class RoundRobinLoadBalance implements LoadBalance {
         return url;
     }
 
+    /**
+     * Internal select logic for multiple URLs.
+     *
+     * @param urls list of URLs
+     * @param key service key (serviceId + optional tag)
+     * @return selected URL
+     */
     protected URL doSelect(List<URL> urls, String key) {
         int index = getNextPositive(key);
         for (int i = 0; i < urls.size(); i++) {

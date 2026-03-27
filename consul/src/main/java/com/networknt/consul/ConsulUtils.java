@@ -26,7 +26,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utilities for Consul registry and discovery.
+ *
+ * @author Steve Hu
+ */
 public class ConsulUtils {
+
+    private ConsulUtils() {
+        throw new IllegalStateException("Utility class");
+    }
 
     /**
      * Check if two lists have the same urls.
@@ -154,6 +163,14 @@ public class ConsulUtils {
     }
 
 
+    /**
+     * Converts host, port and path to a service ID.
+     *
+     * @param host host
+     * @param port port
+     * @param path path
+     * @return service ID string (host:path:port)
+     */
     public static String convertServiceId(String host, int port, String path) {
         return host + ":" + path + ":" + port;
     }

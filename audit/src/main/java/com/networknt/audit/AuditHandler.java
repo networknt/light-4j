@@ -75,17 +75,29 @@ import java.util.*;
  */
 public class AuditHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
+    /** status code field name */
     static final String STATUS_CODE = "statusCode";
+    /** response time field name */
     static final String RESPONSE_TIME = "responseTime";
+    /** timestamp field name */
     static final String TIMESTAMP = "timestamp";
+    /** mask key for audit */
     static final String MASK_KEY = "audit";
+    /** request body field name */
     static final String REQUEST_BODY_KEY = "requestBody";
+    /** response body field name */
     static final String RESPONSE_BODY_KEY = "responseBody";
+    /** request header field name */
     static final String REQUEST_HEADER_KEY = "requestHeader";
+    /** query parameters field name */
     static final String QUERY_PARAMETERS_KEY = "queryParameters";
+    /** path parameters field name */
     static final String PATH_PARAMETERS_KEY = "pathParameters";
+    /** request cookies field name */
     static final String REQUEST_COOKIES_KEY = "requestCookies";
+    /** service ID field name */
     static final String SERVICE_ID_KEY = "serviceId";
+    /** invalid config value status code */
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
 
@@ -94,6 +106,9 @@ public class AuditHandler implements MiddlewareHandler {
     private volatile String serviceId;
     private volatile DateTimeFormatter dateTimeFormatter;
 
+    /**
+     * Default constructor for AuditHandler.
+     */
     public AuditHandler() {
         logger.info("AuditHandler is loaded.");
         ServerConfig serverConfig = ServerConfig.load();
@@ -207,6 +222,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request and response
      * @param auditMap the map containing the audit information
+     * @param config the audit configuration
      */
     private static void logAudit(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         try {
@@ -227,6 +243,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request headers
      * @param auditMap the map to hold the audited headers
+     * @param config the audit configuration
      */
     private static void auditHeader(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         for (String name : config.getHeaderList()) {
@@ -244,6 +261,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param auditInfo the map containing the audit information
      * @param auditMap the map to hold the audited fields
+     * @param config the audit configuration
      */
     private void auditFields(final Map<String, Object> auditInfo, final Map<String, Object> auditMap, AuditConfig config) {
         for (String name : config.getAuditList()) {
@@ -260,6 +278,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request
      * @param auditMap the map to hold the audited request data
+     * @param config the audit configuration
      */
     private void auditRequest(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         if (config.hasHeaderList()) {
@@ -294,6 +313,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request body
      * @param auditMap the map to hold the audited request body
+     * @param config the audit configuration
      */
     private static void auditRequestBody(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         AuditHandler.auditBody(
@@ -311,6 +331,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the response body
      * @param auditMap the map to hold the audited response body
+     * @param config the audit configuration
      */
     private static void auditResponseBody(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         AuditHandler.auditBody(
@@ -331,6 +352,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param bodyRaw the raw body object, can be null
      * @param auditMap the map to hold the audited body
      * @param auditKey the key to be used in the audit map
+     * @param config the audit configuration
      */
     private static void auditBody(final HeaderMap headers, final String bodyString, final Object bodyRaw, Map<String, Object> auditMap, final String auditKey, AuditConfig config) {
         if (bodyString == null && bodyRaw == null) {
@@ -378,6 +400,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the query parameters
      * @param auditMap the map to hold the audited query parameters
+     * @param config the audit configuration
      */
     private static void auditQueryParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         auditParameters(exchange.getQueryParameters(), auditMap, QUERY_PARAMETERS_KEY, config);
@@ -388,6 +411,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the path parameters
      * @param auditMap the map to hold the audited path parameters
+     * @param config the audit configuration
      */
     private static void auditPathParameters(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         auditParameters(exchange.getPathParameters(), auditMap, PATH_PARAMETERS_KEY, config);
@@ -399,6 +423,7 @@ public class AuditHandler implements MiddlewareHandler {
      * @param parameters the parameters to be audited
      * @param auditMap the map to hold the audited parameters
      * @param auditKey the key to be used in the audit map
+     * @param config the audit configuration
      */
     private static void auditParameters(Map<String, Deque<String>> parameters, Map<String, Object> auditMap, String auditKey, AuditConfig config) {
         if (parameters == null || parameters.isEmpty()) {
@@ -418,6 +443,7 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request cookies
      * @param auditMap the map to hold the audited cookies
+     * @param config the audit configuration
      */
     private static void auditRequestCookies(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
         Iterable<Cookie> iterable = exchange.requestCookies();
@@ -452,11 +478,20 @@ public class AuditHandler implements MiddlewareHandler {
         return this;
     }
 
+    /**
+     * Checks if the audit handler is enabled in the configuration.
+     * @return boolean true if enabled, false otherwise
+     */
     @Override
     public boolean isEnabled() {
         return AuditConfig.load().isEnabled();
     }
 
+    /**
+     * Calls the next handler in the chain.
+     * @param exchange HTTP server exchange
+     * @throws Exception if handleRequest fails
+     */
     protected void next(HttpServerExchange exchange) throws Exception {
         Handler.next(exchange, next);
     }

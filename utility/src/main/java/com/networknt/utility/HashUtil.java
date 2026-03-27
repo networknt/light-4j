@@ -41,6 +41,11 @@ public class HashUtil {
 
     private HashUtil() {throw new UnsupportedOperationException("do not instantiate");}
 
+    /**
+     * Calculates MD5 hash of an input string.
+     * @param input String
+     * @return String MD5 hash
+     */
     public static String md5(String input) {
 
         String md5 = null;
@@ -64,6 +69,11 @@ public class HashUtil {
         return md5;
     }
 
+    /**
+     * Converts a byte array to a hex string.
+     * @param array byte array
+     * @return String hex string
+     */
     public static String hex(byte[] array) {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < array.length; ++i) {
@@ -72,6 +82,11 @@ public class HashUtil {
         }
         return sb.toString();
     }
+    /**
+     * Calculates MD5 hash in hex format.
+     * @param message String
+     * @return String hex MD5 hash
+     */
     public static String md5Hex (String message) {
         try {
             MessageDigest md =
@@ -83,6 +98,13 @@ public class HashUtil {
         return null;
     }
 
+    /**
+     * Generates a strong password hash.
+     * @param password String
+     * @return String password hash
+     * @throws NoSuchAlgorithmException if algorithm not found
+     * @throws InvalidKeySpecException if key spec is invalid
+     */
     public static String generateStrongPasswordHash(String password) throws NoSuchAlgorithmException, InvalidKeySpecException
     {
         int iterations = 1000;
@@ -116,6 +138,14 @@ public class HashUtil {
         }
     }
 
+    /**
+     * Validates a password against a stored hash.
+     * @param originalPassword char array
+     * @param storedPassword String stored hash
+     * @return boolean true if valid
+     * @throws NoSuchAlgorithmException if algorithm not found
+     * @throws InvalidKeySpecException if key spec is invalid
+     */
     public static boolean validatePassword(char[] originalPassword, String storedPassword) throws NoSuchAlgorithmException, InvalidKeySpecException
     {
         String[] parts = storedPassword.split(":");
@@ -135,6 +165,12 @@ public class HashUtil {
         return diff == 0;
     }
 
+    /**
+     * Converts a hex string to a byte array.
+     * @param hex String hex
+     * @return byte array
+     * @throws NoSuchAlgorithmException if algorithm not found
+     */
     private static byte[] fromHex(String hex) throws NoSuchAlgorithmException
     {
         byte[] bytes = new byte[hex.length() / 2];

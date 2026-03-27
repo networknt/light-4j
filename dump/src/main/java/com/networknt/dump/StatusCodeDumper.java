@@ -27,6 +27,12 @@ import java.util.Map;
 public class StatusCodeDumper extends AbstractDumper implements IResponseDumpable{
     private String statusCodeResult = "";
 
+    /**
+     * Constructs a StatusCodeDumper with config and exchange.
+     *
+     * @param config dump configuration
+     * @param exchange HTTP server exchange
+     */
     public StatusCodeDumper(DumpConfig config, HttpServerExchange exchange) {
         super(config, exchange);
     }

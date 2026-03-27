@@ -26,5 +26,11 @@ import java.util.List;
 
 public interface NotifyListener {
 
+    /**
+     * Notified when registry changes.
+     *
+     * @param registryUrl registry URL
+     * @param urls        list of URLs
+     */
     void notify(URL registryUrl, List<URL> urls);
 }

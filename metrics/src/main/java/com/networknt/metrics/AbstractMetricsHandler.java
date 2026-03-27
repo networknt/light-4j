@@ -55,24 +55,41 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractMetricsHandler.class);
 
+    /** client id tag */
     protected static final String CLIENT_ID_TAG = "clientId";
+    /** scope client id tag */
     protected static final String SCOPE_CLIENT_ID_TAG = "scopeClientId";
+    /** caller id tag */
     protected static final String CALLER_ID_TAG = "callerId";
+    /** issuer tag */
     protected static final String ISSUER_TAG = "issuer";
+    /** endpoint tag */
     protected static final String ENDPOINT_TAG = "endpoint";
 
+    /** common tag for host */
     protected static final String HOST_COMMON_TAG = "host";
+    /** common tag for port */
     protected static final String PORT_COMMON_TAG = "port";
+    /** common tag for api */
     protected static final String API_COMMON_TAG = "api";
+    /** common tag for env */
     protected static final String ENV_COMMON_TAG = "env";
+    /** common tag for address */
     protected static final String ADDR_COMMON_TAG = "addr";
 
     // The structure that collect all the metrics entries. Even others will be using this structure to inject.
+    /** Registry for metrics collection */
     public static final MetricRegistry registry = new MetricRegistry();
+
+    /** Common tags for all metrics */
     public Map<String, String> commonTags = new HashMap<>();
 
+    /** constant for unknown tag value */
     protected static final String UNKNOWN_TAG_VALUE = "unknown";
 
+    /**
+     * Default constructor for AbstractMetricsHandler.
+     */
     public AbstractMetricsHandler() {
     }
 
@@ -81,8 +98,20 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         return MetricsConfig.load().isEnabled();
     }
 
+    /**
+     * Abstract method to create a metrics reporter.
+     *
+     * @param sender time series DB sender
+     * @param config metrics configuration
+     */
     protected abstract void createMetricsReporter(final TimeSeriesDbSender sender, MetricsConfig config);
 
+    /**
+     * Creates a JVM metrics reporter.
+     *
+     * @param sender time series DB sender
+     * @param config metrics configuration
+     */
     public void createJVMMetricsReporter(final TimeSeriesDbSender sender, MetricsConfig config) {
         try (JVMMetricsDbReporter jvmReporter = new JVMMetricsDbReporter(
                 new MetricRegistry(),
@@ -164,8 +193,9 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
     /**
      * This method is used to inject anonymous metrics for handlers that do not have auditInfo in the exchange.
      *
-     * @param tags the map that contains the tags to be set for anonymous metrics.
+     * @param tags strings to be set for anonymous metrics.
      * @param endpoint the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
+     * @param config metrics configuration
      */
     private void injectAnonymousMetrics(final Map<String, String> tags, final String endpoint, MetricsConfig config) {
         // for MRAS and Salesforce handlers that do not have auditInfo in the exchange as they may be called anonymously.
@@ -189,6 +219,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param tags the map that contains the tags to be set for audit information metrics.
      * @param auditInfo the map that contains the audit information to be used for metrics.
      * @param endpoint the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
+     * @param config metrics configuration
      */
     private void injectAuditInfoMetrics(final Map<String, String> tags, final Map<String, Object> auditInfo, final String endpoint, MetricsConfig config) {
         // for external handlers, the endpoint must be unknown in the auditInfo. If that is the case, use the endpoint passed in.
@@ -223,6 +254,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      *
      * @param tags the map that contains the tags to be set for the issuer.
      * @param auditInfo the map that contains the audit information to be used for metrics.
+     * @param config metrics configuration
      */
     protected static void addIssuerRegex(final Map<String, String> tags, final Map<String, Object> auditInfo, MetricsConfig config) {
         if (auditInfo.get(Constants.ISSUER_CLAIMS) instanceof String issuer) {
@@ -286,12 +318,22 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         return metricsHandler;
     }
 
+    /**
+     * Completion listener for HTTP exchange to collect metrics.
+     */
     protected static class MetricsExchangeCompletionListener implements ExchangeCompletionListener {
 
         private final Map<String, String> commonTags;
         private final long startTime;
         private final MetricsConfig config;
 
+        /**
+         * Constructs a MetricsExchangeCompletionListener.
+         *
+         * @param commonTags common tags for metrics
+         * @param startTime  start time of the exchange
+         * @param config     metrics configuration
+         */
         public MetricsExchangeCompletionListener(final Map<String, String> commonTags, final long startTime, MetricsConfig config) {
             this.commonTags = Objects.requireNonNull(commonTags, "commonTags cannot be null");
             this.startTime = startTime;

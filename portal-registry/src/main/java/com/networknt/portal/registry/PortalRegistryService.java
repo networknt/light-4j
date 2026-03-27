@@ -1,11 +1,9 @@
 package com.networknt.portal.registry;
 
-import com.networknt.config.Config;
-
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
+import java.util.Map;
 
 public class PortalRegistryService {
 
@@ -97,6 +95,33 @@ public class PortalRegistryService {
         } else {
             checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.getDeregisterAfter() + ",\"interval\":" + config.getCheckInterval() + "}}";
         }
+    }
+
+    public String getInstanceId() {
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        return key + ":" + protocol + ":" + address + ":" + port;
+    }
+
+    public List<String> getCapabilities() {
+        List<String> capabilities = new ArrayList<>();
+        capabilities.add("discovery");
+        return capabilities;
+    }
+
+    public Map<String, Object> toRegisterParams() {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("instanceId", getInstanceId());
+        params.put("serviceId", serviceId);
+        if (tag != null) {
+            params.put("tag", tag);
+            params.put("environment", tag);
+        }
+        params.put("protocol", protocol);
+        params.put("address", address);
+        params.put("port", port);
+        params.put("version", serviceId);
+        params.put("capabilities", getCapabilities());
+        return params;
     }
 
     /**

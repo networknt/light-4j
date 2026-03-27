@@ -16,9 +16,15 @@
 
 package com.networknt.decrypt;
 
+/**
+ * The Decryptor interface defines a single method decrypt for decrypting encrypted strings.
+ */
 public interface Decryptor {
-
+    /**
+     * Prefix used to identify encrypted strings.
+     */
     String CRYPT_PREFIX = "CRYPT";
+
 
     /**
      * This is the method that decrypt an encrypted value. The logic of

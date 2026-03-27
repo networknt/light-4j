@@ -26,8 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Configuration class for Consul.
+ */
 @ConfigSchema(configKey = "consul", configName = "consul", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ConsulConfig {
+    /** config name for this config class */
     public static final String CONFIG_NAME = "consul";
     private static final Logger logger = LoggerFactory.getLogger(ConsulConfig.class);
     private static final String CONSUL_URL = "consulUrl";
@@ -228,6 +232,12 @@ public class ConsulConfig {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Loads the ConsulConfig for a specific config name.
+     *
+     * @param configName config name
+     * @return ConsulConfig instance
+     */
     public static ConsulConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -250,105 +260,260 @@ public class ConsulConfig {
         return new ConsulConfig(configName);
     }
 
+    /**
+     * Loads the ConsulConfig for the default config name.
+     *
+     * @return ConsulConfig instance
+     */
     public static ConsulConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Gets the mapped configuration.
+     *
+     * @return Map mapped configuration
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
+    /**
+     * Gets the Consul URL.
+     *
+     * @return String consul URL
+     */
     public String getConsulUrl() {
         return consulUrl;
     }
 
+    /**
+     * Sets the Consul URL.
+     *
+     * @param consulUrl consul URL
+     */
     public void setConsulUrl(String consulUrl) {
         this.consulUrl = consulUrl;
     }
 
+    /**
+     * Gets the Consul token.
+     *
+     * @return String consul token
+     */
     public String getConsulToken() {
         return consulToken;
     }
 
+    /**
+     * Sets the Consul token.
+     *
+     * @param consulToken consul token
+     */
     public void setConsulToken(String consulToken) {
         this.consulToken = consulToken;
     }
 
+    /**
+     * Gets the maximum requests per connection.
+     *
+     * @return int max requests per connection
+     */
     public int getMaxReqPerConn() { return maxReqPerConn; }
 
+    /**
+     * Sets the maximum requests per connection.
+     *
+     * @param maxReqPerConn max requests per connection
+     */
     public void setMaxReqPerConn(int maxReqPerConn) { this.maxReqPerConn = maxReqPerConn; }
 
+    /**
+     * Gets the deregister after time.
+     *
+     * @return String deregister after time
+     */
     public String getDeregisterAfter() {
         return deregisterAfter;
     }
 
+    /**
+     * Sets the deregister after time.
+     *
+     * @param deregisterAfter deregister after time
+     */
     public void setDeregisterAfter(String deregisterAfter) {
         this.deregisterAfter = deregisterAfter;
     }
 
+    /**
+     * Gets the check interval.
+     *
+     * @return String check interval
+     */
     public String getCheckInterval() {
         return checkInterval;
     }
 
+    /**
+     * Sets the check interval.
+     *
+     * @param checkInterval check interval
+     */
     public void setCheckInterval(String checkInterval) {
         this.checkInterval = checkInterval;
     }
 
+    /**
+     * Checks if TCP check is enabled.
+     *
+     * @return true if enabled
+     */
     public boolean isTcpCheck() {
         return tcpCheck;
     }
 
+    /**
+     * Sets if TCP check is enabled.
+     *
+     * @param tcpCheck true if enabled
+     */
     public void setTcpCheck(boolean tcpCheck) {
         this.tcpCheck = tcpCheck;
     }
 
+    /**
+     * Checks if HTTP check is enabled.
+     *
+     * @return true if enabled
+     */
     public boolean isHttpCheck() {
         return httpCheck;
     }
 
+    /**
+     * Sets if HTTP check is enabled.
+     *
+     * @param httpCheck true if enabled
+     */
     public void setHttpCheck(boolean httpCheck) {
         this.httpCheck = httpCheck;
     }
 
+    /**
+     * Checks if TTL check is enabled.
+     *
+     * @return true if enabled
+     */
     public boolean isTtlCheck() {
         return ttlCheck;
     }
 
+    /**
+     * Sets if TTL check is enabled.
+     *
+     * @param ttlCheck true if enabled
+     */
     public void setTtlCheck(boolean ttlCheck) {
         this.ttlCheck = ttlCheck;
     }
+    /**
+     * Gets the wait time for blocking queries.
+     *
+     * @return String wait time
+     */
     public String getWait() {
         return wait;
     }
 
+    /**
+     * Sets the wait time for blocking queries.
+     *
+     * @param wait wait time
+     */
     public void setWait(String wait) {
         this.wait = wait;
     }
 
+    /**
+     * Gets the timeout buffer.
+     *
+     * @return String timeout buffer
+     */
     public String getTimeoutBuffer() { return timeoutBuffer; }
 
+    /**
+     * Sets the timeout buffer.
+     *
+     * @param timeoutBuffer timeout buffer
+     */
     public void setTimeoutBuffer(String timeoutBuffer) { this.timeoutBuffer = timeoutBuffer; }
 
+    /**
+     * Checks if HTTP/2 is enabled.
+     *
+     * @return true if enabled
+     */
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
 
+    /**
+     * Sets if HTTP/2 is enabled.
+     *
+     * @param enableHttp2 true if enabled
+     */
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
 
+    /**
+     * Gets the connection timeout in seconds.
+     *
+     * @return long connection timeout
+     */
     public long getConnectionTimeout() { return connectionTimeout; }
 
+    /**
+     * Gets the request timeout in seconds.
+     *
+     * @return long request timeout
+     */
     public long getRequestTimeout() { return requestTimeout; }
 
+    /**
+     * Gets the reconnect interval in seconds.
+     *
+     * @return long reconnect interval
+     */
     public long getReconnectInterval() { return reconnectInterval; }
 
+    /**
+     * Gets the reconnect jitter in seconds.
+     *
+     * @return long reconnect jitter
+     */
     public long getReconnectJitter() { return reconnectJitter; }
 
+    /**
+     * Gets the lookup interval in seconds.
+     *
+     * @return long lookup interval
+     */
     public long getLookupInterval() { return lookupInterval; }
 
+    /**
+     * Gets the maximum attempts before shutdown.
+     *
+     * @return long max attempts
+     */
     public long getMaxAttemptsBeforeShutdown() { return maxAttemptsBeforeShutdown; }
 
+    /**
+     * Checks if host should shutdown if thread frozen.
+     *
+     * @return true if shutdown enabled
+     */
     public boolean isShutdownIfThreadFrozen() { return shutdownIfThreadFrozen; }
 
     private void setConfigData() {

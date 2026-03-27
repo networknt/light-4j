@@ -60,38 +60,69 @@ import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
  *
  */
 public class DefaultConfigLoader implements IConfigLoader{
+    /**
+     * Default constructor for DefaultConfigLoader.
+     */
+    public DefaultConfigLoader() {
+    }
     static final Logger logger = LoggerFactory.getLogger(DefaultConfigLoader.class);
 
+    /** startup configuration */
     public static Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
     private static final String CENTRALIZED_MANAGEMENT = "values";
+    /** environment tag property name */
     public static final String LIGHT_ENV = "light-env";
+    /** verify hostname false constant */
     public static final String VERIFY_HOSTNAME_FALSE = "false";
 
+    /** default environment */
     public static final String DEFAULT_ENV = "dev";
+    /** default target configs directory */
     public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY ="src/main/resources/config";
 
+    /** config server URI property name */
     public static final String CONFIG_SERVER_URI = "light-config-server-uri";
+    /** config server configs context root */
     public static final String CONFIG_SERVER_CONFIGS_CONTEXT_ROOT = "/config-server/configs";
+    /** config server certs context root */
     public static final String CONFIG_SERVER_CERTS_CONTEXT_ROOT = "/config-server/certs";
+    /** config server files context root */
     public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/config-server/files";
+    /** authorization property name */
     public static final String AUTHORIZATION = "config_server_authorization";
+    /** client truststore password property name */
     public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
+    /** client truststore location property name */
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
+    /** verify host name property name */
     public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
 
+    /** host property name */
     public static final String HOST = "host";
+    /** service ID property name */
     public static final String SERVICE_ID = "serviceId";
+    /** product ID property name */
     public static final String PRODUCT_ID = "productId";
+    /** product version property name */
     public static final String PRODUCT_VERSION = "productVersion";
+    /** API ID property name */
     public static final String API_ID = "apiId";
+    /** API version property name */
     public static final String API_VERSION = "apiVersion";
+    /** environment tag property name */
     public static final String ENV_TAG = "envTag";
+    /** accept header property name */
     public static final String ACCEPT_HEADER = "acceptHeader";
+    /** timeout property name */
     public static final String TIMEOUT = "timeout";
+    /** connect timeout property name */
     public static final String CONNECT_TIMEOUT = "connectTimeout";
 
+    /** light environment */
     public static String lightEnv = null;
+    /** config server URI */
     public static String configServerUri = null;
+    /** target configs directory */
     public static String targetConfigsDirectory = null;
 
     // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
@@ -529,6 +560,11 @@ public class DefaultConfigLoader implements IConfigLoader{
         return sslContext;
     }
 
+    /**
+     * Gets a property from system properties or environment variables.
+     * @param key property key
+     * @return String property value
+     */
     public static String getPropertyOrEnv(String key) {
         // The key should be in lower case and separated with hyphen.
         // Always check the -D and then env variable for the key with lower and upper case.
@@ -566,6 +602,10 @@ public class DefaultConfigLoader implements IConfigLoader{
         return false;
     }
 
+    /**
+     * Gets the target configuration directory.
+     * @return String target configuration directory
+     */
     public static String getTargetConfigsDirectory() {
         targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
         if (targetConfigsDirectory == null) {

@@ -28,6 +28,12 @@ import java.util.Map;
 public class UrlDumper extends AbstractDumper implements IRequestDumpable{
     private String url = "";
 
+    /**
+     * Constructs a UrlDumper with config and exchange.
+     *
+     * @param config dump configuration
+     * @param exchange HTTP server exchange
+     */
     public UrlDumper(DumpConfig config, HttpServerExchange exchange) {
         super(config, exchange);
     }

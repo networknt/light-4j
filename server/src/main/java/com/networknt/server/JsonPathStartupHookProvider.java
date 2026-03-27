@@ -33,6 +33,11 @@ import java.util.Set;
  * @author Steve Hu
  */
 public class JsonPathStartupHookProvider implements StartupHookProvider {
+    /**
+     * Default constructor for JsonPathStartupHookProvider.
+     */
+    public JsonPathStartupHookProvider() {
+    }
     @Override
     public void onStartup() {
         configJsonPath();

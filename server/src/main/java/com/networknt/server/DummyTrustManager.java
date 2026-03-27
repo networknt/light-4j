@@ -32,6 +32,11 @@ import java.security.cert.X509Certificate;
  * @author Steve Hu
  */
 public class DummyTrustManager implements X509TrustManager {
+    /**
+     * Default constructor for DummyTrustManager.
+     */
+    public DummyTrustManager() {
+    }
 
     @Override
     public X509Certificate[] getAcceptedIssuers() {

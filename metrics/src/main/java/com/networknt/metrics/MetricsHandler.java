@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Handler for generic Metrics collection and reporting.
+ */
 public class MetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
 
@@ -24,6 +27,9 @@ public class MetricsHandler extends AbstractMetricsHandler {
     private static final String MASK_KEY_SERVER_PASS = "serverPass";
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for MetricsHandler.
+     */
     public MetricsHandler() {
         logger.debug("MetricsHandler is constructed!");
     }

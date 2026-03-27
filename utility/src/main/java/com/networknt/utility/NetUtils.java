@@ -29,11 +29,24 @@ import java.util.regex.Pattern;
  * @author fishermen
  * @version V1.0 created at: 2013-5-28
  */
+/**
+ * Network utility class.
+ *
+ * @author fishermen
+ * @version V1.0 created at: 2013-5-28
+ */
 public class NetUtils {
+    /**
+     * Default constructor for NetUtils.
+     */
+    public NetUtils() {
+    }
     private static final Logger logger = LoggerFactory.getLogger(NetUtils.class);
 
+    /** localhost IP string */
     public static final String LOCALHOST = "127.0.0.1";
 
+    /** any host IP string */
     public static final String ANYHOST = "0.0.0.0";
 
     private static volatile InetAddress LOCAL_ADDRESS = null;
@@ -44,11 +57,21 @@ public class NetUtils {
 
     private static final Pattern IP_PATTERN = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3,5}$");
 
+    /**
+     * Checks if the host is an invalid local host.
+     * @param host host string
+     * @return boolean true if invalid
+     */
     public static boolean isInvalidLocalHost(String host) {
         return host == null || host.length() == 0 || host.equalsIgnoreCase("localhost") || host.equals("0.0.0.0")
                 || (LOCAL_IP_PATTERN.matcher(host).matches());
     }
 
+    /**
+     * Checks if the host is a valid local host.
+     * @param host host string
+     * @return boolean true if valid
+     */
     public static boolean isValidLocalHost(String host) {
         return !isInvalidLocalHost(host);
     }
@@ -161,16 +184,31 @@ public class NetUtils {
         return null;
     }
 
+    /**
+     * Checks if an address string is valid.
+     * @param address address string
+     * @return boolean true if valid
+     */
     public static boolean isValidAddress(String address) {
         return ADDRESS_PATTERN.matcher(address).matches();
     }
 
+    /**
+     * Checks if an InetAddress is valid.
+     * @param address InetAddress
+     * @return boolean true if valid
+     */
     public static boolean isValidAddress(InetAddress address) {
         if (address == null || address.isLoopbackAddress()) return false;
         String name = address.getHostAddress();
         return (name != null && !ANYHOST.equals(name) && !LOCALHOST.equals(name) && IP_PATTERN.matcher(name).matches());
     }
     //return ip to avoid lookup dns
+    /**
+     * Gets the host name from a SocketAddress.
+     * @param socketAddress SocketAddress
+     * @return String host name
+     */
     public static String getHostName(SocketAddress socketAddress) {
         if (socketAddress == null) {
             return null;
@@ -186,6 +224,10 @@ public class NetUtils {
         return null;
     }
 
+    /**
+     * Gets the local address using a datagram socket.
+     * @return String local address
+     */
     public static String getLocalAddressByDatagram() {
         try(final DatagramSocket socket = new DatagramSocket()){
             socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
@@ -333,6 +375,11 @@ public class NetUtils {
         return buf.toString();
     }
 
+    /**
+     * Resolves a fully qualified domain name to an IP address.
+     * @param fqdn fully qualified domain name
+     * @return String IP address
+     */
     public static String resolveHost2Address(String fqdn) {
         String ip = null;
         try {
@@ -344,6 +391,11 @@ public class NetUtils {
         return ip;
     }
 
+    /**
+     * Resolves the host in a URI to an IP address.
+     * @param uri URI
+     * @return URI with resolved host
+     */
     public static URI resolveUriHost2Address(URI uri) {
         // convert the uri to URL.
         try {

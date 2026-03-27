@@ -60,50 +60,76 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Steve Hu
  */
 public class Server {
+    /**
+     * Default constructor for Server.
+     */
+    public Server() {
+    }
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
+    /** Constant for secret configuration name */
     public static final String SECRET_CONFIG_NAME = "secret";
+    /** Constant for startup configuration name */
     public static final String STARTUP_CONFIG_NAME = "startup";
+    /** Constant for config loader class configuration entry */
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
+    /** Constant for status configuration names */
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
+    /** Constant for environment property key */
     public static final String ENV_PROPERTY_KEY = "environment";
-
+    /** Constant for registry connection error code */
     public static final String ERROR_CONNECT_REGISTRY = "ERR10058";
-
+    /** Constant for status host IP environment variable */
     public static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     // service_id in slf4j MDC
+    /** service ID name in MDC */
     static final String SID = "sId";
-    // the bound http port for the server. For metrics and other queries.
+    /** current HTTP port */
     public static int currentHttpPort = -1;
-    // the bound https port for the server. For metrics and other queries.
+    /** current HTTPS port */
     public static int currentHttpsPort = -1;
-    // the bound ip for the server. For metrics and other queries
+    /** current address (IP) */
     public static String currentAddress;
 
+    /** Trust manager that trusts all certificates */
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
     public static List<String> serviceIds = new ArrayList<>();
     /** a list of service urls kept in memory so that they can be unregistered during server shutdown */
     public static List<URL> serviceUrls;
 
+    /** indicates if shutdown has been requested */
     static protected boolean shutdownRequested = false;
+    /** Undertow server instance */
     static Undertow server = null;
+    /** registry instance */
     static Registry registry;
+    /** SSL context instance */
     static SSLContext sslContext;
 
+    /** graceful shutdown handler */
     static GracefulShutdownHandler gracefulShutdownHandler;
 
     // When dynamic port is used, this HashSet contains used port so that we just need to check here instead of trying bind.
     private static Set usedPorts;
 
     // indicate if the server is ready to accept requests. Used by Kafka sidecar to consume messages in reactive consumer.
+    /** indicates if the server is ready to accept requests */
     public static boolean ready = false;
 
+    /**
+     * Main entry point for the server.
+     *
+     * @param args Command line arguments
+     */
     public static void main(final String[] args) {
         init();
     }
 
+    /**
+     * Initializes the server.
+     */
     public static void init() {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
@@ -152,6 +178,9 @@ public class Server {
         configLoader.init();
     }
 
+    /**
+     * Starts the server.
+     */
     static public void start() {
         // add shutdown hook here.
         addDaemonShutdownHook();
@@ -340,16 +369,27 @@ public class Server {
         return true;
     }
 
+    /**
+     * Shuts down the application.
+     *
+     * @param args Command line arguments
+     */
     public static void shutdownApp(final String[] args) {
         shutdown();
     }
 
+    /**
+     * Stops the Undertow server.
+     */
     static public void stop() {
         if (server != null)
             server.stop();
     }
 
     // implement shutdown hook here.
+    /**
+     * Performs a graceful shutdown of the server and unregisters services.
+     */
     static public void shutdown() {
 
         // need to unregister the service
@@ -383,6 +423,9 @@ public class Server {
         logger.info("Cleaning up before server shutdown");
     }
 
+    /**
+     * Adds a shutdown hook to handle JVM termination.
+     */
     static protected void addDaemonShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -392,6 +435,10 @@ public class Server {
         });
     }
 
+    /**
+     * Loads the server keystore.
+     * @return KeyStore server keystore
+     */
     protected static KeyStore loadKeyStore() {
         String name = ServerConfig.load().getKeystoreName();
         String pass = ServerConfig.load().getKeystorePass();
@@ -402,6 +449,10 @@ public class Server {
         return TlsUtil.loadKeyStore(name, pass.toCharArray());
     }
 
+    /**
+     * Loads the server truststore.
+     * @return KeyStore server truststore
+     */
     protected static KeyStore loadTrustStore() {
         String name = ServerConfig.load().getTruststoreName();
         String pass = ServerConfig.load().getTruststorePass();
@@ -473,6 +524,9 @@ public class Server {
 
 
     // method used to merge status.yml and app-status.yml
+    /**
+     * Merges status.yml and app-status.yml configuration files.
+     */
     protected static void mergeStatusConfig() {
         Map<String, Object> appStatusConfig = Config.getInstance().getJsonMapConfigNoCache(STATUS_CONFIG_NAME[1]);
         if (appStatusConfig == null) {
@@ -539,6 +593,11 @@ public class Server {
         }
     }
 
+    /**
+     * Gets the server address (IP).
+     *
+     * @return String address
+     */
     public static String getAddress() {
         // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
         // variable. If this is null
@@ -562,10 +621,20 @@ public class Server {
         return address;
     }
 
+    /**
+     * Gets the light-4j version.
+     *
+     * @return String version
+     */
     public static String getLight4jVersion() {
         return Server.class.getPackage().getImplementationVersion();
     }
 
+    /**
+     * Gets the light-4j product name.
+     *
+     * @return String product name
+     */
     public static String getLight4jProduct() {
         return Server.class.getPackage().getImplementationTitle();
     }

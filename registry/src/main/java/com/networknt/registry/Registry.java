@@ -24,6 +24,11 @@ package com.networknt.registry;
  */
 public interface Registry extends RegistryService, DiscoveryService {
 
+    /**
+     * Gets the registry URL.
+     *
+     * @return URL registry URL
+     */
     URL getUrl();
 
     /**

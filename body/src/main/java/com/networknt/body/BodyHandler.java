@@ -56,17 +56,23 @@ import java.util.Map;
 
 public class BodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BodyHandler.class);
+    /** content type mismatch status code */
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
 
     // request body will be parsed during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
+    /** request body attachment key */
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
+    /** request body string attachment key */
     public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     private String configName = BodyConfig.CONFIG_NAME;
 
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for BodyHandler.
+     */
     public BodyHandler() {
         BodyConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
@@ -144,7 +150,7 @@ public class BodyHandler implements MiddlewareHandler {
      * Method used to parse the body into FormData and attach it into exchange
      *
      * @param exchange exchange to be attached
-     * @throws IOException
+     * @throws IOException IO Exception
      */
     private void attachFormDataBody(final HttpServerExchange exchange) throws IOException {
         Object data;
@@ -166,7 +172,7 @@ public class BodyHandler implements MiddlewareHandler {
      * @param exchange exchange to be attached
      * @param string   unparsed request body
      * @throws IOException IO Exception
-     * @return boolean
+     * @return boolean true if successful, false otherwise
      */
     private boolean attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
         Object body;

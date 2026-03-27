@@ -28,6 +28,12 @@ import java.util.Map;
  */
 public class HeadersDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable {
     private Map<String, Object> headerMap = new LinkedHashMap<>();
+    /**
+     * Constructs a HeadersDumper with config and exchange.
+     *
+     * @param config dump configuration
+     * @param exchange HTTP server exchange
+     */
     public HeadersDumper(DumpConfig config, HttpServerExchange exchange) {
         super(config, exchange);
     }

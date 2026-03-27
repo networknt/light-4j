@@ -46,8 +46,15 @@ public abstract class AbstractRegistry implements Registry {
 
     private URL registryUrl;
     private Set<URL> registeredServiceUrls = new ConcurrentHashSet<>();
+    /** Registry class name used for logging and status */
     protected String registryClassName = this.getClass().getSimpleName();
 
+    /**
+     * Constructs an AbstractRegistry with a URL.
+     * Registers a switcher listener for registry heartbeats.
+     *
+     * @param url registry URL
+     */
     public AbstractRegistry(URL url) {
         this.registryUrl = url.createCopy();
         // register a heartbeat switcher to perceive service state change and change available state
@@ -224,6 +231,13 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
     */
+    /**
+     * Notifies listener with a list of URLs.
+     *
+     * @param refUrl   reference URL
+     * @param listener notify listener
+     * @param urls     list of URLs
+     */
     protected void notify(URL refUrl, NotifyListener listener, List<URL> urls) {
         if (listener == null || urls == null) {
             return;
@@ -265,18 +279,56 @@ public abstract class AbstractRegistry implements Registry {
         return url;
     }
 
+    /**
+     * Abstract method to register a URL.
+     *
+     * @param url URL to register
+     */
     protected abstract void doRegister(URL url);
 
+    /**
+     * Abstract method to unregister a URL.
+     *
+     * @param url URL to unregister
+     */
     protected abstract void doUnregister(URL url);
 
+    /**
+     * Abstract method to subscribe to a URL.
+     *
+     * @param url      URL to subscribe to
+     * @param listener notify listener
+     */
     protected abstract void doSubscribe(URL url, NotifyListener listener);
 
+    /**
+     * Abstract method to unsubscribe from a URL.
+     *
+     * @param url      URL to unsubscribe from
+     * @param listener notify listener
+     */
     protected abstract void doUnsubscribe(URL url, NotifyListener listener);
 
+    /**
+     * Abstract method to discover URLs.
+     *
+     * @param url URL to discover
+     * @return List of discovered URLs
+     */
     protected abstract List<URL> doDiscover(URL url);
 
+    /**
+     * Abstract method to set a URL available.
+     *
+     * @param url URL to set available
+     */
     protected abstract void doAvailable(URL url);
 
+    /**
+     * Abstract method to set a URL unavailable.
+     *
+     * @param url URL to set unavailable
+     */
     protected abstract void doUnavailable(URL url);
 
 }

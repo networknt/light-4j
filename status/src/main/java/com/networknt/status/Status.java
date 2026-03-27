@@ -41,12 +41,18 @@ import static java.lang.String.format;
 public class Status {
     private static final Logger logger = LoggerFactory.getLogger(Status.class);
 
+    /** Constant for configuration name */
     public static final String CONFIG_NAME = "status";
 
+
     // default severity
+    /** Default severity level */
     public static final String defaultSeverity = "ERROR";
+    /** Config key to show metadata */
     public static final String SHOW_METADATA = "showMetadata";
+    /** Config key to show description */
     public static final String SHOW_DESCRIPTION = "showDescription";
+    /** Config key to show message */
     public static final String SHOW_MESSAGE = "showMessage";
 
     // status serialization bean
@@ -183,62 +189,137 @@ public class Status {
         this.description = description;
     }
 
+    /**
+     * Gets the HTTP status code.
+     *
+     * @return int status code
+     */
     public int getStatusCode() {
         return statusCode;
     }
 
+    /**
+     * Sets the HTTP status code.
+     *
+     * @param statusCode status code
+     */
     public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
     }
 
+    /**
+     * Gets the error code.
+     *
+     * @return String code
+     */
     public String getCode() {
         return code;
     }
 
+    /**
+     * Sets the error code.
+     *
+     * @param code error code
+     */
     public void setCode(String code) {
         this.code = code;
     }
 
+    /**
+     * Gets the error message.
+     *
+     * @return String message
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * Sets the error message.
+     *
+     * @param message error message
+     */
     public void setMessage(String message) {
         this.message = message;
     }
 
+    /**
+     * Gets the error description.
+     *
+     * @return String description
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * Sets the error description.
+     *
+     * @param description error description
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * Sets the severity level.
+     *
+     * @param severity severity
+     */
     public void setSeverity(String severity) {
         this.severity = severity;
     }
 
+    /**
+     * Gets the severity level.
+     *
+     * @return String severity
+     */
     public String getSeverity() {
         return severity;
     }
 
+    /**
+     * Gets the metadata map.
+     *
+     * @return Map of metadata
+     */
     public Map<String, Object> getMetadata() {
         return metadata;
     }
 
+    /**
+     * Sets the metadata map.
+     *
+     * @param metadata metadata
+     */
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
     }
 
+    /**
+     * Checks if metadata should be shown in the response.
+     *
+     * @return boolean show metadata
+     */
     public static boolean shouldShowMetadata() {
         return config.get(SHOW_METADATA) == null ? false : Config.loadBooleanValue(SHOW_METADATA, config.get(SHOW_METADATA));
     }
 
+    /**
+     * Checks if message should be shown in the response.
+     *
+     * @return boolean show message
+     */
     public static boolean shouldShowMessage() {
         return config.get(SHOW_MESSAGE) == null ? true : Config.loadBooleanValue(SHOW_MESSAGE, config.get(SHOW_MESSAGE));
     }
 
+    /**
+     * Checks if description should be shown in the response.
+     *
+     * @return boolean show description
+     */
     public static boolean shouldShowDescription() {
         return config.get(SHOW_DESCRIPTION) == null ? true : Config.loadBooleanValue(SHOW_DESCRIPTION, config.get(SHOW_DESCRIPTION));
     }

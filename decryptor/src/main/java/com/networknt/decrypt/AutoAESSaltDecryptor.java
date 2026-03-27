@@ -13,6 +13,13 @@ package com.networknt.decrypt;
  * to make the encryption stronger.
  */
 public class AutoAESSaltDecryptor extends AESSaltDecryptor {
+    /**
+     * Default constructor for AutoAESSaltDecryptor.
+     */
+    public AutoAESSaltDecryptor() {
+        super();
+    }
+
     private final static String LIGHT_4J_CONFIG_PASSWORD = "light_4j_config_password";
     // All junit tests configuration are using this password to encrypt sensitive info in config files. This Decryptor
     // can detect if the current thread is started by the JUnit test case so that default password is going to be used.
@@ -54,6 +61,11 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
         }
     }
 
+    /**
+     * Checks if the current thread is executing under JUnit.
+     *
+     * @return boolean true if JUnit is detected
+     */
     public static boolean isJUnitTest() {
         for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
             if (element.getClassName().startsWith("org.junit.")) {

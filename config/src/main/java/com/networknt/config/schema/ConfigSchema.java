@@ -5,6 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation for configuration schemas.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigSchema {
@@ -60,22 +63,30 @@ public @interface ConfigSchema {
 
     /**
      * The name of the parameter key of the configuration file.
+     *
+     * @return String config key
      */
     String configKey();
 
     /**
      * The name of the configuration file.
+     *
+     * @return String config name
      */
     String configName();
 
     /**
      * List of all the configuration file formats generated.
      * Leaving this empty means no configuration files get written.
+     *
+     * @return OutputFormat array
      */
     OutputFormat[] outputFormats() default {};
 
     /**
      * The description of the config file itself.
+     *
+     * @return String config description
      */
     String configDescription() default DEFAULT_STRING;
 }

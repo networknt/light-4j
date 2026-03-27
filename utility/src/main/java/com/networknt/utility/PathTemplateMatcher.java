@@ -28,8 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * TODO: we can probably do this faster using a trie type structure, but I think the current impl should perform ok most of the time
  *
  * @author Stuart Douglas
+ * @param <T> the type of value to match
  */
 public class PathTemplateMatcher<T> {
+    /**
+     * Default constructor for PathTemplateMatcher.
+     */
+    public PathTemplateMatcher() {
+    }
 
     /**
      * Map of path template stem to the path templates that share the same base.
@@ -41,6 +47,11 @@ public class PathTemplateMatcher<T> {
      */
     private volatile int[] lengths = {};
 
+    /**
+     * Matches a path against the registered templates.
+     * @param path request path
+     * @return PathMatchResult match result or null
+     */
     public PathMatchResult<T> match(final String path) {
         String normalizedPath = "".equals(path) ? "/" : path;
         if(!normalizedPath.startsWith("/"))
@@ -84,6 +95,12 @@ public class PathTemplateMatcher<T> {
     }
 
 
+    /**
+     * Adds a path template and value to the matcher.
+     * @param template PathTemplate
+     * @param value T value
+     * @return PathTemplateMatcher
+     */
     public synchronized PathTemplateMatcher<T> add(final PathTemplate template, final T value) {
         Set<PathTemplateHolder> values = pathTemplateMap.get(trimBase(template));
         Set<PathTemplateHolder> newValues;
@@ -140,11 +157,22 @@ public class PathTemplateMatcher<T> {
         this.lengths = lengthArray;
     }
 
+    /**
+     * Adds a path template string and value to the matcher.
+     * @param pathTemplate path template string
+     * @param value T value
+     * @return PathTemplateMatcher
+     */
     public synchronized PathTemplateMatcher<T> add(final String pathTemplate, final T value) {
         final PathTemplate template = PathTemplate.create(pathTemplate);
         return add(template, value);
     }
 
+    /**
+     * Adds all templates from another matcher.
+     * @param pathTemplateMatcher matcher to copy from
+     * @return PathTemplateMatcher
+     */
     public synchronized PathTemplateMatcher<T> addAll(PathTemplateMatcher<T> pathTemplateMatcher) {
         for (Map.Entry<String, Set<PathTemplateHolder>> entry : pathTemplateMatcher.getPathTemplateMap().entrySet()) {
             for (PathTemplateHolder pathTemplateHolder : entry.getValue()) {
@@ -158,6 +186,10 @@ public class PathTemplateMatcher<T> {
         return pathTemplateMap;
     }
 
+    /**
+     * Gets all registered path templates.
+     * @return Set of PathTemplate
+     */
     public Set<PathTemplate> getPathTemplates() {
         Set<PathTemplate> templates = new HashSet<>();
         for (Set<PathTemplateHolder> holders : pathTemplateMap.values()) {
@@ -168,6 +200,11 @@ public class PathTemplateMatcher<T> {
         return templates;
     }
 
+    /**
+     * Removes a path template from the matcher.
+     * @param pathTemplate path template string
+     * @return PathTemplateMatcher
+     */
     public synchronized PathTemplateMatcher<T> remove(final String pathTemplate) {
         final PathTemplate template = PathTemplate.create(pathTemplate);
         return remove(template);
@@ -199,6 +236,11 @@ public class PathTemplateMatcher<T> {
     }
 
 
+    /**
+     * Gets the value associated with a template string.
+     * @param template template string
+     * @return T value or null
+     */
     public synchronized T get(String template) {
         PathTemplate pathTemplate = PathTemplate.create(template);
         Set<PathTemplateHolder> values = pathTemplateMap.get(trimBase(pathTemplate));
@@ -213,14 +255,28 @@ public class PathTemplateMatcher<T> {
         return null;
     }
 
+    /**
+     * Path match result class.
+     * @param <T> type of value
+     */
     public static class PathMatchResult<T> extends PathTemplateMatch {
         private final T value;
 
+        /**
+         * Constructs a PathMatchResult.
+         * @param parameters parameters map
+         * @param matchedTemplate matched template string
+         * @param value T value
+         */
         public PathMatchResult(Map<String, String> parameters, String matchedTemplate, T value) {
             super(matchedTemplate, parameters);
             this.value = value;
         }
 
+        /**
+         * Gets the value.
+         * @return T value
+         */
         public T getValue() {
             return value;
         }

@@ -16,17 +16,27 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Response interceptor that intercepts the response body and attaches it to the exchange.
+ */
 public class ResponseBodyInterceptor implements ResponseInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
     private String configName = BodyConfig.CONFIG_NAME;
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for ResponseBodyInterceptor.
+     */
     public ResponseBodyInterceptor() {
         BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("ResponseBodyInterceptor is loaded");
     }
 
+    /**
+     * Constructs a ResponseBodyInterceptor with a specific config name.
+     * @param configName config name
+     */
     public ResponseBodyInterceptor(String configName) {
         this.configName = configName;
         BodyConfig.load(configName);
@@ -134,11 +144,25 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
         return false;
     }
 
+    /**
+     * Method used to attach the XML body to the exchange.
+     * @param ex current exchange
+     * @param str XML body as a string
+     * @param config body configuration
+     * @return true if successful
+     */
     public boolean attachXmlBody(HttpServerExchange ex, String str, BodyConfig config) {
         this.cacheResponseBody(ex, str, config);
         return true;
     }
 
+    /**
+     * Method used to attach the form data body to the exchange.
+     * @param ex current exchange
+     * @param str form data body as a string
+     * @param config body configuration
+     * @return true if successful
+     */
     public boolean attachFormDataBody(HttpServerExchange ex, String str, BodyConfig config) {
         this.cacheResponseBody(ex, str, config);
         return true;

@@ -10,6 +10,9 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class for annotation processing.
+ */
 public class AnnotationUtils {
 
     private AnnotationUtils() {
@@ -19,9 +22,9 @@ public class AnnotationUtils {
     /**
      * Safely gets an element from a canonical name.
      *
-     * @param name             - The canonical name of the element.
-     * @param pe               - The processing environment to use.
-     * @return                 - Returns the element if it exists, otherwise none.
+     * @param name The canonical name of the element.
+     * @param pe   The processing environment to use.
+     * @return     Returns the element if it exists, otherwise none.
      */
     public static Optional<Element> getElement(
             final String name,

@@ -22,7 +22,20 @@ import com.networknt.service.SingletonServiceFactory;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility class for decrypting configuration maps.
+ */
 public class DecryptUtil {
+    private DecryptUtil() {
+        throw new IllegalStateException("DecryptUtil is a utility class");
+    }
+
+    /**
+     * Decrypts a map of configuration values.
+     *
+     * @param map The map to decrypt
+     * @return The decrypted map
+     */
     public static Map<String, Object> decryptMap(Map<String, Object> map) {
         decryptNode(map);
         return map;

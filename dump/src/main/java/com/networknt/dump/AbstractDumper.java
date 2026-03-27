@@ -24,9 +24,16 @@ import java.util.Map;
  * an abstract class which contains common properties of each dumper
  */
 abstract class AbstractDumper{
+    /** The HTTP server exchange */
     protected final HttpServerExchange exchange;
+    /** The dump configuration */
     protected final DumpConfig config;
 
+    /**
+     * Constructs an AbstractDumper with config and exchange.
+     * @param config dump configuration
+     * @param exchange HTTP server exchange
+     */
     AbstractDumper(DumpConfig config, HttpServerExchange exchange) {
         this.config = config;
         this.exchange = exchange;

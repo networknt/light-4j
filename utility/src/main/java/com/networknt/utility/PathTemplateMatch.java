@@ -29,15 +29,28 @@ public class PathTemplateMatch {
     private final String matchedTemplate;
     private final Map<String, String> parameters;
 
+    /**
+     * Constructs a PathTemplateMatch.
+     * @param matchedTemplate matched template string
+     * @param parameters parameters map
+     */
     public PathTemplateMatch(String matchedTemplate, Map<String, String> parameters) {
         this.matchedTemplate = matchedTemplate;
         this.parameters = parameters;
     }
 
+    /**
+     * Gets the matched template.
+     * @return String matched template
+     */
     public String getMatchedTemplate() {
         return matchedTemplate;
     }
 
+    /**
+     * Gets the parameters.
+     * @return Map of parameters
+     */
     public Map<String, String> getParameters() {
         return parameters;
     }

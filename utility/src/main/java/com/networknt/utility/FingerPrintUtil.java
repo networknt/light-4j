@@ -23,10 +23,23 @@ import org.slf4j.LoggerFactory;
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
 
+/**
+ * Utility class to generate certificate fingerprints.
+ */
 public class FingerPrintUtil {
+    /**
+     * Default constructor for FingerPrintUtil.
+     */
+    public FingerPrintUtil() {
+    }
     static final Logger logger = LoggerFactory.getLogger(CodeVerifierUtil.class);
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
+    /**
+     * Gets the certificate fingerprint.
+     * @param cert Certificate
+     * @return String fingerprint
+     */
     public static String getCertFingerPrint(Certificate cert)  {
         byte [] digest = null;
         try {
