@@ -325,9 +325,19 @@ public class McpHandler implements MiddlewareHandler {
             return result;
         }
 
+        String endpointPath = endpoint;
+        String endpointMethod = "call";
+        int atIndex = endpoint.indexOf('@');
+        if (atIndex >= 0) {
+            endpointPath = endpoint.substring(0, atIndex);
+            if (atIndex < endpoint.length() - 1) {
+                endpointMethod = endpoint.substring(atIndex + 1);
+            }
+        }
+
         String serviceEntry = endpointRules.containsKey(endpoint)
                 ? endpoint
-                : ConfigUtils.findServiceEntry("call", endpoint, endpointRules);
+                : ConfigUtils.findServiceEntry(endpointMethod, endpointPath, endpointRules);
         if (serviceEntry == null) {
             return result;
         }
@@ -367,13 +377,8 @@ public class McpHandler implements MiddlewareHandler {
                 objMap.put(Constants.COL, permissionMap.get(Constants.COL));
                 objMap.put(Constants.ROW, permissionMap.get(Constants.ROW));
             }
-            try {
-                ruleResult = ruleExecutor.getRuleEngine().executeRule(ruleId, objMap);
-            } catch (Exception e) {
-                logger.error("Failed to execute MCP response filter rule {} for endpoint {}", ruleId, endpoint, e);
-                return result;
-            }
-            boolean res = (Boolean) ruleResult.get(RuleConstants.RESULT);
+            ruleResult = ruleExecutor.executeRule(ruleId, objMap);
+            boolean res = Boolean.TRUE.equals(ruleResult == null ? null : ruleResult.get(RuleConstants.RESULT));
             if (!res) {
                 finalResult = false;
                 break;

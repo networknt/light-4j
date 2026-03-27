@@ -5,6 +5,11 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.rule.Rule;
+import com.networknt.rule.RuleConstants;
+import com.networknt.rule.RuleEngine;
+import com.networknt.rule.RuleExecutor;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -22,6 +27,8 @@ import org.xnio.OptionMap;
 import com.networknt.sse.SseConnectionRegistry;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -33,9 +40,11 @@ public class McpHandlerTest {
     static Undertow backendServer = null;
     static final int PORT = 7080;
     static final int BACKEND_PORT = 7081;
+    static final TestRuleExecutor testRuleExecutor = new TestRuleExecutor();
 
     @BeforeAll
     public static void setUp() {
+        SingletonServiceFactory.setBean(RuleExecutor.class.getName(), testRuleExecutor);
         if (server == null) {
             logger.info("starting server");
             McpHandler handler = new McpHandler();
@@ -127,6 +136,7 @@ public class McpHandlerTest {
         // internal clear method or just rely on static?
         // McpToolRegistry doesn't have a clear method public exposed usually?
         // Let's check imports. We need to import HttpMcpTool first.
+        testRuleExecutor.setEndpointRules(new HashMap<>());
         McpToolRegistry.clear();
     }
 
@@ -344,5 +354,162 @@ public class McpHandlerTest {
 
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> tool.execute(Map.of()));
         Assertions.assertTrue(exception.getMessage().contains("Cluster service is not available"));
+    }
+
+    @Test
+    public void testToolCallResponseFilterForTextContent() throws Exception {
+        McpTool tool = new McpTool() {
+            @Override
+            public String getName() { return "textFilterTool"; }
+            @Override
+            public String getDescription() { return "A text filter tool"; }
+            @Override
+            public String getEndpoint() { return "/v1/accounts/123@get"; }
+            @Override
+            public String getInputSchema() { return "{\"type\": \"object\"}"; }
+            @Override
+            public Map<String, Object> execute(Map<String, Object> arguments) {
+                return Map.of("content", List.of(Map.of("type", "text", "text", "[{\"accountNo\":123}]")));
+            }
+        };
+        McpToolRegistry.registerTool(tool);
+        testRuleExecutor.setEndpointRules(Map.of(
+                "/v1/accounts@get",
+                Map.of("res-fil", List.of("filterText"))));
+
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(
+                new URI("http://localhost:" + PORT),
+                Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"textFilterTool\", \"arguments\": {}}, \"id\": 5}";
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            latch.await(1000, TimeUnit.MILLISECONDS);
+
+            ClientResponse response = reference.get();
+            Assertions.assertEquals(200, response.getResponseCode());
+            String body = response.getAttachment(Http2Client.RESPONSE_BODY);
+            Map<String, Object> map = Config.getInstance().getMapper().readValue(body, Map.class);
+            Map<String, Object> result = (Map<String, Object>) map.get("result");
+            List<Map<String, Object>> content = (List<Map<String, Object>>) result.get("content");
+            Assertions.assertEquals("[{\"filtered\":true}]", content.get(0).get("text"));
+        } finally {
+            client.restore(token);
+            testRuleExecutor.setEndpointRules(new HashMap<>());
+        }
+    }
+
+    @Test
+    public void testToolCallResponseFilterForStructuredContent() throws Exception {
+        McpTool tool = new McpTool() {
+            @Override
+            public String getName() { return "structuredFilterTool"; }
+            @Override
+            public String getDescription() { return "A structured filter tool"; }
+            @Override
+            public String getEndpoint() { return "/v1/pets@get"; }
+            @Override
+            public String getInputSchema() { return "{\"type\": \"object\"}"; }
+            @Override
+            public Map<String, Object> execute(Map<String, Object> arguments) {
+                return Map.of("structuredContent", Map.of("id", 1, "name", "dog"));
+            }
+        };
+        McpToolRegistry.registerTool(tool);
+        testRuleExecutor.setEndpointRules(Map.of(
+                "/v1/pets@get",
+                Map.of("res-fil", List.of("filterStructured"))));
+
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(
+                new URI("http://localhost:" + PORT),
+                Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"structuredFilterTool\", \"arguments\": {}}, \"id\": 6}";
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            latch.await(1000, TimeUnit.MILLISECONDS);
+
+            ClientResponse response = reference.get();
+            Assertions.assertEquals(200, response.getResponseCode());
+            String body = response.getAttachment(Http2Client.RESPONSE_BODY);
+            Map<String, Object> map = Config.getInstance().getMapper().readValue(body, Map.class);
+            Map<String, Object> result = (Map<String, Object>) map.get("result");
+            Map<String, Object> structuredContent = (Map<String, Object>) result.get("structuredContent");
+            Assertions.assertEquals(Boolean.TRUE, structuredContent.get("filtered"));
+        } finally {
+            client.restore(token);
+            testRuleExecutor.setEndpointRules(new HashMap<>());
+        }
+    }
+
+    static class TestRuleExecutor implements RuleExecutor {
+        private Map<String, Object> endpointRules = new HashMap<>();
+
+        @Override
+        public Map<String, Object> executeRule(String ruleId, Map<String, Object> input) {
+            String responseBody = (String) input.get("responseBody");
+            Map<String, Object> result = new HashMap<>();
+            result.put(RuleConstants.RESULT, true);
+            if ("filterText".equals(ruleId)) {
+                result.put("responseBody", "[{\"filtered\":true}]");
+            } else if ("filterStructured".equals(ruleId)) {
+                result.put("responseBody", "{\"filtered\":true}");
+            } else {
+                result.put("responseBody", responseBody);
+            }
+            return result;
+        }
+
+        @Override
+        public Map<String, Object> executeRules(List<String> ruleIds, String logic, Map<String, Object> objMap) {
+            return null;
+        }
+
+        @Override
+        public Map<String, Object> executeRules(String serviceEntry, String ruleType, Map<String, Object> objMap) {
+            Map<String, Object> result = new HashMap<>();
+            result.put(RuleConstants.RESULT, true);
+            return result;
+        }
+
+        @Override
+        public RuleEngine getRuleEngine() {
+            return null;
+        }
+
+        @Override
+        public Map<String, Object> getEndpointRules() {
+            return endpointRules;
+        }
+
+        @Override
+        public void setEndpointRules(Map<String, Object> endpointRules) {
+            this.endpointRules = endpointRules;
+        }
+
+        @Override
+        public Map<String, Rule> getRules() {
+            return null;
+        }
+
+        @Override
+        public void setRules(Map<String, Rule> rules) {
+        }
     }
 }
