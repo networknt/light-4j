@@ -93,7 +93,7 @@ public class ResponseRowFilterAction implements IAction {
         } else {
             list = mapPermission(list, attributeMap, jwtAttribute, jwtClaims);
         }
-        String jwtUser = jwtClaims.getClaimValueAsString(Constants.USER);
+        String jwtUser = jwtClaims.getClaimValueAsString(Constants.UID);
         Map<String, Object> userMap = (Map<String, Object>)rowMap.get(Constants.USER);
         if(userMap == null) {
             if(logger.isTraceEnabled()) logger.trace("no user filter configured for the endpoint.");
@@ -108,7 +108,7 @@ public class ResponseRowFilterAction implements IAction {
         for (Map.Entry<String, Object> entry : permissionMap.entrySet()) {
             String key = entry.getKey();  // this is a role, group, position, attribute, user
             List<Map<String, Object>> value = (List<Map<String, Object>>) entry.getValue(); // this is the list of colName, operator and colValue map.
-            if (jwtPermission.contains(key)) {
+            if (PermissionMatchUtils.hasPermission(jwtPermission, key)) {
                 if (logger.isTraceEnabled()) logger.trace("permission matched for key = {} value = {}", key, value);
 
                 Iterator<Object> iterator = list.iterator();
