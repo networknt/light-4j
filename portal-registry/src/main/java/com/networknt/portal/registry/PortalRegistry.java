@@ -42,7 +42,7 @@ public class PortalRegistry extends AbstractRegistry {
     private int lookupInterval;
     // keep all the subscribe urls, so that it won't double subscribe.
     private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
-    // service local cache. key: serviceName, value: <service url list>
+    // service local cache. key: serviceName(+tag+protocol), value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<>();
 
     public PortalRegistry(URL url, PortalRegistryClient client) {
@@ -96,10 +96,11 @@ public class PortalRegistry extends AbstractRegistry {
         if(!subscribedSet.contains(url)) {
             String serviceId = url.getPath();
             String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+            String key = discoveryKey(serviceId, tag, url.getProtocol());
             client.ensureWebSocketConnected(getPortalToken(), this::handleWebSocketNotification);
             List<Map<String, Object>> nodes = client.subscribeService(serviceId, tag, url.getProtocol(), getPortalToken());
             ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId, tag, url.getProtocol(), nodes);
-            updateServiceCache(serviceKey(serviceId, tag), serviceUrls, false);
+            updateServiceCache(key, serviceUrls, false);
         }
         subscribedSet.add(url);
     }
@@ -117,8 +118,8 @@ public class PortalRegistry extends AbstractRegistry {
     protected List<URL> doDiscover(URL url) {
         String serviceId = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-        String key = tag == null ? serviceId : serviceId + "|" + tag;
         String protocol = url.getProtocol();
+        String key = discoveryKey(serviceId, tag, protocol);
         if(logger.isTraceEnabled()) logger.trace("discover protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
         List<URL> urls = serviceCache.get(key);
         if (urls == null || urls .isEmpty()) {
@@ -165,7 +166,7 @@ public class PortalRegistry extends AbstractRegistry {
         }
         String protocol = (String)params.get("protocol");
         if (key == null && serviceId != null) {
-            key = serviceKey(serviceId, tag);
+            key = discoveryKey(serviceId, tag, protocol);
         }
         if (key == null) {
             return;
@@ -188,7 +189,7 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private ConcurrentHashMap<String, List<URL>> convertLisMap2UR(String serviceId, String tag, String protocol, List<Map<String, Object>> services)  {
-        String key = serviceKey(serviceId, tag);
+        String key = discoveryKey(serviceId, tag, protocol);
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
         if (services != null && !services.isEmpty()) {
             for (Map<String, Object> service : services) {
@@ -213,6 +214,11 @@ public class PortalRegistry extends AbstractRegistry {
             logger.info("no response for service: {}, set urls to empty list", key);
         }
         return serviceUrls;
+    }
+
+    private String discoveryKey(String serviceId, String tag, String protocol) {
+        String key = serviceKey(serviceId, tag);
+        return protocol == null ? key : key + "|" + protocol;
     }
 
     /**

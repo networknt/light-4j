@@ -17,9 +17,13 @@ package com.networknt.portal.registry;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
+import com.networknt.registry.URLParamType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,5 +59,22 @@ public class PortalRegistryUtilsTest {
     public void testConvertServiceId() {
         String tempServiceId = PortalRegistryUtils.convertPortalRegistrySerivceId(url);
         assertEquals(testServiceId, tempServiceId);
+    }
+
+    @Test
+    public void testBuildUrlPreservesVersionAndEnvironment() {
+        Map<String, Object> service = new HashMap<>();
+        service.put("protocol", "https");
+        service.put("address", testHost);
+        service.put("port", testPort);
+        service.put("version", "2.1.0");
+        service.put("envTag", testServiceTag);
+
+        URL built = PortalRegistryUtils.buildUrl(testServiceId, null, service);
+        assertEquals("https", built.getProtocol());
+        assertEquals(testHost, built.getHost());
+        assertEquals(testPort, built.getPort());
+        assertEquals("2.1.0", built.getParameter(URLParamType.version.getName()));
+        assertEquals(testServiceTag, built.getParameter(URLParamType.environment.getName()));
     }
 }

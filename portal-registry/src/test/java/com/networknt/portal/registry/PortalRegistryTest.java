@@ -20,6 +20,8 @@ import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.PortalRegistryClient;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
+import com.networknt.registry.URLParamType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -130,6 +133,25 @@ public class PortalRegistryTest {
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
         registry.doUnregister(serviceUrl);
+    }
+
+    @Test
+    public void discoverServiceKeepsProtocolsIsolatedInCache() throws Exception {
+        Map<String, String> params = new HashMap<>();
+        params.put(URLParamType.version.getName(), "1.0.0");
+        URL httpUrl = new URLImpl("http", "127.0.0.1", 8001, "com.networknt.multi-protocol.v1", params);
+        URL httpsUrl = new URLImpl("https", "127.0.0.1", 8443, "com.networknt.multi-protocol.v1", params);
+
+        registry.doRegister(httpUrl);
+        registry.doRegister(httpsUrl);
+
+        List<URL> httpUrls = registry.doDiscover(httpUrl);
+        List<URL> httpsUrls = registry.doDiscover(httpsUrl);
+
+        Assertions.assertTrue(httpUrls.stream().allMatch(url -> "http".equals(url.getProtocol())));
+        Assertions.assertTrue(httpsUrls.stream().allMatch(url -> "https".equals(url.getProtocol())));
+        Assertions.assertTrue(httpUrls.stream().anyMatch(url -> url.getPort() == 8001));
+        Assertions.assertTrue(httpsUrls.stream().anyMatch(url -> url.getPort() == 8443));
     }
 
     @Test

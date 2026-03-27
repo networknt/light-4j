@@ -77,7 +77,10 @@ public class PortalRegistryUtils {
         URL url = null;
         if (url == null) {
             Map<String, String> params = new HashMap<>();
-            if(tag != null) params.put(URLParamType.environment.getName(), tag);
+            String effectiveTag = tag != null ? tag : (String)service.get("envTag");
+            if(effectiveTag != null) params.put(URLParamType.environment.getName(), effectiveTag);
+            Object version = service.get("version");
+            if(version != null) params.put(URLParamType.version.getName(), String.valueOf(version));
             url = new URLImpl((String)service.get("protocol"), (String)service.get("address"), (Integer)service.get("port"), serviceId, params);
         }
         return url;

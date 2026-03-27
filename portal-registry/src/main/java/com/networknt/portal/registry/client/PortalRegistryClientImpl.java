@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,6 +30,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     private final Map<String, PortalRegistryService> registeredServices = new ConcurrentHashMap<>();
     private final Map<String, PortalRegistryWebSocketClient> registrationClients = new ConcurrentHashMap<>();
     private final Map<String, SubscriptionState> subscriptions = new ConcurrentHashMap<>();
+    private final Set<String> registrationReconnects = ConcurrentHashMap.newKeySet();
     private final ScheduledExecutorService reconnectExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "portal-registry-ws-reconnect");
         thread.setDaemon(true);
@@ -72,7 +74,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             registerControllerRsService(service, token);
         } catch (Exception e) {
             logger.error("Failed to register service {}", service.getServiceId(), e);
-            scheduleReconnect();
+            scheduleServiceReconnect(service.getInstanceId());
             throw new RuntimeException("Failed to register service " + service.getServiceId(), e);
         }
     }
@@ -85,6 +87,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         if (registrationClient != null) {
             registrationClient.close();
         }
+        registrationReconnects.remove(service.getInstanceId());
     }
 
     @Override
@@ -130,6 +133,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         registrationClients.clear();
         registeredServices.clear();
         subscriptions.clear();
+        registrationReconnects.clear();
         notificationHandler = null;
         currentToken = null;
         reconnectScheduled.set(false);
@@ -143,7 +147,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     @Override
     public List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
         currentToken = token;
-        subscriptions.put(subscriptionKey(serviceId, tag), new SubscriptionState(serviceId, tag, protocol));
+        subscriptions.put(subscriptionKey(serviceId, tag, protocol), new SubscriptionState(serviceId, tag, protocol));
         ensureWebSocketConnected(token, notificationHandler);
         try {
             return extractNodes(webSocketClient.sendRequest("discovery/subscribe", discoveryParams(serviceId, tag, protocol)));
@@ -160,7 +164,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     @Override
     public void unsubscribeService(String serviceId, String tag, String protocol, String token) {
-        subscriptions.remove(subscriptionKey(serviceId, tag));
+        subscriptions.remove(subscriptionKey(serviceId, tag, protocol));
         PortalRegistryWebSocketClient current = webSocketClient;
         if (current == null || !current.isOpen()) {
             return;
@@ -233,7 +237,12 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         registrationClients.values().forEach(PortalRegistryWebSocketClient::close);
         registrationClients.clear();
         for (PortalRegistryService service : registeredServices.values()) {
-            registerControllerRsService(service, currentToken);
+            try {
+                registerControllerRsService(service, currentToken);
+            } catch (RuntimeException e) {
+                logger.warn("Failed to replay microservice registration for {}", service.getServiceId(), e);
+                scheduleServiceReconnect(service.getInstanceId());
+            }
         }
 
         for (SubscriptionState subscription : subscriptions.values()) {
@@ -248,7 +257,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         }
 
         PortalRegistryWebSocketClient registrationClient = new PortalRegistryWebSocketClient(microserviceWsUri, null);
-        registrationClient.setDisconnectHandler(this::scheduleReconnect);
+        registrationClient.setDisconnectHandler(() -> scheduleServiceReconnect(service.getInstanceId()));
         try {
             registrationClient.connect();
             registrationClient.sendRequest("service/register", service.toControllerRsRegisterParams(stripBearerPrefix(token)));
@@ -257,6 +266,38 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             throw new RuntimeException("Failed to connect controller-rs microservice websocket", e);
         }
         registrationClients.put(service.getInstanceId(), registrationClient);
+        registrationReconnects.remove(service.getInstanceId());
+    }
+
+    private void scheduleServiceReconnect(String instanceId) {
+        if (currentToken == null || !registrationReconnects.add(instanceId)) {
+            return;
+        }
+        reconnectExecutor.execute(() -> {
+            long delay = 1000L;
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    PortalRegistryService service = registeredServices.get(instanceId);
+                    if (service == null || currentToken == null) {
+                        return;
+                    }
+                    PortalRegistryWebSocketClient current = registrationClients.get(instanceId);
+                    if (current != null && current.isOpen()) {
+                        return;
+                    }
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(delay);
+                        registerControllerRsService(service, currentToken);
+                        return;
+                    } catch (Exception e) {
+                        logger.warn("Failed to reconnect controller-rs microservice websocket for {}, retrying in {} ms", service.getServiceId(), delay, e);
+                        delay = Math.min(delay * 2, 30000L);
+                    }
+                }
+            } finally {
+                registrationReconnects.remove(instanceId);
+            }
+        });
     }
 
     private String targetDiscoveryAuthorization(String token) {
@@ -319,8 +360,9 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         return token;
     }
 
-    private static String subscriptionKey(String serviceId, String tag) {
-        return tag == null ? serviceId : serviceId + "|" + tag;
+    private static String subscriptionKey(String serviceId, String tag, String protocol) {
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        return protocol == null ? key : key + "|" + protocol;
     }
 
     private record SubscriptionState(String serviceId, String tag, String protocol) {

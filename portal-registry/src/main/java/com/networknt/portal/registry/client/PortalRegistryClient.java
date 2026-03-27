@@ -15,6 +15,7 @@
  */
 package com.networknt.portal.registry.client;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -65,18 +66,29 @@ public interface PortalRegistryClient {
 	 */
 	List<Map<String, Object>> lookupHealthService(String serviceId, String tag, String token);
 
-	boolean supportsWebSocket();
+	default boolean supportsWebSocket() {
+		return false;
+	}
 
-	void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler);
+	default void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+	}
 
-	void closeWebSocket();
+	default void closeWebSocket() {
+	}
 
-	List<Map<String, Object>> subscribeService(String serviceId, String tag, String token);
+	default List<Map<String, Object>> subscribeService(String serviceId, String tag, String token) {
+		return Collections.emptyList();
+	}
 
-	List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token);
+	default List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
+		return subscribeService(serviceId, tag, token);
+	}
 
-	void unsubscribeService(String serviceId, String tag, String token);
+	default void unsubscribeService(String serviceId, String tag, String token) {
+	}
 
-	void unsubscribeService(String serviceId, String tag, String protocol, String token);
+	default void unsubscribeService(String serviceId, String tag, String protocol, String token) {
+		unsubscribeService(serviceId, tag, token);
+	}
 
 }
