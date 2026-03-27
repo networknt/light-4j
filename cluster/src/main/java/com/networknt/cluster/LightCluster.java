@@ -49,6 +49,9 @@ public class LightCluster implements Cluster {
     private static final Set<URL> subscribedSet = new ConcurrentHashSet<>();
     private static final Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
 
+    /**
+     * Default constructor for LightCluster.
+     */
     public LightCluster() {
         if(logger.isInfoEnabled()) logger.info("A LightCluster instance is started");
     }
@@ -79,10 +82,11 @@ public class LightCluster implements Cluster {
     }
 
     /**
+     * Discovers services and returns a list of URIs.
      *
      * @param protocol either http or https
      * @param serviceId unique service identifier - cannot be blank
-     * @param tag an environment tag use along with serviceId for discovery
+     * @param tag an environment tag used along with serviceId for discovery
      * @return List of URI objects
      */
     @Override

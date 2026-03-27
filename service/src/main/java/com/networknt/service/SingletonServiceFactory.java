@@ -30,10 +30,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Created by steve on 2016-11-26.
+ * Factory class for managing singleton service instances defined in service.yml.
+ *
+ * @author Steve Hu
  */
 @SuppressWarnings("unchecked")
 public class SingletonServiceFactory {
+    private SingletonServiceFactory() {
+        throw new IllegalStateException("SingletonServiceFactory is a utility class");
+    }
     private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
     private static Map<String, Object> serviceMap = new HashMap<>();

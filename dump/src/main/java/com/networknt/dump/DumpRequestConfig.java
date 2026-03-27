@@ -5,7 +5,16 @@ import com.networknt.config.schema.BooleanField;
 
 import java.util.List;
 
+/**
+ * Configuration class for dumping requests.
+ */
 public class DumpRequestConfig {
+
+    /**
+     * Default constructor for DumpRequestConfig.
+     */
+    public DumpRequestConfig() {
+    }
 
     @BooleanField(
             configFieldName = "enabled",
@@ -58,34 +67,66 @@ public class DumpRequestConfig {
     )
     private boolean body;
 
+    /**
+     * Checks if URL dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isUrl() {
         return url;
     }
 
+    /**
+     * Checks if header dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isHeaders() {
         return headers;
     }
 
+    /**
+     * Gets filtered headers.
+     * @return List filtered headers
+     */
     public List<String> getFilteredHeaders() {
         return filteredHeaders;
     }
 
+    /**
+     * Checks if cookie dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isCookies() {
         return cookies;
     }
 
+    /**
+     * Gets filtered cookies.
+     * @return List filtered cookies
+     */
     public List<String> getFilteredCookies() {
         return filteredCookies;
     }
 
+    /**
+     * Checks if query parameter dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isQueryParameters() {
         return queryParameters;
     }
 
+    /**
+     * Gets filtered query parameters.
+     * @return List filtered query parameters
+     */
     public List<String> getFilteredQueryParameters() {
         return filteredQueryParameters;
     }
 
+    /**
+     * Checks if body dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isBody() {
         return body;
     }

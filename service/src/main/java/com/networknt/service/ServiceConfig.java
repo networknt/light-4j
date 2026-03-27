@@ -33,7 +33,10 @@ import java.util.Map;
 public class ServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServiceConfig.class);
 
+    /** Constant for configuration name */
     public static final String CONFIG_NAME = "service";
+
+    /** Constant for singletons configuration entry */
     public static final String SINGLETONS = "singletons";
     private List<Map<String, Object>> singletons;
     private Map<String, Object> mappedConfig;
@@ -47,22 +50,46 @@ public class ServiceConfig {
         setConfigData();
     }
 
+    /**
+     * Loads the service configuration from the default config name.
+     *
+     * @return ServiceConfig object
+     */
     public static ServiceConfig load() {
         return new ServiceConfig();
     }
 
+    /**
+     * Loads the service configuration from a specific config name.
+     *
+     * @param configName config name
+     * @return ServiceConfig object
+     */
     public static ServiceConfig load(String configName) {
         return new ServiceConfig(configName);
     }
 
+    /**
+     * Gets the mapped configuration.
+     *
+     * @return Map of configuration entries
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
+    /**
+     * Gets the list of singleton service definitions.
+     *
+     * @return List of maps
+     */
     public List<Map<String, Object>> getSingletons() {
         return singletons;
     }
 
+    /**
+     * Sets the configuration data from the mapped config.
+     */
     public void setConfigData() {
         if(mappedConfig.get(SINGLETONS) instanceof String) {
             // the json string is supported here.

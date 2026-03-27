@@ -50,9 +50,12 @@ public enum URLParamType {
     /** max server conn (all clients conn) **/
     maxServerConnection("maxServerConnection", 100000),
     /** pool conn manger strategy **/
+    /** pool conn manger strategy */
     poolLifo("poolLifo", true),
 
+    /** lazy init */
     lazyInit("lazyInit", false),
+
     /** multi referer share the same channel **/
     shareChannel("shareChannel", false),
 
@@ -67,56 +70,91 @@ public enum URLParamType {
     /** switcherService **/
     switcherService("switcherService", "localSwitcherService"),
 
+    /** group */
     group("group", "default"),
+    /** client group */
     clientGroup("clientGroup", "default"),
+    /** access log */
     accessLog("accessLog", false),
 
-    // 0 no limit to multi-thread
+    /** actives */
     actives("actives", 0),
 
+    /** refresh timestamp */
     refreshTimestamp("refreshTimestamp", 0),
+    /** node type */
     nodeType("nodeType", Constants.NODE_TYPE_SERVICE),
 
-    // format protocol:port
+    /** export */
     export("export", ""),
+    /** embed */
     embed("embed", ""),
 
+    /** registry retry period */
     registryRetryPeriod("registryRetryPeriod", 30 * Constants.SECOND_MILLS),
 
+    /** cluster */
     cluster("cluster", Constants.DEFAULT_VALUE),
+    /** load balance */
     loadbalance("loadbalance", "activeWeight"),
+    /** HA strategy */
     haStrategy("haStrategy", "failover"),
+    /** protocol */
     protocol("protocol", Constants.PROTOCOL_LIGHT),
+    /** path */
     path("path", ""),
+    /** host */
     host("host", ""),
+    /** port */
     port("port", 0),
+    /** IO threads */
     iothreads("iothreads", Runtime.getRuntime().availableProcessors() + 1),
+    /** worker queue size */
     workerQueueSize("workerQueueSize", 0),
+    /** accept connections */
     acceptConnections("acceptConnections", 0),
+    /** filter */
     filter("filter", ""),
 
+    /** application */
     application("application", Constants.FRAMEWORK_NAME),
+    /** module */
     module("module", Constants.FRAMEWORK_NAME),
 
+    /** retries */
     retries("retries", 0),
+    /** async */
     async("async", false),
+    /** mock */
     mock("mock", "false"),
+    /** mean */
     mean("mean", "2"),
+    /** p90 */
     p90("p90", "4"),
+    /** p99 */
     p99("p99", "10"),
+    /** p999 */
     p999("p999", "70"),
+    /** error rate */
     errorRate("errorRate", "0.01"),
+    /** check */
     check("check", "true"),
+    /** direct URL */
     directUrl("directUrl", ""),
+    /** registry session timeout */
     registrySessionTimeout("registrySessionTimeout", 1 * Constants.MINUTE_MILLS),
 
+    /** register */
     register("register", true),
+    /** subscribe */
     subscribe("subscribe", true),
+    /** throw exception */
     throwException("throwException", "true"),
 
+    /** local service address */
     localServiceAddress("localServiceAddress", ""),
 
-    // when switch group，weight of each group. default none
+    /** weights */
     weights("weights", "");
 
     private final String name;
@@ -159,22 +197,47 @@ public enum URLParamType {
         this.intValue = 0;
     }
 
+    /**
+     * Returns the name of the parameter.
+     *
+     * @return String name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns the string value of the parameter.
+     *
+     * @return String value
+     */
     public String getValue() {
         return value;
     }
 
+    /**
+     * Returns the integer value of the parameter.
+     *
+     * @return int value
+     */
     public int getIntValue() {
         return intValue;
     }
 
+    /**
+     * Returns the long value of the parameter.
+     *
+     * @return long value
+     */
     public long getLongValue() {
         return longValue;
     }
 
+    /**
+     * Returns the boolean value of the parameter.
+     *
+     * @return boolean value
+     */
     public boolean getBooleanValue() {
         return boolValue;
     }

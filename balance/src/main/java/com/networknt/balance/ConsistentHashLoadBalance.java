@@ -45,6 +45,9 @@ public class ConsistentHashLoadBalance implements LoadBalance {
     // do the job. It will be registered as extra parameter like public key and public
     // key certificate of the service.
 
+    /**
+     * Default constructor for ConsistentHashLoadBalance.
+     */
     public ConsistentHashLoadBalance() {
         if(logger.isInfoEnabled()) logger.info("A ConsistentHashLoadBalance instance is started");
     }

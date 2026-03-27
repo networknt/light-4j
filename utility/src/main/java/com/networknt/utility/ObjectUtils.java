@@ -6,7 +6,15 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Object utility class.
+ */
 public abstract class ObjectUtils {
+    /**
+     * Default constructor for ObjectUtils.
+     */
+    public ObjectUtils() {
+    }
     private static final int INITIAL_HASH = 7;
     private static final int MULTIPLIER = 31;
 

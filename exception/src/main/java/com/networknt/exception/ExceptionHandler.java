@@ -50,11 +50,18 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for ExceptionHandler.
+     */
     public ExceptionHandler() {
         ExceptionConfig.load(configName);
         if (logger.isInfoEnabled()) logger.info("ExceptionHandler is constructed.");
     }
 
+    /**
+     * Constructs an ExceptionHandler with a specific config name.
+     * @param configName config name
+     */
     public ExceptionHandler(String configName) {
         this.configName = configName;
         ExceptionConfig.load(configName);

@@ -8,11 +8,28 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Configuration utility class.
+ */
 public class ConfigUtils {
+    /**
+     * Default constructor for ConfigUtils.
+     */
+    public ConfigUtils() {
+    }
 	private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
+    /** Delimiter for configuration keys */
     public static final String DELIMITOR = "@";
+    /** Internal key format */
     protected static final String INTERNAL_KEY_FORMAT = "%s %s";
 
+    /**
+     * Finds a service entry in a mapping.
+     * @param method HTTP method
+     * @param searchKey search key
+     * @param mapping mapping map
+     * @return String service entry
+     */
     public static String findServiceEntry(String method, String searchKey, Map<String, Object> mapping) {
         if(logger.isDebugEnabled()) logger.debug("findServiceEntry for " + searchKey + " and method: " + method);
         if(logger.isDebugEnabled()) logger.debug("mapping size: " + mapping.size());
@@ -39,6 +56,11 @@ public class ConfigUtils {
         return result;
     }
 
+    /**
+     * Normalizes a request path by adding a leading slash if missing.
+     * @param requestPath request path
+     * @return String normalized path
+     */
     public static String normalisePath(String requestPath) {
         if(!requestPath.startsWith("/")) {
             return "/" + requestPath;
@@ -46,6 +68,11 @@ public class ConfigUtils {
         return requestPath;
     }
 
+    /**
+     * Converts a key with a delimiter to an internal key.
+     * @param key key string
+     * @return String internal key
+     */
     public static String toInternalKey(String key) {
         String[] tokens = StringUtils.trimToEmpty(key).split(DELIMITOR);
 
@@ -57,10 +84,22 @@ public class ConfigUtils {
         return key;
     }
 
+    /**
+     * Converts a method and path to an internal key.
+     * @param method HTTP method
+     * @param path request path
+     * @return String internal key
+     */
     public static String toInternalKey(String method, String path) {
         return String.format(INTERNAL_KEY_FORMAT, method, ConfigUtils.normalisePath(path));
     }
 
+    /**
+     * Normalizes a map by sorting its keys and nested collections.
+     * @param map map to normalize
+     * @param keysToNotSort keys that should not be sorted
+     * @return Map normalized map
+     */
     public static Map<String, Object> normalizeMap(Map<String, Object> map, List<String> keysToNotSort) {
         Map<String, Object> normalizedData = new TreeMap<>();
 
@@ -88,10 +127,22 @@ public class ConfigUtils {
         return normalizedData;
     }
 
+    /**
+     * Checks if a string matches any string in a list.
+     * @param input input string
+     * @param stringsToMatch list of strings to match
+     * @return boolean true if matches
+     */
     public static boolean matchesAny(String input, List<String> stringsToMatch) {
         return stringsToMatch.contains(input);
     }
 
+    /**
+     * Normalizes a list by sorting its elements if they are strings or by normalizing inner maps.
+     * @param list list to normalize
+     * @param keysToNotSort keys that should not be sorted
+     * @return List normalized list
+     */
     public static List<?> normalizeList(List<?> list, List<String> keysToNotSort) {
         if(list.isEmpty()) {
             return list;

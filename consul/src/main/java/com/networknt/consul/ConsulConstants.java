@@ -16,7 +16,16 @@
 
 package com.networknt.consul;
 
+/**
+ * Constants used in the Consul registry and discovery implementation.
+ *
+ * @author Steve Hu
+ */
 public class ConsulConstants {
+
+    private ConsulConstants() {
+        throw new IllegalStateException("Utility class");
+    }
 	/**
 	 * Light java protocol prefix in consul tag
 	 */

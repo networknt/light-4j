@@ -33,6 +33,7 @@ import java.util.Map;
 @ConfigSchema(configKey = "configReload", configName = "configReload", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
 public class ConfigReloadConfig {
     private static final Logger logger = LoggerFactory.getLogger(ConfigReloadConfig.class);
+    /** config name for this config class */
     public static final String CONFIG_NAME = "configReload";
 
     private static final String ENABLED = "enabled";
@@ -58,10 +59,21 @@ public class ConfigReloadConfig {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Loads the ConfigReloadConfig for the default config name.
+     *
+     * @return ConfigReloadConfig instance
+     */
     public static ConfigReloadConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the ConfigReloadConfig for a specific config name.
+     *
+     * @param configName config name
+     * @return ConfigReloadConfig instance
+     */
     public static ConfigReloadConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> config = Config.getInstance().getJsonMapConfig(configName);
@@ -81,14 +93,29 @@ public class ConfigReloadConfig {
         return new ConfigReloadConfig(configName);
     }
 
+    /**
+     * Checks if the config reload is enabled.
+     *
+     * @return true if enabled
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Sets whether the config reload is enabled.
+     *
+     * @param enabled true to enable
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * Gets the mapped configuration.
+     *
+     * @return Map mapped configuration
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }

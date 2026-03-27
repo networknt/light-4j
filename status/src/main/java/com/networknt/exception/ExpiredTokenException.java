@@ -28,18 +28,37 @@ package com.networknt.exception;
 public class ExpiredTokenException extends Exception {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Default constructor for ExpiredTokenException.
+     */
     public ExpiredTokenException() {
         super();
     }
 
+    /**
+     * Constructs an ExpiredTokenException with a message.
+     *
+     * @param message error message
+     */
     public ExpiredTokenException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs an ExpiredTokenException with a message and a cause.
+     *
+     * @param message error message
+     * @param cause   Throwable cause
+     */
     public ExpiredTokenException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs an ExpiredTokenException with a cause.
+     *
+     * @param cause Throwable cause
+     */
     public ExpiredTokenException(Throwable cause) {
         super(cause);
     }

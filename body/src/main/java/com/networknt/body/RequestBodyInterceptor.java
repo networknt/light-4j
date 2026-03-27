@@ -49,12 +49,19 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for RequestBodyInterceptor.
+     */
     public RequestBodyInterceptor() {
         BodyConfig.load(configName);
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is loaded.");
     }
 
+    /**
+     * Constructs a RequestBodyInterceptor with a specific config name.
+     * @param configName config name
+     */
     public RequestBodyInterceptor(String configName) {
         this.configName = configName;
         BodyConfig.load(configName);
@@ -135,6 +142,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      *
      * @param ex - current exchange
      * @param str - byte buffer body as a string
+     * @param config - body configuration
      * @return - true if successful
      */
     public boolean attachJsonBody(final HttpServerExchange ex, String str, BodyConfig config) {
@@ -153,6 +161,13 @@ public class RequestBodyInterceptor implements RequestInterceptor {
         return false;
     }
 
+    /**
+     * Method used to attach the XML body to the exchange.
+     * @param exchange current exchange
+     * @param s XML body as a string
+     * @param config body configuration
+     * @return true if successful
+     */
     public boolean attachXmlBody(HttpServerExchange exchange, String s, BodyConfig config) {
         // TODO
         this.cacheRequestBody(exchange, s, config);
@@ -164,6 +179,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      *
      * @param exchange exchange to be attached
      * @param s        the string of the  request body
+     * @param config   the body configuration
      * @return boolean to indicate if attached.
      */
     public boolean attachFormDataBody(final HttpServerExchange exchange, String s, BodyConfig config) {

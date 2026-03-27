@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Manager for Consul connection recovery and heartbeat monitoring.
+ */
 public class ConsulRecoveryManager {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRecoveryManager.class);
     private static final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -19,6 +22,12 @@ public class ConsulRecoveryManager {
     private String serviceName;
     private String tag;
 
+    /**
+     * Constructs a ConsulRecoveryManager for a service and tag.
+     *
+     * @param serviceName service name
+     * @param tag service tag
+     */
     public ConsulRecoveryManager(String serviceName, String tag) {
         this.serviceName = serviceName;
         this.tag = tag;
@@ -70,21 +79,57 @@ public class ConsulRecoveryManager {
         System.exit(1);
     }
 
+    /**
+     * Records a heartbeat check-in for the service.
+     */
     public void checkin() {
         logger.debug("Service {} tag {} checking in", serviceName, tag);
         String key = tag == null ? serviceName : serviceName + "|" + tag;
         heartbeats.put(key, System.currentTimeMillis());
     }
 
+    /**
+     * Checks if currently in recovery mode.
+     *
+     * @return true if in recovery mode
+     */
     public boolean isRecoveryMode() { return isRecoveryMode; }
+
+    /**
+     * Gets the number of recovery attempts.
+     *
+     * @return long recovery attempts
+     */
     public long getRecoveryAttempts() { return recoveryAttempts; }
+
+    /**
+     * Gets the service name.
+     *
+     * @return String service name
+     */
     public String getServiceName() { return serviceName; }
+
+    /**
+     * Sets the service name.
+     *
+     * @param serviceName service name
+     */
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }
 
+    /**
+     * Gets the service tag.
+     *
+     * @return String service tag
+     */
     public String getTag() {
         return tag;
     }
 
+    /**
+     * Sets the service tag.
+     *
+     * @param tag service tag
+     */
     public void setTag(String tag) {
         this.tag = tag;
     }

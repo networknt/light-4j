@@ -34,10 +34,17 @@ import java.nio.ByteBuffer;
  */
 public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
 
+    /** Attachment key for the stored response */
     public static final AttachmentKey<byte[]> RESPONSE = AttachmentKey.create(byte[].class);
     private ByteArrayOutputStream outputStream;
     private final HttpServerExchange exchange;
 
+    /**
+     * Constructs a StoreResponseStreamSinkConduit with next conduit and exchange.
+     *
+     * @param next the next conduit in the chain
+     * @param exchange the HTTP server exchange
+     */
     public StoreResponseStreamSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
         this.exchange = exchange;

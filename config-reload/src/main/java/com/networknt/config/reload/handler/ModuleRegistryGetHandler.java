@@ -24,6 +24,9 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
     private static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
 
+    /**
+     * Default constructor for ModuleRegistryGetHandler.
+     */
     public ModuleRegistryGetHandler() {
         ConfigReloadConfig.load();
         if(logger.isDebugEnabled()) logger.debug("ModuleRegistryGetHandler is constructed");

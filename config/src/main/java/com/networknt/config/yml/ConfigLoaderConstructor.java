@@ -13,9 +13,17 @@ import org.yaml.snakeyaml.constructor.Constructor;
  */
 public class ConfigLoaderConstructor extends Constructor {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoaderConstructor.class);
+    /** Constant for config loader class configuration entry */
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
+
     private final ConfigLoader configLoader;
 
+    /**
+     * Gets an instance of ConfigLoaderConstructor for a given config loader class.
+     *
+     * @param configLoaderClass The config loader class to use
+     * @return ConfigLoaderConstructor instance
+     */
     public static ConfigLoaderConstructor getInstance(String configLoaderClass) {
         return new ConfigLoaderConstructor(configLoaderClass);
     }
@@ -25,6 +33,11 @@ public class ConfigLoaderConstructor extends Constructor {
         configLoader = createConfigLoader(configLoaderClass);
     }
 
+    /**
+     * Gets the config loader used by this constructor.
+     *
+     * @return ConfigLoader instance
+     */
     public ConfigLoader getConfigLoader() {
         return configLoader;
     }

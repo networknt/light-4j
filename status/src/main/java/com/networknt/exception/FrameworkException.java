@@ -30,17 +30,34 @@ import com.networknt.status.Status;
  */
 public class FrameworkException extends RuntimeException {
     private static final long serialVersionUID = 1L;
+    /** The status object associated with this exception */
     private final Status status;
 
+    /**
+     * Gets the status object.
+     *
+     * @return Status object
+     */
     public Status getStatus() {
         return status;
     }
 
+    /**
+     * Constructs a FrameworkException with a status.
+     *
+     * @param status Status object
+     */
     public FrameworkException(Status status) {
         super(status.toString());
         this.status = status;
     }
 
+    /**
+     * Constructs a FrameworkException with a status and a cause.
+     *
+     * @param status Status object
+     * @param cause  Throwable cause
+     */
     public FrameworkException(Status status, Throwable cause) {
         super(status.toString(), cause);
         this.status = status;

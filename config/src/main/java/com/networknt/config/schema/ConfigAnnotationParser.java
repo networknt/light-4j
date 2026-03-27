@@ -25,6 +25,13 @@ import java.util.*;
 @SupportedAnnotationTypes("com.networknt.config.schema.ConfigSchema")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ConfigAnnotationParser extends AbstractProcessor {
+    /**
+     * Default constructor for ConfigAnnotationParser.
+     */
+    public ConfigAnnotationParser() {
+        super();
+    }
+
 
     private static final String BUILD_COMMAND_PROPERTY = "sun.java.command";
     private static final String PROFILE_FLAG = "-P";
@@ -162,11 +169,23 @@ public class ConfigAnnotationParser extends AbstractProcessor {
         return Optional.of(Paths.get(resource.toUri()).getParent().resolve(path));
     }
 
+    /**
+     * Logs an error message using the processing environment messager.
+     *
+     * @param message The message to log.
+     * @param args    Arguments for message formatting.
+     */
     public void logError(String message, Object... args) {
         final var formattedMessage = formatMessage(message, args);
         this.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, formattedMessage);
     }
 
+    /**
+     * Logs an info message using the processing environment messager.
+     *
+     * @param message The message to log.
+     * @param args    Arguments for message formatting.
+     */
     public void logInfo(String message, Object... args) {
         final var formattedMessage = formatMessage(message, args);
         this.processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, formattedMessage);

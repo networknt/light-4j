@@ -19,7 +19,6 @@ package com.networknt.portal.registry;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.PortalRegistryClient;
-import com.networknt.portal.registry.client.PortalRegistryWebSocketClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
@@ -39,7 +38,6 @@ import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 public class PortalRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
-    PortalRegistryWebSocketClient webSocketClient = null;
     private PortalRegistryClient client;
     private PortalRegistryHeartbeatManager heartbeatManager;
     private int lookupInterval;
@@ -51,7 +49,7 @@ public class PortalRegistry extends AbstractRegistry {
     public PortalRegistry(URL url, PortalRegistryClient client) {
         super(url);
         this.client = client;
-        if(getPortalRegistryConfig().ttlCheck) {
+        if(getPortalRegistryConfig().ttlCheck && !client.supportsWebSocket()) {
             heartbeatManager = new PortalRegistryHeartbeatManager(client, getPortalToken());
             heartbeatManager.start();
         }
@@ -63,14 +61,14 @@ public class PortalRegistry extends AbstractRegistry {
     protected void doRegister(URL url) {
         PortalRegistryService service = PortalRegistryUtils.buildService(url);
         client.registerService(service, getPortalToken());
-        if(getPortalRegistryConfig().ttlCheck) heartbeatManager.addHeartbeatService(service);
+        if(heartbeatManager != null) heartbeatManager.addHeartbeatService(service);
     }
 
     @Override
     protected void doUnregister(URL url) {
         PortalRegistryService service = PortalRegistryUtils.buildService(url);
         client.unregisterService(service, getPortalToken());
-        if(getPortalRegistryConfig().ttlCheck) heartbeatManager.removeHeartbeatService(service);
+        if(heartbeatManager != null) heartbeatManager.removeHeartbeatService(service);
     }
 
     @Override
@@ -103,60 +101,27 @@ public class PortalRegistry extends AbstractRegistry {
         if(logger.isInfoEnabled()) logger.info("PortalRegistry subscribe url: " + url.toSimpleString());
         // you only need to subscribe once.
         if(!subscribedSet.contains(url)) {
-            // here we assume that the first lookup has been done for the url so that subscription info is available on the server
-            // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
-            // can save a lot of threads than the Consul implementation.
-            try {
-                PortalRegistryConfig config = PortalRegistryConfig.load();
-                String u = "wss" + config.getPortalUrl().substring(config.getPortalUrl().indexOf("://"));
-                if(webSocketClient == null) {
-                    // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
-                    webSocketClient = new PortalRegistryWebSocketClient(URI.create(u + "/ws")) {
-                        @Override
-                        public void onOpen() {
-                            System.out.println("open");
-                        }
-
-                        @Override
-                        public void onMessage(String msg) {
-                            if(logger.isDebugEnabled()) logger.debug("WebSocket message: " + msg);
-                            // The subscribed service nodes have been changed.
-                            // {"com.networknt.ab-1.0.0|test1":[]}
-                            updateCacheFromMessage(msg);
-                        }
-
-                        @Override
-                        public void onClose(int code, String reason) {
-                            System.out.println("close (code: " + code + ", reason: " + reason + ")");
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            System.out.println("err: " + e.getMessage());
-                            System.out.println("Client isOpen?: " + this.isOpen());
-                        }
-                    };
-                }
-            } catch (Exception e) {
-                logger.error("Exception:", e);
+            if (client.supportsWebSocket()) {
+                String serviceId = url.getPath();
+                String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+                client.ensureWebSocketConnected(getPortalToken(), this::handleWebSocketNotification);
+                List<Map<String, Object>> nodes = client.subscribeService(serviceId, tag, getPortalToken());
+                ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId, tag, url.getProtocol(), nodes);
+                updateServiceCache(serviceKey(serviceId, tag), serviceUrls, false);
             }
-            webSocketClient.send(url.toFullStr());
         }
         subscribedSet.add(url);
     }
 
     @Override
     protected void doUnsubscribe(URL url, NotifyListener listener) {
-        // same as the doSubscribe, both url and listener are not used but it is called per client url and it can be
-        // called multiple time without any issue. The first call will stop the WebSocket client.
         if(logger.isInfoEnabled()) logger.info("PortalRegistry unsubscribe url: " + url.toSimpleString());
-        try {
-            if(webSocketClient != null && webSocketClient.isOpen()) {
-                webSocketClient.close();
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+        if (client.supportsWebSocket()) {
+            String serviceId = url.getPath();
+            String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+            client.unsubscribeService(serviceId, tag, getPortalToken());
         }
+        subscribedSet.remove(url);
     }
 
     @Override
@@ -171,7 +136,9 @@ public class PortalRegistry extends AbstractRegistry {
             synchronized (key.intern()) {
                 urls = serviceCache.get(key);
                 if (urls == null || urls .isEmpty()) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceId, tag);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = client.supportsWebSocket()
+                            ? subscribeAndLookup(protocol, serviceId, tag)
+                            : lookupServiceUpdate(protocol, serviceId, tag);
                     updateServiceCache(key, serviceUrls, false);
                     urls = serviceCache.get(key);
                 }
@@ -186,25 +153,47 @@ public class PortalRegistry extends AbstractRegistry {
         return convertLisMap2UR(serviceId, tag, protocol, services);
     }
 
-    private void updateCacheFromMessage(String message) {
-        Map<String, Object> map = JsonMapper.string2Map(message);
-        // there is only one entry in the map from the socket message.
-        Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
-        Map.Entry<String, Object> entry = iterator.next();
-        String key = entry.getKey();
+    private ConcurrentHashMap<String, List<URL>> subscribeAndLookup(String protocol, String serviceId, String tag) {
+        client.ensureWebSocketConnected(getPortalToken(), this::handleWebSocketNotification);
+        List<Map<String, Object>> services = client.subscribeService(serviceId, tag, getPortalToken());
+        return convertLisMap2UR(serviceId, tag, protocol, services);
+    }
 
-        String serviceId = null;
-        String tag = null;
-        if(key.indexOf("|") > 0) {
-            String[] parts = StringUtils.split(key, "|");
-            serviceId = parts[0];
-            tag = parts[1];
-        } else {
-            serviceId = key;
+    private void handleWebSocketNotification(Map<String, Object> envelope) {
+        Object method = envelope.get("method");
+        if (!Objects.equals("controller.discovery.changed", method)) {
+            return;
+        }
+        Object paramsObject = envelope.get("params");
+        if (!(paramsObject instanceof Map<?, ?> rawParams)) {
+            return;
+        }
+        Map<String, Object> params = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawParams.entrySet()) {
+            params.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        updateCacheFromNotification(params);
+    }
+
+    private void updateCacheFromNotification(Map<String, Object> params) {
+        String key = (String)params.get("key");
+        if (key == null) {
+            return;
+        }
+        String serviceId = (String)params.get("serviceId");
+        String tag = (String)params.get("tag");
+        if (serviceId == null) {
+            if(key.indexOf("|") > 0) {
+                String[] parts = StringUtils.split(key, "|");
+                serviceId = parts[0];
+                tag = parts[1];
+            } else {
+                serviceId = key;
+            }
         }
 
-        List nodes = (List)entry.getValue();
-        ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId,  tag, null, nodes);
+        List<Map<String, Object>> nodes = params.get("nodes") instanceof List<?> list ? (List<Map<String, Object>>) list : Collections.emptyList();
+        ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId, tag, null, nodes);
         synchronized (key.intern()) {
             updateServiceCache(key, serviceUrls, false);
         }

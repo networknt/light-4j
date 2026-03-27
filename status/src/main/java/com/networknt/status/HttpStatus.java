@@ -16,6 +16,9 @@
 
 package com.networknt.status;
 
+/**
+ * Enumeration of HTTP status codes.
+ */
 public enum HttpStatus {
 
 	// 1xx Informational
@@ -384,36 +387,71 @@ public enum HttpStatus {
 		return this.reasonPhrase;
 	}
 
+    /**
+     * Return the HTTP series of this status code.
+     *
+     * @return Series enum
+     */
 	public Series series() {
 		return Series.valueOf(this);
 	}
 
 
+    /**
+     * Whether this status code is in the Informational series (1xx).
+     *
+     * @return boolean true if informational
+     */
 	public boolean is1xxInformational() {
 		return (series() == Series.INFORMATIONAL);
 	}
 
 
+    /**
+     * Whether this status code is in the Successful series (2xx).
+     *
+     * @return boolean true if successful
+     */
 	public boolean is2xxSuccessful() {
 		return (series() == Series.SUCCESSFUL);
 	}
 
 
+    /**
+     * Whether this status code is in the Redirection series (3xx).
+     *
+     * @return boolean true if redirection
+     */
 	public boolean is3xxRedirection() {
 		return (series() == Series.REDIRECTION);
 	}
 
 
+    /**
+     * Whether this status code is in the Client Error series (4xx).
+     *
+     * @return boolean true if client error
+     */
 	public boolean is4xxClientError() {
 		return (series() == Series.CLIENT_ERROR);
 	}
 
 
+    /**
+     * Whether this status code is in the Server Error series (5xx).
+     *
+     * @return boolean true if server error
+     */
 	public boolean is5xxServerError() {
 		return (series() == Series.SERVER_ERROR);
 	}
 
 
+    /**
+     * Whether this status code is an error (4xx or 5xx).
+     *
+     * @return boolean true if error
+     */
 	public boolean isError() {
 		return (is4xxClientError() || is5xxServerError());
 	}
@@ -442,6 +480,12 @@ public enum HttpStatus {
 	}
 
 
+    /**
+     * Resolve the given status code to an {@code HttpStatus}, if possible.
+     *
+     * @param statusCode the HTTP status code (potentially non-standard)
+     * @return the corresponding {@code HttpStatus}, or {@code null} if not found
+     */
 	public static HttpStatus resolve(int statusCode) {
 		for (HttpStatus status : values()) {
 			if (status.value == statusCode) {
@@ -453,12 +497,20 @@ public enum HttpStatus {
 
 
 
+    /**
+     * Enumeration of HTTP status series.
+     */
 	public enum Series {
 
+        /** Informational (1xx) */
 		INFORMATIONAL(1),
+        /** Successful (2xx) */
 		SUCCESSFUL(2),
+        /** Redirection (3xx) */
 		REDIRECTION(3),
+        /** Client Error (4xx) */
 		CLIENT_ERROR(4),
+        /** Server Error (5xx) */
 		SERVER_ERROR(5);
 
 		private final int value;
@@ -501,6 +553,12 @@ public enum HttpStatus {
 		}
 
 
+        /**
+         * Resolve the given status code to an {@code HttpStatus.Series}, if possible.
+         *
+         * @param statusCode the HTTP status code (potentially non-standard)
+         * @return the corresponding {@code Series}, or {@code null} if not found
+         */
 		public static Series resolve(int statusCode) {
 			int seriesCode = statusCode / 100;
 			for (Series series : values()) {

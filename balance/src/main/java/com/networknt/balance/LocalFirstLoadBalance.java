@@ -47,6 +47,9 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
         ip = inetAddress.getHostAddress();
     }
 
+    /**
+     * Default constructor for LocalFirstLoadBalance.
+     */
     public LocalFirstLoadBalance() {
         if(logger.isInfoEnabled()) logger.info("A LocalFirstLoadBalance instance is started");
     }
@@ -99,6 +102,12 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
         return localUrls;
     }
 
+    /**
+     * Converts an IP address string to a long value.
+     *
+     * @param address IP address string
+     * @return long value
+     */
     public static long ipToLong(final String address) {
         final String[] addressBytes = address.split("\\.");
         int length = addressBytes.length;

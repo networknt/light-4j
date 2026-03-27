@@ -58,6 +58,12 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     private static ScheduledExecutorService retryExecutor = Executors.newScheduledThreadPool(1);
 
+    /**
+     * Constructs a FailbackRegistry with a URL.
+     * Starts a retry executor to handle failed operations.
+     *
+     * @param url registry URL
+     */
     public FailbackRegistry(URL url) {
         super(url);
         long retryPeriod = url.getIntParameter(URLParamType.registryRetryPeriod.getName(), URLParamType.registryRetryPeriod.getIntValue());

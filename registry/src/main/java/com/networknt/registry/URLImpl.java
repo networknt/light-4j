@@ -44,13 +44,33 @@ public class URLImpl implements URL {
 
     private volatile transient Map<String, Number> numbers;
 
+    /**
+     * Constructs a URLImpl with protocol, host, port and path.
+     *
+     * @param protocol protocol
+     * @param host host
+     * @param port port
+     * @param path path
+     */
     public URLImpl(String protocol, String host, int port, String path) {
         this(protocol, host, port, path, new HashMap<>());
     }
+    /**
+     * Default constructor for URLImpl.
+     */
     public URLImpl() {
 
     }
 
+    /**
+     * Constructs a URLImpl with protocol, host, port, path and parameters.
+     *
+     * @param protocol   protocol
+     * @param host       host
+     * @param port       port
+     * @param path       path
+     * @param parameters parameters
+     */
     public URLImpl(String protocol, String host, int port, String path, Map<String, String> parameters) {
         this.protocol = protocol;
         this.host = host;
@@ -59,6 +79,12 @@ public class URLImpl implements URL {
         this.parameters = parameters;
     }
 
+    /**
+     * Parses a URL string into a URL object.
+     *
+     * @param url URL string
+     * @return URL object
+     */
     public static URL valueOf(String url) {
 
         String protocol = null;
@@ -139,6 +165,11 @@ public class URLImpl implements URL {
         return host;
     }
 
+    /**
+     * Creates a copy of the URL.
+     *
+     * @return URL copy
+     */
     @Override
     public URL createCopy() {
         Map<String, String> params = new HashMap<>();
@@ -149,71 +180,144 @@ public class URLImpl implements URL {
         return new URLImpl(protocol, host, port, path, params);
     }
 
+    /**
+     * Gets the protocol of this URL.
+     *
+     * @return String protocol
+     */
     @Override
     public String getProtocol() {
         return protocol;
     }
 
+    /**
+     * Sets the protocol for this URL.
+     *
+     * @param protocol protocol
+     */
     @Override
     public void setProtocol(String protocol) {
         this.protocol = protocol;
     }
 
+    /**
+     * Gets the host of this URL.
+     *
+     * @return String host
+     */
     @Override
     public String getHost() {
         return host;
     }
 
+    /**
+     * Sets the host for this URL.
+     *
+     * @param host host
+     */
     @Override
     public void setHost(String host) {
         this.host = host;
     }
 
+    /**
+     * Gets the port of this URL.
+     *
+     * @return Integer port
+     */
     @Override
     public Integer getPort() {
         return port;
     }
 
+    /**
+     * Sets the port for this URL.
+     *
+     * @param port port
+     */
     @Override
     public void setPort(int port) {
         this.port = port;
     }
 
+    /**
+     * Gets the path of this URL.
+     *
+     * @return String path
+     */
     @Override
     public String getPath() {
         return path;
     }
 
+    /**
+     * Sets the path for this URL.
+     *
+     * @param path path
+     */
     @Override
     public void setPath(String path) {
         this.path = path;
     }
 
+    /**
+     * Gets the version parameter.
+     *
+     * @return String version
+     */
     @Override
     public String getVersion() {
         return getParameter(URLParamType.version.getName(), URLParamType.version.getValue());
     }
 
+    /**
+     * Gets the group parameter.
+     *
+     * @return String group
+     */
     @Override
     public String getGroup() {
         return getParameter(URLParamType.group.getName(), URLParamType.group.getValue());
     }
 
+    /**
+     * Gets the parameters map.
+     *
+     * @return Map of parameters
+     */
     @Override
     public Map<String, String> getParameters() {
         return parameters;
     }
 
+    /**
+     * Sets the parameters map.
+     *
+     * @param parameters parameters
+     */
     @Override
     public void setParameters(Map<String, String> parameters) {
         this.parameters = parameters;
     }
 
+    /**
+     * Gets a parameter by name.
+     *
+     * @param name parameter name
+     * @return String parameter value
+     */
     @Override
     public String getParameter(String name) {
         return parameters.get(name);
     }
 
+    /**
+     * Gets a parameter by name with a default value.
+     *
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return String parameter value
+     */
     @Override
     public String getParameter(String name, String defaultValue) {
         String value = getParameter(name);
@@ -223,6 +327,14 @@ public class URLImpl implements URL {
         return value;
     }
 
+    /**
+     * Gets a parameter by name, with method and parameter description context.
+     *
+     * @param methodName methodName
+     * @param paramDesc paramDesc
+     * @param name parameter name
+     * @return String parameter value
+     */
     @Override
     public String getMethodParameter(String methodName, String paramDesc, String name) {
         String value = getParameter(Constants.METHOD_CONFIG_PREFIX + methodName + "(" + paramDesc + ")." + name);
@@ -232,6 +344,15 @@ public class URLImpl implements URL {
         return value;
     }
 
+    /**
+     * Gets a parameter by name with a default value, with method and parameter description context.
+     *
+     * @param methodName   methodName
+     * @param paramDesc    paramDesc
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return String parameter value
+     */
     @Override
     public String getMethodParameter(String methodName, String paramDesc, String name, String defaultValue) {
         String value = getMethodParameter(methodName, paramDesc, name);
@@ -241,6 +362,12 @@ public class URLImpl implements URL {
         return value;
     }
 
+    /**
+     * Adds a parameter by name and value.
+     *
+     * @param name parameter name
+     * @param value parameter value
+     */
     @Override
     public void addParameter(String name, String value) {
         if (name == null || value == null) {
@@ -249,6 +376,11 @@ public class URLImpl implements URL {
         parameters.put(name, value);
     }
 
+    /**
+     * Removes a parameter by name.
+     *
+     * @param name parameter name
+     */
     @Override
     public void removeParameter(String name) {
         if (name != null) {
@@ -256,11 +388,22 @@ public class URLImpl implements URL {
         }
     }
 
+    /**
+     * Adds multiple parameters.
+     *
+     * @param params parameters to add
+     */
     @Override
     public void addParameters(Map<String, String> params) {
         parameters.putAll(params);
     }
 
+    /**
+     * Adds a parameter by name and value if it's absent.
+     *
+     * @param name parameter name
+     * @param value parameter value
+     */
     @Override
     public void addParameterIfAbsent(String name, String value) {
         if (hasParameter(name)) {
@@ -269,6 +412,13 @@ public class URLImpl implements URL {
         parameters.put(name, value);
     }
 
+    /**
+     * Gets a boolean parameter by name with a default value.
+     *
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return Boolean parameter value
+     */
     @Override
     public Boolean getBooleanParameter(String name, boolean defaultValue) {
         String value = getParameter(name);
@@ -279,6 +429,15 @@ public class URLImpl implements URL {
         return Boolean.parseBoolean(value);
     }
 
+    /**
+     * Gets a boolean parameter by name with a default value, with method and parameter description context.
+     *
+     * @param methodName   methodName
+     * @param paramDesc    paramDesc
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return Boolean parameter value
+     */
     @Override
     public Boolean getMethodParameter(String methodName, String paramDesc, String name, boolean defaultValue) {
         String value = getMethodParameter(methodName, paramDesc, name);
@@ -288,6 +447,13 @@ public class URLImpl implements URL {
         return Boolean.parseBoolean(value);
     }
 
+    /**
+     * Gets an integer parameter by name with a default value.
+     *
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return Integer parameter value
+     */
     @Override
     public Integer getIntParameter(String name, int defaultValue) {
         Number n = getNumbers().get(name);
@@ -303,6 +469,15 @@ public class URLImpl implements URL {
         return i;
     }
 
+    /**
+     * Gets an integer parameter by name with a default value, with method and parameter description context.
+     *
+     * @param methodName   methodName
+     * @param paramDesc    paramDesc
+     * @param name         parameter name
+     * @param defaultValue default value
+     * @return Integer parameter value
+     */
     @Override
     public Integer getMethodParameter(String methodName, String paramDesc, String name, int defaultValue) {
         String key = methodName + "(" + paramDesc + ")." + name;
@@ -319,6 +494,11 @@ public class URLImpl implements URL {
         return i;
     }
 
+    /**
+     * Gets a string representation of the URI.
+     *
+     * @return String URI
+     */
     @Override
     public String getUri() {
         return protocol + Constants.PROTOCOL_SEPARATOR + host + ":" + port +
@@ -339,10 +519,10 @@ public class URLImpl implements URL {
     }
 
     /**
-     * check if this url can serve the refUrl.
+     * Checks if this URL can serve the given reference URL.
      *
-     * @param refUrl a URL object
-     * @return boolean true can serve
+     * @param refUrl reference URL
+     * @return boolean true if it can serve
      */
     @Override
     public boolean canServe(URL refUrl) {
@@ -374,6 +554,11 @@ public class URLImpl implements URL {
         return true;
     }
 
+    /**
+     * Returns a full string representation of the URL with all parameters.
+     *
+     * @return String representation
+     */
     @Override
     public String toFullStr() {
         StringBuilder builder = new StringBuilder();
@@ -395,11 +580,22 @@ public class URLImpl implements URL {
     }
 
     // protocol、host、port、path、group
+    /**
+     * Returns a simple string representation of the URL.
+     *
+     * @return String simple representation
+     */
     @Override
     public String toSimpleString() {
         return getUri() + "?group=" + getGroup();
     }
 
+    /**
+     * Checks if a parameter exists and is not empty.
+     *
+     * @param key parameter name
+     * @return true if parameter exists
+     */
     @Override
     public boolean hasParameter(String key) {
         String p = getParameter(key);
@@ -410,6 +606,11 @@ public class URLImpl implements URL {
      * comma separated host:port pairs, e.g. "127.0.0.1:3000"
      *
      * @return server port
+     */
+    /**
+     * Returns the server port string (host:port).
+     *
+     * @return String server port
      */
     @Override
     public String getServerPortStr() {

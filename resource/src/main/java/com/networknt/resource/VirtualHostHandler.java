@@ -35,6 +35,9 @@ public class VirtualHostHandler implements HttpHandler {
 
     NameVirtualHostHandler virtualHostHandler;
 
+    /**
+     * Constructs a VirtualHostHandler and initializes virtual hosts from configuration.
+     */
     public VirtualHostHandler() {
         VirtualHostConfig config = VirtualHostConfig.load();
         virtualHostHandler = new NameVirtualHostHandler();

@@ -7,6 +7,9 @@ package com.networknt.server;
  * so that Server class can find, instantiate and then trigger its init() method.
  */
 public interface IConfigLoader {
+    /**
+     * Initializes the config loader.
+     */
     void init();
 
     /**

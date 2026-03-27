@@ -29,6 +29,11 @@ import java.util.regex.Pattern;
  *
  */
 public class StringUtils {
+    /**
+     * Default constructor for StringUtils.
+     */
+    public StringUtils() {
+    }
 
     private static final String[] EMPTY_STRING_ARRAY = {};
 
@@ -53,8 +58,14 @@ public class StringUtils {
      */
     public static final String SPACE = " ";
 
+    /**
+     * Regular expression pattern for validating email addresses.
+     */
     public static final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
             + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+    /**
+     * Compiled pattern for email validation.
+     */
     public static Pattern pattern = Pattern.compile(EMAIL_PATTERN);
 
     /**
@@ -68,6 +79,11 @@ public class StringUtils {
         return value == null || value.isEmpty();
     }
 
+    /**
+     * Expands environment variables in a string.
+     * @param text string containing environment variables in ${VAR} format
+     * @return String expanded string
+     */
     public static String expandEnvVars(String text) {
         Map<String, String> envMap = System.getenv();
         String pattern = "\\$\\{([A-Za-z0-9-_]+)\\}";
@@ -1277,6 +1293,11 @@ public class StringUtils {
         return null;
     }
 
+    /**
+     * Checks if a string is a valid email address.
+     * @param userIdEmail email address string
+     * @return boolean true if valid
+     */
     public static boolean isEmail(String userIdEmail) {
         Matcher matcher = pattern.matcher(userIdEmail);
         return matcher.matches();
@@ -1533,6 +1554,11 @@ public class StringUtils {
         return input.substring(spaceIndex + 1);
     }
 
+    /**
+     * Gets the stack trace from a Throwable as a string.
+     * @param throwable Throwable
+     * @return String stack trace
+     */
     public static String getStackTraceAsString(Throwable throwable) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);

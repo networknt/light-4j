@@ -15,6 +15,13 @@ import java.util.Scanner;
  * secret text for strong encryption.
  */
 public class ManualAESSaltDescryptor extends AESSaltDecryptor {
+    /**
+     * Default constructor for ManualAESSaltDescryptor.
+     */
+    public ManualAESSaltDescryptor() {
+        super();
+    }
+
     @Override
     protected char[] getPassword() {
         char[] password = null;

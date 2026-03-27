@@ -40,10 +40,18 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandler.class);
     private String configName = ServerInfoConfig.CONFIG_NAME;
 
+    /**
+     * Default constructor for ServerInfoGetHandler.
+     */
     public ServerInfoGetHandler() {
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
     }
 
+    /**
+     * Constructs a ServerInfoGetHandler with a specific config name.
+     *
+     * @param configName config name
+     */
     public ServerInfoGetHandler(String configName) {
         this.configName = configName;
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed with {}", configName);

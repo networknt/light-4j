@@ -29,6 +29,9 @@ import java.util.Map;
  * @author Nicholas Azar
  */
 public class ServiceUtil {
+    private ServiceUtil() {
+        throw new IllegalStateException("ServiceUtil is a utility class");
+    }
 
     /**
      * Instantiates and returns an object out of a given configuration.

@@ -52,16 +52,33 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * be picked up the next day morning.
  */
 public abstract class Config {
+    /** Constant for the configuration directory property name */
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
 
+
+    /** Default constructor for Config */
     protected Config() {
     }
 
     // abstract methods that need be implemented by all implementations
 
+    /**
+     * Gets a JSON map configuration by name.
+     *
+     * @param configName name of the configuration
+     * @return Map of configuration values
+     */
     public abstract Map<String, Object> getJsonMapConfig(String configName);
 
+
+    /**
+     * Gets a default JSON map configuration by name.
+     *
+     * @param configName name of the configuration
+     * @return Map of configuration values
+     */
     public abstract Map<String, Object> getDefaultJsonMapConfig(String configName);
+
 
     public abstract Map<String, Object> getJsonMapConfig(String configName, String path);
 
@@ -104,9 +121,19 @@ public abstract class Config {
 
     public abstract void putInConfigCache(String configName, Object config);
 
+    /**
+     * Gets the singleton instance of Config.
+     *
+     * @return Config instance
+     */
     public static Config getInstance() {
         return FileConfigImpl.DEFAULT;
     }
+    /**
+     * Gets a non-decrypted instance of Config.
+     *
+     * @return Config instance
+     */
     public static Config getNoneDecryptedInstance() {
         return NoneDecryptedConfigImpl.NONE_DECRYPTED;
     }

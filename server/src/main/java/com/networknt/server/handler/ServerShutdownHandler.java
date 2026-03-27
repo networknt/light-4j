@@ -18,6 +18,9 @@ public class ServerShutdownHandler implements LightHttpHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(ServerShutdownHandler.class);
 
+	/**
+	 * Default constructor for ServerShutdownHandler.
+	 */
 	public ServerShutdownHandler() {
 		logger.info("ServerShutdownHandler constructed");
 	}

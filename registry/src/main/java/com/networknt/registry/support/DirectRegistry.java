@@ -45,6 +45,12 @@ public class DirectRegistry extends AbstractRegistry {
     private Map<String, List<URL>> directUrls;
     private volatile DirectRegistryConfig config;
 
+    /**
+     * Constructs a DirectRegistry with a URL.
+     * Loads the direct urls from the direct-registry configuration.
+     *
+     * @param url registry URL
+     */
     public DirectRegistry(URL url) {
         super(url);
         config = DirectRegistryConfig.load();

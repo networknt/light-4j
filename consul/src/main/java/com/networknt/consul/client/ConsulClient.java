@@ -21,6 +21,11 @@ import com.networknt.consul.ConsulService;
 
 import java.util.List;
 
+/**
+ * Interface for Consul client implementations.
+ *
+ * @author Steve Hu
+ */
 public interface ConsulClient {
 
 	/**

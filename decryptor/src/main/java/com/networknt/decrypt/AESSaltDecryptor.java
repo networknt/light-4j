@@ -33,6 +33,10 @@ public class AESSaltDecryptor implements Decryptor {
     private final Cipher cipher;
     IvParameterSpec ivSpec;
 
+    /**
+     * Default constructor for AESSaltDecryptor.
+     * Initializes the AES cipher and IV initialization vector.
+     */
     public AESSaltDecryptor() {
         try {
             // CBC = Cipher Block chaining
@@ -78,6 +82,11 @@ public class AESSaltDecryptor implements Decryptor {
         }
     }
 
+    /**
+     * Gets the password for decryption.
+     *
+     * @return char array of the password
+     */
     protected char[] getPassword() {
         return "light".toCharArray();
     }

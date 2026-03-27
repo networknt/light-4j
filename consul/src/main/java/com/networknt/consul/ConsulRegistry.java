@@ -32,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * Registry implementation for Consul.
+ */
 public class ConsulRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
@@ -53,6 +56,13 @@ public class ConsulRegistry extends AbstractRegistry {
 
     static String MASK_KEY_CONSUL_TOKEN = "consulToken";
 
+    /**
+     * Constructs a ConsulRegistry with a URL and a Consul client.
+     * Starts the heartbeat manager if TTL check is enabled.
+     *
+     * @param url registry URL
+     * @param client Consul client
+     */
     public ConsulRegistry(URL url, ConsulClient client) {
         super(url);
         this.client = client;
@@ -68,6 +78,11 @@ public class ConsulRegistry extends AbstractRegistry {
         logger.info("ConsulRegistry init finish.");
     }
 
+    /**
+     * Gets the map of notify listeners.
+     *
+     * @return ConcurrentHashMap of notify listeners
+     */
     public ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> getNotifyListeners() {
         return notifyListeners;
     }

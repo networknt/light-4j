@@ -5,19 +5,31 @@ import java.util.Base64;
 import java.util.UUID;
 import java.nio.ByteBuffer;
 
+/**
+ * UUID utility class.
+ */
 public class UuidUtil {
+    /**
+     * Default constructor for UuidUtil.
+     */
+    public UuidUtil() {
+    }
 
     // Use Java 8's built-in Base64 encoder/decoder
     private static final Base64.Encoder URL_SAFE_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder URL_SAFE_DECODER = Base64.getUrlDecoder();
 
+    /**
+     * Gets a new time-ordered epoch UUID (v7).
+     * @return UUID
+     */
     public static UUID getUUID() {
         return UuidCreator.getTimeOrderedEpoch(); // UUIDv7
     }
 
     /**
      * Generate a UUID and encode it to a URL-safe Base64 string.
-     *
+     * @param uuid UUID to encode
      * @return A URL-safe Base64 encoded UUID string.
      */
     public static String uuidToBase64(UUID uuid) {

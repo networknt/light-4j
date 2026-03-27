@@ -14,6 +14,11 @@ import java.util.*;
 
 public abstract class CollectionUtils {
     /**
+     * Default constructor for CollectionUtils.
+     */
+    public CollectionUtils() {
+    }
+    /**
      * Default load factor for {@link HashMap}/{@link LinkedHashMap} variants.
      * @see #newHashMap(int)
      * @see #newLinkedHashMap(int)

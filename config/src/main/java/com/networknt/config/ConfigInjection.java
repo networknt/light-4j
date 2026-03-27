@@ -42,12 +42,19 @@ import java.util.regex.Pattern;
  * Created by jiachen on 2019-01-08.
  */
 public class ConfigInjection {
+    /**
+     * Default constructor for ConfigInjection.
+     */
+    public ConfigInjection() {
+    }
+
     // Define the injection order
     private static final String INJECTION_ORDER = "injection_order";
     private static final String INJECTION_ORDER_CODE = (!System.getProperty(INJECTION_ORDER, "").equals("")) ?
             System.getProperty(INJECTION_ORDER, "") : "2";
 
     // Define one of the injection value source "values.yaml" and list of exclusion config files
+    /** Constant for centralized management: values */
     public static final String CENTRALIZED_MANAGEMENT = "values";
     private static final String SCALABLE_CONFIG = "config";
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
@@ -83,10 +90,20 @@ public class ConfigInjection {
         }
     }
 
+    /**
+     * Gets the decrypted value map.
+     *
+     * @return Map of decrypted values
+     */
     public static Map<String, Object> getDecryptedValueMap() {
         return decryptedValueMap;
     }
 
+    /**
+     * Sets the decrypted value map.
+     *
+     * @param decryptedValueMap Map of decrypted values to set
+     */
     public static void setDecryptedValueMap(Map<String, Object> decryptedValueMap) {
         if (decryptedValueMap != null) {
             CentralizedManagement.mergeMap(true, decryptedValueMap);
@@ -94,10 +111,20 @@ public class ConfigInjection {
         ConfigInjection.decryptedValueMap = decryptedValueMap;
     }
 
+    /**
+     * Gets the undecrypted value map.
+     *
+     * @return Map of undecrypted values
+     */
     public static Map<String, Object> getUndecryptedValueMap() {
         return undecryptedValueMap;
     }
 
+    /**
+     * Sets the undecrypted value map.
+     *
+     * @param undecryptedValueMap Map of undecrypted values to set
+     */
     public static void setUndecryptedValueMap(Map<String, Object> undecryptedValueMap) {
         if (undecryptedValueMap != null) {
             CentralizedManagement.mergeMap(false, undecryptedValueMap);
@@ -107,6 +134,13 @@ public class ConfigInjection {
 
 
     // Method used to generate the values from environment variables or "values.yaml"
+    /**
+     * Gets the inject value for a given string.
+     *
+     * @param string  The string to inject values into
+     * @param decrypt Whether to decrypt the injected values
+     * @return The object with injected values
+     */
     public static Object getInjectValue(String string, boolean decrypt) {
         Matcher m = pattern.matcher(string);
         StringBuffer sb = new StringBuffer();
@@ -130,6 +164,12 @@ public class ConfigInjection {
 
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
+    /**
+     * Checks if a config file is excluded from injection.
+     *
+     * @param configName The name of the config file
+     * @return true if excluded
+     */
     public static boolean isExclusionConfigFile(String configName) {
         List<Object> exclusionConfigFileList = (exclusionMap == null || exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return SCALABLE_CONFIG.equals(configName)
@@ -137,6 +177,11 @@ public class ConfigInjection {
                 || exclusionConfigFileList.contains(configName);
     }
 
+    /**
+     * Gets the decryptor instance.
+     *
+     * @return Decryptor instance
+     */
     public static Decryptor getDecryptor() {
         return decryptor;
     }
@@ -154,6 +199,13 @@ public class ConfigInjection {
         return input.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
     }
 
+    /**
+     * Decrypts an environment variable value.
+     *
+     * @param decryptor The decryptor to use
+     * @param envVal    The environment variable value
+     * @return The decrypted object
+     */
     public static Object decryptEnvValue(Decryptor decryptor, String envVal) {
         Object decryptedEnvValue;
         //checking if the value put in env is encrypted. If yes then decrypting it.

@@ -33,12 +33,20 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, java
 
     private static final Object PRESENT = new Object();
 
+    /** Internal map for storing set elements */
     private final ConcurrentMap<E, Object> map;
 
+    /**
+     * Constructs a new, empty ConcurrentHashSet.
+     */
     public ConcurrentHashSet() {
         map = new ConcurrentHashMap<E, Object>();
     }
 
+    /**
+     * Constructs a new, empty ConcurrentHashSet with the specified initial capacity.
+     * @param initialCapacity initial capacity
+     */
     public ConcurrentHashSet(int initialCapacity) {
         map = new ConcurrentHashMap<E, Object>(initialCapacity);
     }

@@ -35,6 +35,11 @@ import java.util.regex.Pattern;
  * @author Steve Hu
  */
 public class CodeVerifierUtil {
+    /**
+     * Default constructor for CodeVerifierUtil.
+     */
+    public CodeVerifierUtil() {
+    }
 
     static final Logger logger = LoggerFactory.getLogger(CodeVerifierUtil.class);
 

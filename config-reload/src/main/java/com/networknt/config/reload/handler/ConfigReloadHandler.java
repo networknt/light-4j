@@ -31,13 +31,18 @@ import static com.networknt.config.ConfigInjection.CENTRALIZED_MANAGEMENT;
  *
  */
 public class ConfigReloadHandler implements LightHttpHandler {
+    /** startup config name */
     public static final String STARTUP_CONFIG_NAME = "startup";
+    /** config loader class property name */
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
     private  static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
     private  static final String MODULE_DEFAULT = "ALL";
     private  static final String RELOAD_METHOD = "reload";
 
+    /**
+     * Default constructor for ConfigReloadHandler.
+     */
     public ConfigReloadHandler() {
         ConfigReloadConfig.load();
         if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");

@@ -26,9 +26,27 @@ import java.util.List;
 
 public interface DiscoveryService {
 
+    /**
+     * Subscribes to changes for a given URL.
+     *
+     * @param url URL to subscribe to
+     * @param listener NotifyListener to receive updates
+     */
     void subscribe(URL url, NotifyListener listener);
 
+    /**
+     * Unsubscribes from changes for a given URL.
+     *
+     * @param url URL to unsubscribe from
+     * @param listener NotifyListener to be removed
+     */
     void unsubscribe(URL url, NotifyListener listener);
 
+    /**
+     * Discovers URLs for a given service URL.
+     *
+     * @param url service URL to discover
+     * @return List of discovered URLs
+     */
     List<URL> discover(URL url);
 }

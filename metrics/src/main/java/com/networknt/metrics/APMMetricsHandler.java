@@ -19,6 +19,9 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
+/**
+ * Metrics handler for APM (Application Performance Monitoring).
+ */
 public class APMMetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(APMMetricsHandler.class);
 
@@ -27,6 +30,9 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
     private final AtomicBoolean firstTime = new AtomicBoolean(true);
     private volatile HttpHandler next;
 
+    /**
+     * Default constructor for APMMetricsHandler.
+     */
     public APMMetricsHandler() {
         logger.debug("APMMetricsHandler is constructed!");
     }

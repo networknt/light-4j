@@ -37,8 +37,16 @@ import java.util.regex.Pattern;
  * @author Steve Hu
  */
 public class Util {
+    /**
+     * Default constructor for Util.
+     */
+    public Util() {
+    }
     static final Logger logger = LoggerFactory.getLogger(Util.class);
 
+    /**
+     * List of HTTP methods.
+     */
     public static final List<String> METHODS = Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH");
 
     /**
@@ -76,6 +84,10 @@ public class Util {
         return inetAddress;
     }
 
+    /**
+     * Gets the version of the JAR file.
+     * @return String JAR version
+     */
     public static String getJarVersion() {
         String path = Util.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         //String path = "/Users/stevehu/project/light-example-4j/petstore/target/swagger-light-server-1.0.0.jar";
@@ -90,6 +102,10 @@ public class Util {
         return ver;
     }
 
+    /**
+     * Gets the framework version.
+     * @return String framework version
+     */
     public static String getFrameworkVersion() {
         // this doesn't work.
         // TODO make it work.
@@ -100,6 +116,11 @@ public class Util {
         return location.toString();
     }
 
+    /**
+     * Parses an integer string.
+     * @param intStr integer string
+     * @return int value or default
+     */
     public static int parseInteger(String intStr) {
         if (intStr == null) {
             return Constants.DEFAULT_INT_VALUE;
@@ -111,6 +132,11 @@ public class Util {
         }
     }
 
+    /**
+     * URL encodes a string.
+     * @param value string to encode
+     * @return String encoded string
+     */
     public static String urlEncode(String value) {
         if (value == null || value.length() == 0) {
             return "";
@@ -122,6 +148,11 @@ public class Util {
         }
     }
 
+    /**
+     * URL decodes a string.
+     * @param value string to decode
+     * @return String decoded string
+     */
     public static String urlDecode(String value) {
         if (value == null || value.length() == 0) {
             return "";
@@ -133,6 +164,12 @@ public class Util {
         }
     }
 
+    /**
+     * Substitutes variables in a template string.
+     * @param template template string
+     * @param variables variables map
+     * @return String substituted string
+     */
     public static String substituteVariables(String template, Map<String, String> variables) {
         Pattern pattern = Pattern.compile("\\$\\{(.+?)\\}");
         Matcher matcher = pattern.matcher(template);

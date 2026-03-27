@@ -20,6 +20,9 @@ import com.networknt.registry.URL;
 
 import java.util.List;
 
+/**
+ * Interface for Load Balance implementations to select a URL from a list of URLs.
+ */
 public interface LoadBalance {
     // select one from a list of URLs
 

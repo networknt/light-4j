@@ -31,17 +31,34 @@ import com.networknt.status.Status;
  */
 public class ApiException extends Exception {
     private static final long serialVersionUID = 1L;
+    /** The status object associated with this exception */
     private final Status status;
 
+    /**
+     * Gets the status object.
+     *
+     * @return Status object
+     */
     public Status getStatus() {
         return status;
     }
 
+    /**
+     * Constructs an ApiException with a status.
+     *
+     * @param status Status object
+     */
     public ApiException(Status status) {
         super(status.toString());
         this.status = status;
     }
 
+    /**
+     * Constructs an ApiException with a status and a cause.
+     *
+     * @param status Status object
+     * @param cause  Throwable cause
+     */
     public ApiException(Status status, Throwable cause) {
         super(status.toString(), cause);
         this.status = status;

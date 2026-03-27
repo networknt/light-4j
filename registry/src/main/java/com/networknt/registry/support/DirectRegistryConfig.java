@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Configuration for direct registry that defines service to hosts mapping.
+ */
 @ConfigSchema(
         configKey = "direct-registry",
         configName = "direct-registry",
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 public class DirectRegistryConfig {
     private static final Logger logger = LoggerFactory.getLogger(DirectRegistryConfig.class);
 
+    /** Constant for configuration name */
     public static final String CONFIG_NAME = "direct-registry";
     private static final String DIRECT_URLS = "directUrls";
 
@@ -70,10 +74,21 @@ public class DirectRegistryConfig {
         setMap();
     }
 
+    /**
+     * Loads the direct registry configuration from the default config name.
+     *
+     * @return DirectRegistryConfig object
+     */
     public static DirectRegistryConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the direct registry configuration from a specific config name.
+     *
+     * @param configName config name
+     * @return DirectRegistryConfig object
+     */
     public static DirectRegistryConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -93,6 +108,11 @@ public class DirectRegistryConfig {
         return new DirectRegistryConfig(configName);
     }
 
+    /**
+     * Gets the mapped configuration.
+     *
+     * @return Map mapped configuration
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -101,10 +121,20 @@ public class DirectRegistryConfig {
         return config;
     }
 
+    /**
+     * Gets the direct URLs mapping.
+     *
+     * @return Map direct URLs mapping
+     */
     public Map<String, List<URL>> getDirectUrls() {
         return directUrls;
     }
 
+    /**
+     * Sets the direct URLs mapping.
+     *
+     * @param directUrls map of direct URLs
+     */
     public void setDirectUrls(Map<String, List<URL>> directUrls) {
         this.directUrls = directUrls;
     }

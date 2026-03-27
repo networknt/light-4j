@@ -39,6 +39,7 @@ import java.util.Map;
         }
 )
 public class DumpConfig {
+    /** dump configuration name */
     public static final String CONFIG_NAME = "dump";
 
     @BooleanField(
@@ -154,10 +155,19 @@ public class DumpConfig {
         this(CONFIG_NAME);
     }
 
+    /**
+     * Loads the DumpConfig for the default config name.
+     * @return DumpConfig instance
+     */
     public static DumpConfig load() {
         return load(CONFIG_NAME);
     }
 
+    /**
+     * Loads the DumpConfig for a specific config name.
+     * @param configName config name
+     * @return DumpConfig instance
+     */
     public static DumpConfig load(String configName) {
         if (CONFIG_NAME.equals(configName)) {
             Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
@@ -178,6 +188,10 @@ public class DumpConfig {
         return new DumpConfig(configName);
     }
 
+    /**
+     * Sets the response configuration.
+     * @param response Map of response configuration
+     */
     public void setResponse(Map<String, Object> response) {
         final var mapper = Config.getInstance().getMapper();
         this.response = mapper.convertValue(response, new TypeReference<>() {
@@ -185,6 +199,10 @@ public class DumpConfig {
     }
 
 
+    /**
+     * Sets the request configuration.
+     * @param request Map of request configuration
+     */
     public void setRequest(Map<String, Object> request) {
         final var mapper = Config.getInstance().getMapper();
         this.request = mapper.convertValue(request, new TypeReference<>() {
@@ -199,55 +217,108 @@ public class DumpConfig {
         return config.get(filterOptionName) instanceof List ? (List<String>) config.get(filterOptionName) : new ArrayList();
     }
 
+    /**
+     * Checks if the dump middleware is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * Checks if request dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestEnabled() {
         return isEnabled() && requestEnabled;
     }
 
+    /**
+     * Checks if response dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isResponseEnabled() {
         return isEnabled() && responseEnabled;
     }
 
     //auto-generated
+    /**
+     * Sets if the dump middleware is enabled.
+     * @param enabled boolean true if enabled
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * Checks if masking is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isMaskEnabled() {
         return mask;
     }
 
+    /**
+     * Sets if masking is enabled.
+     * @param mask boolean true if enabled
+     */
     public void setMask(boolean mask) {
         this.mask = mask;
     }
 
+    /**
+     * Gets the log level.
+     * @return String log level
+     */
     public String getLogLevel() {
         return logLevel;
     }
 
+    /**
+     * Sets the log level.
+     * @param logLevel String log level
+     */
     public void setLogLevel(String logLevel) {
         this.logLevel = logLevel;
     }
 
+    /**
+     * Gets the indent size.
+     * @return int indent size
+     */
     public int getIndentSize() {
         return indentSize;
     }
 
+    /**
+     * Sets the indent size.
+     * @param indentSize int indent size
+     */
     public void setIndentSize(int indentSize) {
         this.indentSize = indentSize;
     }
 
+    /**
+     * Checks if JSON format is used.
+     * @return boolean true if enabled
+     */
     public boolean isUseJson() {
         return useJson;
     }
 
+    /**
+     * Sets if JSON format should be used.
+     * @param useJson boolean true if enabled
+     */
     public void setUseJson(boolean useJson) {
         this.useJson = useJson;
     }
 
+    /**
+     * @deprecated since 2.2.1
+     * Gets the request configuration Map.
+     * @return Map of request configuration
+     */
     @Deprecated(since = "2.2.1")
     public Map<String, Object> getRequest() {
         final var mapper = Config.getInstance().getMapper();
@@ -255,6 +326,11 @@ public class DumpConfig {
         });
     }
 
+    /**
+     * @deprecated since 2.2.1
+     * Gets the response configuration Map.
+     * @return Map of response configuration
+     */
     @Deprecated(since = "2.2.1")
     public Map<String, Object> getResponse() {
         final var mapper = Config.getInstance().getMapper();
@@ -263,66 +339,129 @@ public class DumpConfig {
     }
 
 
+    /**
+     * Checks if request URL dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestUrlEnabled() {
         return request.isUrl();
     }
 
+    /**
+     * Checks if request header dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestHeaderEnabled() {
         return request.isHeaders();
     }
 
+    /**
+     * Gets filtered request headers.
+     * @return List filtered request headers
+     */
     public List<String> getRequestFilteredHeaders() {
         return request.getFilteredHeaders();
     }
 
+    /**
+     * Checks if request cookie dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestCookieEnabled() {
         return request.isCookies();
     }
 
+    /**
+     * Gets filtered request cookies.
+     * @return List filtered request cookies
+     */
     public List<String> getRequestFilteredCookies() {
         return request.getFilteredCookies();
     }
 
+    /**
+     * Checks if request query parameter dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestQueryParametersEnabled() {
         return request.isQueryParameters();
     }
 
+    /**
+     * Gets filtered request query parameters.
+     * @return List filtered request query parameters
+     */
     public List<String> getRequestFilteredQueryParameters() {
         return request.getFilteredQueryParameters();
     }
 
+    /**
+     * Checks if request body dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isRequestBodyEnabled() {
         return request.isBody();
     }
 
+    /**
+     * Checks if response header dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isResponseHeaderEnabled() {
         return response.isHeaders();
     }
 
+    /**
+     * Gets filtered response headers.
+     * @return List filtered response headers
+     */
     public List<String> getResponseFilteredHeaders() {
         return response.getFilteredHeaders();
     }
 
+    /**
+     * Checks if response cookie dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isResponseCookieEnabled() {
         return response.isCookies();
     }
 
+    /**
+     * Gets filtered response cookies.
+     * @return List filtered response cookies
+     */
     public List<String> getResponseFilteredCookies() {
         return response.getFilteredCookies();
     }
 
+    /**
+     * Checks if response status code dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isResponseStatusCodeEnabled() {
         return response.isStatusCode();
     }
 
+    /**
+     * Checks if response body dumping is enabled.
+     * @return boolean true if enabled
+     */
     public boolean isResponseBodyEnabled() {
         return response.isBody();
     }
 
+    /**
+     * Gets the mapped configuration.
+     * @return Map mapped configuration
+     */
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
+    /**
+     * Sets the configuration data from the mapped config.
+     */
     public void setConfigData() {
         if (mappedConfig != null) {
             Object object = mappedConfig.get("enabled");
