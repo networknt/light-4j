@@ -14,7 +14,7 @@ final class PermissionMatchUtils {
         if (jwtPermissions == null || configuredPermissions == null) {
             return false;
         }
-        return Arrays.stream(configuredPermissions.split(","))
+        return Arrays.stream(configuredPermissions.split(" "))
                 .map(String::trim)
                 .filter(permission -> !permission.isEmpty())
                 .anyMatch(permission -> hasPermission(jwtPermissions, permission));

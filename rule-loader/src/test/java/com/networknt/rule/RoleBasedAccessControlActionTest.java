@@ -14,7 +14,7 @@ class RoleBasedAccessControlActionTest {
     @Test
     void shouldNotMatchRoleBySubstring() throws Exception {
         RoleBasedAccessControlAction action = new RoleBasedAccessControlAction();
-        Map<String, Object> objMap = createObjMap("admin user", "host-admin, org-admin");
+        Map<String, Object> objMap = createObjMap("admin user", "host-admin org-admin");
         Map<String, Object> resultMap = new HashMap<>();
 
         action.performAction("ruleId", "actionId", objMap, resultMap, List.of());
@@ -25,7 +25,7 @@ class RoleBasedAccessControlActionTest {
     @Test
     void shouldMatchExactRole() throws Exception {
         RoleBasedAccessControlAction action = new RoleBasedAccessControlAction();
-        Map<String, Object> objMap = createObjMap("admin user", "host-admin, user");
+        Map<String, Object> objMap = createObjMap("admin user", "host-admin user");
         Map<String, Object> resultMap = new HashMap<>();
 
         action.performAction("ruleId", "actionId", objMap, resultMap, List.of());
