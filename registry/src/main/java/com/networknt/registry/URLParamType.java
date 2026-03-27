@@ -49,8 +49,7 @@ public enum URLParamType {
     maxContentLength("maxContentLength", 10 * 1024 * 1024),
     /** max server conn (all clients conn) **/
     maxServerConnection("maxServerConnection", 100000),
-    /** pool conn manger strategy **/
-    /** pool conn manger strategy */
+    /** pool conn manager strategy **/
     poolLifo("poolLifo", true),
 
     /** lazy init */
