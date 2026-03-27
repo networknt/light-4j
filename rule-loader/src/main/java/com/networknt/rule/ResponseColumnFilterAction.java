@@ -95,7 +95,7 @@ public class ResponseColumnFilterAction implements IAction {
         } else {
             list = mapPermission(list, attributeMap, jwtAttribute);
         }
-        String jwtUser = jwtClaims.getClaimValueAsString(Constants.USER);
+        String jwtUser = jwtClaims.getClaimValueAsString(Constants.UID);
         Map<String, Object> userMap = (Map<String, Object>)colMap.get(Constants.USER);
         if(userMap == null) {
             if(logger.isTraceEnabled()) logger.trace("no user filter configured for the endpoint.");
@@ -111,7 +111,7 @@ public class ResponseColumnFilterAction implements IAction {
         for (Map.Entry<String, Object> entry : permissionMap.entrySet()) {
             String key = entry.getKey();
             String value = (String)entry.getValue();
-            if(jwtPermission.contains(key)) {
+            if(PermissionMatchUtils.hasPermission(jwtPermission, key)) {
                 if(logger.isTraceEnabled()) logger.trace("permission matched for key = {} value = {}", key, value);
                 // filter the list based on the value
                 if(value.startsWith("!")) {

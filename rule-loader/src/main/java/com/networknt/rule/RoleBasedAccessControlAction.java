@@ -25,13 +25,8 @@ public class RoleBasedAccessControlAction implements IAction {
         String jwtRole = (String) jwtClaims.getClaimValue(Constants.ROLE);
         String endpointRoles = (String) objMap.get(Constants.ROLES);
         if(logger.isTraceEnabled()) logger.trace("ruleId {} actionId {} jwtRole {} endpointRoles {}", ruleId, actionId, jwtRole, endpointRoles);
-        // split the role in the jwt token and compare with the required roles in the roles from the object map.
-        String[] split = jwtRole.split("\\s+");
-        for (String s : split) {
-            if (endpointRoles.contains(s.trim())) {
-                resultMap.put(RuleConstants.RESULT, true);
-                break;
-            }
+        if (PermissionMatchUtils.hasAnyConfiguredPermission(jwtRole, endpointRoles)) {
+            resultMap.put(RuleConstants.RESULT, true);
         }
     }
 }

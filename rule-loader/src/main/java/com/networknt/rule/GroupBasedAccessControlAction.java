@@ -27,15 +27,9 @@ public class GroupBasedAccessControlAction implements IAction {
         String endpointGroups = (String) objMap.get(Constants.GROUPS);
         if (logger.isTraceEnabled())
             logger.trace("ruleId {} actionId {} jwtGroup {} endpointGroup {}", ruleId, actionId, jwtGroup, endpointGroups);
-        // split the grp in the jwt token and compare with the required group in the groups from the object map.
-        String[] split = jwtGroup.split("\\s+");
-        for (String s : split) {
-            if (endpointGroups.contains(s.trim())) {
-                resultMap.put(RuleConstants.RESULT, true);
-                break;
-            }
+        if (PermissionMatchUtils.hasAnyConfiguredPermission(jwtGroup, endpointGroups)) {
+            resultMap.put(RuleConstants.RESULT, true);
         }
-
     }
 
 }

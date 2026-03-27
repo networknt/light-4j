@@ -26,12 +26,8 @@ public class UserBasedAccessControlAction implements IAction{
         String jwtUser = (String) jwtClaims.getClaimValue(Constants.UID);
         String endpointUsers = (String) objMap.get(Constants.USERS);
         if(logger.isTraceEnabled()) logger.trace("ruleId {} actionId {} jwtUser {} endpointUsers {}", ruleId, actionId, jwtUser, endpointUsers);
-        String[] split = jwtUser.split("\\s+");
-        for (String s : split) {
-            if (endpointUsers.contains(s.trim())) {
-                resultMap.put(RuleConstants.RESULT, true);
-                break;
-            }
+        if (PermissionMatchUtils.hasAnyConfiguredPermission(jwtUser, endpointUsers)) {
+            resultMap.put(RuleConstants.RESULT, true);
         }
     }
 }

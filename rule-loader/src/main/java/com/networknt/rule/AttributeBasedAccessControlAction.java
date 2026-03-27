@@ -29,6 +29,9 @@ public class AttributeBasedAccessControlAction implements IAction {
         List<Map<String, String>> endpointAttributes = (List<Map<String, String>>) objMap.get(Constants.ATTRIBUTES);
         if (logger.isTraceEnabled())
             logger.trace("ruleId {} actionId {} jwtAttribute {} endpointAttributes {}", ruleId, actionId, jwtAttribute, endpointAttributes);
+        if (endpointAttributes == null) {
+            return;
+        }
         // parse the jwtAttribute and compare with the required attributes in the endpoint config.
         Map<String, String> jwtAttributeMap = Util.parseAttributes(jwtAttribute);
         boolean result = checkAttributesExist(endpointAttributes, jwtAttributeMap);

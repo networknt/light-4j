@@ -26,12 +26,8 @@ public class PositionBasedAccessControlAction implements IAction {
         String jwtPosition = (String) jwtClaims.getClaimValue(Constants.POS);
         String endpointPositions = (String) objMap.get(Constants.POSITIONS);
         if(logger.isTraceEnabled()) logger.trace("ruleId {} actionId {} jwtPosition {} endpointPosition {}", ruleId, actionId, jwtPosition, endpointPositions);
-        String[] split = jwtPosition.split("\\s+");
-        for (String s : split) {
-            if (endpointPositions.contains(s.trim())) {
-                resultMap.put(RuleConstants.RESULT, true);
-                break;
-            }
+        if (PermissionMatchUtils.hasAnyConfiguredPermission(jwtPosition, endpointPositions)) {
+            resultMap.put(RuleConstants.RESULT, true);
         }
     }
 }
