@@ -64,22 +64,22 @@ public class PortalRegistryTest {
         registry.doRegister(serviceUrl2);
         PortalRegistryService service1 = PortalRegistryUtils.buildService(serviceUrl);
         Assertions.assertTrue(client.isRegistered(service1));
-        Assertions.assertFalse(client.isWorking(service1));
+        Assertions.assertTrue(client.isWorking(service1));
         PortalRegistryService service2 = PortalRegistryUtils.buildService(serviceUrl2);
         Assertions.assertTrue(client.isRegistered(service2));
-        Assertions.assertFalse(client.isWorking(service2));
+        Assertions.assertTrue(client.isWorking(service2));
 
-        // available
+        // available is a no-op for controller-rs
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
         Assertions.assertTrue(client.isWorking(service1));
         Assertions.assertTrue(client.isWorking(service2));
 
-        // unavailable
+        // unavailable is also a no-op for controller-rs
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assertions.assertFalse(client.isWorking(service1));
-        Assertions.assertFalse(client.isWorking(service2));
+        Assertions.assertTrue(client.isWorking(service1));
+        Assertions.assertTrue(client.isWorking(service2));
 
         // unregister
         registry.doUnregister(serviceUrl);
@@ -115,11 +115,10 @@ public class PortalRegistryTest {
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.doDiscover(serviceUrl);
-        Assertions.assertTrue(urls.isEmpty());
+        Assertions.assertTrue(urls.contains(serviceUrl));
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        System.out.println("Before discovery");
         try {
             urls = registry.doDiscover(serviceUrl);
         } catch (Exception e) {
@@ -127,7 +126,7 @@ public class PortalRegistryTest {
         }
         Assertions.assertTrue(urls.contains(serviceUrl));
 
-        // unavailable & unregister
+        // unavailable is a no-op; unregister removes the service
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
         registry.doUnregister(serviceUrl);

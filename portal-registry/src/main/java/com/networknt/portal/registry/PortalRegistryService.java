@@ -24,6 +24,8 @@ public class PortalRegistryService {
 
     private String checkString;
 
+    private String version;
+
     public String getServiceId() {
         return serviceId;
     }
@@ -88,6 +90,14 @@ public class PortalRegistryService {
         this.checkString = checkString;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public PortalRegistryService() {
         PortalRegistryConfig config = PortalRegistryConfig.load();
         if(config.isHttpCheck()) {
@@ -119,8 +129,23 @@ public class PortalRegistryService {
         params.put("protocol", protocol);
         params.put("address", address);
         params.put("port", port);
-        params.put("version", serviceId);
+        params.put("version", version);
         params.put("capabilities", getCapabilities());
+        return params;
+    }
+
+    public Map<String, Object> toControllerRsRegisterParams(String jwt) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("jwt", jwt);
+        params.put("serviceId", serviceId);
+        if (tag != null) {
+            params.put("envTag", tag);
+        }
+        params.put("environment", tag != null ? tag : "default");
+        params.put("version", version != null ? version : "1.0.0");
+        params.put("protocol", protocol);
+        params.put("port", port);
+        params.put("tags", Map.of());
         return params;
     }
 

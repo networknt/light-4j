@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * @author zhanglei28
@@ -66,7 +67,7 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
 
     @Override
     public void registerService(PortalRegistryService service, String token) {
-        serviceStatus.put(service.getServiceId() + service.getAddress() + service.getPort(), false);
+        serviceStatus.put(service.getServiceId() + service.getAddress() + service.getPort(), true);
         services.put(service.getServiceId() + service.getAddress() + service.getPort(), service);
     }
 
@@ -92,6 +93,37 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
             }
         }
         return list;
+    }
+
+    @Override
+    public boolean supportsWebSocket() {
+        return true;
+    }
+
+    @Override
+    public void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+    }
+
+    @Override
+    public void closeWebSocket() {
+    }
+
+    @Override
+    public List<Map<String, Object>> subscribeService(String serviceId, String tag, String token) {
+        return lookupHealthService(serviceId, tag, token);
+    }
+
+    @Override
+    public List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
+        return lookupHealthService(serviceId, tag, token);
+    }
+
+    @Override
+    public void unsubscribeService(String serviceId, String tag, String token) {
+    }
+
+    @Override
+    public void unsubscribeService(String serviceId, String tag, String protocol, String token) {
     }
 
     public long getCheckPassTimes(PortalRegistryService service) {

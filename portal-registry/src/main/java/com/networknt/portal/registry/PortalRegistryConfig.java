@@ -29,6 +29,7 @@ public class PortalRegistryConfig {
 
     private static final String PORTAL_URL = "portalUrl";
     private static final String PORTAL_TOKEN = "portalToken";
+    private static final String CONTROLLER_DISCOVERY_TOKEN = "controllerDiscoveryToken";
     private static final String MAX_REQ_PER_CONN = "maxReqPerConn";
     private static final String DEREGISTER_AFTER = "deregisterAfter";
     private static final String CHECK_INTERVAL = "checkInterval";
@@ -97,6 +98,13 @@ public class PortalRegistryConfig {
                     "that case, you can use portalRegistry.portalToken as the key instead of the environment variable."
     )
     String portalToken;
+
+    @StringField(
+            configFieldName = "controllerDiscoveryToken",
+            externalizedKeyName = "controllerDiscoveryToken",
+            description = "Bearer token used for controller-rs discovery websocket authentication. If blank, portalToken is reused."
+    )
+    String controllerDiscoveryToken;
 
     @IntegerField(
             configFieldName = "maxReqPerConn",
@@ -180,6 +188,14 @@ public class PortalRegistryConfig {
         return maxReqPerConn;
     }
 
+    public String getControllerDiscoveryToken() {
+        return controllerDiscoveryToken;
+    }
+
+    public void setControllerDiscoveryToken(String controllerDiscoveryToken) {
+        this.controllerDiscoveryToken = controllerDiscoveryToken;
+    }
+
     public void setMaxReqPerConn(int maxReqPerConn) {
         this.maxReqPerConn = maxReqPerConn;
     }
@@ -229,6 +245,8 @@ public class PortalRegistryConfig {
         if (object != null) portalUrl = (String) object;
         object = mappedConfig.get(PORTAL_TOKEN);
         if (object != null) portalToken = (String) object;
+        object = mappedConfig.get(CONTROLLER_DISCOVERY_TOKEN);
+        if (object != null) controllerDiscoveryToken = (String) object;
         object = mappedConfig.get(MAX_REQ_PER_CONN);
         if (object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
         object = mappedConfig.get(DEREGISTER_AFTER);
