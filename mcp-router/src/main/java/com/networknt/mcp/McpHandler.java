@@ -10,6 +10,8 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleExecutor;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.ConfigUtils;
+import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -31,6 +33,14 @@ public class McpHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(McpHandler.class);
     private static final String JSONRpc_VERSION = "2.0";
     private static final String REQUEST_ACCESS = "req-acc";
+    private static final String RESPONSE_FILTER = "res-fil";
+    private static final String PERMISSION = "permission";
+    private static final String RESPONSE_BODY = "responseBody";
+    private static final String ERROR_MESSAGE = "errorMessage";
+    private static final String STATUS_CODE = "statusCode";
+    private static final String AUDIT_INFO = "auditInfo";
+    private static final String ENDPOINT = "endpoint";
+    private static final String TOOL_ARGUMENTS = "toolArguments";
 
     private volatile HttpHandler next;
     private volatile McpConfig config;
@@ -210,6 +220,7 @@ public class McpHandler implements MiddlewareHandler {
                         }
                         try {
                             Map<String, Object> result = tool.execute(args);
+                            result = applyResponseFilter(exch, tool.getEndpoint(), args, result);
                             response.put("result", result);
                         } catch (Exception e) {
                              logger.error("Tool execution error", e);
@@ -300,6 +311,166 @@ public class McpHandler implements MiddlewareHandler {
                 response.put("error", Map.of("code", -32001, "message", "Access denied by access control rule for " + endpoint));
                 return false;
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> applyResponseFilter(HttpServerExchange exchange, String endpoint, Map<String, Object> args, Map<String, Object> result) {
+        if (ruleExecutor == null || endpoint == null || result == null) {
+            return result;
+        }
+
+        Map<String, Object> endpointRules = ruleExecutor.getEndpointRules();
+        if (endpointRules == null || endpointRules.isEmpty()) {
+            return result;
+        }
+
+        String endpointPath = endpoint;
+        String endpointMethod = "call";
+        int atIndex = endpoint.indexOf('@');
+        if (atIndex >= 0) {
+            endpointPath = endpoint.substring(0, atIndex);
+            if (atIndex < endpoint.length() - 1) {
+                endpointMethod = endpoint.substring(atIndex + 1);
+            }
+        }
+
+        String serviceEntry = endpointRules.containsKey(endpoint)
+                ? endpoint
+                : ConfigUtils.findServiceEntry(endpointMethod, endpointPath, endpointRules);
+        if (serviceEntry == null) {
+            return result;
+        }
+
+        Map<String, List> serviceEntryRules = (Map<String, List>) endpointRules.get(serviceEntry);
+        if (serviceEntryRules == null) {
+            return result;
+        }
+
+        List<String> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
+        if (responseRules == null || responseRules.isEmpty()) {
+            return result;
+        }
+
+        FilterTarget filterTarget = FilterTarget.from(result);
+        if (filterTarget == null) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Skipping MCP response filter for endpoint {} because the result is not filterable. result={}",
+                        endpoint, JsonMapper.toJson(result));
+            }
+            return result;
+        }
+
+        String responseBody = filterTarget.responseBody();
+        Map<String, Object> objMap = new HashMap<>();
+        objMap.put(RESPONSE_BODY, responseBody);
+        objMap.put(AUDIT_INFO, exchange.getAttachment(AttachmentConstants.AUDIT_INFO));
+        objMap.put(STATUS_CODE, exchange.getStatusCode());
+        objMap.put(ENDPOINT, endpoint);
+        objMap.put(TOOL_ARGUMENTS, args);
+
+        boolean finalResult = true;
+        Map<String, Object> ruleResult = null;
+        for (String ruleId : responseRules) {
+            Map<String, Object> permissionMap = (Map<String, Object>) serviceEntryRules.get(PERMISSION);
+            if (permissionMap != null) {
+                objMap.put(Constants.COL, permissionMap.get(Constants.COL));
+                objMap.put(Constants.ROW, permissionMap.get(Constants.ROW));
+            }
+            ruleResult = ruleExecutor.executeRule(ruleId, objMap);
+            boolean res = Boolean.TRUE.equals(ruleResult == null ? null : ruleResult.get(RuleConstants.RESULT));
+            if (!res) {
+                finalResult = false;
+                break;
+            }
+            responseBody = (String) ruleResult.get(RESPONSE_BODY);
+            objMap.put(RESPONSE_BODY, responseBody);
+        }
+
+        if (!finalResult) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("MCP response filter condition not met for endpoint {}: {}", endpoint,
+                        ruleResult == null ? null : ruleResult.get(ERROR_MESSAGE));
+            }
+            return result;
+        }
+
+        if (ruleResult == null) {
+            return result;
+        }
+
+        responseBody = (String) ruleResult.get(RESPONSE_BODY);
+        if (responseBody == null) {
+            return result;
+        }
+
+        try {
+            return filterTarget.applyFiltered(responseBody, mapper);
+        } catch (Exception e) {
+            logger.warn("Unable to apply filtered MCP response for endpoint {}. Returning original result.", endpoint, e);
+            return result;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static final class FilterTarget {
+        private final Map<String, Object> result;
+        private final Object structuredContent;
+        private final Map<String, Object> contentItem;
+        private final String responseBody;
+
+        private FilterTarget(Map<String, Object> result, Object structuredContent, Map<String, Object> contentItem, String responseBody) {
+            this.result = result;
+            this.structuredContent = structuredContent;
+            this.contentItem = contentItem;
+            this.responseBody = responseBody;
+        }
+
+        private static FilterTarget from(Map<String, Object> result) {
+            Object structuredContent = result.get("structuredContent");
+            if (structuredContent != null) {
+                return new FilterTarget(result, structuredContent, null, JsonMapper.toJson(structuredContent));
+            }
+
+            Object contentObject = result.get("content");
+            if (!(contentObject instanceof List<?> contentList) || contentList.size() != 1) {
+                return null;
+            }
+
+            Object itemObject = contentList.get(0);
+            if (!(itemObject instanceof Map<?, ?> rawContentItem)) {
+                return null;
+            }
+
+            Object type = rawContentItem.get("type");
+            Object text = rawContentItem.get("text");
+            if (!"text".equals(type) || !(text instanceof String textValue)) {
+                return null;
+            }
+
+            return new FilterTarget(result, null, (Map<String, Object>) rawContentItem, textValue);
+        }
+
+        private String responseBody() {
+            return responseBody;
+        }
+
+        private Map<String, Object> applyFiltered(String filteredBody, ObjectMapper mapper) throws Exception {
+            if (structuredContent != null) {
+                Map<String, Object> newResult = new HashMap<>(result);
+                newResult.put("structuredContent", mapper.readValue(filteredBody, Object.class));
+                return newResult;
+            }
+
+            if (contentItem != null) {
+                Map<String, Object> newResult = new HashMap<>(result);
+                Map<String, Object> newContentItem = new HashMap<>(contentItem);
+                newContentItem.put("text", filteredBody);
+                newResult.put("content", List.of(newContentItem));
+                return newResult;
+            }
+
+            return result;
         }
     }
 
