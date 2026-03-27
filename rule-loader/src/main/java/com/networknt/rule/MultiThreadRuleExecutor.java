@@ -103,6 +103,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
 
     @Override
     public Map<String, Object> getEndpointRules() {
+        checkConfigReload();
         RuntimeState currentState = state;
         return currentState == null ? null : currentState.endpointRules;
     }
