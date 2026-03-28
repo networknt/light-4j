@@ -79,6 +79,10 @@ Header:
 - `controllerDiscoveryToken` when configured
 - otherwise `portalToken`
 
+For local light-portal development, the controller JWKS endpoint is:
+
+- `http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys`
+
 ## 4. Registration Contract
 
 ### 4.1 Register Request
@@ -106,6 +110,9 @@ Rules:
 - `version` comes from the light-4j registry URL version, not from `serviceId`
 - `address` is not part of the payload; `controller-rs` derives it from the socket remote address
 - one service instance maps to one registration socket
+- the service JWT must be `RS256`
+- the controller resolves the signing key from JWKS by `kid` and refreshes when a new `kid` is seen
+- service identity is matched with claim fallback `sid`, then `service_id`, then `cid`, then `sub`
 
 ### 4.2 Register Ack
 

@@ -71,6 +71,8 @@ Notes:
 - `controllerDiscoveryToken` is used for `/ws/discovery`
 - if `controllerDiscoveryToken` is blank, `portalToken` is reused
 - `portalToken` is also used as the service JWT source passed in `service/register`
+- the controller should verify that token from its JWKS endpoint, for example `http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys`
+- current service identity comes from `cid`; future tokens may use `sid`
 - `ttlCheck` and `httpCheck` remain in config for compatibility, but the controller-rs path does not use REST heartbeat/check endpoints
 
 ## 4. Registry Service Mapping
