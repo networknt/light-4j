@@ -89,7 +89,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     /** config server files context root */
     public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/config-server/files";
     /** authorization property name */
-    public static final String AUTHORIZATION = "config_server_authorization";
+    public static final String AUTHORIZATION = "light_portal_authorization";
     /** client truststore password property name */
     public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
     /** client truststore location property name */

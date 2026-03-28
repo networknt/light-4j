@@ -1,12 +1,13 @@
-# Portal URL for accessing controller API. Default to lightapi.net public portal, and it can be pointed to a standalone
-# light-controller instance for testing in the same Kubernetes cluster or docker-compose.
+# Controller base URL. For local controller-rs or light-controller development, use something like
+# https://localhost:8443. The registration websocket is derived as /ws/microservice and discovery as /ws/discovery.
 portalUrl: ${portalRegistry.portalUrl:https://lightapi.net}
-# Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0
-# provider during the deployment. And then pass the token to the container with an environment variable. The other
-# option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In
-# that case, you can use portalRegistry.portalToken as the key instead of the environment variable.
-portalToken: ${portalRegistry.portalToken:}
-# Bearer token used for controller-rs discovery websocket authentication. If blank, portalToken is reused.
+# RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured
+# JWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security
+# provider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.
+# This value is typically provided with the light_portal_authorization environment variable or portalRegistry.portalToken.
+portalToken: ${light_portal_authorization:}
+# Bearer token used on the discovery websocket Authorization header. If blank, portalToken is reused.
+# Example override: portalRegistry.controllerDiscoveryToken.
 controllerDiscoveryToken: ${portalRegistry.controllerDiscoveryToken:}
 # number of requests before resetting the shared connection to work around HTTP/2 limitation
 maxReqPerConn: ${portalRegistry.maxReqPerConn:1000000}
