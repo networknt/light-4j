@@ -109,8 +109,9 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
             Appender<ILoggingEvent> logEvent = it.next();
             if(logEvent.getClass().equals(RollingFileAppender.class)) {
                 FileReader reader = new FileReader(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
-                BufferedReader bufferedReader = new BufferedReader(reader);
-                res = this.parseAppenderFile(bufferedReader, startTime, endTime, log, loggerLevel, offset, limit);
+                try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+                    res = this.parseAppenderFile(bufferedReader, startTime, endTime, log, loggerLevel, offset, limit);
+                }
             }
         }
         return res;
