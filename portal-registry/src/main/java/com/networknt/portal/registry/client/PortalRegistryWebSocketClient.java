@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -33,7 +32,6 @@ public class PortalRegistryWebSocketClient {
     private final HttpClient httpClient;
     private final AtomicLong nextId = new AtomicLong(1L);
     private final Map<String, CompletableFuture<Map<String, Object>>> pending = new ConcurrentHashMap<>();
-    private final AtomicBoolean open = new AtomicBoolean(false);
 
     private volatile WebSocket webSocket;
     private volatile Consumer<Map<String, Object>> notificationHandler;
@@ -69,14 +67,24 @@ public class PortalRegistryWebSocketClient {
         }
 
         try {
-            webSocket = builder.buildAsync(uri, listener).join();
-            open.set(true);
+            WebSocket connected = builder.buildAsync(uri, listener)
+                    .get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            if (listener.isTerminated() || connected.isInputClosed() || connected.isOutputClosed()) {
+                connected.abort();
+                throw new IOException("Websocket connection closed during connect");
+            }
+            webSocket = connected;
         } catch (CompletionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof IOException ioException) {
                 throw ioException;
             }
             throw new IOException("Failed to connect websocket to " + uri, cause == null ? e : cause);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while connecting websocket to " + uri, e);
+        } catch (ExecutionException | TimeoutException e) {
+            throw new IOException("Failed to connect websocket to " + uri, e);
         }
 
         Runnable handler = connectHandler;
@@ -98,7 +106,8 @@ public class PortalRegistryWebSocketClient {
     }
 
     public boolean isOpen() {
-        return open.get() && webSocket != null;
+        WebSocket current = webSocket;
+        return current != null && !current.isInputClosed() && !current.isOutputClosed();
     }
 
     public synchronized void close() {
@@ -108,12 +117,17 @@ public class PortalRegistryWebSocketClient {
         }
         explicitClose = true;
         try {
-            current.sendClose(WebSocket.NORMAL_CLOSURE, "closed").join();
-        } catch (CompletionException e) {
-            logger.debug("Error while closing websocket", e.getCause() == null ? e : e.getCause());
+            current.sendClose(WebSocket.NORMAL_CLOSURE, "closed")
+                    .get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            current.abort();
+            logger.debug("Interrupted while closing websocket", e);
+        } catch (ExecutionException | TimeoutException e) {
+            current.abort();
+            logger.debug("Error while closing websocket", e);
         } finally {
             webSocket = null;
-            open.set(false);
         }
     }
 
@@ -165,11 +179,18 @@ public class PortalRegistryWebSocketClient {
 
     private void send(String text) throws IOException {
         WebSocket current = webSocket;
-        if (current == null || !open.get()) {
+        if (current == null || current.isInputClosed() || current.isOutputClosed()) {
             throw new IOException("Websocket channel is not open");
         }
         try {
-            current.sendText(text, true).join();
+            current.sendText(text, true).get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            current.abort();
+            throw new IOException("Interrupted while sending websocket message", e);
+        } catch (ExecutionException | TimeoutException e) {
+            current.abort();
+            throw new IOException("Failed to send websocket message", e);
         } catch (CompletionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof IOException ioException) {
@@ -211,7 +232,6 @@ public class PortalRegistryWebSocketClient {
 
     private void failPending(Throwable error) {
         webSocket = null;
-        open.set(false);
         for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
             entry.getValue().completeExceptionally(error);
         }
@@ -234,6 +254,11 @@ public class PortalRegistryWebSocketClient {
 
     private class PortalWebSocketListener implements WebSocket.Listener {
         private final StringBuilder textBuffer = new StringBuilder();
+        private volatile boolean terminated;
+
+        public boolean isTerminated() {
+            return terminated;
+        }
 
         @Override
         public void onOpen(WebSocket webSocket) {
@@ -272,12 +297,14 @@ public class PortalRegistryWebSocketClient {
 
         @Override
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+            terminated = true;
             failPending(new IOException("Websocket closed: " + statusCode + " " + reason));
             return CompletableFuture.completedFuture(null);
         }
 
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
+            terminated = true;
             logger.error("WebSocket client error", error);
             failPending(error);
         }
