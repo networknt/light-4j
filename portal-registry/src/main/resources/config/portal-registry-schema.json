@@ -10,7 +10,7 @@
     },
     "portalToken" : {
       "type" : "string",
-      "description" : "RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured\nJWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security\nprovider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.\nThis value is typically provided with the light_portal_authorization environment variable or portalRegistry.portalToken."
+      "description" : "RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured\nJWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security\nprovider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.\nThis value is typically provided with the LIGHT_PORTAL_AUTHORIZATION environment variable."
     },
     "controllerDiscoveryToken" : {
       "type" : "string",

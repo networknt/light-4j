@@ -95,7 +95,7 @@ public class PortalRegistryConfig {
             description = "RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured\n" +
                     "JWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security\n" +
                     "provider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.\n" +
-                    "This value is typically provided with the light_portal_authorization environment variable or portalRegistry.portalToken."
+                    "This value is typically provided with the LIGHT_PORTAL_AUTHORIZATION environment variable."
     )
     String portalToken;
 
