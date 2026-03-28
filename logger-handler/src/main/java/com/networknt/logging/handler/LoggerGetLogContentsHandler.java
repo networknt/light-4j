@@ -16,8 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,7 +28,13 @@ import java.util.*;
  *
  */
 public class LoggerGetLogContentsHandler implements LightHttpHandler {
+    /**
+     * Default constructor for LoggerGetLogContentsHandler.
+     */
+    public LoggerGetLogContentsHandler() {
+    }
     private static final Logger logger = LoggerFactory.getLogger(LoggerGetLogContentsHandler.class);
+    /** Configuration name for logging */
     public static final String CONFIG_NAME = "logging";
     private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ";
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
@@ -36,7 +43,9 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
     static final String LEVEL_LOG_KEY = "level";
     static final String LOGGER_LOG_KEY = "logger";
     static final String ROOT_LOGGER_NAME = "ROOT";
+    /** Default limit for log entries */
     public static final int DEFAULT_LIMIT = 100;
+    /** Default offset for log entries */
     public static final int DEFAULT_OFFSET = 0;
 
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
@@ -108,8 +117,8 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
         for(Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders(); it.hasNext();) {
             Appender<ILoggingEvent> logEvent = it.next();
             if(logEvent.getClass().equals(RollingFileAppender.class)) {
-                FileReader reader = new FileReader(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
-                try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+                Path logFile = Path.of(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
+                try (BufferedReader bufferedReader = Files.newBufferedReader(logFile)) {
                     res = this.parseAppenderFile(bufferedReader, startTime, endTime, log, loggerLevel, offset, limit);
                 }
             }

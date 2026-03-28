@@ -59,6 +59,9 @@ public class LoggerGetHandler implements LightHttpHandler {
     static final String API_ERROR_RESPONSE = "ERR10083";
     static final String DOWNSTREAM_ADMIN_DISABLED = "ERR10084";
 
+    /**
+     * Default constructor for LoggerGetHandler.
+     */
     public LoggerGetHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerGetHandler is constructed.");
     }

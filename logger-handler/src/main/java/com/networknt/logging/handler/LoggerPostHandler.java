@@ -53,12 +53,16 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  */
 public class LoggerPostHandler implements LightHttpHandler {
+    /** Configuration name for logging */
     public static final String CONFIG_NAME = "logging";
     static final String LOGGER_INFO_DISABLED = "ERR12108";
     static final String REQUEST_BODY_MISSING = "ERR10059";
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String API_ERROR_RESPONSE = "ERR10083";
     static final String DOWNSTREAM_ADMIN_DISABLED = "ERR10084";
+    /**
+     * Default constructor for LoggerPostHandler.
+     */
     public LoggerPostHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerPostHandler is constructed.");
     }

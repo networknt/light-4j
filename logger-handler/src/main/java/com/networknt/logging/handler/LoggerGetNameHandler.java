@@ -36,11 +36,15 @@ import org.slf4j.LoggerFactory;
  */
 public class LoggerGetNameHandler implements LightHttpHandler {
 
+    /** Configuration name for logging */
     public static final String CONFIG_NAME = "logging";
     private static final String LOGGER_NAME = "loggerName";
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
+    /**
+     * Default constructor for LoggerGetNameHandler.
+     */
     public LoggerGetNameHandler() {
     }
 
