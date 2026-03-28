@@ -1,16 +1,20 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "portalUrl", "portalToken", "maxReqPerConn", "deregisterAfter", "checkInterval", "httpCheck", "ttlCheck", "healthPath" ],
+  "required" : [ "portalUrl", "portalToken", "controllerDiscoveryToken", "maxReqPerConn", "deregisterAfter", "checkInterval", "httpCheck", "ttlCheck", "healthPath" ],
   "properties" : {
     "portalUrl" : {
       "type" : "string",
-      "description" : "Portal URL for accessing controller API. Default to lightapi.net public portal, and it can be pointed to a standalone\nlight-controller instance for testing in the same Kubernetes cluster or docker-compose.",
+      "description" : "Controller base URL. For local controller-rs or light-controller development, use something like\nhttps://localhost:8443. The registration websocket is derived as /ws/microservice and discovery as /ws/discovery.",
       "default" : "https://lightapi.net"
     },
     "portalToken" : {
       "type" : "string",
-      "description" : "Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0\nprovider during the deployment. And then pass the token to the container with an environment variable. The other\noption is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In\nthat case, you can use portalRegistry.portalToken as the key instead of the environment variable."
+      "description" : "RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured\nJWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security\nprovider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.\nThis value is typically provided with the LIGHT_PORTAL_AUTHORIZATION environment variable."
+    },
+    "controllerDiscoveryToken" : {
+      "type" : "string",
+      "description" : "Bearer token used on the discovery websocket Authorization header. If blank, portalToken is reused."
     },
     "maxReqPerConn" : {
       "type" : "integer",

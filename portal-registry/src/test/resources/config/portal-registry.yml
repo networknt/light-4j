@@ -1,5 +1,5 @@
-# Portal URL for accessing controller API. Default to lightapi.net public portal and it can be point to a standalone
-# light-controller instance for testing in the same Kubernetes cluster or docker-compose.
+# Controller base URL used by the test suite. The registration websocket is derived as /ws/microservice
+# and discovery as /ws/discovery.
 portalUrl: ${portalRegistry.portalUrl:https://localhost:8443}
 # number of requests before resetting the shared connection to work around HTTP/2 limitation
 maxReqPerConn: ${portalRegistry.maxReqPerConn:1000000}

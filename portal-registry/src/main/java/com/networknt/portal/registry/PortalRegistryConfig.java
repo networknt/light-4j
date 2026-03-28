@@ -84,25 +84,25 @@ public class PortalRegistryConfig {
             configFieldName = "portalUrl",
             externalizedKeyName = "portalUrl",
             defaultValue = "https://lightapi.net",
-            description = "Portal URL for accessing controller API. Default to lightapi.net public portal, and it can be pointed to a standalone\n" +
-                    "light-controller instance for testing in the same Kubernetes cluster or docker-compose."
+            description = "Controller base URL. For local controller-rs or light-controller development, use something like\n" +
+                    "https://localhost:8443. The registration websocket is derived as /ws/microservice and discovery as /ws/discovery."
     )
     String portalUrl;
 
     @StringField(
             configFieldName = "portalToken",
             externalizedKeyName = "portalToken",
-            description = "Bootstrap jwt token to access the light-controller. In most case, the pipeline will get the token from OAuth 2.0\n" +
-                    "provider during the deployment. And then pass the token to the container with an environment variable. The other\n" +
-                    "option is to use the light-4j encyptor to encrypt token and put it into the values.yml in the config server. In\n" +
-                    "that case, you can use portalRegistry.portalToken as the key instead of the environment variable."
+            description = "RS256 service registration token sent in service/register params.jwt. The controller verifies it against its configured\n" +
+                    "JWKS endpoint, for example http://localhost:6881/oauth2/AZZRJE52eXu3t1hseacnGQ/keys for the light-portal dev security\n" +
+                    "provider. Today the token should identify the service with cid matching the requested serviceId. Future tokens may use sid.\n" +
+                    "This value is typically provided with the LIGHT_PORTAL_AUTHORIZATION environment variable."
     )
     String portalToken;
 
     @StringField(
             configFieldName = "controllerDiscoveryToken",
             externalizedKeyName = "controllerDiscoveryToken",
-            description = "Bearer token used for controller-rs discovery websocket authentication. If blank, portalToken is reused."
+            description = "Bearer token used on the discovery websocket Authorization header. If blank, portalToken is reused."
     )
     String controllerDiscoveryToken;
 

@@ -94,7 +94,7 @@ public class UrlConfigLoader implements IConfigLoader {
 	public static final String SERVICE_VERSION = "serviceVersion";
 
 	/** authorization property name */
-	public static final String AUTHORIZATION = "config_server_authorization";
+	public static final String AUTHORIZATION = "light_portal_authorization";
 	/** client truststore password property name */
 	public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
 	/** client truststore location property name */
