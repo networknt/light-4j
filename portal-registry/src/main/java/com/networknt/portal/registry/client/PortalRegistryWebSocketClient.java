@@ -38,6 +38,7 @@ public class PortalRegistryWebSocketClient {
     private volatile Runnable disconnectHandler;
     private volatile Runnable connectHandler;
     private volatile boolean explicitClose;
+    private volatile boolean terminated;
 
     public PortalRegistryWebSocketClient(URI uri, String authorization) {
         this.uri = uri;
@@ -49,7 +50,7 @@ public class PortalRegistryWebSocketClient {
                     .connectTimeout(java.time.Duration.ofMillis(REQUEST_TIMEOUT_MILLIS))
                     .build();
         } catch (IOException e) {
-            throw new RuntimeException("Unable to initialize websocket SSL context", e);
+            throw new PortalRegistryWebSocketClientException("Unable to initialize websocket SSL context", e);
         }
     }
 
@@ -58,6 +59,7 @@ public class PortalRegistryWebSocketClient {
             return;
         }
         explicitClose = false;
+        terminated = false;
 
         PortalWebSocketListener listener = new PortalWebSocketListener();
         java.net.http.WebSocket.Builder builder = httpClient.newWebSocketBuilder()
@@ -132,6 +134,10 @@ public class PortalRegistryWebSocketClient {
     }
 
     public Map<String, Object> sendRequest(String method, Map<String, Object> params) {
+        if (terminated) {
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method,
+                    new IOException("Websocket channel is not open"));
+        }
         String id = String.valueOf(nextId.getAndIncrement());
         CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
         pending.put(id, future);
@@ -147,7 +153,7 @@ public class PortalRegistryWebSocketClient {
             Map<String, Object> response = future.get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
             Object error = response.get("error");
             if (error instanceof Map<?, ?> errorMap) {
-                throw new RuntimeException(String.valueOf(errorMap.get("message")));
+                throw new PortalRegistryWebSocketClientException(String.valueOf(errorMap.get("message")));
             }
             Object result = response.get("result");
             if (result instanceof Map<?, ?> resultMap) {
@@ -156,9 +162,9 @@ public class PortalRegistryWebSocketClient {
             return Collections.emptyMap();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Failed to invoke websocket method " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method, e);
         } catch (IOException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException("Failed to invoke websocket method " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method, e);
         } finally {
             pending.remove(id);
         }
@@ -173,7 +179,7 @@ public class PortalRegistryWebSocketClient {
             request.put("params", params);
             send(JsonMapper.toJson(request));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to invoke websocket notification " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket notification " + method, e);
         }
     }
 
@@ -200,50 +206,6 @@ public class PortalRegistryWebSocketClient {
         }
     }
 
-    private void handleMessage(String message) {
-        Map<String, Object> envelope;
-        try {
-            envelope = JsonMapper.string2Map(message);
-        } catch (RuntimeException e) {
-            logger.warn("Unable to parse websocket message {}", message, e);
-            return;
-        }
-        if (envelope == null) {
-            return;
-        }
-
-        Object method = envelope.get("method");
-        if (method != null) {
-            Consumer<Map<String, Object>> handler = notificationHandler;
-            if (handler != null) {
-                handler.accept(envelope);
-            }
-            return;
-        }
-
-        Object id = envelope.get("id");
-        if (id != null) {
-            CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
-            if (future != null) {
-                future.complete(envelope);
-            }
-        }
-    }
-
-    private void failPending(Throwable error) {
-        webSocket = null;
-        for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
-            entry.getValue().completeExceptionally(error);
-        }
-        pending.clear();
-        if (!explicitClose) {
-            Runnable handler = disconnectHandler;
-            if (handler != null) {
-                handler.run();
-            }
-        }
-    }
-
     private Map<String, Object> castMap(Map<?, ?> map) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -254,10 +216,10 @@ public class PortalRegistryWebSocketClient {
 
     private class PortalWebSocketListener implements WebSocket.Listener {
         private final StringBuilder textBuffer = new StringBuilder();
-        private volatile boolean terminated;
+        private volatile boolean listenerTerminated;
 
         public boolean isTerminated() {
-            return terminated;
+            return listenerTerminated;
         }
 
         @Override
@@ -273,40 +235,98 @@ public class PortalRegistryWebSocketClient {
                 textBuffer.setLength(0);
                 handleMessage(message);
             }
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onPing(WebSocket webSocket, ByteBuffer message) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-            terminated = true;
+            listenerTerminated = true;
             failPending(new IOException("Websocket closed: " + statusCode + " " + reason));
             return CompletableFuture.completedFuture(null);
         }
 
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
-            terminated = true;
+            listenerTerminated = true;
             logger.error("WebSocket client error", error);
             failPending(error);
+        }
+
+        private CompletionStage<?> requestNext(WebSocket webSocket) {
+            webSocket.request(1);
+            return CompletableFuture.completedFuture(null);
+        }
+
+        private void handleMessage(String message) {
+            Map<String, Object> envelope;
+            try {
+                envelope = JsonMapper.string2Map(message);
+            } catch (RuntimeException e) {
+                logger.warn("Unable to parse websocket message {}", message, e);
+                return;
+            }
+            if (envelope == null) {
+                return;
+            }
+
+            Object method = envelope.get("method");
+            if (method != null) {
+                Consumer<Map<String, Object>> handler = notificationHandler;
+                if (handler != null) {
+                    handler.accept(envelope);
+                }
+                return;
+            }
+
+            Object id = envelope.get("id");
+            if (id != null) {
+                CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
+                if (future != null) {
+                    future.complete(envelope);
+                }
+            }
+        }
+
+        private void failPending(Throwable error) {
+            PortalRegistryWebSocketClient.this.terminated = true;
+            webSocket = null;
+            for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
+                CompletableFuture<Map<String, Object>> future = pending.remove(entry.getKey());
+                if (future != null) {
+                    future.completeExceptionally(error);
+                }
+            }
+            if (!explicitClose) {
+                Runnable handler = disconnectHandler;
+                if (handler != null) {
+                    handler.run();
+                }
+            }
+        }
+    }
+
+    private static final class PortalRegistryWebSocketClientException extends IllegalStateException {
+        private PortalRegistryWebSocketClientException(String message) {
+            super(message);
+        }
+
+        private PortalRegistryWebSocketClientException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
