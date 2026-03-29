@@ -200,50 +200,6 @@ public class PortalRegistryWebSocketClient {
         }
     }
 
-    private void handleMessage(String message) {
-        Map<String, Object> envelope;
-        try {
-            envelope = JsonMapper.string2Map(message);
-        } catch (RuntimeException e) {
-            logger.warn("Unable to parse websocket message {}", message, e);
-            return;
-        }
-        if (envelope == null) {
-            return;
-        }
-
-        Object method = envelope.get("method");
-        if (method != null) {
-            Consumer<Map<String, Object>> handler = notificationHandler;
-            if (handler != null) {
-                handler.accept(envelope);
-            }
-            return;
-        }
-
-        Object id = envelope.get("id");
-        if (id != null) {
-            CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
-            if (future != null) {
-                future.complete(envelope);
-            }
-        }
-    }
-
-    private void failPending(Throwable error) {
-        webSocket = null;
-        for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
-            entry.getValue().completeExceptionally(error);
-        }
-        pending.clear();
-        if (!explicitClose) {
-            Runnable handler = disconnectHandler;
-            if (handler != null) {
-                handler.run();
-            }
-        }
-    }
-
     private Map<String, Object> castMap(Map<?, ?> map) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -285,14 +241,12 @@ public class PortalRegistryWebSocketClient {
 
         @Override
         public CompletionStage<?> onPing(WebSocket webSocket, ByteBuffer message) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
@@ -307,6 +261,55 @@ public class PortalRegistryWebSocketClient {
             terminated = true;
             logger.error("WebSocket client error", error);
             failPending(error);
+        }
+
+        private CompletionStage<?> requestNext(WebSocket webSocket) {
+            webSocket.request(1);
+            return CompletableFuture.completedFuture(null);
+        }
+
+        private void handleMessage(String message) {
+            Map<String, Object> envelope;
+            try {
+                envelope = JsonMapper.string2Map(message);
+            } catch (RuntimeException e) {
+                logger.warn("Unable to parse websocket message {}", message, e);
+                return;
+            }
+            if (envelope == null) {
+                return;
+            }
+
+            Object method = envelope.get("method");
+            if (method != null) {
+                Consumer<Map<String, Object>> handler = notificationHandler;
+                if (handler != null) {
+                    handler.accept(envelope);
+                }
+                return;
+            }
+
+            Object id = envelope.get("id");
+            if (id != null) {
+                CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
+                if (future != null) {
+                    future.complete(envelope);
+                }
+            }
+        }
+
+        private void failPending(Throwable error) {
+            webSocket = null;
+            for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
+                entry.getValue().completeExceptionally(error);
+            }
+            pending.clear();
+            if (!explicitClose) {
+                Runnable handler = disconnectHandler;
+                if (handler != null) {
+                    handler.run();
+                }
+            }
         }
     }
 }
