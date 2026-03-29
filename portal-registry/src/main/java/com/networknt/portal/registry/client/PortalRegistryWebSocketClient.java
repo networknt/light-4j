@@ -216,10 +216,10 @@ public class PortalRegistryWebSocketClient {
 
     private class PortalWebSocketListener implements WebSocket.Listener {
         private final StringBuilder textBuffer = new StringBuilder();
-        private volatile boolean terminated;
+        private volatile boolean listenerTerminated;
 
         public boolean isTerminated() {
-            return terminated;
+            return listenerTerminated;
         }
 
         @Override
@@ -255,14 +255,14 @@ public class PortalRegistryWebSocketClient {
 
         @Override
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-            terminated = true;
+            listenerTerminated = true;
             failPending(new IOException("Websocket closed: " + statusCode + " " + reason));
             return CompletableFuture.completedFuture(null);
         }
 
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
-            terminated = true;
+            listenerTerminated = true;
             logger.error("WebSocket client error", error);
             failPending(error);
         }
@@ -303,7 +303,7 @@ public class PortalRegistryWebSocketClient {
         }
 
         private void failPending(Throwable error) {
-            terminated = true;
+            PortalRegistryWebSocketClient.this.terminated = true;
             webSocket = null;
             for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
                 CompletableFuture<Map<String, Object>> future = pending.remove(entry.getKey());
