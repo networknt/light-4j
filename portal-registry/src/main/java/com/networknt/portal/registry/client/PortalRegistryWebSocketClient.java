@@ -38,6 +38,7 @@ public class PortalRegistryWebSocketClient {
     private volatile Runnable disconnectHandler;
     private volatile Runnable connectHandler;
     private volatile boolean explicitClose;
+    private volatile boolean terminated;
 
     public PortalRegistryWebSocketClient(URI uri, String authorization) {
         this.uri = uri;
@@ -58,6 +59,7 @@ public class PortalRegistryWebSocketClient {
             return;
         }
         explicitClose = false;
+        terminated = false;
 
         PortalWebSocketListener listener = new PortalWebSocketListener();
         java.net.http.WebSocket.Builder builder = httpClient.newWebSocketBuilder()
@@ -132,6 +134,10 @@ public class PortalRegistryWebSocketClient {
     }
 
     public Map<String, Object> sendRequest(String method, Map<String, Object> params) {
+        if (terminated) {
+            throw new RuntimeException("Failed to invoke websocket method " + method,
+                    new IOException("Websocket channel is not open"));
+        }
         String id = String.valueOf(nextId.getAndIncrement());
         CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
         pending.put(id, future);
@@ -229,14 +235,12 @@ public class PortalRegistryWebSocketClient {
                 textBuffer.setLength(0);
                 handleMessage(message);
             }
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
         public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
-            webSocket.request(1);
-            return CompletableFuture.completedFuture(null);
+            return requestNext(webSocket);
         }
 
         @Override
@@ -299,11 +303,14 @@ public class PortalRegistryWebSocketClient {
         }
 
         private void failPending(Throwable error) {
+            terminated = true;
             webSocket = null;
             for (Map.Entry<String, CompletableFuture<Map<String, Object>>> entry : pending.entrySet()) {
-                entry.getValue().completeExceptionally(error);
+                CompletableFuture<Map<String, Object>> future = pending.remove(entry.getKey());
+                if (future != null) {
+                    future.completeExceptionally(error);
+                }
             }
-            pending.clear();
             if (!explicitClose) {
                 Runnable handler = disconnectHandler;
                 if (handler != null) {
