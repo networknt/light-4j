@@ -19,10 +19,10 @@ package com.networknt.portal.registry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class PortalRegistryServiceTest {
-    static PortalRegistryConfig config = PortalRegistryConfig.load();
+class PortalRegistryServiceTest {
+
     @Test
-    public void testToString() {
+    void testToString() {
         PortalRegistryService service = new PortalRegistryService();
         service.setServiceId("com.networknt.apib-1.0.0");
         service.setName("apib");
@@ -33,15 +33,11 @@ public class PortalRegistryServiceTest {
 
         String s = service.toString();
         System.out.println("s = " + s);
-        if(config.httpCheck) {
-            Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"healthPath\":\"/health/\",\"tlsSkipVerify\":true,\"interval\":10000}}", s);
-        } else {
-            Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:https:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"interval\":10000}}", s);
-        }
+        Assertions.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"protocol\":\"https\",\"address\":\"127.0.0.1\",\"port\":7442,\"key\":\"com.networknt.apib-1.0.0|uat1\"}", s);
     }
 
     @Test
-    public void testControllerRsRegisterParamsUseVersionAndJwtPayload() {
+    void testControllerRsRegisterParamsUseVersionAndJwtPayload() {
         PortalRegistryService service = new PortalRegistryService();
         service.setServiceId("com.networknt.apib-1.0.0");
         service.setProtocol("https");

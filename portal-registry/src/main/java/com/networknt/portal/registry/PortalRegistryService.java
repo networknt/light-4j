@@ -20,10 +20,6 @@ public class PortalRegistryService {
 
     private int port;
 
-    private String healthPath;
-
-    private String checkString;
-
     private String version;
 
     public String getServiceId() {
@@ -74,37 +70,12 @@ public class PortalRegistryService {
         this.port = port;
     }
 
-    public String getHealthPath() {
-        return healthPath;
-    }
-
-    public void setHealthPath(String healthPath) {
-        this.healthPath = healthPath;
-    }
-
-    public String getCheckString() {
-        return checkString;
-    }
-
-    public void setCheckString(String checkString) {
-        this.checkString = checkString;
-    }
-
     public String getVersion() {
         return version;
     }
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public PortalRegistryService() {
-        PortalRegistryConfig config = PortalRegistryConfig.load();
-        if(config.isHttpCheck()) {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.getDeregisterAfter() + ",\"healthPath\":\"" + config.getHealthPath() + "\",\"tlsSkipVerify\":true,\"interval\":" + config.getCheckInterval() + "}}";
-        } else {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.getDeregisterAfter() + ",\"interval\":" + config.getCheckInterval() + "}}";
-        }
     }
 
     public String getInstanceId() {
@@ -150,7 +121,7 @@ public class PortalRegistryService {
     }
 
     /**
-     * Construct a register json payload. Note that deregister internal minimum is 1m.
+     * Construct a register JSON payload.
      *
      * @return String
      */
@@ -163,7 +134,7 @@ public class PortalRegistryService {
                 + "\",\"protocol\":\"" + protocol
                 + "\",\"address\":\"" + address
                 + "\",\"port\":" + port
-                + String.format(checkString, key, protocol, address, port, serviceId);
+                + ",\"key\":\"" + key + "\"}";
     }
 
 }
