@@ -27,10 +27,7 @@ import java.security.cert.Certificate;
  * Utility class to generate certificate fingerprints.
  */
 public class FingerPrintUtil {
-    /**
-     * Default constructor for FingerPrintUtil.
-     */
-    public FingerPrintUtil() {
+    private FingerPrintUtil() {
     }
     static final Logger logger = LoggerFactory.getLogger(CodeVerifierUtil.class);
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();

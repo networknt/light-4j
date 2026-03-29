@@ -22,10 +22,7 @@ package com.networknt.utility;
  * @author Steve Hu
  */
 public class Constants {
-    /**
-     * Default constructor for Constants.
-     */
-    public Constants() {
+    private Constants() {
     }
     // headers
 

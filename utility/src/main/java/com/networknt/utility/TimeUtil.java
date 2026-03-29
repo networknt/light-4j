@@ -6,10 +6,7 @@ import java.util.concurrent.TimeUnit;
  * Time utility class.
  */
 public class TimeUtil {
-    /**
-     * Default constructor for TimeUtil.
-     */
-    public TimeUtil() {
+    private TimeUtil() {
     }
     /**
      * Return the number of milliseconds per time unit.

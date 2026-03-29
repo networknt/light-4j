@@ -26,20 +26,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * @author fishermen
- * @version V1.0 created at: 2013-5-28
- */
-/**
  * Network utility class.
  *
  * @author fishermen
  * @version V1.0 created at: 2013-5-28
  */
 public class NetUtils {
-    /**
-     * Default constructor for NetUtils.
-     */
-    public NetUtils() {
+    private NetUtils() {
     }
     private static final Logger logger = LoggerFactory.getLogger(NetUtils.class);
 

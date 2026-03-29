@@ -8,10 +8,7 @@ import java.util.Optional;
  * Map utility class for case-insensitive operations.
  */
 public class MapUtil {
-    /**
-     * Default constructor for MapUtil.
-     */
-    public MapUtil() {
+    private MapUtil() {
     }
 
     /**

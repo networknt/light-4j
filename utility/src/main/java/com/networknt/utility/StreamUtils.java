@@ -16,10 +16,7 @@ import java.nio.charset.Charset;
  * @since 3.2.2
  */
 public abstract class StreamUtils {
-    /**
-     * Default constructor for StreamUtils.
-     */
-    public StreamUtils() {
+    private StreamUtils() {
     }
     /**
      * The default buffer size used when copying bytes.

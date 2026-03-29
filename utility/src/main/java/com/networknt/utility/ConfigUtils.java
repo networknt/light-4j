@@ -12,10 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Configuration utility class.
  */
 public class ConfigUtils {
-    /**
-     * Default constructor for ConfigUtils.
-     */
-    public ConfigUtils() {
+    private ConfigUtils() {
     }
 	private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
     /** Delimiter for configuration keys */

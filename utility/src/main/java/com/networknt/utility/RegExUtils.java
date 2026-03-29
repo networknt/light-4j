@@ -24,10 +24,7 @@ import java.util.regex.Pattern;
  * @since 3.8
  */
 public class RegExUtils {
-    /**
-     * Default constructor for RegExUtils.
-     */
-    public RegExUtils() {
+    private RegExUtils() {
     }
 
     /**
