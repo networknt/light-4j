@@ -40,10 +40,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Steve Hu
  */
 public class NioUtils {
-    /**
-     * Default constructor for NioUtils.
-     */
-    public NioUtils() {
+    private NioUtils() {
     }
     private static final int BUFFER_SIZE = 1024 * 4;
     private static final String DOT = ".";

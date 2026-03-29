@@ -37,10 +37,7 @@ import java.util.regex.Pattern;
  * @author Steve Hu
  */
 public class Util {
-    /**
-     * Default constructor for Util.
-     */
-    public Util() {
+    private Util() {
     }
     static final Logger logger = LoggerFactory.getLogger(Util.class);
 

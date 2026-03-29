@@ -7,10 +7,7 @@ import java.util.Random;
  * Byte utility class.
  */
 public class ByteUtil {
-    /**
-     * Default constructor for ByteUtil.
-     */
-    public ByteUtil() {
+    private ByteUtil() {
     }
 
     /**

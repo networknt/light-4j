@@ -9,10 +9,7 @@ import java.nio.ByteBuffer;
  * UUID utility class.
  */
 public class UuidUtil {
-    /**
-     * Default constructor for UuidUtil.
-     */
-    public UuidUtil() {
+    private UuidUtil() {
     }
 
     // Use Java 8's built-in Base64 encoder/decoder

@@ -29,10 +29,7 @@ import java.util.regex.Pattern;
  *
  */
 public class StringUtils {
-    /**
-     * Default constructor for StringUtils.
-     */
-    public StringUtils() {
+    private StringUtils() {
     }
 
     private static final String[] EMPTY_STRING_ARRAY = {};

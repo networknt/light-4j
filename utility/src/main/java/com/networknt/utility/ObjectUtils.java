@@ -10,10 +10,7 @@ import java.util.Optional;
  * Object utility class.
  */
 public abstract class ObjectUtils {
-    /**
-     * Default constructor for ObjectUtils.
-     */
-    public ObjectUtils() {
+    private ObjectUtils() {
     }
     private static final int INITIAL_HASH = 7;
     private static final int MULTIPLIER = 31;
