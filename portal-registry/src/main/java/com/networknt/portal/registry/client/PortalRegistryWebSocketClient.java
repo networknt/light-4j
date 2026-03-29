@@ -50,7 +50,7 @@ public class PortalRegistryWebSocketClient {
                     .connectTimeout(java.time.Duration.ofMillis(REQUEST_TIMEOUT_MILLIS))
                     .build();
         } catch (IOException e) {
-            throw new RuntimeException("Unable to initialize websocket SSL context", e);
+            throw new PortalRegistryWebSocketClientException("Unable to initialize websocket SSL context", e);
         }
     }
 
@@ -135,7 +135,7 @@ public class PortalRegistryWebSocketClient {
 
     public Map<String, Object> sendRequest(String method, Map<String, Object> params) {
         if (terminated) {
-            throw new RuntimeException("Failed to invoke websocket method " + method,
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method,
                     new IOException("Websocket channel is not open"));
         }
         String id = String.valueOf(nextId.getAndIncrement());
@@ -153,7 +153,7 @@ public class PortalRegistryWebSocketClient {
             Map<String, Object> response = future.get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
             Object error = response.get("error");
             if (error instanceof Map<?, ?> errorMap) {
-                throw new RuntimeException(String.valueOf(errorMap.get("message")));
+                throw new PortalRegistryWebSocketClientException(String.valueOf(errorMap.get("message")));
             }
             Object result = response.get("result");
             if (result instanceof Map<?, ?> resultMap) {
@@ -162,9 +162,9 @@ public class PortalRegistryWebSocketClient {
             return Collections.emptyMap();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Failed to invoke websocket method " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method, e);
         } catch (IOException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException("Failed to invoke websocket method " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket method " + method, e);
         } finally {
             pending.remove(id);
         }
@@ -179,7 +179,7 @@ public class PortalRegistryWebSocketClient {
             request.put("params", params);
             send(JsonMapper.toJson(request));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to invoke websocket notification " + method, e);
+            throw new PortalRegistryWebSocketClientException("Failed to invoke websocket notification " + method, e);
         }
     }
 
@@ -317,6 +317,16 @@ public class PortalRegistryWebSocketClient {
                     handler.run();
                 }
             }
+        }
+    }
+
+    private static final class PortalRegistryWebSocketClientException extends IllegalStateException {
+        private PortalRegistryWebSocketClientException(String message) {
+            super(message);
+        }
+
+        private PortalRegistryWebSocketClientException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
