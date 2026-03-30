@@ -89,32 +89,16 @@ public class PortalRegistryService {
         return capabilities;
     }
 
-    public Map<String, Object> toRegisterParams() {
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("instanceId", getInstanceId());
-        params.put("serviceId", serviceId);
-        if (tag != null) {
-            params.put("tag", tag);
-            params.put("environment", tag);
-        }
-        params.put("protocol", protocol);
-        params.put("address", address);
-        params.put("port", port);
-        params.put("version", version);
-        params.put("capabilities", getCapabilities());
-        return params;
-    }
-
-    public Map<String, Object> toControllerRsRegisterParams(String jwt) {
+    public Map<String, Object> toRegisterParams(String jwt) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("jwt", jwt);
         params.put("serviceId", serviceId);
         if (tag != null) {
             params.put("envTag", tag);
         }
-        params.put("environment", tag != null ? tag : "default");
         params.put("version", version != null ? version : "1.0.0");
         params.put("protocol", protocol);
+        params.put("address", address);
         params.put("port", port);
         params.put("tags", Map.of());
         return params;

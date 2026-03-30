@@ -29,7 +29,6 @@ public class PortalRegistryConfig {
 
     private static final String PORTAL_URL = "portalUrl";
     private static final String PORTAL_TOKEN = "portalToken";
-    private static final String CONTROLLER_DISCOVERY_TOKEN = "controllerDiscoveryToken";
 
     private static volatile PortalRegistryConfig instance;
     private final Config config;
@@ -79,7 +78,7 @@ public class PortalRegistryConfig {
             externalizedKeyName = "portalUrl",
             defaultValue = "https://lightapi.net",
             description = "Controller base URL. For local controller-rs or light-controller development, use something like\n" +
-                    "https://localhost:8443. The registration websocket is derived as /ws/microservice and discovery as /ws/discovery."
+                    "https://localhost:8443. The unified registration and discovery channel is derived as /ws/microservice."
     )
     String portalUrl;
 
@@ -92,13 +91,6 @@ public class PortalRegistryConfig {
                     "This value is typically provided with the LIGHT_PORTAL_AUTHORIZATION environment variable."
     )
     String portalToken;
-
-    @StringField(
-            configFieldName = "controllerDiscoveryToken",
-            externalizedKeyName = "controllerDiscoveryToken",
-            description = "Bearer token used on the discovery websocket Authorization header. If blank, portalToken is reused."
-    )
-    String controllerDiscoveryToken;
 
     public String getPortalUrl() {
         return portalUrl;
@@ -116,20 +108,10 @@ public class PortalRegistryConfig {
         this.portalToken = portalToken;
     }
 
-    public String getControllerDiscoveryToken() {
-        return controllerDiscoveryToken;
-    }
-
-    public void setControllerDiscoveryToken(String controllerDiscoveryToken) {
-        this.controllerDiscoveryToken = controllerDiscoveryToken;
-    }
-
     private void setConfigData() {
         Object object = mappedConfig.get(PORTAL_URL);
         if (object != null) portalUrl = (String) object;
         object = mappedConfig.get(PORTAL_TOKEN);
         if (object != null) portalToken = (String) object;
-        object = mappedConfig.get(CONTROLLER_DISCOVERY_TOKEN);
-        if (object != null) controllerDiscoveryToken = (String) object;
     }
 }

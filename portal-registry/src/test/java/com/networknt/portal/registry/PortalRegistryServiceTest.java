@@ -19,6 +19,8 @@ package com.networknt.portal.registry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 class PortalRegistryServiceTest {
 
     @Test
@@ -37,6 +39,23 @@ class PortalRegistryServiceTest {
     }
 
     @Test
+    void testUnifiedRegisterParamsUseEnvTagAddressAndVersion() {
+        PortalRegistryService service = new PortalRegistryService();
+        service.setServiceId("com.networknt.apib-1.0.0");
+        service.setProtocol("https");
+        service.setAddress("127.0.0.1");
+        service.setPort(7442);
+        service.setTag("uat1");
+        service.setVersion("1.2.3");
+
+        Map<String, Object> params = service.toRegisterParams("raw-jwt");
+        Assertions.assertEquals("raw-jwt", params.get("jwt"));
+        Assertions.assertEquals("uat1", params.get("envTag"));
+        Assertions.assertEquals("127.0.0.1", params.get("address"));
+        Assertions.assertFalse(params.containsKey("environment"));
+    }
+
+    @Test
     void testControllerRsRegisterParamsUseVersionAndJwtPayload() {
         PortalRegistryService service = new PortalRegistryService();
         service.setServiceId("com.networknt.apib-1.0.0");
@@ -46,9 +65,9 @@ class PortalRegistryServiceTest {
         service.setTag("uat1");
         service.setVersion("1.2.3");
 
-        Assertions.assertEquals("1.2.3", service.toRegisterParams().get("version"));
-        Assertions.assertEquals("raw-jwt", service.toControllerRsRegisterParams("raw-jwt").get("jwt"));
-        Assertions.assertEquals("uat1", service.toControllerRsRegisterParams("raw-jwt").get("envTag"));
-        Assertions.assertEquals("1.2.3", service.toControllerRsRegisterParams("raw-jwt").get("version"));
+        Assertions.assertEquals("1.2.3", service.toRegisterParams("raw-jwt").get("version"));
+        Assertions.assertEquals("raw-jwt", service.toRegisterParams("raw-jwt").get("jwt"));
+        Assertions.assertEquals("uat1", service.toRegisterParams("raw-jwt").get("envTag"));
+        Assertions.assertEquals("1.2.3", service.toRegisterParams("raw-jwt").get("version"));
     }
 }
