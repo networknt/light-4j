@@ -319,19 +319,33 @@ public class McpHandler {
     }
 
     private static Map<String, Object> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, Level loggerLevel) throws IOException, ParseException {
-        Map<String, Object> res = new HashMap<>();
+        List<Map<String, Object>> allLogs = new ArrayList<>();
+        int total = 0;
         for (Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders(); it.hasNext(); ) {
             Appender<ILoggingEvent> logEvent = it.next();
             if (logEvent instanceof RollingFileAppender) {
                 Path logFile = Path.of(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
                 if (Files.exists(logFile)) {
                     try (BufferedReader bufferedReader = Files.newBufferedReader(logFile)) {
-                        res = parseAppenderFile(bufferedReader, startTime, endTime, loggerLevel);
+                        Map<String, Object> appenderResult = parseAppenderFile(bufferedReader, startTime, endTime, loggerLevel);
+                        if (appenderResult != null && appenderResult.containsKey("total") && appenderResult.containsKey("logs")) {
+                            Object totalObj = appenderResult.get("total");
+                            Object logsObj = appenderResult.get("logs");
+                            if (totalObj instanceof Integer && logsObj instanceof List) {
+                                total += (Integer) totalObj;
+                                @SuppressWarnings("unchecked")
+                                List<Map<String, Object>> logs = (List<Map<String, Object>>) logsObj;
+                                allLogs.addAll(logs);
+                            }
+                        }
                     }
                 }
             }
         }
-        return res;
+        if (total == 0 && allLogs.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return Map.of("total", total, "logs", allLogs);
     }
 
     private static Map<String, Object> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime, Level loggerLevel) throws IOException, ParseException {
