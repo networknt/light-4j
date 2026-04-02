@@ -8,9 +8,7 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import com.networknt.config.Config;
 import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoUtil;
-import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
-import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +16,33 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class McpHandler {
     private static final Logger logger = LoggerFactory.getLogger(McpHandler.class);
     private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ";
+    private static final String OBJECT = "object";
+    private static final String PROPERTIES = "properties";
+    private static final String INPUT_SCHEMA = "inputSchema";
+    private static final String DESCRIPTION = "description";
+    private static final String LOGGERS = "loggers";
+    private static final String STRING = "string";
+    private static final String START_TIME = "startTime";
+    private static final String LOGGER_LEVEL = "loggerLevel";
+    private static final String LEVEL = "level";
+    private static final String STATUS = "status";
+    private static final String SUCCESS = "success";
     private static McpLogAppender activeLogAppender = null;
+
+    private McpHandler() {
+    }
 
     public static void handle(PortalRegistryWebSocketClient client, Map<String, Object> envelope) {
         String method = (String) envelope.get("method");
@@ -55,60 +70,60 @@ public class McpHandler {
         List<Map<String, Object>> tools = List.of(
                 Map.of(
                         "name", "get_service_info",
-                        "description", "Retrieve information about this microservice instance",
-                        "inputSchema", Map.of("type", "object", "properties", Map.of())
+                        DESCRIPTION, "Retrieve information about this microservice instance",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
                 ),
                 Map.of(
                         "name", "check",
-                        "description", "Perform a local health check",
-                        "inputSchema", Map.of("type", "object", "properties", Map.of())
+                        DESCRIPTION, "Perform a local health check",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
                 ),
                 Map.of(
                         "name", "get_loggers",
-                        "description", "Retrieve current logger configuration",
-                        "inputSchema", Map.of("type", "object", "properties", Map.of())
+                        DESCRIPTION, "Retrieve current logger configuration",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
                 ),
                 Map.of(
                         "name", "set_loggers",
-                        "description", "Update logger levels",
-                        "inputSchema", Map.of(
-                                "type", "object",
-                                "properties", Map.of("loggers", Map.of("type", "array", "items", Map.of("type", "object"))),
-                                "required", List.of("loggers")
+                        DESCRIPTION, "Update logger levels",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(LOGGERS, Map.of("type", "array", "items", Map.of("type", OBJECT))),
+                                "required", List.of(LOGGERS)
                         )
                 ),
                 Map.of(
                         "name", "get_log_content",
-                        "description", "Retrieve historical log content",
-                        "inputSchema", Map.of(
-                                "type", "object",
-                                "properties", Map.of(
-                                        "startTime", Map.of("type", "string"),
-                                        "loggerLevel", Map.of("type", "string")
+                        DESCRIPTION, "Retrieve historical log content",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(
+                                        START_TIME, Map.of("type", STRING),
+                                        LOGGER_LEVEL, Map.of("type", STRING)
                                 ),
-                                "required", List.of("startTime")
+                                "required", List.of(START_TIME)
                         )
                 ),
                 Map.of(
                         "name", "start_logs",
-                        "description", "Start live log streaming",
-                        "inputSchema", Map.of(
-                                "type", "object",
-                                "properties", Map.of(
-                                        "level", Map.of("type", "string", "description", "Minimum log level (INFO, DEBUG, ERROR, etc.)")
+                        DESCRIPTION, "Start live log streaming",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(
+                                        LEVEL, Map.of("type", STRING, DESCRIPTION, "Minimum log level (INFO, DEBUG, ERROR, etc.)")
                                 )
                         )
                 ),
                 Map.of(
                         "name", "stop_logs",
-                        "description", "Stop live log streaming",
-                        "inputSchema", Map.of("type", "object", "properties", Map.of())
+                        DESCRIPTION, "Stop live log streaming",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
                 )
         );
         client.sendResult(id, Map.of("tools", tools));
     }
 
-    private static void handleToolsCall(PortalRegistryWebSocketClient client, Object id, Map<String, Object> params) throws Exception {
+    private static void handleToolsCall(PortalRegistryWebSocketClient client, Object id, Map<String, Object> params) throws IOException, ParseException {
         String name = (String) params.get("name");
         Map<String, Object> args = (Map<String, Object>) params.get("arguments");
         if (args == null) args = Collections.emptyMap();
@@ -124,19 +139,19 @@ public class McpHandler {
                 client.sendResult(id, getLoggers());
                 break;
             case "set_loggers":
-                setLoggers((List<Map<String, String>>) args.get("loggers"));
-                client.sendResult(id, Map.of("status", "success"));
+                setLoggers((List<Map<String, String>>) args.get(LOGGERS));
+                client.sendResult(id, Map.of(STATUS, SUCCESS));
                 break;
             case "get_log_content":
                 client.sendResult(id, getLogContent(args));
                 break;
             case "start_logs":
                 startLogs(client, args);
-                client.sendResult(id, Map.of("status", "success", "message", "Live logs started"));
+                client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs started"));
                 break;
             case "stop_logs":
                 stopLogs();
-                client.sendResult(id, Map.of("status", "success", "message", "Live logs stopped"));
+                client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs stopped"));
                 break;
             default:
                 client.sendError(id, -32602, "Tool not found: " + name);
@@ -161,16 +176,16 @@ public class McpHandler {
         if (loggers == null) return;
         for (Map<String, String> map : loggers) {
             String name = map.get("name");
-            Level level = Level.valueOf(map.get("level"));
+            Level level = Level.valueOf(map.get(LEVEL));
             ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(name);
             if (level != logger.getLevel()) logger.setLevel(level);
         }
     }
 
-    private static Map<String, Object> getLogContent(Map<String, Object> args) throws Exception {
-        long startTime = Long.parseLong((String) args.get("startTime"));
+    private static Map<String, Object> getLogContent(Map<String, Object> args) throws IOException, ParseException {
+        long startTime = Long.parseLong((String) args.get(START_TIME));
         long endTime = args.containsKey("endTime") ? Long.parseLong((String) args.get("endTime")) : System.currentTimeMillis();
-        Level loggerLevel = args.containsKey("loggerLevel") ? Level.toLevel((String) args.get("loggerLevel")) : Level.ERROR;
+        Level loggerLevel = args.containsKey(LOGGER_LEVEL) ? Level.toLevel((String) args.get(LOGGER_LEVEL)) : Level.ERROR;
 
         Map<String, Map<String, Object>> logContent = new HashMap<>();
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -182,7 +197,7 @@ public class McpHandler {
         return Map.of("content", logContent);
     }
 
-    private static Map<String, Object> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, Level loggerLevel) throws Exception {
+    private static Map<String, Object> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, Level loggerLevel) throws IOException, ParseException {
         Map<String, Object> res = new HashMap<>();
         for (Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders(); it.hasNext(); ) {
             Appender<ILoggingEvent> logEvent = it.next();
@@ -190,7 +205,7 @@ public class McpHandler {
                 Path logFile = Path.of(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
                 if (Files.exists(logFile)) {
                     try (BufferedReader bufferedReader = Files.newBufferedReader(logFile)) {
-                        res = parseAppenderFile(bufferedReader, startTime, endTime, log, loggerLevel);
+                        res = parseAppenderFile(bufferedReader, startTime, endTime, loggerLevel);
                     }
                 }
             }
@@ -198,23 +213,29 @@ public class McpHandler {
         return res;
     }
 
-    private static Map<String, Object> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime, ch.qos.logback.classic.Logger log, Level loggerLevel) throws Exception {
+    private static Map<String, Object> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime, Level loggerLevel) throws IOException, ParseException {
         List<Map<String, Object>> logs = new ArrayList<>();
         int index = 0;
         String currentLine;
         while ((currentLine = bufferedReader.readLine()) != null) {
             try {
                 Map<String, Object> logLine = Config.getInstance().getMapper().readValue(currentLine, Map.class);
-                if (logLine != null && logLine.containsKey("timestamp") && logLine.containsKey("level")) {
+                if (logLine != null && logLine.containsKey("timestamp") && logLine.containsKey(LEVEL)) {
                     SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
                     long logTime = timestampFormat.parse(logLine.get("timestamp").toString()).toInstant().toEpochMilli();
-                    Level logLevel = Level.valueOf(((String) logLine.get("level")).trim());
+                    Level logLevel = Level.valueOf(((String) logLine.get(LEVEL)).trim());
                     if (logTime >= startTime && logTime <= endTime && logLevel.isGreaterOrEqual(loggerLevel)) {
                         logs.add(logLine);
                         index++;
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (ParseException e) {
+                throw e;
+            } catch (RuntimeException ignored) {
+                // Ignore malformed lines because log files may contain non-JSON output.
+            } catch (IOException ignored) {
+                // Ignore lines that cannot be parsed as JSON; continue scanning the log file.
+            }
         }
         return Map.of("total", index, "logs", logs);
     }
@@ -226,11 +247,9 @@ public class McpHandler {
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         activeLogAppender = new McpLogAppender(client);
         activeLogAppender.setContext(lc);
-        String levelStr = (String) args.get("level");
+        String levelStr = (String) args.get(LEVEL);
         if (levelStr != null) {
-            // We can't easily set level on the specific appender in standard AppenderBase without a filter
-            // but for simplicity, we'll just add it to the root logger.
-            // If more granular control is needed, we'd add a ThresholdFilter.
+            // The stream currently attaches at the root logger and does not filter by threshold yet.
         }
         activeLogAppender.start();
         ch.qos.logback.classic.Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);

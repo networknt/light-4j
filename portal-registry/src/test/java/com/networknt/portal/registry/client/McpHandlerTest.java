@@ -14,19 +14,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-public class McpHandlerTest {
+class McpHandlerTest {
     private static final Logger logger = LoggerFactory.getLogger(McpHandlerTest.class);
 
     @Mock
     private PortalRegistryWebSocketClient client;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testStartStopLogs() throws Exception {
+    void testStartStopLogs() {
         // Prepare start_logs request
         Map<String, Object> params = new HashMap<>();
         params.put("name", "start_logs");

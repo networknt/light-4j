@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 public class PortalRegistryWebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryWebSocketClient.class);
     private static final long REQUEST_TIMEOUT_MILLIS = 5000L;
+    private static final String JSONRPC = "jsonrpc";
 
     private final URI uri;
     private final String authorization;
@@ -144,7 +145,7 @@ public class PortalRegistryWebSocketClient {
         try {
             connect();
             Map<String, Object> request = new LinkedHashMap<>();
-            request.put("jsonrpc", "2.0");
+            request.put(JSONRPC, "2.0");
             request.put("id", id);
             request.put("method", method);
             request.put("params", params);
@@ -174,7 +175,7 @@ public class PortalRegistryWebSocketClient {
         try {
             connect();
             Map<String, Object> request = new LinkedHashMap<>();
-            request.put("jsonrpc", "2.0");
+            request.put(JSONRPC, "2.0");
             request.put("method", method);
             request.put("params", params);
             send(JsonMapper.toJson(request));
@@ -186,7 +187,7 @@ public class PortalRegistryWebSocketClient {
     public void sendResult(Object id, Object result) {
         try {
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("jsonrpc", "2.0");
+            response.put(JSONRPC, "2.0");
             response.put("id", id);
             response.put("result", result);
             send(JsonMapper.toJson(response));
@@ -198,7 +199,7 @@ public class PortalRegistryWebSocketClient {
     public void sendError(Object id, int code, String message) {
         try {
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("jsonrpc", "2.0");
+            response.put(JSONRPC, "2.0");
             response.put("id", id);
             Map<String, Object> error = new LinkedHashMap<>();
             error.put("code", code);
