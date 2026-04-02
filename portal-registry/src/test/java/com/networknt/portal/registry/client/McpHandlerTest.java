@@ -84,7 +84,7 @@ class McpHandlerTest {
 
         McpHandler.handle(client, envelope);
 
-        verify(client).sendError(eq(125), eq(-32602), contains("Missing params"));
+        verify(client).sendError(eq(125), eq(-32602), contains("Missing or invalid params"));
     }
 
     @Test
