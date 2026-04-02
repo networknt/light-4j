@@ -145,13 +145,19 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private void handleWebSocketNotification(PortalRegistryWebSocketClient client, Map<String, Object> envelope) {
-        Object method = envelope.get("method");
-        if (method != null && ((String)method).startsWith("tools/")) {
+        Object methodObject = envelope.get("method");
+        if (!(methodObject instanceof String method)) {
+            if (logger.isWarnEnabled()) {
+                logger.warn("Ignoring websocket envelope with non-string method: {}", methodObject);
+            }
+            return;
+        }
+        if (method.startsWith("tools/")) {
             McpHandler.handle(client, envelope);
             return;
         }
 
-        if (!Objects.equals("discovery/changed", method)) {
+        if (!"discovery/changed".equals(method)) {
             return;
         }
         Object paramsObject = envelope.get("params");
