@@ -79,7 +79,11 @@ public class McpHandler {
             }
         } catch (Exception e) {
             logger.error("Error handling MCP request", e);
-            client.sendError(id, -32603, e.getMessage());
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.isEmpty()) {
+                errorMessage = "Internal error: " + e.getClass().getSimpleName();
+            }
+            client.sendError(id, -32603, errorMessage);
         }
     }
 
