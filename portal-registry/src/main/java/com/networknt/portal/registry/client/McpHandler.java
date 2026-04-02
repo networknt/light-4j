@@ -115,7 +115,8 @@ public class McpHandler {
                         INPUT_SCHEMA, Map.of(
                                 "type", OBJECT,
                                 PROPERTIES, Map.of(
-                                        START_TIME, Map.of("type", STRING),
+                                        START_TIME, Map.of("type", "integer", DESCRIPTION, "Start time in epoch milliseconds"),
+                                        END_TIME, Map.of("type", "integer", DESCRIPTION, "Optional end time in epoch milliseconds"),
                                         LOGGER_LEVEL, Map.of("type", STRING)
                                 ),
                                 "required", List.of(START_TIME)
