@@ -164,10 +164,55 @@ public class McpHandler {
             case "get_loggers":
                 client.sendResult(id, getLoggers());
                 break;
-            case "set_loggers":
-                setLoggers((List<Map<String, String>>) args.get(LOGGERS));
+            case "set_loggers": {
+                Object loggersObject = args.get(LOGGERS);
+                if (loggersObject == null) {
+                    client.sendError(id, -32602, "Missing 'loggers' parameter");
+                    return;
+                }
+                if (!(loggersObject instanceof List<?> loggersList)) {
+                    client.sendError(id, -32602, "'loggers' must be a list");
+                    return;
+                }
+
+                List<Map<String, String>> validatedLoggers = new ArrayList<>();
+
+                int index = 0;
+                for (Object entry : loggersList) {
+                    if (!(entry instanceof Map<?, ?> entryMap)) {
+                        client.sendError(id, -32602, "Each logger entry must be an object with 'name' and 'level' fields (invalid entry at index " + index + ")");
+                        return;
+                    }
+                    Object nameValue = entryMap.get("name");
+                    Object levelValue = entryMap.get("level");
+                    if (!(nameValue instanceof String) || ((String) nameValue).isBlank()) {
+                        client.sendError(id, -32602, "Each logger entry must contain a non-blank 'name' (invalid entry at index " + index + ")");
+                        return;
+                    }
+                    if (!(levelValue instanceof String) || ((String) levelValue).isBlank()) {
+                        client.sendError(id, -32602, "Each logger entry must contain a non-blank 'level' (invalid entry at index " + index + ")");
+                        return;
+                    }
+                    String loggerName = ((String) nameValue).trim();
+                    String levelString = ((String) levelValue).trim();
+                    try {
+                        // Validate that the level is a recognized Logback level.
+                        Level.valueOf(levelString.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        client.sendError(id, -32602, "Invalid logger level '" + levelString + "' for logger '" + loggerName + "' at index " + index);
+                        return;
+                    }
+                    Map<String, String> validatedEntry = new HashMap<>();
+                    validatedEntry.put("name", loggerName);
+                    validatedEntry.put("level", levelString);
+                    validatedLoggers.add(validatedEntry);
+                    index++;
+                }
+
+                setLoggers(validatedLoggers);
                 client.sendResult(id, Map.of(STATUS, SUCCESS));
                 break;
+            }
             case "get_log_content":
                 client.sendResult(id, getLogContent(args));
                 break;
