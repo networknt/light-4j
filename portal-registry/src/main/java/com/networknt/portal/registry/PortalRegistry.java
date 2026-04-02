@@ -146,7 +146,7 @@ public class PortalRegistry extends AbstractRegistry {
 
     private void handleWebSocketNotification(PortalRegistryWebSocketClient client, Map<String, Object> envelope) {
         Object method = envelope.get("method");
-        if (method != null && (((String)method).startsWith("tools/") || ((String)method).startsWith("service/"))) {
+        if (method != null && ((String)method).startsWith("tools/")) {
             McpHandler.handle(client, envelope);
             return;
         }

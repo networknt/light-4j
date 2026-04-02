@@ -45,9 +45,13 @@ public class McpHandler {
     }
 
     public static void handle(PortalRegistryWebSocketClient client, Map<String, Object> envelope) {
-        String method = (String) envelope.get("method");
+        Object methodObject = envelope.get("method");
         Object id = envelope.get("id");
         if (id == null) return;
+        if (!(methodObject instanceof String method)) {
+            client.sendError(id, -32600, "Missing or invalid method");
+            return;
+        }
 
         try {
             switch (method) {
@@ -124,9 +128,22 @@ public class McpHandler {
     }
 
     private static void handleToolsCall(PortalRegistryWebSocketClient client, Object id, Map<String, Object> params) throws IOException, ParseException {
-        String name = (String) params.get("name");
-        Map<String, Object> args = (Map<String, Object>) params.get("arguments");
-        if (args == null) args = Collections.emptyMap();
+        if (params == null) {
+            client.sendError(id, -32602, "Missing params for tools/call");
+            return;
+        }
+        Object nameObject = params.get("name");
+        if (!(nameObject instanceof String name) || name.isBlank()) {
+            client.sendError(id, -32602, "Missing or invalid tool name");
+            return;
+        }
+        Object argumentsObject = params.get("arguments");
+        if (argumentsObject != null && !(argumentsObject instanceof Map<?, ?>)) {
+            client.sendError(id, -32602, "Invalid tool arguments");
+            return;
+        }
+
+        Map<String, Object> args = castMapOrEmpty(argumentsObject);
 
         switch (name) {
             case "get_service_info":
@@ -156,6 +173,17 @@ public class McpHandler {
             default:
                 client.sendError(id, -32602, "Tool not found: " + name);
         }
+    }
+
+    private static Map<String, Object> castMapOrEmpty(Object value) {
+        if (!(value instanceof Map<?, ?> rawMap)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Object> converted = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            converted.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return converted;
     }
 
     private static List<LoggerInfo> getLoggers() {

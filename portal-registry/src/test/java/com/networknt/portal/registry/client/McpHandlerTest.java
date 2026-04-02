@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 class McpHandlerTest {
@@ -54,6 +55,7 @@ class McpHandlerTest {
         // Verify notification was sent by the appender
         // Note: There might be a slight delay or buffering, but AppenderBase.append is synchronous
         verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        clearInvocations(client);
 
         // Call stop_logs
         Map<String, Object> stopParams = new HashMap<>();
@@ -71,8 +73,17 @@ class McpHandlerTest {
         // Log another message
         logger.info("This should not be sent");
 
-        // Verify no more notifications were sent after stop
-        // (total count should still be what it was before stop)
-        // We use verifyNoMoreInteractions or check the count again.
+        verify(client, never()).sendNotification(eq("notifications/log"), any());
+    }
+
+    @Test
+    void testToolsCallRejectsMissingParams() {
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 125);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendError(eq(125), eq(-32602), contains("Missing params"));
     }
 }
