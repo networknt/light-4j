@@ -28,7 +28,7 @@ public class McpLogAppender extends AppenderBase<ILoggingEvent> {
         log.put("logger", event.getLoggerName());
         log.put("message", event.getFormattedMessage());
         log.put("thread", event.getThreadName());
-        
+
         if (event.getThrowableProxy() != null) {
             log.put("exception", event.getThrowableProxy().getMessage());
         }
