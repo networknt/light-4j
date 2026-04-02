@@ -101,7 +101,7 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     }
 
     @Override
-    public void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+    public void ensureWebSocketConnected(String token, java.util.function.BiConsumer<com.networknt.portal.registry.client.PortalRegistryWebSocketClient, Map<String, Object>> notificationHandler) {
     }
 
     @Override

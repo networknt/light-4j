@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class PortalRegistryWebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryWebSocketClient.class);
@@ -34,7 +34,7 @@ public class PortalRegistryWebSocketClient {
     private final Map<String, CompletableFuture<Map<String, Object>>> pending = new ConcurrentHashMap<>();
 
     private volatile WebSocket webSocket;
-    private volatile Consumer<Map<String, Object>> notificationHandler;
+    private volatile BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler;
     private volatile Runnable disconnectHandler;
     private volatile Runnable connectHandler;
     private volatile boolean explicitClose;
@@ -95,16 +95,16 @@ public class PortalRegistryWebSocketClient {
         }
     }
 
-    public void setNotificationHandler(Consumer<Map<String, Object>> notificationHandler) {
-        this.notificationHandler = notificationHandler;
-    }
-
-    public void setDisconnectHandler(Runnable disconnectHandler) {
-        this.disconnectHandler = disconnectHandler;
+    public void setMessageHandler(BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler) {
+        this.messageHandler = messageHandler;
     }
 
     public void setConnectHandler(Runnable connectHandler) {
         this.connectHandler = connectHandler;
+    }
+
+    public void setDisconnectHandler(Runnable disconnectHandler) {
+        this.disconnectHandler = disconnectHandler;
     }
 
     public boolean isOpen() {
@@ -180,6 +180,33 @@ public class PortalRegistryWebSocketClient {
             send(JsonMapper.toJson(request));
         } catch (IOException e) {
             throw new PortalRegistryWebSocketClientException("Failed to invoke websocket notification " + method, e);
+        }
+    }
+
+    public void sendResult(Object id, Object result) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("jsonrpc", "2.0");
+            response.put("id", id);
+            response.put("result", result);
+            send(JsonMapper.toJson(response));
+        } catch (IOException e) {
+            logger.error("Failed to send websocket response {}", id, e);
+        }
+    }
+
+    public void sendError(Object id, int code, String message) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("jsonrpc", "2.0");
+            response.put("id", id);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("code", code);
+            error.put("message", message);
+            response.put("error", error);
+            send(JsonMapper.toJson(response));
+        } catch (IOException e) {
+            logger.error("Failed to send websocket error response {}", id, e);
         }
     }
 
@@ -284,21 +311,18 @@ public class PortalRegistryWebSocketClient {
                 return;
             }
 
-            Object method = envelope.get("method");
-            if (method != null) {
-                Consumer<Map<String, Object>> handler = notificationHandler;
-                if (handler != null) {
-                    handler.accept(envelope);
-                }
-                return;
-            }
-
             Object id = envelope.get("id");
-            if (id != null) {
+            if (id != null && !envelope.containsKey("method")) {
                 CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
                 if (future != null) {
                     future.complete(envelope);
+                    return;
                 }
+            }
+
+            BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> handler = messageHandler;
+            if (handler != null) {
+                handler.accept(PortalRegistryWebSocketClient.this, envelope);
             }
         }
 
