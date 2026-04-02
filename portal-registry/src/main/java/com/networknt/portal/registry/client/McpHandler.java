@@ -264,9 +264,48 @@ public class McpHandler {
         }
     }
 
+    private static long parseRequiredLongArg(Map<String, Object> args, String key) {
+        Object value = args.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required parameter: " + key);
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                // fall through to throw below
+            }
+        }
+        throw new IllegalArgumentException("Invalid long parameter: " + key);
+    }
+
+    private static long parseOptionalLongArg(Map<String, Object> args, String key, long defaultValue) {
+        if (!args.containsKey(key)) {
+            return defaultValue;
+        }
+        Object value = args.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Invalid long parameter: " + key);
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid long parameter: " + key);
+            }
+        }
+        throw new IllegalArgumentException("Invalid long parameter: " + key);
+    }
+
     private static Map<String, Object> getLogContent(Map<String, Object> args) throws IOException, ParseException {
-        long startTime = Long.parseLong((String) args.get(START_TIME));
-        long endTime = args.containsKey("endTime") ? Long.parseLong((String) args.get("endTime")) : System.currentTimeMillis();
+        long startTime = parseRequiredLongArg(args, START_TIME);
+        long endTime = parseOptionalLongArg(args, "endTime", System.currentTimeMillis());
         Level loggerLevel = args.containsKey(LOGGER_LEVEL) ? Level.toLevel((String) args.get(LOGGER_LEVEL)) : Level.ERROR;
 
         Map<String, Map<String, Object>> logContent = new HashMap<>();
