@@ -393,8 +393,8 @@ public class McpHandler {
                         index++;
                     }
                 }
-            } catch (ParseException e) {
-                throw e;
+            } catch (ParseException ignored) {
+                // Ignore lines with timestamps that cannot be parsed; continue scanning the log file.
             } catch (RuntimeException ignored) {
                 // Ignore malformed lines because log files may contain non-JSON output.
             } catch (IOException ignored) {
