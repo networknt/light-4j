@@ -86,4 +86,59 @@ class McpHandlerTest {
 
         verify(client).sendError(eq(125), eq(-32602), contains("Missing params"));
     }
+
+    @Test
+    void testStopLogsForClientDetachesOnDisconnect() {
+        // Start log streaming with this client
+        when(client.isOpen()).thenReturn(true);
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 200);
+        envelope.put("params", params);
+        McpHandler.handle(client, envelope);
+
+        // Log a message to confirm appender is active
+        logger.info("Before disconnect");
+        verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        clearInvocations(client);
+
+        // Simulate websocket disconnect by calling stopLogsForClient
+        McpHandler.stopLogsForClient(client);
+
+        // Log after disconnect — appender should be detached
+        logger.info("After disconnect, should not be sent");
+        verify(client, never()).sendNotification(eq("notifications/log"), any());
+    }
+
+    @Test
+    void testStopLogsForClientDoesNotStopUnrelatedClient() {
+        PortalRegistryWebSocketClient otherClient = mock(PortalRegistryWebSocketClient.class);
+        when(otherClient.isOpen()).thenReturn(true);
+
+        // Start logs for otherClient
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 300);
+        envelope.put("params", params);
+        McpHandler.handle(otherClient, envelope);
+
+        // Verify appender is active for otherClient
+        logger.info("Sent via otherClient appender");
+        verify(otherClient, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        clearInvocations(otherClient);
+
+        // Simulate disconnect of the original (unrelated) client — should NOT stop otherClient's appender
+        McpHandler.stopLogsForClient(client);
+
+        // Log again — otherClient's appender should still be active
+        logger.info("Still active after unrelated disconnect");
+        verify(otherClient, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+
+        // Cleanup
+        McpHandler.stopLogsForClient(otherClient);
+    }
 }

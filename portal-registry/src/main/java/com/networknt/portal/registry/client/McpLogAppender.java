@@ -16,6 +16,10 @@ public class McpLogAppender extends AppenderBase<ILoggingEvent> {
         this.client = client;
     }
 
+    public boolean isForClient(PortalRegistryWebSocketClient websocketClient) {
+        return this.client == websocketClient;
+    }
+
     @Override
     protected void append(ILoggingEvent event) {
         if (client == null || !client.isOpen()) {

@@ -402,4 +402,16 @@ public class McpHandler {
             logger.info("Stopped MCP live log streaming");
         }
     }
+
+    /**
+     * Stops and detaches the active log appender if it belongs to the given client.
+     * Called when a websocket client disconnects to avoid leaking appenders across reconnects.
+     *
+     * @param client the websocket client that disconnected
+     */
+    public static synchronized void stopLogsForClient(PortalRegistryWebSocketClient client) {
+        if (activeLogAppender != null && activeLogAppender.isForClient(client)) {
+            stopLogs();
+        }
+    }
 }

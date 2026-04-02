@@ -159,7 +159,10 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         }
 
         PortalRegistryWebSocketClient registrationClient = new PortalRegistryWebSocketClient(microserviceWsUri, null);
-        registrationClient.setDisconnectHandler(() -> scheduleServiceReconnect(service.getInstanceId()));
+        registrationClient.setDisconnectHandler(() -> {
+            McpHandler.stopLogsForClient(registrationClient);
+            scheduleServiceReconnect(service.getInstanceId());
+        });
         if (messageHandler != null) {
             registrationClient.setMessageHandler(messageHandler);
         }
