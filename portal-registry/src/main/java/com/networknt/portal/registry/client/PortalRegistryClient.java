@@ -18,7 +18,7 @@ package com.networknt.portal.registry.client;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import com.networknt.portal.registry.PortalRegistryService;
 
@@ -70,7 +70,7 @@ public interface PortalRegistryClient {
 		return false;
 	}
 
-	default void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+	default void ensureWebSocketConnected(String token, BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler) {
 	}
 
 	default void closeWebSocket() {

@@ -21,11 +21,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class PortalRegistryWebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryWebSocketClient.class);
     private static final long REQUEST_TIMEOUT_MILLIS = 5000L;
+    private static final String JSONRPC = "jsonrpc";
 
     private final URI uri;
     private final String authorization;
@@ -34,7 +35,7 @@ public class PortalRegistryWebSocketClient {
     private final Map<String, CompletableFuture<Map<String, Object>>> pending = new ConcurrentHashMap<>();
 
     private volatile WebSocket webSocket;
-    private volatile Consumer<Map<String, Object>> notificationHandler;
+    private volatile BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler;
     private volatile Runnable disconnectHandler;
     private volatile Runnable connectHandler;
     private volatile boolean explicitClose;
@@ -95,16 +96,16 @@ public class PortalRegistryWebSocketClient {
         }
     }
 
-    public void setNotificationHandler(Consumer<Map<String, Object>> notificationHandler) {
-        this.notificationHandler = notificationHandler;
-    }
-
-    public void setDisconnectHandler(Runnable disconnectHandler) {
-        this.disconnectHandler = disconnectHandler;
+    public void setMessageHandler(BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler) {
+        this.messageHandler = messageHandler;
     }
 
     public void setConnectHandler(Runnable connectHandler) {
         this.connectHandler = connectHandler;
+    }
+
+    public void setDisconnectHandler(Runnable disconnectHandler) {
+        this.disconnectHandler = disconnectHandler;
     }
 
     public boolean isOpen() {
@@ -113,6 +114,7 @@ public class PortalRegistryWebSocketClient {
     }
 
     public synchronized void close() {
+        McpHandler.stopLogsForClient(this);
         WebSocket current = webSocket;
         if (current == null) {
             return;
@@ -144,7 +146,7 @@ public class PortalRegistryWebSocketClient {
         try {
             connect();
             Map<String, Object> request = new LinkedHashMap<>();
-            request.put("jsonrpc", "2.0");
+            request.put(JSONRPC, "2.0");
             request.put("id", id);
             request.put("method", method);
             request.put("params", params);
@@ -174,12 +176,39 @@ public class PortalRegistryWebSocketClient {
         try {
             connect();
             Map<String, Object> request = new LinkedHashMap<>();
-            request.put("jsonrpc", "2.0");
+            request.put(JSONRPC, "2.0");
             request.put("method", method);
             request.put("params", params);
             send(JsonMapper.toJson(request));
         } catch (IOException e) {
             throw new PortalRegistryWebSocketClientException("Failed to invoke websocket notification " + method, e);
+        }
+    }
+
+    public void sendResult(Object id, Object result) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put(JSONRPC, "2.0");
+            response.put("id", id);
+            response.put("result", result);
+            send(JsonMapper.toJson(response));
+        } catch (IOException e) {
+            logger.error("Failed to send websocket response {}", id, e);
+        }
+    }
+
+    public void sendError(Object id, int code, String message) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put(JSONRPC, "2.0");
+            response.put("id", id);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("code", code);
+            error.put("message", message);
+            response.put("error", error);
+            send(JsonMapper.toJson(response));
+        } catch (IOException e) {
+            logger.error("Failed to send websocket error response {}", id, e);
         }
     }
 
@@ -284,21 +313,20 @@ public class PortalRegistryWebSocketClient {
                 return;
             }
 
-            Object method = envelope.get("method");
-            if (method != null) {
-                Consumer<Map<String, Object>> handler = notificationHandler;
-                if (handler != null) {
-                    handler.accept(envelope);
+            Object id = envelope.get("id");
+            if (id != null && !envelope.containsKey("method")) {
+                CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
+                if (future != null) {
+                    future.complete(envelope);
+                } else if (logger.isDebugEnabled()) {
+                    logger.debug("Ignoring unmatched JSON-RPC response with id {}: {}", id, envelope);
                 }
                 return;
             }
 
-            Object id = envelope.get("id");
-            if (id != null) {
-                CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
-                if (future != null) {
-                    future.complete(envelope);
-                }
+            BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> handler = messageHandler;
+            if (handler != null) {
+                handler.accept(PortalRegistryWebSocketClient.this, envelope);
             }
         }
 

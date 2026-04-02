@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 /**
  * @author zhanglei28
@@ -101,11 +100,13 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     }
 
     @Override
-    public void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+    public void ensureWebSocketConnected(String token, java.util.function.BiConsumer<com.networknt.portal.registry.client.PortalRegistryWebSocketClient, Map<String, Object>> notificationHandler) {
+        // Test mock does not establish a real websocket connection.
     }
 
     @Override
     public void closeWebSocket() {
+        // Test mock does not hold websocket resources that need cleanup.
     }
 
     @Override

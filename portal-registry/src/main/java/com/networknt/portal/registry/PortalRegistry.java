@@ -18,7 +18,9 @@ package com.networknt.portal.registry;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.portal.registry.client.McpHandler;
 import com.networknt.portal.registry.client.PortalRegistryClient;
+import com.networknt.portal.registry.client.PortalRegistryWebSocketClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
@@ -55,6 +57,7 @@ public class PortalRegistry extends AbstractRegistry {
     @Override
     protected void doRegister(URL url) {
         PortalRegistryService service = PortalRegistryUtils.buildService(url);
+        client.ensureWebSocketConnected(getPortalToken(), this::handleWebSocketNotification);
         client.registerService(service, getPortalToken());
     }
 
@@ -141,9 +144,20 @@ public class PortalRegistry extends AbstractRegistry {
         return convertLisMap2UR(serviceId, tag, protocol, services);
     }
 
-    private void handleWebSocketNotification(Map<String, Object> envelope) {
-        Object method = envelope.get("method");
-        if (!Objects.equals("discovery/changed", method)) {
+    private void handleWebSocketNotification(PortalRegistryWebSocketClient client, Map<String, Object> envelope) {
+        Object methodObject = envelope.get("method");
+        if (!(methodObject instanceof String method)) {
+            if (logger.isWarnEnabled()) {
+                logger.warn("Ignoring websocket envelope with non-string method: {}", methodObject);
+            }
+            return;
+        }
+        if (method.startsWith("tools/")) {
+            McpHandler.handle(client, envelope);
+            return;
+        }
+
+        if (!"discovery/changed".equals(method)) {
             return;
         }
         Object paramsObject = envelope.get("params");

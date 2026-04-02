@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class PortalRegistryClientImpl implements PortalRegistryClient {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistryClientImpl.class);
@@ -37,7 +37,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     });
     private final AtomicBoolean reconnectScheduled = new AtomicBoolean(false);
 
-    private volatile Consumer<Map<String, Object>> notificationHandler;
+    private volatile BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler;
     private volatile String currentToken;
 
     public PortalRegistryClientImpl() {
@@ -100,9 +100,11 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
     }
 
     @Override
-    public synchronized void ensureWebSocketConnected(String token, Consumer<Map<String, Object>> notificationHandler) {
+    public synchronized void ensureWebSocketConnected(String token, BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> messageHandler) {
         currentToken = token;
-        this.notificationHandler = notificationHandler;
+        this.messageHandler = messageHandler;
+        // set handler for existing clients
+        registrationClients.values().forEach(client -> client.setMessageHandler(messageHandler));
     }
 
     @Override
@@ -112,7 +114,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         registeredServices.clear();
         subscriptions.clear();
         registrationReconnects.clear();
-        notificationHandler = null;
+        messageHandler = null;
         currentToken = null;
         reconnectScheduled.set(false);
     }
@@ -150,8 +152,6 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         throw new IllegalArgumentException("Unsupported portal url: " + portalUrl);
     }
 
-
-
     private void registerControllerRsService(PortalRegistryService service, String token) {
         PortalRegistryWebSocketClient existing = registrationClients.remove(service.getInstanceId());
         if (existing != null) {
@@ -159,9 +159,12 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         }
 
         PortalRegistryWebSocketClient registrationClient = new PortalRegistryWebSocketClient(microserviceWsUri, null);
-        registrationClient.setDisconnectHandler(() -> scheduleServiceReconnect(service.getInstanceId()));
-        if (notificationHandler != null) {
-            registrationClient.setNotificationHandler(notificationHandler);
+        registrationClient.setDisconnectHandler(() -> {
+            McpHandler.stopLogsForClient(registrationClient);
+            scheduleServiceReconnect(service.getInstanceId());
+        });
+        if (messageHandler != null) {
+            registrationClient.setMessageHandler(messageHandler);
         }
         try {
             registrationClient.connect();
