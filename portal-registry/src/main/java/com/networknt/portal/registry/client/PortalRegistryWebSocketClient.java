@@ -114,6 +114,7 @@ public class PortalRegistryWebSocketClient {
     }
 
     public synchronized void close() {
+        McpHandler.stopLogsForClient(this);
         WebSocket current = webSocket;
         if (current == null) {
             return;

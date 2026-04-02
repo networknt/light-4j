@@ -1,5 +1,8 @@
 package com.networknt.portal.registry.client;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -7,7 +10,9 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -140,5 +145,34 @@ class McpHandlerTest {
 
         // Cleanup
         McpHandler.stopLogsForClient(otherClient);
+    }
+
+    @Test
+    void testExplicitCloseDetachesActiveLogAppender() {
+        PortalRegistryWebSocketClient realClient =
+                new PortalRegistryWebSocketClient(URI.create("wss://localhost:8443/ws/microservice"), null);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 400);
+        envelope.put("params", params);
+
+        McpHandler.handle(realClient, envelope);
+
+        realClient.close();
+
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        boolean hasMcpAppender = false;
+        for (Iterator<Appender<ILoggingEvent>> iterator = root.iteratorForAppenders(); iterator.hasNext(); ) {
+            if (iterator.next() instanceof McpLogAppender) {
+                hasMcpAppender = true;
+                break;
+            }
+        }
+
+        org.junit.jupiter.api.Assertions.assertFalse(hasMcpAppender);
     }
 }
