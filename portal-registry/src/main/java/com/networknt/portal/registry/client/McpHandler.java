@@ -380,7 +380,11 @@ public class McpHandler {
         if (!(logEvent instanceof RollingFileAppender<?> rollingFileAppender)) {
             return Collections.emptyMap();
         }
-        Path logFile = Path.of(rollingFileAppender.getFile());
+        String filePath = rollingFileAppender.getFile();
+        if (filePath == null || filePath.isBlank()) {
+            return Collections.emptyMap();
+        }
+        Path logFile = Path.of(filePath);
         if (!Files.exists(logFile)) {
             return Collections.emptyMap();
         }
