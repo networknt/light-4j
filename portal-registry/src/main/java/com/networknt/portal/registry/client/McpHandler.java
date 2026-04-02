@@ -272,7 +272,9 @@ public class McpHandler {
         if (loggers == null) return;
         for (Map<String, String> map : loggers) {
             String name = map.get(NAME);
-            Level level = Level.valueOf(map.get(LEVEL));
+            String levelStr = map.get(LEVEL);
+            if (levelStr == null) continue;
+            Level level = Level.valueOf(levelStr.toUpperCase());
             ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(name);
             if (level != logger.getLevel()) logger.setLevel(level);
         }
