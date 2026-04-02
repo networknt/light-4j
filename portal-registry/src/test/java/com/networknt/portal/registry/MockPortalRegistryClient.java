@@ -101,10 +101,12 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
 
     @Override
     public void ensureWebSocketConnected(String token, java.util.function.BiConsumer<com.networknt.portal.registry.client.PortalRegistryWebSocketClient, Map<String, Object>> notificationHandler) {
+        // Test mock does not establish a real websocket connection.
     }
 
     @Override
     public void closeWebSocket() {
+        // Test mock does not hold websocket resources that need cleanup.
     }
 
     @Override
