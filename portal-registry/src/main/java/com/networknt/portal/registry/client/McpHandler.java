@@ -352,11 +352,11 @@ public class McpHandler {
         List<Map<String, Object>> logs = new ArrayList<>();
         int index = 0;
         String currentLine;
+        SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
         while ((currentLine = bufferedReader.readLine()) != null) {
             try {
                 Map<String, Object> logLine = Config.getInstance().getMapper().readValue(currentLine, Map.class);
                 if (logLine != null && logLine.containsKey("timestamp") && logLine.containsKey(LEVEL)) {
-                    SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
                     long logTime = timestampFormat.parse(logLine.get("timestamp").toString()).toInstant().toEpochMilli();
                     Level logLevel = Level.valueOf(((String) logLine.get(LEVEL)).trim());
                     if (logTime >= startTime && logTime <= endTime && logLevel.isGreaterOrEqual(loggerLevel)) {
