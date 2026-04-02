@@ -59,7 +59,16 @@ public class McpHandler {
                     handleToolsList(client, id);
                     break;
                 case "tools/call":
-                    handleToolsCall(client, id, (Map<String, Object>) envelope.get("params"));
+                    Object paramsObj = envelope.get("params");
+                    if (!(paramsObj instanceof Map<?, ?> rawParams)) {
+                        client.sendError(id, -32602, "Missing or invalid params for tools/call");
+                        break;
+                    }
+                    Map<String, Object> params = new HashMap<>();
+                    for (Map.Entry<?, ?> entry : rawParams.entrySet()) {
+                        params.put(String.valueOf(entry.getKey()), entry.getValue());
+                    }
+                    handleToolsCall(client, id, params);
                     break;
                 default:
                     client.sendError(id, -32601, "Method not found: " + method);
