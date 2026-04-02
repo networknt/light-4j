@@ -1,7 +1,9 @@
 package com.networknt.portal.registry.client;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,9 +13,11 @@ import java.util.Map;
  */
 public class McpLogAppender extends AppenderBase<ILoggingEvent> {
     private final PortalRegistryWebSocketClient client;
+    private final Level threshold;
 
-    public McpLogAppender(PortalRegistryWebSocketClient client) {
+    public McpLogAppender(PortalRegistryWebSocketClient client, Level threshold) {
         this.client = client;
+        this.threshold = threshold;
     }
 
     public boolean isForClient(PortalRegistryWebSocketClient websocketClient) {
@@ -23,6 +27,9 @@ public class McpLogAppender extends AppenderBase<ILoggingEvent> {
     @Override
     protected void append(ILoggingEvent event) {
         if (client == null || !client.isOpen()) {
+            return;
+        }
+        if (threshold != null && !event.getLevel().isGreaterOrEqual(threshold)) {
             return;
         }
 

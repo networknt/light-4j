@@ -77,6 +77,8 @@ public class McpHandler {
                 default:
                     client.sendError(id, -32601, "Method not found: " + method);
             }
+        } catch (IllegalArgumentException e) {
+            client.sendError(id, -32602, e.getMessage());
         } catch (Exception e) {
             logger.error("Error handling MCP request", e);
             String errorMessage = e.getMessage();
@@ -327,7 +329,7 @@ public class McpHandler {
     private static Map<String, Object> getLogContent(Map<String, Object> args) throws IOException, ParseException {
         long startTime = parseRequiredLongArg(args, START_TIME);
         long endTime = parseOptionalLongArg(args, END_TIME, System.currentTimeMillis());
-        Level loggerLevel = args.containsKey(LOGGER_LEVEL) ? Level.toLevel((String) args.get(LOGGER_LEVEL)) : Level.ERROR;
+        Level loggerLevel = parseOptionalLevelArg(args, LOGGER_LEVEL, Level.ERROR);
 
         Map<String, Map<String, Object>> logContent = new HashMap<>();
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -338,6 +340,21 @@ public class McpHandler {
             }
         }
         return Map.of("content", logContent);
+    }
+
+    private static Level parseOptionalLevelArg(Map<String, Object> args, String key, Level defaultValue) {
+        if (!args.containsKey(key)) {
+            return defaultValue;
+        }
+        Object value = args.get(key);
+        if (value == null || !(value instanceof String levelString) || levelString.isBlank()) {
+            throw new IllegalArgumentException("Invalid logger level parameter: " + key);
+        }
+        try {
+            return Level.valueOf(levelString.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid logger level parameter: " + key);
+        }
     }
 
     private static Map<String, Object> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, Level loggerLevel) throws IOException, ParseException {
@@ -413,12 +430,9 @@ public class McpHandler {
             stopLogs();
         }
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        activeLogAppender = new McpLogAppender(client);
+        Level threshold = parseOptionalLevelArg(args, LEVEL, null);
+        activeLogAppender = new McpLogAppender(client, threshold);
         activeLogAppender.setContext(lc);
-        String levelStr = (String) args.get(LEVEL);
-        if (levelStr != null) {
-            // The stream currently attaches at the root logger and does not filter by threshold yet.
-        }
         activeLogAppender.start();
         ch.qos.logback.classic.Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);
         root.addAppender(activeLogAppender);

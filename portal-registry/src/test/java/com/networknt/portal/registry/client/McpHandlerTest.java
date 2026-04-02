@@ -175,4 +175,46 @@ class McpHandlerTest {
 
         org.junit.jupiter.api.Assertions.assertFalse(hasMcpAppender);
     }
+
+    @Test
+    void testStartLogsFiltersBelowThreshold() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+        params.put("arguments", Map.of("level", "ERROR"));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 500);
+        envelope.put("params", params);
+
+        when(client.isOpen()).thenReturn(true);
+
+        McpHandler.handle(client, envelope);
+        clearInvocations(client);
+
+        logger.info("Below threshold");
+        verify(client, never()).sendNotification(eq("notifications/log"), any());
+
+        logger.error("At threshold");
+        verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+
+        McpHandler.stopLogsForClient(client);
+    }
+
+    @Test
+    void testGetLogContentRejectsInvalidLoggerLevelType() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "get_log_content");
+        params.put("arguments", Map.of(
+                "startTime", 0L,
+                "loggerLevel", true
+        ));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 501);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendError(eq(501), eq(-32602), contains("Invalid logger level parameter"));
+    }
 }

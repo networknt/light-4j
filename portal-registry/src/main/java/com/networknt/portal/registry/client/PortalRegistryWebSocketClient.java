@@ -318,8 +318,10 @@ public class PortalRegistryWebSocketClient {
                 CompletableFuture<Map<String, Object>> future = pending.remove(String.valueOf(id));
                 if (future != null) {
                     future.complete(envelope);
-                    return;
+                } else if (logger.isDebugEnabled()) {
+                    logger.debug("Ignoring unmatched JSON-RPC response with id {}: {}", id, envelope);
                 }
+                return;
             }
 
             BiConsumer<PortalRegistryWebSocketClient, Map<String, Object>> handler = messageHandler;
