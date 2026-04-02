@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class McpHandler {
     private static final String SUCCESS = "success";
     private static final String TOTAL = "total";
     private static final String LOGS = "logs";
-    private static McpLogAppender activeLogAppender = null;
+    private static final Map<PortalRegistryWebSocketClient, McpLogAppender> activeLogAppenders = new IdentityHashMap<>();
 
     private McpHandler() {
     }
@@ -184,7 +185,7 @@ public class McpHandler {
                 client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs started"));
                 break;
             case "stop_logs":
-                stopLogs();
+                stopLogs(client);
                 client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs stopped"));
                 break;
             default:
@@ -430,27 +431,43 @@ public class McpHandler {
     }
 
     private static synchronized void startLogs(PortalRegistryWebSocketClient client, Map<String, Object> args) {
-        if (activeLogAppender != null) {
-            stopLogs();
-        }
+        stopLogs(client);
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         Level threshold = parseOptionalLevelArg(args, LEVEL, null);
-        activeLogAppender = new McpLogAppender(client, threshold);
+        McpLogAppender activeLogAppender = new McpLogAppender(client, threshold);
         activeLogAppender.setContext(lc);
         activeLogAppender.start();
-        ch.qos.logback.classic.Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);
-        root.addAppender(activeLogAppender);
+        attachLiveAppender(lc, activeLogAppender);
+        activeLogAppenders.put(client, activeLogAppender);
         logger.info("Started MCP live log streaming");
     }
 
-    private static synchronized void stopLogs() {
+    private static synchronized void stopLogs(PortalRegistryWebSocketClient client) {
+        McpLogAppender activeLogAppender = activeLogAppenders.remove(client);
         if (activeLogAppender != null) {
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-            ch.qos.logback.classic.Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);
-            root.detachAppender(activeLogAppender);
+            detachLiveAppender(lc, activeLogAppender);
             activeLogAppender.stop();
-            activeLogAppender = null;
             logger.info("Stopped MCP live log streaming");
+        }
+    }
+
+    private static void attachLiveAppender(LoggerContext loggerContext, McpLogAppender appender) {
+        ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.addAppender(appender);
+        for (ch.qos.logback.classic.Logger logger : loggerContext.getLoggerList()) {
+            if (logger == root) {
+                continue;
+            }
+            if (!logger.isAdditive()) {
+                logger.addAppender(appender);
+            }
+        }
+    }
+
+    private static void detachLiveAppender(LoggerContext loggerContext, McpLogAppender appender) {
+        for (ch.qos.logback.classic.Logger logger : loggerContext.getLoggerList()) {
+            logger.detachAppender(appender);
         }
     }
 
@@ -461,9 +478,7 @@ public class McpHandler {
      * @param client the websocket client that disconnected
      */
     public static synchronized void stopLogsForClient(PortalRegistryWebSocketClient client) {
-        if (activeLogAppender != null && activeLogAppender.isForClient(client)) {
-            stopLogs();
-        }
+        stopLogs(client);
     }
 
     private record ValidationResult(boolean valid, String toolName, Map<String, Object> arguments, String errorMessage) {
