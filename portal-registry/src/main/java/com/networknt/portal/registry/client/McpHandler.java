@@ -801,14 +801,6 @@ public class McpHandler {
         }
     }
 
-    private static Map<String, Object> toJsonSafeMap(Map<?, ?> rawMap) {
-        Map<String, Object> safeMap = new HashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            safeMap.put(String.valueOf(entry.getKey()), toJsonSafeValue(entry.getValue()));
-        }
-        return safeMap;
-    }
-
     private static Map<String, Object> summarizeCacheEntries(Map<?, ?> rawMap) {
         Map<String, Object> summaryMap = new HashMap<>();
         for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
@@ -853,38 +845,6 @@ public class McpHandler {
             return Map.of(TYPE, "array", SIZE, Array.getLength(value));
         }
         return Map.of(TYPE, value.getClass().getName());
-    }
-
-    private static Object toJsonSafeValue(Object value) {
-        if (value == null
-                || value instanceof String
-                || value instanceof Number
-                || value instanceof Boolean) {
-            return value;
-        }
-        if (value instanceof Map<?, ?> map) {
-            return toJsonSafeMap(map);
-        }
-        if (value instanceof Iterable<?> iterable) {
-            List<Object> items = new ArrayList<>();
-            for (Object item : iterable) {
-                items.add(toJsonSafeValue(item));
-            }
-            return items;
-        }
-        if (value.getClass().isArray()) {
-            int length = Array.getLength(value);
-            List<Object> items = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                items.add(toJsonSafeValue(Array.get(value, i)));
-            }
-            return items;
-        }
-        try {
-            return Config.getInstance().getMapper().convertValue(value, Object.class);
-        } catch (IllegalArgumentException e) {
-            return String.valueOf(value);
-        }
     }
 
     private static List<String> readOptionalStringList(Object value, String key) {
