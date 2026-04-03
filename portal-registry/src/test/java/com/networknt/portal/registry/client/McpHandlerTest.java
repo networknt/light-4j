@@ -148,6 +148,50 @@ class McpHandlerTest {
     }
 
     @Test
+    void testStopLogsStopsOnlyCallingClient() {
+        PortalRegistryWebSocketClient otherClient = mock(PortalRegistryWebSocketClient.class);
+        when(client.isOpen()).thenReturn(true);
+        when(otherClient.isOpen()).thenReturn(true);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+
+        Map<String, Object> firstEnvelope = new HashMap<>();
+        firstEnvelope.put("method", "tools/call");
+        firstEnvelope.put("id", 310);
+        firstEnvelope.put("params", params);
+        McpHandler.handle(client, firstEnvelope);
+
+        Map<String, Object> secondEnvelope = new HashMap<>();
+        secondEnvelope.put("method", "tools/call");
+        secondEnvelope.put("id", 311);
+        secondEnvelope.put("params", params);
+        McpHandler.handle(otherClient, secondEnvelope);
+
+        clearInvocations(client, otherClient);
+
+        logger.info("Before stop");
+        verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        verify(otherClient, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        clearInvocations(client, otherClient);
+
+        Map<String, Object> stopParams = new HashMap<>();
+        stopParams.put("name", "stop_logs");
+        Map<String, Object> stopEnvelope = new HashMap<>();
+        stopEnvelope.put("method", "tools/call");
+        stopEnvelope.put("id", 312);
+        stopEnvelope.put("params", stopParams);
+        McpHandler.handle(client, stopEnvelope);
+        clearInvocations(client, otherClient);
+
+        logger.info("After stopping one client");
+        verify(client, never()).sendNotification(eq("notifications/log"), any());
+        verify(otherClient, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+
+        McpHandler.stopLogsForClient(otherClient);
+    }
+
+    @Test
     void testExplicitCloseDetachesActiveLogAppender() {
         PortalRegistryWebSocketClient realClient =
                 new PortalRegistryWebSocketClient(URI.create("wss://localhost:8443/ws/microservice"), null);
@@ -198,6 +242,34 @@ class McpHandlerTest {
         verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
 
         McpHandler.stopLogsForClient(client);
+    }
+
+    @Test
+    void testStartLogsCapturesNonAdditiveLogger() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "start_logs");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 550);
+        envelope.put("params", params);
+
+        when(client.isOpen()).thenReturn(true);
+
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        ch.qos.logback.classic.Logger nonAdditiveLogger = loggerContext.getLogger("test.nonadditive.logger");
+        boolean previousAdditive = nonAdditiveLogger.isAdditive();
+        try {
+            nonAdditiveLogger.setAdditive(false);
+            McpHandler.handle(client, envelope);
+            clearInvocations(client);
+
+            nonAdditiveLogger.info("Non-additive logger message");
+
+            verify(client, atLeastOnce()).sendNotification(eq("notifications/log"), any());
+        } finally {
+            McpHandler.stopLogsForClient(client);
+            nonAdditiveLogger.setAdditive(previousAdditive);
+        }
     }
 
     @Test
