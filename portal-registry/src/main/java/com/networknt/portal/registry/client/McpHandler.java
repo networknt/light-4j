@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -36,6 +37,7 @@ public class McpHandler {
     private static final String PROPERTIES = "properties";
     private static final String INPUT_SCHEMA = "inputSchema";
     private static final String DESCRIPTION = "description";
+    private static final String REQUIRED = "required";
     private static final String LOGGERS = "loggers";
     private static final String STRING = "string";
     private static final String START_TIME = "startTime";
@@ -48,8 +50,13 @@ public class McpHandler {
     private static final String CONFIG_ARG = "config";
     private static final String STATUS = "status";
     private static final String SUCCESS = "success";
+    private static final String MESSAGE = "message";
     private static final String TOTAL = "total";
     private static final String LOGS = "logs";
+    private static final String EXCEPTION = "exception";
+    private static final String KILLAPP = "killapp";
+    private static final String LATENCY = "latency";
+    private static final String MEMORY = "memory";
     private static final Map<PortalRegistryWebSocketClient, McpLogAppender> activeLogAppenders = new IdentityHashMap<>();
     private static final String EXCEPTION_ASSAULT_HANDLER = "com.networknt.chaos.ExceptionAssaultHandler";
     private static final String KILLAPP_ASSAULT_HANDLER = "com.networknt.chaos.KillappAssaultHandler";
@@ -57,6 +64,8 @@ public class McpHandler {
     private static final String MEMORY_ASSAULT_HANDLER = "com.networknt.chaos.MemoryAssaultHandler";
     private static final String CHAOS_MONKEY_UNAVAILABLE_MESSAGE =
             "Chaos monkey is not available on this service. Add the light-chaos-monkey dependencies to enable it.";
+    private static final String CACHE_UNAVAILABLE_MESSAGE =
+            "Cache support is not available on this service. Add the cache-manager dependencies to enable it.";
 
     private McpHandler() {
     }
@@ -125,7 +134,7 @@ public class McpHandler {
                         INPUT_SCHEMA, Map.of(
                                 "type", OBJECT,
                                 PROPERTIES, Map.of(LOGGERS, Map.of("type", "array", "items", Map.of("type", OBJECT))),
-                                "required", List.of(LOGGERS)
+                                REQUIRED, List.of(LOGGERS)
                         )
                 ),
                 Map.of(
@@ -138,7 +147,7 @@ public class McpHandler {
                                         END_TIME, Map.of("type", "integer", DESCRIPTION, "Optional end time in epoch milliseconds"),
                                         LOGGER_LEVEL, Map.of("type", STRING)
                                 ),
-                                "required", List.of(START_TIME)
+                                REQUIRED, List.of(START_TIME)
                         )
                 ),
                 Map.of(
@@ -182,7 +191,7 @@ public class McpHandler {
                         INPUT_SCHEMA, Map.of(
                                 "type", OBJECT,
                                 PROPERTIES, Map.of(NAME, Map.of("type", STRING)),
-                                "required", List.of(NAME)
+                                REQUIRED, List.of(NAME)
                         )
                 ),
                 Map.of(
@@ -199,7 +208,7 @@ public class McpHandler {
                                         ASSAULT_TYPE, Map.of("type", STRING),
                                         CONFIG_ARG, Map.of("type", OBJECT)
                                 ),
-                                "required", List.of(ASSAULT_TYPE, CONFIG_ARG)
+                                REQUIRED, List.of(ASSAULT_TYPE, CONFIG_ARG)
                         )
                 )
         );
@@ -240,11 +249,11 @@ public class McpHandler {
                 break;
             case "start_logs":
                 startLogs(client, args);
-                client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs started"));
+                client.sendResult(id, Map.of(STATUS, SUCCESS, MESSAGE, "Live logs started"));
                 break;
             case "stop_logs":
                 stopLogs(client);
-                client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs stopped"));
+                client.sendResult(id, Map.of(STATUS, SUCCESS, MESSAGE, "Live logs stopped"));
                 break;
             case "get_modules":
                 client.sendResult(id, getModules());
@@ -597,6 +606,13 @@ public class McpHandler {
     }
 
     private static Map<String, Object> listCaches() {
+        if (!isCacheAvailable()) {
+            return Map.of(
+                    "supported", false,
+                    MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                    "caches", Collections.emptyList()
+            );
+        }
         try {
             Class<?> cacheConfigClass = resolveClass("com.networknt.cache.CacheConfig");
             Method loadMethod = cacheConfigClass.getMethod("load");
@@ -611,7 +627,17 @@ public class McpHandler {
                     cacheNames.add(String.valueOf(getCacheNameMethod.invoke(cacheItem)));
                 }
             }
-            return Map.of("caches", cacheNames);
+            return Map.of(
+                    "supported", true,
+                    "caches", cacheNames
+            );
+        } catch (IllegalStateException e) {
+            logger.info("Cache support is not available", e);
+            return Map.of(
+                    "supported", false,
+                    MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                    "caches", Collections.emptyList()
+            );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to list caches", e);
         }
@@ -622,17 +648,42 @@ public class McpHandler {
         if (cacheName == null) {
             throw new IllegalArgumentException("Missing required parameter: name");
         }
+        if (!isCacheAvailable()) {
+            return Map.of(
+                    "supported", false,
+                    MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                    NAME, cacheName,
+                    "entries", Collections.emptyMap()
+            );
+        }
         try {
             Class<?> cacheManagerClass = resolveClass("com.networknt.cache.CacheManager");
             Method getInstanceMethod = cacheManagerClass.getMethod("getInstance");
             Object cacheManager = getInstanceMethod.invoke(null);
             if (cacheManager == null) {
-                throw new IllegalArgumentException("CacheManager is not available");
+                return Map.of(
+                        "supported", false,
+                        MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                        NAME, cacheName,
+                        "entries", Collections.emptyMap()
+                );
             }
             Method method = cacheManagerClass.getMethod("getCache", String.class);
             @SuppressWarnings("unchecked")
             Map<Object, Object> cacheMap = (Map<Object, Object>) method.invoke(cacheManager, cacheName);
-            return Map.of(NAME, cacheName, "entries", cacheMap == null ? Collections.emptyMap() : cacheMap);
+            return Map.of(
+                    "supported", true,
+                    NAME, cacheName,
+                    "entries", cacheMap == null ? Collections.emptyMap() : toJsonSafeMap(cacheMap)
+            );
+        } catch (IllegalStateException e) {
+            logger.info("Cache support is not available", e);
+            return Map.of(
+                    "supported", false,
+                    MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                    NAME, cacheName,
+                    "entries", Collections.emptyMap()
+            );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to retrieve cache entries", e);
         }
@@ -642,15 +693,15 @@ public class McpHandler {
         if (!isChaosMonkeyAvailable()) {
             return Map.of(
                     "supported", false,
-                    "message", CHAOS_MONKEY_UNAVAILABLE_MESSAGE
+                    MESSAGE, CHAOS_MONKEY_UNAVAILABLE_MESSAGE
             );
         }
         Map<String, Object> configMap = new HashMap<>();
         configMap.put("supported", true);
-        configMap.put("exception", getChaosConfig(EXCEPTION_ASSAULT_HANDLER, "config"));
-        configMap.put("killapp", getChaosConfig(KILLAPP_ASSAULT_HANDLER, "config"));
-        configMap.put("latency", getChaosConfig(LATENCY_ASSAULT_HANDLER, "config"));
-        configMap.put("memory", getChaosConfig(MEMORY_ASSAULT_HANDLER, "config"));
+        configMap.put(EXCEPTION, getChaosConfig(EXCEPTION_ASSAULT_HANDLER, CONFIG_ARG));
+        configMap.put(KILLAPP, getChaosConfig(KILLAPP_ASSAULT_HANDLER, CONFIG_ARG));
+        configMap.put(LATENCY, getChaosConfig(LATENCY_ASSAULT_HANDLER, CONFIG_ARG));
+        configMap.put(MEMORY, getChaosConfig(MEMORY_ASSAULT_HANDLER, CONFIG_ARG));
         return configMap;
     }
 
@@ -698,27 +749,27 @@ public class McpHandler {
     private static String resolveAssaultHandlerClass(String assaultType) {
         String normalized = normalizeAssaultId(assaultType);
         return switch (normalized) {
-            case "exception" -> EXCEPTION_ASSAULT_HANDLER;
-            case "killapp" -> KILLAPP_ASSAULT_HANDLER;
-            case "latency" -> LATENCY_ASSAULT_HANDLER;
-            case "memory" -> MEMORY_ASSAULT_HANDLER;
+            case EXCEPTION -> EXCEPTION_ASSAULT_HANDLER;
+            case KILLAPP -> KILLAPP_ASSAULT_HANDLER;
+            case LATENCY -> LATENCY_ASSAULT_HANDLER;
+            case MEMORY -> MEMORY_ASSAULT_HANDLER;
             default -> throw new IllegalArgumentException("Invalid assaultType: " + assaultType);
         };
     }
 
     private static String normalizeAssaultId(String assaultType) {
         String normalized = assaultType == null ? "" : assaultType.trim().toLowerCase();
-        if ("killappassaulthandler".equals(normalized) || KILLAPP_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "killapp".equals(normalized) || "kill_app".equals(normalized)) {
-            return "killapp";
+        if ("killappassaulthandler".equals(normalized) || KILLAPP_ASSAULT_HANDLER.toLowerCase().equals(normalized) || KILLAPP.equals(normalized) || "kill_app".equals(normalized)) {
+            return KILLAPP;
         }
-        if ("exceptionassaulthandler".equals(normalized) || EXCEPTION_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "exception".equals(normalized)) {
-            return "exception";
+        if ("exceptionassaulthandler".equals(normalized) || EXCEPTION_ASSAULT_HANDLER.toLowerCase().equals(normalized) || EXCEPTION.equals(normalized)) {
+            return EXCEPTION;
         }
-        if ("latencyassaulthandler".equals(normalized) || LATENCY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "latency".equals(normalized)) {
-            return "latency";
+        if ("latencyassaulthandler".equals(normalized) || LATENCY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || LATENCY.equals(normalized)) {
+            return LATENCY;
         }
-        if ("memoryassaulthandler".equals(normalized) || MEMORY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "memory".equals(normalized)) {
-            return "memory";
+        if ("memoryassaulthandler".equals(normalized) || MEMORY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || MEMORY.equals(normalized)) {
+            return MEMORY;
         }
         return normalized;
     }
@@ -727,9 +778,59 @@ public class McpHandler {
         return modules.size() == 1 && "all".equalsIgnoreCase(modules.getFirst());
     }
 
+    private static boolean isCacheAvailable() {
+        try {
+            resolveClass("com.networknt.cache.CacheConfig");
+            resolveClass("com.networknt.cache.CacheManager");
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    private static Map<String, Object> toJsonSafeMap(Map<?, ?> rawMap) {
+        Map<String, Object> safeMap = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            safeMap.put(String.valueOf(entry.getKey()), toJsonSafeValue(entry.getValue()));
+        }
+        return safeMap;
+    }
+
+    private static Object toJsonSafeValue(Object value) {
+        if (value == null
+                || value instanceof String
+                || value instanceof Number
+                || value instanceof Boolean) {
+            return value;
+        }
+        if (value instanceof Map<?, ?> map) {
+            return toJsonSafeMap(map);
+        }
+        if (value instanceof Iterable<?> iterable) {
+            List<Object> items = new ArrayList<>();
+            for (Object item : iterable) {
+                items.add(toJsonSafeValue(item));
+            }
+            return items;
+        }
+        if (value.getClass().isArray()) {
+            int length = Array.getLength(value);
+            List<Object> items = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                items.add(toJsonSafeValue(Array.get(value, i)));
+            }
+            return items;
+        }
+        try {
+            return Config.getInstance().getMapper().convertValue(value, Object.class);
+        } catch (IllegalArgumentException e) {
+            return String.valueOf(value);
+        }
+    }
+
     private static List<String> readOptionalStringList(Object value, String key) {
         if (value == null) {
-            return null;
+            return Collections.emptyList();
         }
         if (!(value instanceof List<?> values)) {
             throw new IllegalArgumentException("'" + key + "' must be a list");

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -288,5 +289,60 @@ class McpHandlerTest {
         McpHandler.handle(client, envelope);
 
         verify(client).sendError(eq(501), eq(-32602), contains("Invalid logger level parameter"));
+    }
+
+    @Test
+    void testListCachesReportsSupportStatus() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "list_caches");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 600);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(600), argThat(result -> {
+            if (!(result instanceof Map<?, ?> map)) {
+                return false;
+            }
+            Object supported = map.get("supported");
+            Object caches = map.get("caches");
+            return supported instanceof Boolean && caches instanceof java.util.List<?>;
+        }));
+    }
+
+    @Test
+    void testGetCacheEntriesReportsSupportStatusAndSafeEntries() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "get_cache_entries");
+        params.put("arguments", Map.of("name", "test-cache"));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 601);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(601), argThat(result -> {
+            if (!(result instanceof Map<?, ?> map)) {
+                return false;
+            }
+            if (!"test-cache".equals(map.get("name"))) {
+                return false;
+            }
+            Object supported = map.get("supported");
+            if (!(supported instanceof Boolean)) {
+                return false;
+            }
+            Object entries = map.get("entries");
+            if (!(entries instanceof Map<?, ?> entriesMap)) {
+                return false;
+            }
+            if (Boolean.FALSE.equals(supported)) {
+                return entriesMap.equals(Collections.emptyMap());
+            }
+            return true;
+        }));
     }
 }
