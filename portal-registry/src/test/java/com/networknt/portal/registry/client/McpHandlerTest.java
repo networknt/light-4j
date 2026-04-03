@@ -182,6 +182,7 @@ class McpHandlerTest {
         stopEnvelope.put("id", 312);
         stopEnvelope.put("params", stopParams);
         McpHandler.handle(client, stopEnvelope);
+        clearInvocations(client, otherClient);
 
         logger.info("After stopping one client");
         verify(client, never()).sendNotification(eq("notifications/log"), any());
