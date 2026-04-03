@@ -9,11 +9,14 @@ import com.networknt.config.Config;
 import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoUtil;
 import com.networknt.logging.model.LoggerInfo;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -40,11 +43,20 @@ public class McpHandler {
     private static final String LOGGER_LEVEL = "loggerLevel";
     private static final String LEVEL = "level";
     private static final String NAME = "name";
+    private static final String MODULES = "modules";
+    private static final String ASSAULT_TYPE = "assaultType";
+    private static final String CONFIG_ARG = "config";
     private static final String STATUS = "status";
     private static final String SUCCESS = "success";
     private static final String TOTAL = "total";
     private static final String LOGS = "logs";
     private static final Map<PortalRegistryWebSocketClient, McpLogAppender> activeLogAppenders = new IdentityHashMap<>();
+    private static final String EXCEPTION_ASSAULT_HANDLER = "com.networknt.chaos.ExceptionAssaultHandler";
+    private static final String KILLAPP_ASSAULT_HANDLER = "com.networknt.chaos.KillappAssaultHandler";
+    private static final String LATENCY_ASSAULT_HANDLER = "com.networknt.chaos.LatencyAssaultHandler";
+    private static final String MEMORY_ASSAULT_HANDLER = "com.networknt.chaos.MemoryAssaultHandler";
+    private static final String CHAOS_MONKEY_UNAVAILABLE_MESSAGE =
+            "Chaos monkey is not available on this service. Add the light-chaos-monkey dependencies to enable it.";
 
     private McpHandler() {
     }
@@ -143,6 +155,52 @@ public class McpHandler {
                         "name", "stop_logs",
                         DESCRIPTION, "Stop live log streaming",
                         INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
+                ),
+                Map.of(
+                        "name", "get_modules",
+                        DESCRIPTION, "Retrieve registered modules and plugins",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
+                ),
+                Map.of(
+                        "name", "reload_modules",
+                        DESCRIPTION, "Reload selected modules/plugins or all when omitted",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(
+                                        MODULES, Map.of("type", "array", "items", Map.of("type", STRING))
+                                )
+                        )
+                ),
+                Map.of(
+                        "name", "list_caches",
+                        DESCRIPTION, "List available local cache names",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
+                ),
+                Map.of(
+                        "name", "get_cache_entries",
+                        DESCRIPTION, "Retrieve entries for a cache by name",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(NAME, Map.of("type", STRING)),
+                                "required", List.of(NAME)
+                        )
+                ),
+                Map.of(
+                        "name", "get_chaos_monkey_config",
+                        DESCRIPTION, "Retrieve current chaos monkey configuration",
+                        INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
+                ),
+                Map.of(
+                        "name", "configure_chaos_monkey",
+                        DESCRIPTION, "Update one chaos monkey assault configuration",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(
+                                        ASSAULT_TYPE, Map.of("type", STRING),
+                                        CONFIG_ARG, Map.of("type", OBJECT)
+                                ),
+                                "required", List.of(ASSAULT_TYPE, CONFIG_ARG)
+                        )
                 )
         );
         client.sendResult(id, Map.of("tools", tools));
@@ -187,6 +245,28 @@ public class McpHandler {
             case "stop_logs":
                 stopLogs(client);
                 client.sendResult(id, Map.of(STATUS, SUCCESS, "message", "Live logs stopped"));
+                break;
+            case "get_modules":
+                client.sendResult(id, getModules());
+                break;
+            case "reload_modules":
+                client.sendResult(id, reloadModules(args));
+                break;
+            case "list_caches":
+                client.sendResult(id, listCaches());
+                break;
+            case "get_cache_entries":
+                client.sendResult(id, getCacheEntries(args));
+                break;
+            case "get_chaos_monkey_config":
+                client.sendResult(id, getChaosMonkeyConfig());
+                break;
+            case "configure_chaos_monkey":
+                if (!isChaosMonkeyAvailable()) {
+                    client.sendError(id, -32602, CHAOS_MONKEY_UNAVAILABLE_MESSAGE);
+                    return;
+                }
+                client.sendResult(id, configureChaosMonkey(args));
                 break;
             default:
                 client.sendError(id, -32602, "Tool not found: " + name);
@@ -479,6 +559,223 @@ public class McpHandler {
      */
     public static synchronized void stopLogsForClient(PortalRegistryWebSocketClient client) {
         stopLogs(client);
+    }
+
+    private static Map<String, Object> getModules() {
+        List<String> modules = new ArrayList<>();
+        modules.addAll(ModuleRegistry.getModuleClasses());
+        modules.addAll(ModuleRegistry.getPluginClasses());
+        return Map.of(MODULES, modules);
+    }
+
+    private static Map<String, Object> reloadModules(Map<String, Object> args) {
+        List<String> requestedModules = readOptionalStringList(args.get(MODULES), MODULES);
+        List<String> modulesToReload = new ArrayList<>();
+        if (requestedModules == null || requestedModules.isEmpty() || isReloadAll(requestedModules)) {
+            modulesToReload.addAll(ModuleRegistry.getModuleClasses());
+            modulesToReload.addAll(ModuleRegistry.getPluginClasses());
+        } else {
+            modulesToReload.addAll(requestedModules);
+        }
+
+        List<String> reloaded = new ArrayList<>();
+        if (!modulesToReload.isEmpty()) {
+            Config.getInstance().clearConfigCache("values");
+            logger.info("Centralized config values.yml is reloaded.");
+        }
+
+        for (String moduleClass : modulesToReload) {
+            String configName = findConfigName(moduleClass);
+            if (configName == null) {
+                logger.warn("Module or plugin {} is not found in the registry", moduleClass);
+                continue;
+            }
+            Config.getInstance().clearConfigCache(configName);
+            reloaded.add(moduleClass);
+        }
+        return Map.of(MODULES, reloaded);
+    }
+
+    private static Map<String, Object> listCaches() {
+        try {
+            Class<?> cacheConfigClass = resolveClass("com.networknt.cache.CacheConfig");
+            Method loadMethod = cacheConfigClass.getMethod("load");
+            Object cacheConfig = loadMethod.invoke(null);
+            Method getCachesMethod = cacheConfigClass.getMethod("getCaches");
+            @SuppressWarnings("unchecked")
+            List<Object> cacheItems = (List<Object>) getCachesMethod.invoke(cacheConfig);
+            List<String> cacheNames = new ArrayList<>();
+            if (cacheItems != null) {
+                for (Object cacheItem : cacheItems) {
+                    Method getCacheNameMethod = cacheItem.getClass().getMethod("getCacheName");
+                    cacheNames.add(String.valueOf(getCacheNameMethod.invoke(cacheItem)));
+                }
+            }
+            return Map.of("caches", cacheNames);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to list caches", e);
+        }
+    }
+
+    private static Map<String, Object> getCacheEntries(Map<String, Object> args) {
+        String cacheName = readRequiredString(args.get(NAME));
+        if (cacheName == null) {
+            throw new IllegalArgumentException("Missing required parameter: name");
+        }
+        try {
+            Class<?> cacheManagerClass = resolveClass("com.networknt.cache.CacheManager");
+            Method getInstanceMethod = cacheManagerClass.getMethod("getInstance");
+            Object cacheManager = getInstanceMethod.invoke(null);
+            if (cacheManager == null) {
+                throw new IllegalArgumentException("CacheManager is not available");
+            }
+            Method method = cacheManagerClass.getMethod("getCache", String.class);
+            @SuppressWarnings("unchecked")
+            Map<Object, Object> cacheMap = (Map<Object, Object>) method.invoke(cacheManager, cacheName);
+            return Map.of(NAME, cacheName, "entries", cacheMap == null ? Collections.emptyMap() : cacheMap);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to retrieve cache entries", e);
+        }
+    }
+
+    private static Map<String, Object> getChaosMonkeyConfig() {
+        if (!isChaosMonkeyAvailable()) {
+            return Map.of(
+                    "supported", false,
+                    "message", CHAOS_MONKEY_UNAVAILABLE_MESSAGE
+            );
+        }
+        Map<String, Object> configMap = new HashMap<>();
+        configMap.put("supported", true);
+        configMap.put("exception", getChaosConfig(EXCEPTION_ASSAULT_HANDLER, "config"));
+        configMap.put("killapp", getChaosConfig(KILLAPP_ASSAULT_HANDLER, "config"));
+        configMap.put("latency", getChaosConfig(LATENCY_ASSAULT_HANDLER, "config"));
+        configMap.put("memory", getChaosConfig(MEMORY_ASSAULT_HANDLER, "config"));
+        return configMap;
+    }
+
+    private static Map<String, Object> configureChaosMonkey(Map<String, Object> args) {
+        String assaultType = readRequiredString(args.get(ASSAULT_TYPE));
+        if (assaultType == null) {
+            throw new IllegalArgumentException("Missing required parameter: assaultType");
+        }
+        Object configObject = args.get(CONFIG_ARG);
+        if (!(configObject instanceof Map<?, ?> rawConfig)) {
+            throw new IllegalArgumentException("Missing or invalid parameter: config");
+        }
+        Map<String, Object> config = castMapOrEmpty(rawConfig);
+        String handlerClassName = resolveAssaultHandlerClass(assaultType);
+        try {
+            Class<?> handlerClass = resolveClass(handlerClassName);
+            String configClassName = handlerClassName.replace("Handler", "Config");
+            Class<?> configClass = resolveClass(configClassName);
+            Object convertedConfig = Config.getInstance().getMapper().convertValue(config, configClass);
+            Field configField = handlerClass.getField("config");
+            configField.set(null, convertedConfig);
+            return Map.of("assaultType", normalizeAssaultId(assaultType), CONFIG_ARG, config);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to configure chaos monkey assault " + assaultType, e);
+        }
+    }
+
+    private static Object getChaosConfig(String handlerClassName, String fieldName) {
+        try {
+            Class<?> handlerClass = resolveClass(handlerClassName);
+            Field configField = handlerClass.getField(fieldName);
+            Object currentConfig = configField.get(null);
+            if (currentConfig != null) {
+                return currentConfig;
+            }
+            String configClassName = handlerClassName.replace("Handler", "Config");
+            Class<?> configClass = resolveClass(configClassName);
+            Method loadMethod = configClass.getMethod("load");
+            return loadMethod.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to load chaos monkey config for " + handlerClassName, e);
+        }
+    }
+
+    private static String resolveAssaultHandlerClass(String assaultType) {
+        String normalized = normalizeAssaultId(assaultType);
+        return switch (normalized) {
+            case "exception" -> EXCEPTION_ASSAULT_HANDLER;
+            case "killapp" -> KILLAPP_ASSAULT_HANDLER;
+            case "latency" -> LATENCY_ASSAULT_HANDLER;
+            case "memory" -> MEMORY_ASSAULT_HANDLER;
+            default -> throw new IllegalArgumentException("Invalid assaultType: " + assaultType);
+        };
+    }
+
+    private static String normalizeAssaultId(String assaultType) {
+        String normalized = assaultType == null ? "" : assaultType.trim().toLowerCase();
+        if ("killappassaulthandler".equals(normalized) || KILLAPP_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "killapp".equals(normalized) || "kill_app".equals(normalized)) {
+            return "killapp";
+        }
+        if ("exceptionassaulthandler".equals(normalized) || EXCEPTION_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "exception".equals(normalized)) {
+            return "exception";
+        }
+        if ("latencyassaulthandler".equals(normalized) || LATENCY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "latency".equals(normalized)) {
+            return "latency";
+        }
+        if ("memoryassaulthandler".equals(normalized) || MEMORY_ASSAULT_HANDLER.toLowerCase().equals(normalized) || "memory".equals(normalized)) {
+            return "memory";
+        }
+        return normalized;
+    }
+
+    private static boolean isReloadAll(List<String> modules) {
+        return modules.size() == 1 && "all".equalsIgnoreCase(modules.getFirst());
+    }
+
+    private static List<String> readOptionalStringList(Object value, String key) {
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof List<?> values)) {
+            throw new IllegalArgumentException("'" + key + "' must be a list");
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : values) {
+            if (!(entry instanceof String string) || string.isBlank()) {
+                throw new IllegalArgumentException("Each entry in '" + key + "' must be a non-blank string");
+            }
+            result.add(string.trim());
+        }
+        return result;
+    }
+
+    private static String findConfigName(String moduleClass) {
+        for (String key : ModuleRegistry.getModuleRegistry().keySet()) {
+            if (key.endsWith(":" + moduleClass)) {
+                return key.substring(0, key.lastIndexOf(':'));
+            }
+        }
+        for (String key : ModuleRegistry.getPluginRegistry().keySet()) {
+            if (key.endsWith(":" + moduleClass)) {
+                return key.substring(0, key.lastIndexOf(':'));
+            }
+        }
+        return null;
+    }
+
+    private static Class<?> resolveClass(String className) {
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Required class is not available: " + className, e);
+        }
+    }
+
+    private static boolean isChaosMonkeyAvailable() {
+        try {
+            resolveClass(EXCEPTION_ASSAULT_HANDLER);
+            resolveClass(KILLAPP_ASSAULT_HANDLER);
+            resolveClass(LATENCY_ASSAULT_HANDLER);
+            resolveClass(MEMORY_ASSAULT_HANDLER);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     private record ValidationResult(boolean valid, String toolName, Map<String, Object> arguments, String errorMessage) {
