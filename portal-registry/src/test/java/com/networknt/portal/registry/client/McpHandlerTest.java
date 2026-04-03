@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -342,7 +343,75 @@ class McpHandlerTest {
             if (Boolean.FALSE.equals(supported)) {
                 return entriesMap.equals(Collections.emptyMap());
             }
-            return true;
+            return entriesMap.values().stream().allMatch(value ->
+                    value instanceof Map<?, ?> summary && summary.containsKey("type"));
         }));
+    }
+
+    @Test
+    void testGetModulesReturnsModulesList() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "get_modules");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 700);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(700), argThat(result ->
+                result instanceof Map<?, ?> map && map.get("modules") instanceof List<?>
+        ));
+    }
+
+    @Test
+    void testReloadModulesReturnsModulesList() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "reload_modules");
+        params.put("arguments", Map.of("modules", Collections.emptyList()));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 701);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(701), argThat(result ->
+                result instanceof Map<?, ?> map && map.get("modules") instanceof List<?>
+        ));
+    }
+
+    @Test
+    void testGetChaosMonkeyConfigReportsSupportStatus() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "get_chaos_monkey_config");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 702);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(702), argThat(result ->
+                result instanceof Map<?, ?> map && map.get("supported") instanceof Boolean
+        ));
+    }
+
+    @Test
+    void testConfigureChaosMonkeyRejectsWhenUnsupported() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "configure_chaos_monkey");
+        params.put("arguments", Map.of(
+                "assaultType", "latency",
+                "config", Map.of("enabled", true)
+        ));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 703);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendError(eq(703), eq(-32602), contains("not available"));
     }
 }

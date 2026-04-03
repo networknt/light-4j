@@ -51,8 +51,14 @@ public class McpHandler {
     private static final String STATUS = "status";
     private static final String SUCCESS = "success";
     private static final String MESSAGE = "message";
+    private static final String SUPPORTED = "supported";
+    private static final String TYPE = "type";
+    private static final String SIZE = "size";
+    private static final String KEYS = "keys";
     private static final String TOTAL = "total";
     private static final String LOGS = "logs";
+    private static final String CACHES = "caches";
+    private static final String ENTRIES = "entries";
     private static final String EXCEPTION = "exception";
     private static final String KILLAPP = "killapp";
     private static final String LATENCY = "latency";
@@ -608,9 +614,9 @@ public class McpHandler {
     private static Map<String, Object> listCaches() {
         if (!isCacheAvailable()) {
             return Map.of(
-                    "supported", false,
+                    SUPPORTED, false,
                     MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
-                    "caches", Collections.emptyList()
+                    CACHES, Collections.emptyList()
             );
         }
         try {
@@ -628,15 +634,15 @@ public class McpHandler {
                 }
             }
             return Map.of(
-                    "supported", true,
-                    "caches", cacheNames
+                    SUPPORTED, true,
+                    CACHES, cacheNames
             );
         } catch (IllegalStateException e) {
             logger.info("Cache support is not available", e);
             return Map.of(
-                    "supported", false,
+                    SUPPORTED, false,
                     MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
-                    "caches", Collections.emptyList()
+                    CACHES, Collections.emptyList()
             );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to list caches", e);
@@ -650,10 +656,10 @@ public class McpHandler {
         }
         if (!isCacheAvailable()) {
             return Map.of(
-                    "supported", false,
+                    SUPPORTED, false,
                     MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
                     NAME, cacheName,
-                    "entries", Collections.emptyMap()
+                    ENTRIES, Collections.emptyMap()
             );
         }
         try {
@@ -662,27 +668,27 @@ public class McpHandler {
             Object cacheManager = getInstanceMethod.invoke(null);
             if (cacheManager == null) {
                 return Map.of(
-                        "supported", false,
+                        SUPPORTED, false,
                         MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
                         NAME, cacheName,
-                        "entries", Collections.emptyMap()
+                        ENTRIES, Collections.emptyMap()
                 );
             }
             Method method = cacheManagerClass.getMethod("getCache", String.class);
             @SuppressWarnings("unchecked")
             Map<Object, Object> cacheMap = (Map<Object, Object>) method.invoke(cacheManager, cacheName);
             return Map.of(
-                    "supported", true,
+                    SUPPORTED, true,
                     NAME, cacheName,
-                    "entries", cacheMap == null ? Collections.emptyMap() : toJsonSafeMap(cacheMap)
+                    ENTRIES, cacheMap == null ? Collections.emptyMap() : summarizeCacheEntries(cacheMap)
             );
         } catch (IllegalStateException e) {
             logger.info("Cache support is not available", e);
             return Map.of(
-                    "supported", false,
+                    SUPPORTED, false,
                     MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
                     NAME, cacheName,
-                    "entries", Collections.emptyMap()
+                    ENTRIES, Collections.emptyMap()
             );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to retrieve cache entries", e);
@@ -692,12 +698,12 @@ public class McpHandler {
     private static Map<String, Object> getChaosMonkeyConfig() {
         if (!isChaosMonkeyAvailable()) {
             return Map.of(
-                    "supported", false,
+                    SUPPORTED, false,
                     MESSAGE, CHAOS_MONKEY_UNAVAILABLE_MESSAGE
             );
         }
         Map<String, Object> configMap = new HashMap<>();
-        configMap.put("supported", true);
+        configMap.put(SUPPORTED, true);
         configMap.put(EXCEPTION, getChaosConfig(EXCEPTION_ASSAULT_HANDLER, CONFIG_ARG));
         configMap.put(KILLAPP, getChaosConfig(KILLAPP_ASSAULT_HANDLER, CONFIG_ARG));
         configMap.put(LATENCY, getChaosConfig(LATENCY_ASSAULT_HANDLER, CONFIG_ARG));
@@ -718,12 +724,12 @@ public class McpHandler {
         String handlerClassName = resolveAssaultHandlerClass(assaultType);
         try {
             Class<?> handlerClass = resolveClass(handlerClassName);
-            String configClassName = handlerClassName.replace("Handler", "Config");
+            String configClassName = handlerClassName.replace("Handler", capitalize(CONFIG_ARG));
             Class<?> configClass = resolveClass(configClassName);
             Object convertedConfig = Config.getInstance().getMapper().convertValue(config, configClass);
             Field configField = handlerClass.getField("config");
             configField.set(null, convertedConfig);
-            return Map.of("assaultType", normalizeAssaultId(assaultType), CONFIG_ARG, config);
+            return Map.of(ASSAULT_TYPE, normalizeAssaultId(assaultType), CONFIG_ARG, config);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to configure chaos monkey assault " + assaultType, e);
         }
@@ -737,7 +743,7 @@ public class McpHandler {
             if (currentConfig != null) {
                 return currentConfig;
             }
-            String configClassName = handlerClassName.replace("Handler", "Config");
+            String configClassName = handlerClassName.replace("Handler", capitalize(fieldName));
             Class<?> configClass = resolveClass(configClassName);
             Method loadMethod = configClass.getMethod("load");
             return loadMethod.invoke(null);
@@ -774,6 +780,13 @@ public class McpHandler {
         return normalized;
     }
 
+    private static String capitalize(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
     private static boolean isReloadAll(List<String> modules) {
         return modules.size() == 1 && "all".equalsIgnoreCase(modules.getFirst());
     }
@@ -794,6 +807,52 @@ public class McpHandler {
             safeMap.put(String.valueOf(entry.getKey()), toJsonSafeValue(entry.getValue()));
         }
         return safeMap;
+    }
+
+    private static Map<String, Object> summarizeCacheEntries(Map<?, ?> rawMap) {
+        Map<String, Object> summaryMap = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            summaryMap.put(String.valueOf(entry.getKey()), summarizeCacheValue(entry.getValue()));
+        }
+        return summaryMap;
+    }
+
+    private static Map<String, Object> summarizeCacheValue(Object value) {
+        if (value == null) {
+            return Map.of(TYPE, "null");
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            return Map.of(TYPE, value.getClass().getSimpleName().toLowerCase());
+        }
+        if (value instanceof String string) {
+            return Map.of(TYPE, STRING, SIZE, string.length());
+        }
+        if (value instanceof Map<?, ?> map) {
+            List<String> keys = new ArrayList<>();
+            int count = 0;
+            for (Object key : map.keySet()) {
+                if (count++ >= 10) {
+                    break;
+                }
+                keys.add(String.valueOf(key));
+            }
+            return Map.of(
+                    TYPE, OBJECT,
+                    SIZE, map.size(),
+                    KEYS, keys
+            );
+        }
+        if (value instanceof Iterable<?> iterable) {
+            int count = 0;
+            for (Object ignored : iterable) {
+                count++;
+            }
+            return Map.of(TYPE, "array", SIZE, count);
+        }
+        if (value.getClass().isArray()) {
+            return Map.of(TYPE, "array", SIZE, Array.getLength(value));
+        }
+        return Map.of(TYPE, value.getClass().getName());
     }
 
     private static Object toJsonSafeValue(Object value) {
