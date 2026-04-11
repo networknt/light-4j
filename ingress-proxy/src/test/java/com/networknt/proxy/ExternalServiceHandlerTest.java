@@ -22,6 +22,7 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -313,5 +314,15 @@ public class ExternalServiceHandlerTest {
         Assertions.assertTrue(timeoutOccurred, "Expected timeout to occur for slow endpoint with configured pathPrefix timeout");
     }
 
+    @Test
+    public void testBuildRetryRequestFallsBackWhenRestrictedHeaderIsRejected() {
+        HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
+                .GET()
+                .build();
+
+        HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 1);
+
+        Assertions.assertSame(originalRequest, retryRequest);
+    }
 
 }

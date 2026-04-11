@@ -41,10 +41,6 @@ import java.util.regex.Matcher;
  * @author Steve Hu
  */
 public class ExternalServiceHandler implements MiddlewareHandler {
-    static {
-        System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host,connection");
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
@@ -231,13 +227,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // First attempt: Use original request (Keep-Alive enabled by default)
                         finalRequest = request;
                     } else {
-                        // Subsequent attempts: Force a fresh connection by adding the 'Connection: close' header.
-                        // This ensures the load balancer sees a new TCP handshake and can route to a new node.
-                        logger.info("Attempt {} failed. Retrying with 'Connection: close' to force fresh connection.", attempt);
-
-                        finalRequest = HttpRequest.newBuilder(request, (name, value) -> true)
-                                .header("Connection", "close")
-                                .build();
+                        finalRequest = buildRetryRequest(request, attempt);
                     }
 
                     // Always use the same shared, long-lived client
@@ -440,5 +430,17 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             case "POST" -> builder.POST(bodyPublisher).build();
             default -> builder.method(method, bodyPublisher).build();
         };
+    }
+
+    static HttpRequest buildRetryRequest(HttpRequest request, int attempt) {
+        try {
+            logger.info("Attempt {} failed. Retrying with 'Connection: close' to force fresh connection.", attempt);
+            return HttpRequest.newBuilder(request, (name, value) -> true)
+                    .header("Connection", "close")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            logger.warn("Attempt {} retry could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt, e);
+            return request;
+        }
     }
 }
