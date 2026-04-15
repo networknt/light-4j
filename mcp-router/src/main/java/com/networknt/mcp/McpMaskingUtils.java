@@ -49,7 +49,7 @@ public class McpMaskingUtils {
         if (inputSchema == null || inputSchema.trim().isEmpty()) {
             return new HashMap<>();
         }
-        
+
         // Ensure it's populated
         getMaskingRulesFromSchema(toolName, inputSchema);
         return schemaTokenizationRulesCache.getOrDefault(toolName, new HashMap<>());

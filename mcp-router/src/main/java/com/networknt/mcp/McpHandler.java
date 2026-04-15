@@ -203,20 +203,20 @@ public class McpHandler implements MiddlewareHandler {
 
                     List<Map<String, Object>> toolList = new ArrayList<>();
                     for (McpTool tool : McpToolRegistry.getTools().values()) {
-                        
+
                         // Execute advanced filtering logic if query or intent values exist
                         boolean match = true;
-                        
+
                         if (query != null) {
                             match = (tool.getName() != null && tool.getName().toLowerCase().contains(query)) ||
                                     (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(query));
                         }
-                        
+
                         if (match && intent != null) {
                             match = (tool.getName() != null && tool.getName().toLowerCase().contains(intent)) ||
                                     (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(intent));
                         }
-                        
+
                         if (!match) continue;
 
                         Map<String, Object> t = new HashMap<>();
@@ -282,7 +282,7 @@ public class McpHandler implements MiddlewareHandler {
                                 com.jayway.jsonpath.DocumentContext ctx = com.jayway.jsonpath.JsonPath.parse(mapper.writeValueAsString(args));
                                 com.jayway.jsonpath.Configuration conf = com.jayway.jsonpath.Configuration.builder().options(com.jayway.jsonpath.Option.AS_PATH_LIST).build();
                                 com.jayway.jsonpath.DocumentContext pathCtx = com.jayway.jsonpath.JsonPath.using(conf).parse(ctx.jsonString());
-                                
+
                                 for (Map.Entry<String, Integer> entry : tokenizeRules.entrySet()) {
                                     String abstractPath = entry.getKey();
                                     Integer schemeId = entry.getValue();
@@ -303,7 +303,7 @@ public class McpHandler implements MiddlewareHandler {
                                 args = mapper.readValue(ctx.jsonString(), Map.class);
                             }
 
-                            // Optional: Unstructured Regex Masking 
+                            // Optional: Unstructured Regex Masking
                             // If a regex rule named "mcp_global" exists in mask.yml "string" section
                             String globalArgsStr = mapper.writeValueAsString(args);
                             String finalArgsStr = Mask.maskString(globalArgsStr, "mcp_global");

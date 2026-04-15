@@ -28,7 +28,7 @@ public class HttpTokenClient implements TokenClient {
     private static final Logger logger = LoggerFactory.getLogger(HttpTokenClient.class);
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
     private static final Http2Client client = Http2Client.getInstance();
-    
+
     private final String serviceUrl;
 
     public HttpTokenClient(String serviceUrl) {

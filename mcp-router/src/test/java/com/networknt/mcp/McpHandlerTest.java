@@ -490,28 +490,28 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            
+
             connection.sendRequest(request, client.createClientCallback(reference, latch, json));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
             Assertions.assertEquals(200, response.getResponseCode());
-            
+
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
             Map<String, Object> map = Config.getInstance().getMapper().readValue(body, Map.class);
             Map<String, Object> result = (Map<String, Object>) map.get("result");
             java.util.List<Map<String, Object>> tools = (java.util.List<Map<String, Object>>) result.get("tools");
-            
+
             Assertions.assertFalse(tools.isEmpty());
-            
+
             boolean dbToolFound = false;
             boolean weatherToolFound = false; // weather is registered in setUp()
-            
+
             for(Map<String, Object> toolMap: tools) {
                 if("databaseQuery".equals(toolMap.get("name"))) dbToolFound = true;
                 if("weather".equals(toolMap.get("name"))) weatherToolFound = true;
             }
-            
+
             Assertions.assertTrue(dbToolFound, "The database tool should be found based on the query.");
             Assertions.assertFalse(weatherToolFound, "The weather tool should be filtered out because it does not match 'database'.");
 
