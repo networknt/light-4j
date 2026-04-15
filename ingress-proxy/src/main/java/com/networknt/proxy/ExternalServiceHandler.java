@@ -213,11 +213,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
             /*
              * 1st Attempt (Normal): Use the default persistent connection. This is fast and efficient.
-
-             * 2nd Attempt (The "Fresh Connection" Retry): Use the Connection: close header. This forces
-             *  the load balancer to re-evaluate the target node if the first one was dead or hanging.
-
-             * 3rd Attempt (Final Safeguard): It will use a new connection to send the request.
+             *
+             * 2nd/3rd Attempts (Best-Effort Fresh Connection Retry): Try to use the
+             * Connection: close header to force a fresh connection so the load balancer
+             * can re-evaluate the target node if the first one was dead or hanging.
+             * If the JVM rejects restricted headers, retries gracefully fall back to
+             * normal requests without Connection: close.
              */
             int maxRetries = config.getMaxConnectionRetries();
             HttpResponse<byte[]> response = null;
