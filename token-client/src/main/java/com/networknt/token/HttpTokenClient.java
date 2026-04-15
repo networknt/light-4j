@@ -66,17 +66,21 @@ public class HttpTokenClient implements TokenClient {
                 if (response != null && response.getResponseCode() == 200) {
                     return response.getAttachment(Http2Client.RESPONSE_BODY);
                 } else {
-                    logger.error("Tokenization failed with status: " + (response != null ? response.getResponseCode() : "timeout"));
+                    String status = response != null ? String.valueOf(response.getResponseCode()) : "timeout";
+                    logger.error("Tokenization failed with status: {}", status);
+                    throw new IllegalStateException("Tokenization failed with status: " + status);
                 }
             } finally {
                 if (token != null) {
                     client.restore(token);
                 }
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Exception during tokenization", e);
+            throw new IllegalStateException("Exception during tokenization", e);
         }
-        return value;
     }
 
     @Override
@@ -105,16 +109,20 @@ public class HttpTokenClient implements TokenClient {
                 if (response != null && response.getResponseCode() == 200) {
                     return response.getAttachment(Http2Client.RESPONSE_BODY);
                 } else {
-                    logger.error("Detokenization failed with status: " + (response != null ? response.getResponseCode() : "timeout"));
+                    String status = response != null ? String.valueOf(response.getResponseCode()) : "timeout";
+                    logger.error("Detokenization failed with status: {}", status);
+                    throw new IllegalStateException("Detokenization failed with status: " + status);
                 }
             } finally {
                 if (token != null) {
                     client.restore(token);
                 }
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Exception during detokenization", e);
+            throw new IllegalStateException("Exception during detokenization", e);
         }
-        return tokenPrefix;
     }
 }
