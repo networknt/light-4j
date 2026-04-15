@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 
 /**
@@ -44,6 +45,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
+    private static volatile Boolean connectionCloseHeaderSupported;
+    private static final AtomicBoolean connectionCloseHeaderFallbackLogged = new AtomicBoolean(false);
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
     private String configName = ExternalServiceConfig.CONFIG_NAME;
@@ -433,13 +436,22 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     }
 
     static HttpRequest buildRetryRequest(HttpRequest request, int attempt) {
+        if (Boolean.FALSE.equals(connectionCloseHeaderSupported)) {
+            return request;
+        }
         try {
             logger.info("Retrying attempt {} with 'Connection: close' to force fresh connection.", attempt + 1);
-            return HttpRequest.newBuilder(request, (name, value) -> true)
+            HttpRequest retryRequest = HttpRequest.newBuilder(request, (name, value) -> true)
                     .header("Connection", "close")
                     .build();
+            connectionCloseHeaderSupported = Boolean.TRUE;
+            return retryRequest;
         } catch (IllegalArgumentException e) {
-            logger.info("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt + 1, e);
+            connectionCloseHeaderSupported = Boolean.FALSE;
+            if (connectionCloseHeaderFallbackLogged.compareAndSet(false, true)) {
+                logger.info("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt + 1);
+                logger.debug("Unable to set restricted header 'Connection: close'.", e);
+            }
             return request;
         }
     }

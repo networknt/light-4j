@@ -21,11 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ExternalServiceHandlerTest {
@@ -61,6 +63,11 @@ public class ExternalServiceHandlerTest {
             server.stop();
             logger.info("The server is stopped.");
         }
+    }
+
+    @AfterEach
+    void resetRetryRequestCache() throws Exception {
+        setRetryRequestCache(null, false);
     }
 
     static RoutingHandler getTestHandler() {
@@ -328,6 +335,28 @@ public class ExternalServiceHandlerTest {
             Assertions.assertEquals("close",
                     retryRequest.headers().firstValue("Connection").orElse(null));
         }
+    }
+
+    @Test
+    void testBuildRetryRequestSkipsRestrictedHeaderWhenUnsupportedCached() throws Exception {
+        HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
+                .GET()
+                .build();
+        setRetryRequestCache(Boolean.FALSE, true);
+
+        HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 2);
+
+        Assertions.assertSame(originalRequest, retryRequest);
+    }
+
+    private static void setRetryRequestCache(Boolean supported, boolean fallbackLogged) throws Exception {
+        Field supportedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderSupported");
+        supportedField.setAccessible(true);
+        supportedField.set(null, supported);
+
+        Field loggedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderFallbackLogged");
+        loggedField.setAccessible(true);
+        ((AtomicBoolean) loggedField.get(null)).set(fallbackLogged);
     }
 
 }
