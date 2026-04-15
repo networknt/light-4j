@@ -440,10 +440,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             return request;
         }
         try {
-            logger.info("Retrying attempt {} with 'Connection: close' to force fresh connection.", attempt + 1);
             HttpRequest retryRequest = HttpRequest.newBuilder(request, (name, value) -> true)
                     .header("Connection", "close")
                     .build();
+            logger.info("Retrying attempt {} with 'Connection: close' to force fresh connection.", attempt + 1);
             connectionCloseHeaderSupported = Boolean.TRUE;
             return retryRequest;
         } catch (IllegalArgumentException e) {
