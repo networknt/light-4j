@@ -450,7 +450,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         } catch (IllegalArgumentException e) {
             connectionCloseHeaderSupported = Boolean.FALSE;
             if (connectionCloseHeaderFallbackLogged.compareAndSet(false, true)) {
-                logger.info("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt + 1);
+                logger.info("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection at JVM startup to enable fresh-connection retries.", attempt + 1);
                 logger.debug("Unable to set restricted header 'Connection: close'.", e);
             }
             return request;
