@@ -328,7 +328,7 @@ public class ExternalServiceHandlerTest {
                 .build();
 
         HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 1);
-        Boolean cachedSupport = getRetryRequestCacheSupport();
+        Boolean cachedSupport = getConnectionCloseHeaderSupported();
 
         if (retryRequest == originalRequest) {
             Assertions.assertSame(originalRequest, retryRequest);
@@ -336,7 +336,7 @@ public class ExternalServiceHandlerTest {
 
             HttpRequest secondRetryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 2);
             Assertions.assertSame(originalRequest, secondRetryRequest);
-            Assertions.assertEquals(Boolean.FALSE, getRetryRequestCacheSupport());
+            Assertions.assertEquals(Boolean.FALSE, getConnectionCloseHeaderSupported());
         } else {
             Assertions.assertEquals("close",
                     retryRequest.headers().firstValue("Connection").orElse(null));
@@ -368,7 +368,7 @@ public class ExternalServiceHandlerTest {
         ((AtomicBoolean) loggedFieldValue).set(fallbackLogged);
     }
 
-    private static Boolean getRetryRequestCacheSupport() {
+    private static Boolean getConnectionCloseHeaderSupported() {
         try {
             Field supportedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderSupported");
             supportedField.setAccessible(true);
