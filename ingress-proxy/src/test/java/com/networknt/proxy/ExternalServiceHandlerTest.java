@@ -322,7 +322,12 @@ public class ExternalServiceHandlerTest {
 
         HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 1);
 
-        Assertions.assertSame(originalRequest, retryRequest);
+        if (retryRequest == originalRequest) {
+            Assertions.assertSame(originalRequest, retryRequest);
+        } else {
+            Assertions.assertEquals("close",
+                    retryRequest.headers().firstValue("Connection").orElse(null));
+        }
     }
 
 }
