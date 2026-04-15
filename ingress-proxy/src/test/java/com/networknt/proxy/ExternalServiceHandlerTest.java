@@ -315,7 +315,7 @@ public class ExternalServiceHandlerTest {
     }
 
     @Test
-    public void testBuildRetryRequestFallsBackWhenRestrictedHeaderIsRejected() {
+    void testBuildRetryRequestFallsBackWhenRestrictedHeaderIsRejected() {
         HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
                 .GET()
                 .build();
