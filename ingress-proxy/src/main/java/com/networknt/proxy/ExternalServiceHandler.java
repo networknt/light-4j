@@ -45,7 +45,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
-    private static volatile Boolean connectionCloseHeaderSupported;
+    private static volatile Boolean connectionCloseHeaderSupported = null;
     private static final AtomicBoolean connectionCloseHeaderFallbackLogged = new AtomicBoolean(false);
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
@@ -436,7 +436,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     }
 
     static HttpRequest buildRetryRequest(HttpRequest request, int attempt) {
-        if (Boolean.FALSE.equals(connectionCloseHeaderSupported)) {
+        if (shouldSkipConnectionCloseRetryHeader()) {
             return request;
         }
         try {
@@ -454,5 +454,9 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             }
             return request;
         }
+    }
+
+    private static boolean shouldSkipConnectionCloseRetryHeader() {
+        return Boolean.FALSE.equals(connectionCloseHeaderSupported);
     }
 }

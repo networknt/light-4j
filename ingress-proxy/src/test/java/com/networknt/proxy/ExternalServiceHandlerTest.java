@@ -65,7 +65,7 @@ public class ExternalServiceHandlerTest {
         }
     }
 
-    @AfterEach
+    @BeforeEach
     void resetRetryRequestCache() throws Exception {
         setRetryRequestCache(null, false);
     }
@@ -338,7 +338,7 @@ public class ExternalServiceHandlerTest {
     }
 
     @Test
-    void testBuildRetryRequestSkipsRestrictedHeaderWhenUnsupportedCached() throws Exception {
+    void testBuildRetryRequestWithCachedUnsupportedHeader() throws Exception {
         HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
                 .GET()
                 .build();
@@ -356,7 +356,9 @@ public class ExternalServiceHandlerTest {
 
         Field loggedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderFallbackLogged");
         loggedField.setAccessible(true);
-        ((AtomicBoolean) loggedField.get(null)).set(fallbackLogged);
+        Object loggedFieldValue = loggedField.get(null);
+        Assertions.assertInstanceOf(AtomicBoolean.class, loggedFieldValue);
+        ((AtomicBoolean) loggedFieldValue).set(fallbackLogged);
     }
 
 }
