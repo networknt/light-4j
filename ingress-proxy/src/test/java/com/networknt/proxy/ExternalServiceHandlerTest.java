@@ -21,10 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ExternalServiceHandlerTest {
@@ -60,6 +63,11 @@ public class ExternalServiceHandlerTest {
             server.stop();
             logger.info("The server is stopped.");
         }
+    }
+
+    @BeforeEach
+    void resetRetryRequestCache() throws Exception {
+        setRetryRequestCache(null, false);
     }
 
     static RoutingHandler getTestHandler() {
@@ -313,5 +321,61 @@ public class ExternalServiceHandlerTest {
         Assertions.assertTrue(timeoutOccurred, "Expected timeout to occur for slow endpoint with configured pathPrefix timeout");
     }
 
+    @Test
+    void testBuildRetryRequestFallsBackWhenRestrictedHeaderIsRejected() {
+        HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
+                .GET()
+                .build();
+
+        HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 1);
+        Boolean cachedSupport = getConnectionCloseHeaderSupported();
+
+        if (retryRequest == originalRequest) {
+            Assertions.assertSame(originalRequest, retryRequest);
+            Assertions.assertEquals(Boolean.FALSE, cachedSupport);
+
+            HttpRequest secondRetryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 2);
+            Assertions.assertSame(originalRequest, secondRetryRequest);
+            Assertions.assertEquals(Boolean.FALSE, getConnectionCloseHeaderSupported());
+        } else {
+            Assertions.assertEquals("close",
+                    retryRequest.headers().firstValue("Connection").orElse(null));
+            Assertions.assertEquals(Boolean.TRUE, cachedSupport);
+        }
+    }
+
+    @Test
+    void testBuildRetryRequestWithCachedUnsupportedHeader() throws Exception {
+        HttpRequest originalRequest = HttpRequest.newBuilder(URI.create("https://example.com/test"))
+                .GET()
+                .build();
+        setRetryRequestCache(Boolean.FALSE, true);
+
+        HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 2);
+
+        Assertions.assertSame(originalRequest, retryRequest);
+    }
+
+    private static void setRetryRequestCache(Boolean supported, boolean fallbackLogged) throws Exception {
+        Field supportedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderSupported");
+        supportedField.setAccessible(true);
+        supportedField.set(null, supported);
+
+        Field loggedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderFallbackLogged");
+        loggedField.setAccessible(true);
+        Object loggedFieldValue = loggedField.get(null);
+        Assertions.assertInstanceOf(AtomicBoolean.class, loggedFieldValue);
+        ((AtomicBoolean) loggedFieldValue).set(fallbackLogged);
+    }
+
+    private static Boolean getConnectionCloseHeaderSupported() {
+        try {
+            Field supportedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderSupported");
+            supportedField.setAccessible(true);
+            return (Boolean) supportedField.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

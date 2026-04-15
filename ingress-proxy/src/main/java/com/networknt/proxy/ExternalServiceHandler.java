@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 
 /**
@@ -41,13 +42,11 @@ import java.util.regex.Matcher;
  * @author Steve Hu
  */
 public class ExternalServiceHandler implements MiddlewareHandler {
-    static {
-        System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host,connection");
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
+    private static volatile Boolean connectionCloseHeaderSupported = null;
+    private static final AtomicBoolean connectionCloseHeaderFallbackLogged = new AtomicBoolean(false);
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
     private String configName = ExternalServiceConfig.CONFIG_NAME;
@@ -214,11 +213,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
             /*
              * 1st Attempt (Normal): Use the default persistent connection. This is fast and efficient.
-
-             * 2nd Attempt (The "Fresh Connection" Retry): Use the Connection: close header. This forces
-             *  the load balancer to re-evaluate the target node if the first one was dead or hanging.
-
-             * 3rd Attempt (Final Safeguard): It will use a new connection to send the request.
+             *
+             * 2nd/3rd Attempts (Best-Effort Fresh Connection Retry): Try to use the
+             * Connection: close header to force a fresh connection so the load balancer
+             * can re-evaluate the target node if the first one was dead or hanging.
+             * If the JVM rejects restricted headers, retries gracefully fall back to
+             * normal requests without Connection: close.
              */
             int maxRetries = config.getMaxConnectionRetries();
             HttpResponse<byte[]> response = null;
@@ -231,13 +231,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // First attempt: Use original request (Keep-Alive enabled by default)
                         finalRequest = request;
                     } else {
-                        // Subsequent attempts: Force a fresh connection by adding the 'Connection: close' header.
-                        // This ensures the load balancer sees a new TCP handshake and can route to a new node.
-                        logger.info("Attempt {} failed. Retrying with 'Connection: close' to force fresh connection.", attempt);
-
-                        finalRequest = HttpRequest.newBuilder(request, (name, value) -> true)
-                                .header("Connection", "close")
-                                .build();
+                        finalRequest = buildRetryRequest(request, attempt);
                     }
 
                     // Always use the same shared, long-lived client
@@ -440,5 +434,30 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             case "POST" -> builder.POST(bodyPublisher).build();
             default -> builder.method(method, bodyPublisher).build();
         };
+    }
+
+    static HttpRequest buildRetryRequest(HttpRequest request, int attempt) {
+        if (shouldSkipConnectionCloseRetryHeader()) {
+            return request;
+        }
+        try {
+            HttpRequest retryRequest = HttpRequest.newBuilder(request, (name, value) -> true)
+                    .header("Connection", "close")
+                    .build();
+            logger.info("Retrying attempt {} with 'Connection: close' to force fresh connection.", attempt + 1);
+            connectionCloseHeaderSupported = Boolean.TRUE;
+            return retryRequest;
+        } catch (IllegalArgumentException e) {
+            connectionCloseHeaderSupported = Boolean.FALSE;
+            if (connectionCloseHeaderFallbackLogged.compareAndSet(false, true)) {
+                logger.info("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection at JVM startup to enable fresh-connection retries.", attempt + 1);
+                logger.debug("Unable to set restricted header 'Connection: close'.", e);
+            }
+            return request;
+        }
+    }
+
+    private static boolean shouldSkipConnectionCloseRetryHeader() {
+        return Boolean.FALSE.equals(connectionCloseHeaderSupported);
     }
 }
