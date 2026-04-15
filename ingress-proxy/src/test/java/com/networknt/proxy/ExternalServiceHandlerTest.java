@@ -328,12 +328,19 @@ public class ExternalServiceHandlerTest {
                 .build();
 
         HttpRequest retryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 1);
+        Boolean cachedSupport = getRetryRequestCacheSupport();
 
         if (retryRequest == originalRequest) {
             Assertions.assertSame(originalRequest, retryRequest);
+            Assertions.assertEquals(Boolean.FALSE, cachedSupport);
+
+            HttpRequest secondRetryRequest = ExternalServiceHandler.buildRetryRequest(originalRequest, 2);
+            Assertions.assertSame(originalRequest, secondRetryRequest);
+            Assertions.assertEquals(Boolean.FALSE, getRetryRequestCacheSupport());
         } else {
             Assertions.assertEquals("close",
                     retryRequest.headers().firstValue("Connection").orElse(null));
+            Assertions.assertEquals(Boolean.TRUE, cachedSupport);
         }
     }
 
@@ -359,6 +366,16 @@ public class ExternalServiceHandlerTest {
         Object loggedFieldValue = loggedField.get(null);
         Assertions.assertInstanceOf(AtomicBoolean.class, loggedFieldValue);
         ((AtomicBoolean) loggedFieldValue).set(fallbackLogged);
+    }
+
+    private static Boolean getRetryRequestCacheSupport() {
+        try {
+            Field supportedField = ExternalServiceHandler.class.getDeclaredField("connectionCloseHeaderSupported");
+            supportedField.setAccessible(true);
+            return (Boolean) supportedField.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
