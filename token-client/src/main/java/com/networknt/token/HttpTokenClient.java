@@ -97,7 +97,7 @@ public class HttpTokenClient implements TokenClient {
                 ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/token/" + tokenPrefix);
                 request.getRequestHeaders().put(Headers.HOST, "localhost");
 
-                connection.sendRequest(request, client.createClientCallback(reference, latch, ""));
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
 
                 latch.await(3, TimeUnit.SECONDS);
 
