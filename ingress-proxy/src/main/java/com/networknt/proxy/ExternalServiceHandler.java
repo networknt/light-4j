@@ -434,12 +434,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     static HttpRequest buildRetryRequest(HttpRequest request, int attempt) {
         try {
-            logger.info("Attempt {} failed. Retrying with 'Connection: close' to force fresh connection.", attempt);
+            logger.info("Retrying attempt {} with 'Connection: close' to force fresh connection.", attempt + 1);
             return HttpRequest.newBuilder(request, (name, value) -> true)
                     .header("Connection", "close")
                     .build();
         } catch (IllegalArgumentException e) {
-            logger.warn("Attempt {} retry could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt, e);
+            logger.warn("Retry attempt {} could not set restricted header 'Connection: close'. Falling back to a normal retry. Configure -Djdk.httpclient.allowRestrictedHeaders=connection,host at JVM startup to enable fresh-connection retries.", attempt + 1, e);
             return request;
         }
     }
