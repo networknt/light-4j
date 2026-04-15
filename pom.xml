@@ -230,6 +230,7 @@
         <module>access-config</module>
         <module>sse-handler</module>
         <module>mcp-router</module>
+        <module>token-client</module>
         <module>token-exchange</module>
         <module>rule-config</module>
     </modules>
@@ -660,6 +661,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>mcp-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>token-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

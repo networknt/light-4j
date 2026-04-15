@@ -458,6 +458,68 @@ public class McpHandlerTest {
         }
     }
 
+    @Test
+    public void testListToolsWithSearchQuery() throws Exception {
+        // Register a dummy tool first
+        McpTool tool1 = new McpTool() {
+            @Override
+            public String getName() { return "databaseQuery"; }
+            @Override
+            public String getDescription() { return "A database tool"; }
+            @Override
+            public String getEndpoint() { return "dbTool@call"; }
+            @Override
+            public String getInputSchema() { return "{\"type\": \"object\"}"; }
+            @Override
+            public Map<String, Object> execute(Map<String, Object> arguments) { return null; }
+        };
+        McpToolRegistry.registerTool(tool1);
+
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final SimpleConnectionState.ConnectionToken token = client.borrow(
+                new URI("http://localhost:" + PORT),
+                Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            // We search explicitly for 'database'
+            String json = "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"params\": {\"query\": \"database\"}, \"id\": 7}";
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            latch.await(1000, TimeUnit.MILLISECONDS);
+
+            ClientResponse response = reference.get();
+            Assertions.assertEquals(200, response.getResponseCode());
+            
+            String body = response.getAttachment(Http2Client.RESPONSE_BODY);
+            Map<String, Object> map = Config.getInstance().getMapper().readValue(body, Map.class);
+            Map<String, Object> result = (Map<String, Object>) map.get("result");
+            java.util.List<Map<String, Object>> tools = (java.util.List<Map<String, Object>>) result.get("tools");
+            
+            Assertions.assertFalse(tools.isEmpty());
+            
+            boolean dbToolFound = false;
+            boolean weatherToolFound = false; // weather is registered in setUp()
+            
+            for(Map<String, Object> toolMap: tools) {
+                if("databaseQuery".equals(toolMap.get("name"))) dbToolFound = true;
+                if("weather".equals(toolMap.get("name"))) weatherToolFound = true;
+            }
+            
+            Assertions.assertTrue(dbToolFound, "The database tool should be found based on the query.");
+            Assertions.assertFalse(weatherToolFound, "The weather tool should be filtered out because it does not match 'database'.");
+
+        } finally {
+            client.restore(token);
+        }
+    }
+
     static class TestRuleExecutor implements RuleExecutor {
         private Map<String, Object> endpointRules = new HashMap<>();
 
