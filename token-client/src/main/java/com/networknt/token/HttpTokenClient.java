@@ -75,8 +75,6 @@ public class HttpTokenClient implements TokenClient {
                     client.restore(token);
                 }
             }
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             logger.error("Exception during tokenization", e);
             throw new IllegalStateException("Exception during tokenization", e);
@@ -118,8 +116,6 @@ public class HttpTokenClient implements TokenClient {
                     client.restore(token);
                 }
             }
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             logger.error("Exception during detokenization", e);
             throw new IllegalStateException("Exception during detokenization", e);
