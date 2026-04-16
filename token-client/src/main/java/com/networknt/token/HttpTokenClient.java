@@ -36,51 +36,59 @@ public class HttpTokenClient implements TokenClient {
         this.serviceUrl = serviceUrl;
     }
 
+    private String executeRequest(URI uri, ClientRequest request, String requestBody, String operation) throws Exception {
+        SimpleConnectionState.ConnectionToken token = null;
+        try {
+            token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+            ClientConnection connection = (ClientConnection) token.connection().getRawConnection();
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+
+            if (requestBody != null) {
+                connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
+            } else {
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
+            }
+
+            if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                logger.error("{} request timed out after {} seconds", operation, REQUEST_TIMEOUT_SECONDS);
+                throw new IllegalStateException(operation + " failed with status: timeout");
+            }
+
+            ClientResponse response = reference.get();
+            if (response != null && response.getResponseCode() == 200) {
+                return response.getAttachment(Http2Client.RESPONSE_BODY);
+            }
+
+            String status = response != null ? String.valueOf(response.getResponseCode()) : "timeout";
+            logger.error("{} failed with status: {}", operation, status);
+            throw new IllegalStateException(operation + " failed with status: " + status);
+        } finally {
+            if (token != null) {
+                client.restore(token);
+            }
+        }
+    }
+
     @Override
     public String tokenize(String value, int schemeId) {
         if (value == null || value.isEmpty()) return value;
 
         try {
             URI uri = new URI(serviceUrl);
-            SimpleConnectionState.ConnectionToken token = null;
-            try {
-                token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
-                ClientConnection connection = (ClientConnection) token.connection().getRawConnection();
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/v1/token");
+            String hostHeader = uri.getPort() == -1 ? uri.getHost() : uri.getHost() + ":" + uri.getPort();
+            request.getRequestHeaders().put(Headers.HOST, hostHeader);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 
-                final CountDownLatch latch = new CountDownLatch(1);
-                final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            Map<String, Object> reqBody = new HashMap<>();
+            reqBody.put("value", value);
+            reqBody.put("schemeId", schemeId);
+            String body = mapper.writeValueAsString(reqBody);
 
-                ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/v1/token");
-                String hostHeader = uri.getPort() == -1 ? uri.getHost() : uri.getHost() + ":" + uri.getPort();
-                request.getRequestHeaders().put(Headers.HOST, hostHeader);
-                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-
-                Map<String, Object> reqBody = new HashMap<>();
-                reqBody.put("value", value);
-                reqBody.put("schemeId", schemeId);
-                String body = mapper.writeValueAsString(reqBody);
-
-                connection.sendRequest(request, client.createClientCallback(reference, latch, body));
-
-                if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    logger.error("Tokenization request timed out after {} seconds", REQUEST_TIMEOUT_SECONDS);
-                    throw new IllegalStateException("Tokenization failed with status: timeout");
-                }
-
-                ClientResponse response = reference.get();
-                if (response != null && response.getResponseCode() == 200) {
-                    return response.getAttachment(Http2Client.RESPONSE_BODY);
-                } else {
-                    String status = response != null ? String.valueOf(response.getResponseCode()) : "timeout";
-                    logger.error("Tokenization failed with status: {}", status);
-                    throw new IllegalStateException("Tokenization failed with status: " + status);
-                }
-            } finally {
-                if (token != null) {
-                    client.restore(token);
-                }
-            }
+            return executeRequest(uri, request, body, "Tokenization");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Tokenization interrupted", e);
@@ -97,37 +105,9 @@ public class HttpTokenClient implements TokenClient {
 
         try {
             URI uri = new URI(serviceUrl);
-            SimpleConnectionState.ConnectionToken token = null;
-            try {
-                token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
-                ClientConnection connection = (ClientConnection) token.connection().getRawConnection();
-
-                final CountDownLatch latch = new CountDownLatch(1);
-                final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
-                ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/token/" + tokenPrefix);
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
-
-                connection.sendRequest(request, client.createClientCallback(reference, latch));
-
-                if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    logger.error("Detokenization request timed out after {} seconds", REQUEST_TIMEOUT_SECONDS);
-                    throw new IllegalStateException("Detokenization failed with status: timeout");
-                }
-
-                ClientResponse response = reference.get();
-                if (response != null && response.getResponseCode() == 200) {
-                    return response.getAttachment(Http2Client.RESPONSE_BODY);
-                } else {
-                    String status = response != null ? String.valueOf(response.getResponseCode()) : "timeout";
-                    logger.error("Detokenization failed with status: {}", status);
-                    throw new IllegalStateException("Detokenization failed with status: " + status);
-                }
-            } finally {
-                if (token != null) {
-                    client.restore(token);
-                }
-            }
+            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/token/" + tokenPrefix);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            return executeRequest(uri, request, null, "Detokenization");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Detokenization interrupted", e);
