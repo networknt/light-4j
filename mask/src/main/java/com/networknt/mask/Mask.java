@@ -277,19 +277,18 @@ public class Mask {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> getConfigMap(String configType) {
-        if (config == null) return null;
+        if (config == null) return Collections.emptyMap();
         Object val = config.get(configType);
-        if (val == null) return null;
+        if (val == null) return Collections.emptyMap();
         if (val instanceof Map) return (Map<String, Object>) val;
-        if (val instanceof String) {
-            String strVal = (String) val;
-            if (strVal.trim().isEmpty()) return null;
+        if (val instanceof String strVal) {
+            if (strVal.trim().isEmpty()) return Collections.emptyMap();
             try {
                 return Config.getInstance().getMapper().readValue(strVal, Map.class);
             } catch (Exception e) {
                 logger.error("Failed to parse " + configType + " from config string: " + strVal, e);
             }
         }
-        return null;
+        return Collections.emptyMap();
     }
 }

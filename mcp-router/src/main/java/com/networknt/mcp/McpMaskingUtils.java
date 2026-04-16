@@ -15,10 +15,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class McpMaskingUtils {
     private static final Logger logger = LoggerFactory.getLogger(McpMaskingUtils.class);
+    private static final String X_TOKENIZE = "x-tokenize";
+    private static final String PROPERTIES = "properties";
+    private static final String ITEMS = "items";
 
     // Cache holding parsed schemas per tool name
     private static final Map<String, Map<String, String>> schemaMaskingRulesCache = new ConcurrentHashMap<>();
     private static final Map<String, Map<String, Integer>> schemaTokenizationRulesCache = new ConcurrentHashMap<>();
+
+    private McpMaskingUtils() {
+    }
 
     /**
      * Parses an MCP Tool input schema to build dynamic JsonPath rules based on the 'x-mask' extension.
@@ -67,13 +73,13 @@ public class McpMaskingUtils {
         }
 
         // Check if this node is marked for tokenization
-        if (node.has("x-tokenize") && node.get("x-tokenize").isInt()) {
-            tokenizeRules.put(currentPath, node.get("x-tokenize").asInt());
+        if (node.has(X_TOKENIZE) && node.get(X_TOKENIZE).isInt()) {
+            tokenizeRules.put(currentPath, node.get(X_TOKENIZE).asInt());
         }
 
         // If this is an object schema, its properties are in the "properties" field
-        if (node.has("properties") && node.get("properties").isObject()) {
-            JsonNode properties = node.get("properties");
+        if (node.has(PROPERTIES) && node.get(PROPERTIES).isObject()) {
+            JsonNode properties = node.get(PROPERTIES);
             Iterator<Map.Entry<String, JsonNode>> fields = properties.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
@@ -82,8 +88,8 @@ public class McpMaskingUtils {
         }
 
         // If this is an array schema, its items are in the "items" field
-        if (node.has("items") && node.get("items").isObject()) {
-            traverseSchema(node.get("items"), currentPath + "[*]", maskRules, tokenizeRules);
+        if (node.has(ITEMS) && node.get(ITEMS).isObject()) {
+            traverseSchema(node.get(ITEMS), currentPath + "[*]", maskRules, tokenizeRules);
         }
     }
 }

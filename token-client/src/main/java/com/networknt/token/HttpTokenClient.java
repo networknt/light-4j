@@ -28,6 +28,7 @@ public class HttpTokenClient implements TokenClient {
     private static final Logger logger = LoggerFactory.getLogger(HttpTokenClient.class);
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
     private static final Http2Client client = Http2Client.getInstance();
+    private static final int REQUEST_TIMEOUT_SECONDS = 3;
 
     private final String serviceUrl;
 
@@ -60,7 +61,10 @@ public class HttpTokenClient implements TokenClient {
 
                 connection.sendRequest(request, client.createClientCallback(reference, latch, body));
 
-                latch.await(3, TimeUnit.SECONDS);
+                if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    logger.error("Tokenization request timed out after {} seconds", REQUEST_TIMEOUT_SECONDS);
+                    throw new IllegalStateException("Tokenization failed with status: timeout");
+                }
 
                 ClientResponse response = reference.get();
                 if (response != null && response.getResponseCode() == 200) {
@@ -75,6 +79,10 @@ public class HttpTokenClient implements TokenClient {
                     client.restore(token);
                 }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Tokenization interrupted", e);
+            throw new IllegalStateException("Tokenization interrupted", e);
         } catch (Exception e) {
             logger.error("Exception during tokenization", e);
             throw new IllegalStateException("Exception during tokenization", e);
@@ -83,7 +91,6 @@ public class HttpTokenClient implements TokenClient {
 
     @Override
     public String detokenize(String tokenPrefix) {
-        // Implementation for detokenization HTTP GET -> /v1/token/{token}
         if (tokenPrefix == null || tokenPrefix.isEmpty()) return tokenPrefix;
 
         try {
@@ -101,7 +108,10 @@ public class HttpTokenClient implements TokenClient {
 
                 connection.sendRequest(request, client.createClientCallback(reference, latch));
 
-                latch.await(3, TimeUnit.SECONDS);
+                if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    logger.error("Detokenization request timed out after {} seconds", REQUEST_TIMEOUT_SECONDS);
+                    throw new IllegalStateException("Detokenization failed with status: timeout");
+                }
 
                 ClientResponse response = reference.get();
                 if (response != null && response.getResponseCode() == 200) {
@@ -116,6 +126,10 @@ public class HttpTokenClient implements TokenClient {
                     client.restore(token);
                 }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Detokenization interrupted", e);
+            throw new IllegalStateException("Detokenization interrupted", e);
         } catch (Exception e) {
             logger.error("Exception during detokenization", e);
             throw new IllegalStateException("Exception during detokenization", e);

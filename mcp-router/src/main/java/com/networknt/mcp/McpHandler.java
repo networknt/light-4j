@@ -46,6 +46,10 @@ public class McpHandler implements MiddlewareHandler {
     private static final String AUDIT_INFO = "auditInfo";
     private static final String ENDPOINT = "endpoint";
     private static final String TOOL_ARGUMENTS = "toolArguments";
+    private static final String TOOL_RESULT = "toolResult";
+    private static final String ERROR = "error";
+    private static final String MESSAGE = "message";
+    private static final String CODE = "code";
 
     // Initialize Token Framework locally (L1/L2 -> L3 HTTP Fallback)
     private static final TokenClient tokenClient = new CacheTokenClient(new HttpTokenClient("https://tokenization.lightapi.net"));
@@ -175,192 +179,222 @@ public class McpHandler implements MiddlewareHandler {
         exchange.getRequestReceiver().receiveFullString((exch, message) -> {
             if(logger.isDebugEnabled()) logger.debug("JSON-RPC message: {}", message);
             try {
-                Map<String, Object> request = mapper.readValue(message, Map.class);
-                String method = (String) request.get("method");
-                Object id = request.get("id");
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("jsonrpc", JSONRpc_VERSION);
-                response.put("id", id);
-
-                if ("initialize".equals(method)) {
-                    Map<String, Object> textResult = new HashMap<>();
-                    textResult.put("protocolVersion", "2024-11-05");
-                    textResult.put("capabilities", Map.of("tools", Map.of("listChanged", true)));
-                    textResult.put("serverInfo", Map.of("name", "light-4j-mcp", "version", "1.0.0"));
-                    response.put("result", textResult);
-                } else if ("notifications/initialized".equals(method)) {
-                    // client ready, no response needed for notification
-                    return;
-                } else if ("tools/list".equals(method)) {
-                    Map<String, Object> params = (Map<String, Object>) request.get("params");
-                    String query = null;
-                    String intent = null;
-                    if (params != null) {
-                        query = params.get("query") != null ? params.get("query").toString().toLowerCase() : null;
-                        intent = params.get("intent") != null ? params.get("intent").toString().toLowerCase() : null;
-                    }
-
-                    List<Map<String, Object>> toolList = new ArrayList<>();
-                    for (McpTool tool : McpToolRegistry.getTools().values()) {
-
-                        // Execute advanced filtering logic if query or intent values exist
-                        boolean match = true;
-
-                        if (query != null) {
-                            match = (tool.getName() != null && tool.getName().toLowerCase().contains(query)) ||
-                                    (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(query));
-                        }
-
-                        if (match && intent != null) {
-                            match = (tool.getName() != null && tool.getName().toLowerCase().contains(intent)) ||
-                                    (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(intent));
-                        }
-
-                        if (!match) continue;
-
-                        Map<String, Object> t = new HashMap<>();
-                        t.put("name", tool.getName());
-                        t.put("description", tool.getDescription());
-                        try {
-                            // Parse schema string to JSON structure
-                            if(tool.getInputSchema() != null) {
-                                t.put("inputSchema", mapper.readTree(tool.getInputSchema()));
-                            } else {
-                                t.put("inputSchema", Map.of("type", "object"));
-                            }
-                        } catch (Exception e) {
-                             logger.warn("Invalid JSON schema for tool {}", tool.getName(), e);
-                             t.put("inputSchema", Map.of("type", "object"));
-                        }
-                        toolList.add(t);
-                    }
-                    response.put("result", Map.of("tools", toolList));
-                } else if ("tools/call".equals(method)) {
-                    Map<String, Object> params = (Map<String, Object>) request.get("params");
-                    String toolName = (String) params.get("name");
-                    Map<String, Object> args = (Map<String, Object>) params.get("arguments");
-
-                    Map<String, Object> auditInfo = exch.getAttachment(AttachmentConstants.AUDIT_INFO);
-                    if (auditInfo == null) {
-                        auditInfo = new HashMap<>();
-                        exch.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
-                    }
-                    auditInfo.put("toolName", toolName);
-                    try {
-                        if (args != null) auditInfo.put("toolArguments", mapper.writeValueAsString(args));
-                    } catch (Exception e) {
-                        auditInfo.put("toolArguments", args);
-                    }
-
-                    McpTool tool = McpToolRegistry.getTool(toolName);
-                    if (tool != null) {
-                        // Fine-grained access control check before tool execution
-                        if (!checkAccessControl(exch, tool.getEndpoint(), args, response)) {
-                            // Access denied, response already populated with error
-                            try {
-                                auditInfo.put("toolResult", mapper.writeValueAsString(response.get("error")));
-                            } catch (Exception e) {
-                                auditInfo.put("toolResult", response.get("error"));
-                            }
-                            exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                            exch.getResponseSender().send(mapper.writeValueAsString(response));
-                            return;
-                        }
-                        try {
-                            // Mask arguments based on schema definition before passing to backend
-                            Map<String, String> requestRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, tool.getInputSchema());
-                            if (requestRules != null && !requestRules.isEmpty()) {
-                                String argsStr = mapper.writeValueAsString(args);
-                                String maskedArgsStr = Mask.maskJson(argsStr, requestRules);
-                                args = mapper.readValue(maskedArgsStr, Map.class);
-                            }
-
-                            // Tokenize arguments based on schema definition
-                            Map<String, Integer> tokenizeRules = McpMaskingUtils.getTokenizationRulesFromSchema(toolName, tool.getInputSchema());
-                            if (tokenizeRules != null && !tokenizeRules.isEmpty()) {
-                                com.jayway.jsonpath.DocumentContext ctx = com.jayway.jsonpath.JsonPath.parse(mapper.writeValueAsString(args));
-                                com.jayway.jsonpath.Configuration conf = com.jayway.jsonpath.Configuration.builder().options(com.jayway.jsonpath.Option.AS_PATH_LIST).build();
-                                com.jayway.jsonpath.DocumentContext pathCtx = com.jayway.jsonpath.JsonPath.using(conf).parse(ctx.jsonString());
-
-                                for (Map.Entry<String, Integer> entry : tokenizeRules.entrySet()) {
-                                    String abstractPath = entry.getKey();
-                                    Integer schemeId = entry.getValue();
-                                    try {
-                                        java.util.List<String> actualPaths = pathCtx.read(abstractPath);
-                                        for (String actualPath : actualPaths) {
-                                            Object val = ctx.read(actualPath);
-                                            if (val instanceof String) {
-                                                // We securely invoke the chained Tokenization API cache wrapper for each matching path target
-                                                String tok = tokenClient.tokenize((String) val, schemeId);
-                                                ctx.set(actualPath, tok);
-                                            }
-                                        }
-                                    } catch (com.jayway.jsonpath.PathNotFoundException e) {
-                                        // Ignore if path not found in payload
-                                    }
-                                }
-                                args = mapper.readValue(ctx.jsonString(), Map.class);
-                            }
-
-                            // Optional: Unstructured Regex Masking
-                            // If a regex rule named "mcp_global" exists in mask.yml "string" section
-                            String globalArgsStr = mapper.writeValueAsString(args);
-                            String finalArgsStr = Mask.maskString(globalArgsStr, "mcp_global");
-                            if (!globalArgsStr.equals(finalArgsStr)) {
-                                args = mapper.readValue(finalArgsStr, Map.class);
-                            }
-
-                            Map<String, Object> result = tool.execute(args);
-                            result = applyResponseFilter(exch, tool.getEndpoint(), args, result);
-
-                            // Mask properties in result based on predefined JSON paths in mask.yml
-                            if (result != null) {
-                                String resultStr = mapper.writeValueAsString(result);
-                                String maskedResultStr = Mask.maskJson(resultStr, toolName);
-                                // Optional fallback: apply global unstructured mask to result
-                                maskedResultStr = Mask.maskString(maskedResultStr, "mcp_global");
-                                result = mapper.readValue(maskedResultStr, Map.class);
-                            }
-
-                            response.put("result", result);
-                            try {
-                                if (result != null) auditInfo.put("toolResult", mapper.writeValueAsString(result));
-                            } catch (Exception e) {
-                                auditInfo.put("toolResult", result);
-                            }
-                        } catch (Exception e) {
-                             logger.error("Tool execution error", e);
-                             Map<String, Object> errorMap = Map.of("code", -32000, "message", "Tool execution failed: " + e.getMessage());
-                             response.put("error", errorMap);
-                             try {
-                                 auditInfo.put("toolResult", mapper.writeValueAsString(errorMap));
-                             } catch (Exception ex) {
-                                 auditInfo.put("toolResult", errorMap);
-                             }
-                        }
-                    } else {
-                        Map<String, Object> errorMap = Map.of("code", -32601, "message", "Tool not found: " + toolName);
-                        response.put("error", errorMap);
-                        try {
-                            auditInfo.put("toolResult", mapper.writeValueAsString(errorMap));
-                        } catch (Exception e) {
-                            auditInfo.put("toolResult", errorMap);
-                        }
-                    }
-                } else {
-                    response.put("error", Map.of("code", -32601, "message", "Method not found: " + method));
-                }
-
-                exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                exch.getResponseSender().send(mapper.writeValueAsString(response));
-
+                processMessage(exch, message);
             } catch (Exception e) {
                 logger.error("Error processing MCP message", e);
                 exch.setStatusCode(500);
                 exch.getResponseSender().send("{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Parse error\"}, \"id\": null}");
             }
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processMessage(HttpServerExchange exch, String message) throws Exception {
+        Map<String, Object> request = mapper.readValue(message, Map.class);
+        String method = (String) request.get("method");
+        Object id = request.get("id");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("jsonrpc", JSONRpc_VERSION);
+        response.put("id", id);
+
+        if ("initialize".equals(method)) {
+            Map<String, Object> textResult = new HashMap<>();
+            textResult.put("protocolVersion", "2024-11-05");
+            textResult.put("capabilities", Map.of("tools", Map.of("listChanged", true)));
+            textResult.put("serverInfo", Map.of("name", "light-4j-mcp", "version", "1.0.0"));
+            response.put("result", textResult);
+        } else if ("notifications/initialized".equals(method)) {
+            return;
+        } else if ("tools/list".equals(method)) {
+            addToolsListResponse(request, response);
+        } else if ("tools/call".equals(method)) {
+            if (handleToolCall(exch, request, response)) {
+                return;
+            }
+        } else {
+            response.put(ERROR, Map.of(CODE, -32601, MESSAGE, "Method not found: " + method));
+        }
+
+        exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exch.getResponseSender().send(mapper.writeValueAsString(response));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addToolsListResponse(Map<String, Object> request, Map<String, Object> response) {
+        Map<String, Object> params = (Map<String, Object>) request.get("params");
+        String query = null;
+        String intent = null;
+        if (params != null) {
+            query = params.get("query") != null ? params.get("query").toString().toLowerCase() : null;
+            intent = params.get("intent") != null ? params.get("intent").toString().toLowerCase() : null;
+        }
+
+        List<Map<String, Object>> toolList = new ArrayList<>();
+        for (McpTool tool : McpToolRegistry.getTools().values()) {
+            if (!matchesToolFilter(tool, query, intent)) {
+                continue;
+            }
+
+            Map<String, Object> toolMap = new HashMap<>();
+            toolMap.put("name", tool.getName());
+            toolMap.put("description", tool.getDescription());
+            toolMap.put("inputSchema", parseInputSchema(tool));
+            toolList.add(toolMap);
+        }
+        response.put("result", Map.of("tools", toolList));
+    }
+
+    private boolean matchesToolFilter(McpTool tool, String query, String intent) {
+        boolean match = true;
+
+        if (query != null) {
+            match = (tool.getName() != null && tool.getName().toLowerCase().contains(query)) ||
+                    (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(query));
+        }
+
+        if (match && intent != null) {
+            match = (tool.getName() != null && tool.getName().toLowerCase().contains(intent)) ||
+                    (tool.getDescription() != null && tool.getDescription().toLowerCase().contains(intent));
+        }
+
+        return match;
+    }
+
+    private Object parseInputSchema(McpTool tool) {
+        try {
+            if(tool.getInputSchema() != null) {
+                return mapper.readTree(tool.getInputSchema());
+            }
+        } catch (Exception e) {
+            logger.warn("Invalid JSON schema for tool {}", tool.getName(), e);
+        }
+        return Map.of("type", "object");
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws Exception {
+        Map<String, Object> params = (Map<String, Object>) request.get("params");
+        String toolName = (String) params.get("name");
+        Map<String, Object> args = (Map<String, Object>) params.get("arguments");
+
+        Map<String, Object> auditInfo = exch.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo == null) {
+            auditInfo = new HashMap<>();
+            exch.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        }
+        auditInfo.put("toolName", toolName);
+        if (args != null) {
+            putAuditJson(auditInfo, TOOL_ARGUMENTS, args);
+        }
+
+        McpTool tool = McpToolRegistry.getTool(toolName);
+        if (tool == null) {
+            Map<String, Object> errorMap = Map.of(CODE, -32601, MESSAGE, "Tool not found: " + toolName);
+            response.put(ERROR, errorMap);
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+            return false;
+        }
+
+        if (!checkAccessControl(exch, tool.getEndpoint(), args, response)) {
+            putAuditJson(auditInfo, TOOL_RESULT, response.get(ERROR));
+            exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            exch.getResponseSender().send(mapper.writeValueAsString(response));
+            return true;
+        }
+
+        executeTool(exch, toolName, args, auditInfo, tool, response);
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void executeTool(HttpServerExchange exch, String toolName, Map<String, Object> args, Map<String, Object> auditInfo,
+                             McpTool tool, Map<String, Object> response) {
+        try {
+            Map<String, Object> maskedArgs = maskToolArguments(toolName, args, tool);
+            Map<String, Object> result = tool.execute(maskedArgs);
+            result = applyResponseFilter(exch, tool.getEndpoint(), maskedArgs, result);
+            if (result != null) {
+                result = maskToolResult(toolName, result);
+            }
+
+            response.put("result", result);
+            if (result != null) {
+                putAuditJson(auditInfo, TOOL_RESULT, result);
+            }
+        } catch (Exception e) {
+            logger.error("Tool execution error", e);
+            Map<String, Object> errorMap = Map.of(CODE, -32000, MESSAGE, "Tool execution failed: " + e.getMessage());
+            response.put(ERROR, errorMap);
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> maskToolArguments(String toolName, Map<String, Object> args, McpTool tool) throws Exception {
+        Map<String, String> requestRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, tool.getInputSchema());
+        if (requestRules != null && !requestRules.isEmpty()) {
+            String argsStr = mapper.writeValueAsString(args);
+            String maskedArgsStr = Mask.maskJson(argsStr, requestRules);
+            args = mapper.readValue(maskedArgsStr, Map.class);
+        }
+
+        Map<String, Integer> tokenizeRules = McpMaskingUtils.getTokenizationRulesFromSchema(toolName, tool.getInputSchema());
+        if (tokenizeRules != null && !tokenizeRules.isEmpty()) {
+            args = tokenizeArguments(args, tokenizeRules);
+        }
+
+        String globalArgsStr = mapper.writeValueAsString(args);
+        String finalArgsStr = Mask.maskString(globalArgsStr, "mcp_global");
+        if (!globalArgsStr.equals(finalArgsStr)) {
+            args = mapper.readValue(finalArgsStr, Map.class);
+        }
+        return args;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> maskToolResult(String toolName, Map<String, Object> result) throws Exception {
+        String resultStr = mapper.writeValueAsString(result);
+        String maskedResultStr = Mask.maskJson(resultStr, toolName);
+        maskedResultStr = Mask.maskString(maskedResultStr, "mcp_global");
+        return mapper.readValue(maskedResultStr, Map.class);
+    }
+
+    private void putAuditJson(Map<String, Object> auditInfo, String key, Object value) {
+        try {
+            auditInfo.put(key, mapper.writeValueAsString(value));
+        } catch (Exception e) {
+            auditInfo.put(key, value);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> tokenizeArguments(Map<String, Object> args, Map<String, Integer> tokenizeRules) throws Exception {
+        com.jayway.jsonpath.DocumentContext ctx = com.jayway.jsonpath.JsonPath.parse(mapper.writeValueAsString(args));
+        com.jayway.jsonpath.Configuration conf = com.jayway.jsonpath.Configuration.builder().options(com.jayway.jsonpath.Option.AS_PATH_LIST).build();
+        com.jayway.jsonpath.DocumentContext pathCtx = com.jayway.jsonpath.JsonPath.using(conf).parse(ctx.jsonString());
+
+        for (Map.Entry<String, Integer> entry : tokenizeRules.entrySet()) {
+            tokenizePath(ctx, pathCtx, entry.getKey(), entry.getValue());
+        }
+        return mapper.readValue(ctx.jsonString(), Map.class);
+    }
+
+    private void tokenizePath(com.jayway.jsonpath.DocumentContext ctx,
+                              com.jayway.jsonpath.DocumentContext pathCtx,
+                              String abstractPath,
+                              Integer schemeId) {
+        try {
+            List<String> actualPaths = pathCtx.read(abstractPath);
+            for (String actualPath : actualPaths) {
+                Object val = ctx.read(actualPath);
+                if (val instanceof String string) {
+                    ctx.set(actualPath, tokenClient.tokenize(string, schemeId));
+                }
+            }
+        } catch (com.jayway.jsonpath.PathNotFoundException e) {
+            // Ignore if path not found in payload
+        }
     }
 
     /**
@@ -415,7 +449,7 @@ public class McpHandler implements MiddlewareHandler {
         if (result == null) {
             if (accessControlConfig.isDefaultDeny()) {
                 logger.error("Access control rule is missing and default deny is true for tool endpoint {}", endpoint);
-                response.put("error", Map.of("code", -32001, "message", "Access denied: no access control rule defined for " + endpoint));
+                response.put(ERROR, Map.of(CODE, -32001, MESSAGE, "Access denied: no access control rule defined for " + endpoint));
                 return false;
             } else {
                 // No rules defined and default allow — proceed
@@ -427,7 +461,7 @@ public class McpHandler implements MiddlewareHandler {
                 return true;
             } else {
                 logger.error("Access denied for tool endpoint {}: {}", endpoint, JsonMapper.toJson(result));
-                response.put("error", Map.of("code", -32001, "message", "Access denied by access control rule for " + endpoint));
+                response.put(ERROR, Map.of(CODE, -32001, MESSAGE, "Access denied by access control rule for " + endpoint));
                 return false;
             }
         }

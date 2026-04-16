@@ -459,7 +459,7 @@ public class McpHandlerTest {
     }
 
     @Test
-    public void testListToolsWithSearchQuery() throws Exception {
+    void testListToolsWithSearchQuery() throws Exception {
         // Register a dummy tool first
         McpTool tool1 = new McpTool() {
             @Override
