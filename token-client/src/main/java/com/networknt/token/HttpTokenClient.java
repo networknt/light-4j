@@ -51,8 +51,10 @@ public class HttpTokenClient implements TokenClient {
                 final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
                 ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/v1/token");
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
+                String hostHeader = uri.getPort() == -1 ? uri.getHost() : uri.getHost() + ":" + uri.getPort();
+                request.getRequestHeaders().put(Headers.HOST, hostHeader);
                 request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 
                 Map<String, Object> reqBody = new HashMap<>();
                 reqBody.put("value", value);
