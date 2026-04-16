@@ -51,9 +51,11 @@ headers: ${audit.headers:["X-Correlation-Id", "X-Traceability-Id","caller_id"]}
 # - toolName
 # MCP Tool Arguments
 # - toolArguments
+#   Enable only when the handler writes sanitized/masked/tokenized values to AUDIT_INFO.
 # MCP Tool Result
 # - toolResult
-audit: ${audit.audit:["client_id", "user_id", "scope_client_id", "endpoint", "serviceId", "toolName", "toolArguments", "toolResult"]}
+#   Enable only when the handler writes sanitized/masked/tokenized values to AUDIT_INFO.
+audit: ${audit.audit:["client_id", "user_id", "scope_client_id", "endpoint", "serviceId", "toolName"]}
 # The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the
 # request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.
 requestBodyMaxSize: ${audit.requestBodyMaxSize:4096}
