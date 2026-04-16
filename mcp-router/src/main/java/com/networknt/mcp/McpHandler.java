@@ -1,5 +1,6 @@
 package com.networknt.mcp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.access.AccessControlConfig;
 import com.networknt.config.Config;
@@ -189,7 +190,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private void processMessage(HttpServerExchange exch, String message) throws Exception {
+    private void processMessage(HttpServerExchange exch, String message) throws JsonProcessingException {
         Map<String, Object> request = mapper.readValue(message, Map.class);
         String method = (String) request.get("method");
         Object id = request.get("id");
@@ -266,14 +267,14 @@ public class McpHandler implements MiddlewareHandler {
             if(tool.getInputSchema() != null) {
                 return mapper.readTree(tool.getInputSchema());
             }
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             logger.warn("Invalid JSON schema for tool {}", tool.getName(), e);
         }
         return Map.of("type", "object");
     }
 
     @SuppressWarnings("unchecked")
-    private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws Exception {
+    private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws JsonProcessingException {
         Map<String, Object> params = (Map<String, Object>) request.get("params");
         String toolName = (String) params.get("name");
         Map<String, Object> args = (Map<String, Object>) params.get("arguments");
@@ -331,7 +332,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> maskToolArguments(String toolName, Map<String, Object> args, McpTool tool) throws Exception {
+    private Map<String, Object> maskToolArguments(String toolName, Map<String, Object> args, McpTool tool) throws JsonProcessingException {
         Map<String, String> requestRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, tool.getInputSchema());
         if (requestRules != null && !requestRules.isEmpty()) {
             String argsStr = mapper.writeValueAsString(args);
@@ -353,7 +354,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> maskToolResult(String toolName, Map<String, Object> result) throws Exception {
+    private Map<String, Object> maskToolResult(String toolName, Map<String, Object> result) throws JsonProcessingException {
         String resultStr = mapper.writeValueAsString(result);
         String maskedResultStr = Mask.maskJson(resultStr, toolName);
         maskedResultStr = Mask.maskString(maskedResultStr, "mcp_global");
@@ -363,13 +364,13 @@ public class McpHandler implements MiddlewareHandler {
     private void putAuditJson(Map<String, Object> auditInfo, String key, Object value) {
         try {
             auditInfo.put(key, mapper.writeValueAsString(value));
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             auditInfo.put(key, value);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> tokenizeArguments(Map<String, Object> args, Map<String, Integer> tokenizeRules) throws Exception {
+    private Map<String, Object> tokenizeArguments(Map<String, Object> args, Map<String, Integer> tokenizeRules) throws JsonProcessingException {
         com.jayway.jsonpath.DocumentContext ctx = com.jayway.jsonpath.JsonPath.parse(mapper.writeValueAsString(args));
         com.jayway.jsonpath.Configuration conf = com.jayway.jsonpath.Configuration.builder().options(com.jayway.jsonpath.Option.AS_PATH_LIST).build();
         com.jayway.jsonpath.DocumentContext pathCtx = com.jayway.jsonpath.JsonPath.using(conf).parse(ctx.jsonString());
