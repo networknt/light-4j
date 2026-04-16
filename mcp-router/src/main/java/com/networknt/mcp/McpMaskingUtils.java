@@ -5,6 +5,9 @@ import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -64,7 +67,21 @@ public class McpMaskingUtils {
     }
 
     private static String getCacheKey(String toolName, String inputSchema) {
-        return toolName + '\u0000' + inputSchema;
+        return toolName + ":" + sha256(inputSchema);
+    }
+
+    private static String sha256(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", e);
+        }
     }
 
     private static void traverseSchema(JsonNode node, String currentPath, Map<String, String> maskRules, Map<String, Integer> tokenizeRules) {
