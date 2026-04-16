@@ -36,7 +36,7 @@ public class HttpTokenClient implements TokenClient {
         this.serviceUrl = serviceUrl;
     }
 
-    private String executeRequest(URI uri, ClientRequest request, String requestBody, String operation) throws Exception {
+    private String executeRequest(URI uri, ClientRequest request, String requestBody, String operation) throws InterruptedException {
         SimpleConnectionState.ConnectionToken token = null;
         try {
             token = client.borrow(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
