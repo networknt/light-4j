@@ -460,6 +460,8 @@ public class McpHandlerTest {
 
     @Test
     void testListToolsWithSearchQuery() throws Exception {
+        Map<String, McpTool> originalTools = new HashMap<>(McpToolRegistry.getTools());
+
         // Register a dummy tool first
         McpTool tool1 = new McpTool() {
             @Override
@@ -519,6 +521,7 @@ public class McpHandlerTest {
 
         } finally {
             McpToolRegistry.clear();
+            originalTools.values().forEach(McpToolRegistry::registerTool);
             client.restore(token);
         }
     }
