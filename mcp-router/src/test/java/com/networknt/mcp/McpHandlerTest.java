@@ -516,6 +516,7 @@ public class McpHandlerTest {
             Assertions.assertFalse(weatherToolFound, "The weather tool should be filtered out because it does not match 'database'.");
 
         } finally {
+            McpToolRegistry.clear();
             client.restore(token);
         }
     }
