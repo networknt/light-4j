@@ -492,9 +492,11 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
 
             connection.sendRequest(request, client.createClientCallback(reference, latch, json));
-            latch.await(1000, TimeUnit.MILLISECONDS);
+            boolean completed = latch.await(1000, TimeUnit.MILLISECONDS);
+            Assertions.assertTrue(completed, "Timed out waiting for MCP response");
 
             ClientResponse response = reference.get();
+            Assertions.assertNotNull(response, "MCP response should be available after latch completion");
             Assertions.assertEquals(200, response.getResponseCode());
 
             String body = response.getAttachment(Http2Client.RESPONSE_BODY);
