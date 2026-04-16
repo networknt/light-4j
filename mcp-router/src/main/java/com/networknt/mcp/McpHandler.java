@@ -275,15 +275,38 @@ public class McpHandler implements MiddlewareHandler {
 
     @SuppressWarnings("unchecked")
     private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws JsonProcessingException {
-        Map<String, Object> params = (Map<String, Object>) request.get("params");
-        String toolName = (String) params.get("name");
-        Map<String, Object> args = (Map<String, Object>) params.get("arguments");
-
         Map<String, Object> auditInfo = exch.getAttachment(AttachmentConstants.AUDIT_INFO);
         if (auditInfo == null) {
             auditInfo = new HashMap<>();
             exch.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
+
+        Object paramsObj = request.get("params");
+        if (!(paramsObj instanceof Map)) {
+            Map<String, Object> errorMap = Map.of(CODE, -32602, MESSAGE, "Invalid params: params must be an object");
+            response.put(ERROR, errorMap);
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+            return false;
+        }
+
+        Map<String, Object> params = (Map<String, Object>) paramsObj;
+        Object toolNameObj = params.get("name");
+        if (!(toolNameObj instanceof String) || ((String) toolNameObj).isEmpty()) {
+            Map<String, Object> errorMap = Map.of(CODE, -32602, MESSAGE, "Invalid params: name must be a non-empty string");
+            response.put(ERROR, errorMap);
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+            return false;
+        }
+        String toolName = (String) toolNameObj;
+
+        Object argsObj = params.get("arguments");
+        if (argsObj != null && !(argsObj instanceof Map)) {
+            Map<String, Object> errorMap = Map.of(CODE, -32602, MESSAGE, "Invalid params: arguments must be an object");
+            response.put(ERROR, errorMap);
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+            return false;
+        }
+        Map<String, Object> args = (Map<String, Object>) argsObj;
         auditInfo.put("toolName", toolName);
         if (args != null) {
             putAuditJson(auditInfo, TOOL_ARGUMENTS, args);
