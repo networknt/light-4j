@@ -10,18 +10,23 @@ import com.networknt.cache.CacheManager;
 public class CacheTokenClient implements TokenClient {
     private static final String CACHE_NAME = "token_vault_cache";
     private final TokenClient delegate;
+    private final CacheManager cacheManager;
 
     public CacheTokenClient(TokenClient delegate) {
+        this(delegate, CacheManager.getInstance());
+    }
+
+    CacheTokenClient(TokenClient delegate, CacheManager cacheManager) {
         this.delegate = delegate;
+        this.cacheManager = cacheManager;
     }
 
     @Override
     public String tokenize(String value, int schemeId) {
         String cacheKey = schemeId + ":" + value;
 
-        CacheManager cache = CacheManager.getInstance();
-        if (cache != null) {
-            Object cachedToken = cache.get(CACHE_NAME, cacheKey);
+        if (cacheManager != null) {
+            Object cachedToken = cacheManager.get(CACHE_NAME, cacheKey);
             if (cachedToken != null) {
                 return (String) cachedToken;
             }
@@ -30,11 +35,11 @@ public class CacheTokenClient implements TokenClient {
         // Cache Miss: Drop down to the delegate (e.g. underlying L3 Http service)
         String generatedToken = delegate.tokenize(value, schemeId);
 
-        if (cache != null && generatedToken != null && !generatedToken.equals(value)) {
+        if (cacheManager != null && generatedToken != null && !generatedToken.equals(value)) {
             // Bi-directional caching. Cache the cleartext -> token
-            cache.put(CACHE_NAME, cacheKey, generatedToken);
+            cacheManager.put(CACHE_NAME, cacheKey, generatedToken);
             // Cache the token -> cleartext for fast reverse lookup
-            cache.put(CACHE_NAME, "reverse:" + generatedToken, value);
+            cacheManager.put(CACHE_NAME, "reverse:" + generatedToken, value);
         }
 
         return generatedToken;
@@ -44,9 +49,8 @@ public class CacheTokenClient implements TokenClient {
     public String detokenize(String token) {
         String cacheKey = "reverse:" + token;
 
-        CacheManager cache = CacheManager.getInstance();
-        if (cache != null) {
-            Object cachedCleartext = cache.get(CACHE_NAME, cacheKey);
+        if (cacheManager != null) {
+            Object cachedCleartext = cacheManager.get(CACHE_NAME, cacheKey);
             if (cachedCleartext != null) {
                 return (String) cachedCleartext;
             }
@@ -55,8 +59,8 @@ public class CacheTokenClient implements TokenClient {
         // Cache Miss
         String cleartext = delegate.detokenize(token);
 
-        if (cache != null && cleartext != null && !cleartext.equals(token)) {
-            cache.put(CACHE_NAME, cacheKey, cleartext);
+        if (cacheManager != null && cleartext != null && !cleartext.equals(token)) {
+            cacheManager.put(CACHE_NAME, cacheKey, cleartext);
         }
 
         return cleartext;
