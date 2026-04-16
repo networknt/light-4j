@@ -19,4 +19,21 @@ class McpMaskingUtilsTest {
         Map<String, Integer> rules = McpMaskingUtils.getTokenizationRulesFromSchema("  ", "{\"type\":\"object\"}");
         assertEquals(0, rules.size());
     }
+
+    @Test
+    void shouldRefreshRulesWhenSchemaChangesForSameTool() {
+        String toolName = "tool1";
+        String schemaWithMask = "{\"type\":\"object\",\"properties\":{\"ssn\":{\"type\":\"string\",\"x-mask\":true,\"x-mask-pattern\":\"^(\\\\d{3})\\\\d{2}(\\\\d{4})$\"}}}";
+        String schemaWithTokenize = "{\"type\":\"object\",\"properties\":{\"ssn\":{\"type\":\"string\",\"x-tokenize\":1}}}";
+
+        Map<String, String> maskingRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, schemaWithMask);
+        assertEquals(1, maskingRules.size());
+
+        Map<String, String> changedMaskingRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, schemaWithTokenize);
+        assertTrue(changedMaskingRules.isEmpty());
+
+        Map<String, Integer> tokenizationRules = McpMaskingUtils.getTokenizationRulesFromSchema(toolName, schemaWithTokenize);
+        assertEquals(1, tokenizationRules.size());
+        assertEquals(1, tokenizationRules.get("$.ssn"));
+    }
 }

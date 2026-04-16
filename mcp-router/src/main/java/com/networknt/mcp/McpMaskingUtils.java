@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,7 +20,7 @@ public class McpMaskingUtils {
     private static final String PROPERTIES = "properties";
     private static final String ITEMS = "items";
 
-    // Cache holding parsed schemas per tool name
+    // Cache holding parsed schemas per tool name + schema fingerprint
     private static final Map<String, Map<String, String>> schemaMaskingRulesCache = new ConcurrentHashMap<>();
     private static final Map<String, Map<String, Integer>> schemaTokenizationRulesCache = new ConcurrentHashMap<>();
 
@@ -37,13 +38,14 @@ public class McpMaskingUtils {
             return new HashMap<>();
         }
 
-        return schemaMaskingRulesCache.computeIfAbsent(toolName, k -> {
+        String cacheKey = getCacheKey(toolName, inputSchema);
+        return schemaMaskingRulesCache.computeIfAbsent(cacheKey, k -> {
             Map<String, String> rules = new HashMap<>();
             Map<String, Integer> tokenizeRules = new HashMap<>();
             try {
                 JsonNode schemaNode = Config.getInstance().getMapper().readTree(inputSchema);
                 traverseSchema(schemaNode, "$", rules, tokenizeRules);
-                schemaTokenizationRulesCache.put(toolName, tokenizeRules);
+                schemaTokenizationRulesCache.put(cacheKey, tokenizeRules);
             } catch (Exception e) {
                 logger.error("Failed to parse input schema for tool: " + toolName, e);
             }
@@ -56,9 +58,14 @@ public class McpMaskingUtils {
             return new HashMap<>();
         }
 
+        String cacheKey = getCacheKey(toolName, inputSchema);
         // Ensure it's populated
         getMaskingRulesFromSchema(toolName, inputSchema);
-        return schemaTokenizationRulesCache.getOrDefault(toolName, new HashMap<>());
+        return schemaTokenizationRulesCache.getOrDefault(cacheKey, new HashMap<>());
+    }
+
+    private static String getCacheKey(String toolName, String inputSchema) {
+        return toolName + ":" + Objects.hashCode(inputSchema);
     }
 
     private static void traverseSchema(JsonNode node, String currentPath, Map<String, String> maskRules, Map<String, Integer> tokenizeRules) {
