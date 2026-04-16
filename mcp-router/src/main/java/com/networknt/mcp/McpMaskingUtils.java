@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -65,7 +64,7 @@ public class McpMaskingUtils {
     }
 
     private static String getCacheKey(String toolName, String inputSchema) {
-        return toolName + ":" + Objects.hashCode(inputSchema);
+        return toolName + '\u0000' + inputSchema;
     }
 
     private static void traverseSchema(JsonNode node, String currentPath, Map<String, String> maskRules, Map<String, Integer> tokenizeRules) {
