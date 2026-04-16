@@ -33,7 +33,7 @@ public class McpMaskingUtils {
      * @return Map of JsonPath to replacement expression (e.g., {"$.ssn": "^(.*)$"})
      */
     public static Map<String, String> getMaskingRulesFromSchema(String toolName, String inputSchema) {
-        if (inputSchema == null || inputSchema.trim().isEmpty()) {
+        if (toolName == null || toolName.trim().isEmpty() || inputSchema == null || inputSchema.trim().isEmpty()) {
             return new HashMap<>();
         }
 
@@ -52,7 +52,7 @@ public class McpMaskingUtils {
     }
 
     public static Map<String, Integer> getTokenizationRulesFromSchema(String toolName, String inputSchema) {
-        if (inputSchema == null || inputSchema.trim().isEmpty()) {
+        if (toolName == null || toolName.trim().isEmpty() || inputSchema == null || inputSchema.trim().isEmpty()) {
             return new HashMap<>();
         }
 
