@@ -191,9 +191,11 @@ public class McpHandler implements MiddlewareHandler {
 
     @SuppressWarnings("unchecked")
     private void processMessage(HttpServerExchange exch, String message) throws JsonProcessingException {
+        if(logger.isDebugEnabled()) logger.debug("processMessage entered for path: {}", exch.getRequestPath());
         Map<String, Object> request = mapper.readValue(message, Map.class);
         String method = (String) request.get("method");
         Object id = request.get("id");
+        if(logger.isDebugEnabled()) logger.debug("processMessage - method: {}, id: {}", method, id);
 
         Map<String, Object> response = new HashMap<>();
         response.put("jsonrpc", JSONRpc_VERSION);
@@ -206,6 +208,7 @@ public class McpHandler implements MiddlewareHandler {
             textResult.put("serverInfo", Map.of("name", "light-4j-mcp", "version", "1.0.0"));
             response.put("result", textResult);
         } else if ("notifications/initialized".equals(method)) {
+            if(logger.isDebugEnabled()) logger.debug("processMessage - notifications/initialized received, returning without response");
             return;
         } else if ("tools/list".equals(method)) {
             addToolsListResponse(request, response);
@@ -217,8 +220,16 @@ public class McpHandler implements MiddlewareHandler {
             response.put(ERROR, Map.of(CODE, -32601, MESSAGE, "Method not found: " + method));
         }
 
+        String responseBody;
+        try {
+            responseBody = mapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize JSON-RPC response", e);
+            responseBody = "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Serialization error\"}, \"id\": null}";
+        }
+        if(logger.isDebugEnabled()) logger.debug("processMessage - sending response: {}", responseBody);
         exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exch.getResponseSender().send(mapper.writeValueAsString(response));
+        exch.getResponseSender().send(responseBody);
     }
 
     @SuppressWarnings("unchecked")
@@ -230,6 +241,9 @@ public class McpHandler implements MiddlewareHandler {
             query = params.get("query") != null ? params.get("query").toString().toLowerCase() : null;
             intent = params.get("intent") != null ? params.get("intent").toString().toLowerCase() : null;
         }
+
+        int registrySize = McpToolRegistry.getTools().size();
+        if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - registry has {} tool(s), query={}, intent={}", registrySize, query, intent);
 
         List<Map<String, Object>> toolList = new ArrayList<>();
         for (McpTool tool : McpToolRegistry.getTools().values()) {
@@ -243,6 +257,7 @@ public class McpHandler implements MiddlewareHandler {
             toolMap.put("inputSchema", parseInputSchema(tool));
             toolList.add(toolMap);
         }
+        if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - returning {} tool(s) after filtering", toolList.size());
         response.put("result", Map.of("tools", toolList));
     }
 
