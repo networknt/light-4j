@@ -225,7 +225,16 @@ public class McpHandler implements MiddlewareHandler {
             responseBody = mapper.writeValueAsString(response);
         } catch (JsonProcessingException e) {
             logger.error("Failed to serialize JSON-RPC response", e);
-            responseBody = "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Serialization error\"}, \"id\": null}";
+            Map<String, Object> fallbackResponse = new HashMap<>();
+            fallbackResponse.put("jsonrpc", JSONRpc_VERSION);
+            fallbackResponse.put("error", Map.of(CODE, -32603, MESSAGE, "Internal error"));
+            fallbackResponse.put("id", id);
+            try {
+                responseBody = mapper.writeValueAsString(fallbackResponse);
+            } catch (JsonProcessingException fallbackException) {
+                logger.error("Failed to serialize fallback JSON-RPC error response", fallbackException);
+                responseBody = "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32603, \"message\": \"Internal error\"}, \"id\": null}";
+            }
         }
         if(logger.isDebugEnabled()) logger.debug("processMessage - sending response: {}", responseBody);
         exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
