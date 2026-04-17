@@ -251,11 +251,12 @@ public class McpHandler implements MiddlewareHandler {
             intent = params.get("intent") != null ? params.get("intent").toString().toLowerCase() : null;
         }
 
-        int registrySize = McpToolRegistry.getTools().size();
+        Map<String, McpTool> tools = McpToolRegistry.getTools();
+        int registrySize = tools.size();
         if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - registry has {} tool(s), query={}, intent={}", registrySize, query, intent);
 
         List<Map<String, Object>> toolList = new ArrayList<>();
-        for (McpTool tool : McpToolRegistry.getTools().values()) {
+        for (McpTool tool : tools.values()) {
             if (!matchesToolFilter(tool, query, intent)) {
                 continue;
             }
