@@ -682,7 +682,7 @@ public class JwtVerifier extends TokenVerifier {
                     jwkList = new JsonWebKeySet(key).getJsonWebKeys();
                 }
                 if (jwkList == null || jwkList.isEmpty()) {
-                    throw new RuntimeException("cannot get JWK from OAuth server. response = " + key);
+                    throw new IllegalStateException("cannot get JWK from OAuth server. response = " + key);
                 }
                 if(cacheManager != null) {
                     for (JsonWebKey jwk : jwkList) {

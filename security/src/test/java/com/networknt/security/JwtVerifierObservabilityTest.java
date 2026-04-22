@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
+class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
     private static final Logger logger = LoggerFactory.getLogger(JwtVerifierObservabilityTest.class);
 
     private static Undertow server = null;
 
     @BeforeAll
-    public static void beforeClass() throws IOException {
+    static void beforeClass() throws IOException {
         SSLContext sslContext = createSSLContext(loadKeyStore("server.keystore"), loadKeyStore("server.truststore"), false);
         Undertow.Builder builder = Undertow.builder();
         builder.addHttpsListener(7775, "localhost", sslContext);
@@ -45,7 +45,7 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
     }
 
     @AfterAll
-    public static void afterClass() {
+    static void afterClass() {
         if(server != null) server.stop();
     }
 
@@ -75,13 +75,13 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
     }
 
     @Test
-    public void testHttpErrorLogging() throws Exception {
+    void testHttpErrorLogging() throws Exception {
         setupConfigs("/oauth2/key-error");
 
         // We need to force JwtVerifier to use our configs.
         // Since it calls ClientConfig.get() and SecurityConfig.load(), 
         // we use the load(String) methods.
-        SecurityConfig securityConfig = SecurityConfig.load("security-obs");
+        SecurityConfig.load("security-obs");
         // We also need to make sure ClientConfig.get() returns our config.
         // This is tricky because JwtVerifier calls ClientConfig.get() internally.
         // However, we can set the singleton instance if we have access.
@@ -104,12 +104,12 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
         try {
             jwtVerifier.verifyJwt(jwt, true, true);
         } catch (Exception e) {
-            logger.info("Caught expected exception: " + e.getMessage());
+            logger.info("Caught expected exception: {}", e.getMessage());
         }
     }
 
     @Test
-    public void testMalformedJwkLogging() throws Exception {
+    void testMalformedJwkLogging() throws Exception {
         Config.getInstance().getMapper().writeValue(new File("target/test-classes/client.yml"), clientMapFor("/oauth2/key-malformed"));
         Config.getInstance().getMapper().writeValue(new File("target/test-classes/security.yml"), securityMapFor());
 
@@ -118,7 +118,7 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
         try {
             jwtVerifier.verifyJwt(jwt, true, true);
         } catch (Exception e) {
-            logger.info("Caught expected exception: " + e.getMessage());
+            logger.info("Caught expected exception: {}", e.getMessage());
         }
     }
 
