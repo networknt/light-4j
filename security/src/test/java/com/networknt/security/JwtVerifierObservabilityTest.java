@@ -61,7 +61,7 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
         tokenMap.put("key", keyMap);
         oauthMap.put("token", tokenMap);
         clientMap.put("oauth", oauthMap);
-        
+
         Config.getInstance().getMapper().writeValue(new File("target/test-classes/client-obs.yml"), clientMap);
 
         // security.yml
@@ -79,23 +79,23 @@ public class JwtVerifierObservabilityTest extends JwtVerifierJwkBase {
         setupConfigs("/oauth2/key-error");
 
         // We need to force JwtVerifier to use our configs.
-        // Since it calls ClientConfig.get() and SecurityConfig.load(), 
+        // Since it calls ClientConfig.get() and SecurityConfig.load(),
         // we use the load(String) methods.
         SecurityConfig securityConfig = SecurityConfig.load("security-obs");
         // We also need to make sure ClientConfig.get() returns our config.
         // This is tricky because JwtVerifier calls ClientConfig.get() internally.
         // However, we can set the singleton instance if we have access.
         // Or just use the fact that it will load "client.yml" if we name it so.
-        
+
         // Let's try naming them client.yml and security.yml in a custom folder?
-        // No, let's just use the load methods and hope for the best, 
+        // No, let's just use the load methods and hope for the best,
         // OR better yet, just test the retrieveJwk logic if it's accessible or through verifyJwt.
-        
+
         // Actually, verifyJwt uses ClientConfig.get() internally.
         // I'll just write to client.yml and security.yml in target/test-classes.
         // But that might interfere with other tests if run in parallel.
         // Since I'm running only this test, it's fine.
-        
+
         Config.getInstance().getMapper().writeValue(new File("target/test-classes/client.yml"), clientMapFor("/oauth2/key-error"));
         Config.getInstance().getMapper().writeValue(new File("target/test-classes/security.yml"), securityMapFor());
 
