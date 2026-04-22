@@ -655,7 +655,7 @@ public class JwtVerifier extends TokenVerifier {
                     } catch (ClientException ce) {
 
                         if (logger.isErrorEnabled())
-                            logger.error("Failed to get key. - {} - {} ", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                            logger.error("Failed to get key. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
                     }
                 }
             } else {
@@ -699,7 +699,7 @@ public class JwtVerifier extends TokenVerifier {
             } catch (ClientException ce) {
 
                 if (logger.isErrorEnabled())
-                    logger.error("Failed to get Key. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                    logger.error("Failed to get Key. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
             }
         }
     }
@@ -790,7 +790,7 @@ public class JwtVerifier extends TokenVerifier {
                 logger.error("Failed to get JWK. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
         } catch (ClientException ce) {
             if (logger.isErrorEnabled())
-                logger.error("Failed to get key - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                logger.error("Failed to get key - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
         }
         return null;
     }
@@ -804,12 +804,13 @@ public class JwtVerifier extends TokenVerifier {
     public X509Certificate getCertForToken(String kid) {
         X509Certificate certificate = null;
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        String key = null;
         try {
 
             if (logger.isWarnEnabled())
                 logger.warn("<Deprecated: use JsonWebKeySet instead> Getting raw certificate for kid: {} from {}", kid, keyRequest.getServerUrl());
 
-            String key = OauthHelper.getKey(keyRequest);
+            key = OauthHelper.getKey(keyRequest);
 
             if (logger.isWarnEnabled())
                 logger.warn("<Deprecated: use JsonWebKeySet instead> Got raw certificate {} for kid: {}", key, kid);
@@ -824,7 +825,7 @@ public class JwtVerifier extends TokenVerifier {
         } catch (ClientException ce) {
 
             if (logger.isErrorEnabled())
-                logger.error("Failed to get key: {}", ce.getMessage(), ce);
+                logger.error("Failed to get key: {} - response = {}", ce.getMessage(), key, ce);
 
         }
         return certificate;
@@ -833,8 +834,9 @@ public class JwtVerifier extends TokenVerifier {
     public X509Certificate getCertForSign(String kid) {
         X509Certificate certificate = null;
         SignKeyRequest keyRequest = new SignKeyRequest(kid);
+        String key = null;
         try {
-            String key = OauthHelper.getKey(keyRequest);
+            key = OauthHelper.getKey(keyRequest);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(key.getBytes(StandardCharsets.UTF_8)));
         } catch (CertificateException ce) {
@@ -845,7 +847,7 @@ public class JwtVerifier extends TokenVerifier {
         } catch (ClientException ce) {
 
             if (logger.isErrorEnabled())
-                logger.error("Failed to get key: {}", ce.getMessage(), ce);
+                logger.error("Failed to get key: {} - response = {}", ce.getMessage(), key, ce);
 
         }
         return certificate;
