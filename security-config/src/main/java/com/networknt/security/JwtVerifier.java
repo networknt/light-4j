@@ -625,10 +625,11 @@ public class JwtVerifier extends TokenVerifier {
                     }
                     // get the jwk from the auth server.
                     TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
+                    String key = null;
                     try {
                         if (logger.isDebugEnabled())
                             logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
-                        String key = OauthHelper.getKey(keyRequest);
+                        key = OauthHelper.getKey(keyRequest);
                         if (logger.isDebugEnabled()) logger.debug("Got Json Web Key = {}", key);
                         // find all use = sig keys
                         List<JsonWebKey> jwkList = new JsonWebKeySet(key).findJsonWebKeys(null, null, SIG, null);
@@ -637,7 +638,7 @@ public class JwtVerifier extends TokenVerifier {
                         }
                         if (jwkList == null || jwkList.isEmpty()) {
                             if (logger.isErrorEnabled())
-                                logger.error("Cannot get JWK from OAuth server.");
+                                logger.error("Cannot get JWK from OAuth server. response = {}", key);
                         } else {
                             if(cacheManager != null) {
                                 for (JsonWebKey jwk : jwkList) {
@@ -649,7 +650,7 @@ public class JwtVerifier extends TokenVerifier {
                         }
                     } catch (JoseException ce) {
                         if (logger.isErrorEnabled())
-                            logger.error("Failed to get JWK set. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                            logger.error("Failed to get JWK set. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
 
                     } catch (ClientException ce) {
 
@@ -667,11 +668,12 @@ public class JwtVerifier extends TokenVerifier {
             if(logger.isTraceEnabled()) logger.trace("A single audience {} is configured in client.yml", audience);
             // there is only one jwk server.
             TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, null);
+            String key = null;
             try {
                 if (logger.isDebugEnabled())
                     logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
 
-                String key = OauthHelper.getKey(keyRequest);
+                key = OauthHelper.getKey(keyRequest);
 
                 if (logger.isDebugEnabled()) logger.debug("Got Json Web Key = {}", key);
                 // find all use = sig keys
@@ -680,7 +682,7 @@ public class JwtVerifier extends TokenVerifier {
                     jwkList = new JsonWebKeySet(key).getJsonWebKeys();
                 }
                 if (jwkList == null || jwkList.isEmpty()) {
-                    throw new RuntimeException("cannot get JWK from OAuth server");
+                    throw new RuntimeException("cannot get JWK from OAuth server. response = " + key);
                 }
                 if(cacheManager != null) {
                     for (JsonWebKey jwk : jwkList) {
@@ -692,7 +694,7 @@ public class JwtVerifier extends TokenVerifier {
             } catch (JoseException ce) {
 
                 if (logger.isErrorEnabled())
-                    logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                    logger.error("Failed to get JWK. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
 
             } catch (ClientException ce) {
 
@@ -768,11 +770,12 @@ public class JwtVerifier extends TokenVerifier {
         // config is not null if isMultipleAuthServers is true. If it is null, then the key section is used from the client.yml
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true, config);
 
+        String key = null;
         try {
             if (logger.isDebugEnabled())
                 logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
 
-            String key = OauthHelper.getKey(keyRequest);
+            key = OauthHelper.getKey(keyRequest);
 
             if (logger.isDebugEnabled())
                 logger.debug("Got Json Web Key {} from {} with path {}", key, keyRequest.getServerUrl(), keyRequest.getUri());
@@ -784,7 +787,7 @@ public class JwtVerifier extends TokenVerifier {
             return jwk;
         } catch (JoseException ce) {
             if (logger.isErrorEnabled())
-                logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                logger.error("Failed to get JWK. - {} - {} - response = {}", new Status(GET_KEY_ERROR), ce.getMessage(), key, ce);
         } catch (ClientException ce) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get key - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
