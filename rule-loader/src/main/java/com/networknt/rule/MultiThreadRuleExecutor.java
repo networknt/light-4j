@@ -128,7 +128,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             for(Rule rule: rules.values()) {
                 if(rule.getActions() != null) {
                     for (RuleAction action : rule.getActions()) {
-                        String actionClass = action.getActionClassName();
+                        String actionClass = action.getActionRef();
                         loadActionClass(actionClass, ruleEngine);
                     }
                 }
