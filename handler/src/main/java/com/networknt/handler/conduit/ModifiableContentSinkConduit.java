@@ -11,7 +11,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
-import org.xnio.XnioWorker;
 import org.xnio.channels.StreamSourceChannel;
 import org.xnio.conduits.*;
 
@@ -36,6 +35,16 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     private volatile boolean writingResponse = false;
 
     private final Object lock = new Object();
+
+    private PooledByteBuffer[] http2ResponseBuffers;
+
+    private int http2ResponseBufferIndex;
+
+    private boolean http2WriteReadyHandlerInstalled;
+
+    private boolean http2Terminating;
+
+    private boolean http2Complete;
 
     /**
      * Construct a new instance.
@@ -201,121 +210,144 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     }
 
     private void http2Write(final PooledByteBuffer[] buffers) {
-        final var ioThread = next.getWriteThread();
-        final var workerThread = next.getWorker();
-
-        if (ioThread == Thread.currentThread())
-            this.executeHttp2WriteThread(workerThread, buffers);
-
-        else throw new IllegalStateException("Conduit should not be called in a non IO-thread...");
+        this.http2ResponseBuffers = buffers;
+        this.http2ResponseBufferIndex = 0;
+        this.http2Terminating = false;
+        this.http2Complete = false;
+        this.installHttp2WriteReadyHandler();
+        this.runOnWriteThread(this::drainHttp2Response);
     }
 
-    private void executeHttp2WriteThread(XnioWorker workerThread, final PooledByteBuffer[] buffers) {
-        workerThread.execute(() -> {
+    private void installHttp2WriteReadyHandler() {
+        if (this.http2WriteReadyHandlerInstalled)
+            return;
 
-            try {
-                int index = 0;
-                long totalWritten = 0;
+        this.next.setWriteReadyHandler(new WriteReadyHandler() {
+            @Override
+            public void writeReady() {
+                ModifiableContentSinkConduit.this.runOnWriteThread(ModifiableContentSinkConduit.this::drainHttp2Response);
+            }
 
-                for (var buffer : buffers) {
+            @Override
+            public void forceTermination() {
+                ModifiableContentSinkConduit.this.failHttp2Response(new IOException("HTTP/2 downstream write was forcibly terminated."));
+            }
 
-                    if (buffer == null || buffer.getBuffer() == null)
-                        break;
-
-                    var written = 0;
-
-                    if (LOG.isTraceEnabled())
-                        LOG.trace("[{}] Before-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", index, written, totalWritten, buffer.getBuffer().limit());
-
-                    var lastWrite = this.doWrite(buffers, buffer, written, index);
-
-                    totalWritten += written;
-
-                    if (LOG.isTraceEnabled())
-                        LOG.trace("[{}] After-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", index, written, totalWritten, buffer.getBuffer().limit());
-
-                    buffer.close();
-                    index++;
-
-                    if (lastWrite)
-                        break;
-                }
-
-                if (LOG.isTraceEnabled())
-                    LOG.trace("Terminating writes...");
-
-                next.terminateWrites();
-            } catch (IOException e) {
-                LOG.error("Failed to execute conduit writes on Worker Thread.", e);
-                throw new RuntimeException("Failed to execute conduit writes on Worker Thread. " + e.getMessage(), e);
+            @Override
+            public void terminated() {
+                ModifiableContentSinkConduit.this.closeRemainingBuffers();
             }
         });
+
+        this.http2WriteReadyHandlerInstalled = true;
     }
 
-    /**
-     * Performs the actual write operation to the next conduit.
-     *
-     * @param buffers The pooled byte buffers.
-     * @param buffer  The current pooled byte buffer to write.
-     * @param written The number of bytes already written.
-     * @param index   The index of the current buffer.
-     * @return true if this was the last write, false otherwise.
-     * @throws IOException If an I/O error occurs.
-     */
-    private boolean doWrite(PooledByteBuffer[] buffers, PooledByteBuffer buffer, int written, int index) throws IOException {
-        boolean lastWrite = false;
-        while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
-            long res;
+    private void runOnWriteThread(Runnable task) {
+        if (this.next.getWriteThread() == Thread.currentThread())
+            task.run();
+        else
+            this.next.getWriteThread().execute(task);
+    }
 
-            if (this.isLastWrite(buffers, index)) {
+    private void drainHttp2Response() {
+        if (this.http2Complete)
+            return;
 
-                if (LOG.isTraceEnabled())
-                    LOG.trace("Final write occurred...");
+        try {
+            if (this.http2Terminating) {
+                this.completeHttp2Response();
+                return;
+            }
 
-                res = next.write(buffer.getBuffer());
-                lastWrite = true;
+            while (this.http2ResponseBuffers != null && this.http2ResponseBufferIndex < this.http2ResponseBuffers.length) {
+                PooledByteBuffer pooled = this.http2ResponseBuffers[this.http2ResponseBufferIndex];
 
-            } else res = next.write(buffer.getBuffer());
+                if (pooled == null || pooled.getBuffer() == null) {
+                    this.completeHttp2Response();
+                    return;
+                }
 
-            written += res;
+                ByteBuffer buffer = pooled.getBuffer();
 
-            if (this.isBufferConsumed(buffer, res, index))
-                break;
+                while (buffer.hasRemaining()) {
+                    int written = this.next.write(buffer);
 
-            next.awaitWritable();
+                    if (written == 0) {
+                        this.next.resumeWrites();
+                        return;
+                    }
+                }
+
+                pooled.close();
+                this.http2ResponseBuffers[this.http2ResponseBufferIndex] = null;
+                this.http2ResponseBufferIndex++;
+            }
+
+            this.completeHttp2Response();
+        } catch (IOException | RuntimeException e) {
+            this.failHttp2Response(e);
         }
-        return lastWrite;
     }
 
-    /**
-     * Checks if the buffer has been fully consumed.
-     *
-     * @param buffer The pooled byte buffer to check.
-     * @param res    The result of the last write operation.
-     * @param index  The index of the buffer.
-     * @return true if consumed, false otherwise.
-     */
-    private boolean isBufferConsumed(PooledByteBuffer buffer, long res, int index) {
+    private void completeHttp2Response() throws IOException {
+        if (this.http2Complete)
+            return;
 
-        if (LOG.isTraceEnabled())
-            LOG.trace("[{}] Checking if the buffer was fully consumed...", index);
+        if (!this.http2Terminating) {
+            this.http2Terminating = true;
 
-        return !(res == 0L) && (buffer.getBuffer().position() >= buffer.getBuffer().limit());
+            if (LOG.isTraceEnabled())
+                LOG.trace("Terminating HTTP/2 response writes...");
+
+            this.next.terminateWrites();
+        }
+
+        if (!this.next.flush()) {
+            this.next.resumeWrites();
+            return;
+        }
+
+        this.next.suspendWrites();
+        this.http2Complete = true;
+        this.closeRemainingBuffers();
     }
 
-    /**
-     * Checks if this is the last write for the given buffers.
-     *
-     * @param buffers The pooled byte buffers.
-     * @param index   The current index.
-     * @return true if last write, false otherwise.
-     */
-    private boolean isLastWrite(PooledByteBuffer[] buffers, int index) {
+    private void failHttp2Response(Exception e) {
+        if (LOG.isErrorEnabled())
+            LOG.error("Failed to write intercepted HTTP/2 response.", e);
 
-        if (LOG.isTraceEnabled())
-            LOG.trace("[{}] Checking if this is the last write....", index);
+        this.http2Complete = true;
+        this.closeRemainingBuffers();
 
-        return buffers[index + 1] == null || buffers[index + 1].getBuffer() == null;
+        try {
+            this.next.truncateWrites();
+        } catch (IOException ex) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("Failed to truncate HTTP/2 response writes after write failure.", ex);
+        }
+    }
+
+    private void closeRemainingBuffers() {
+        if (this.http2ResponseBuffers == null)
+            return;
+
+        for (int i = this.http2ResponseBufferIndex; i < this.http2ResponseBuffers.length; i++) {
+            PooledByteBuffer pooled = this.http2ResponseBuffers[i];
+
+            if (pooled == null)
+                continue;
+
+            try {
+                pooled.close();
+            } catch (RuntimeException e) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Failed to close HTTP/2 response buffer.", e);
+            } finally {
+                this.http2ResponseBuffers[i] = null;
+            }
+        }
+
+        this.http2ResponseBuffers = null;
     }
 
     /**
