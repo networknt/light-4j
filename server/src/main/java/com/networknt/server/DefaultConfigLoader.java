@@ -173,7 +173,12 @@ public class DefaultConfigLoader implements IConfigLoader{
             String queryParameters = getConfigServerQueryParameters();
 
             // This is the method to load values.yml from the config server
-            loadConfigs(queryParameters);
+            boolean loadedFromConfigServer = loadConfigs(queryParameters);
+            if (loadedFromConfigServer) {
+                logger.info("Server startup config source: config server");
+            } else {
+                logger.info("Server startup config source: existing local values.yml cache (config server did not return usable configs)");
+            }
 
             loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
@@ -195,7 +200,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.error("Logback configuration failed", e);
             }
         } else {
-            logger.warn("Warning! {} is not provided; using local configs", CONFIG_SERVER_URI);
+            logger.warn("Warning! {} is not provided; using local values.yml", CONFIG_SERVER_URI);
         }
     }
 
@@ -214,9 +219,14 @@ public class DefaultConfigLoader implements IConfigLoader{
 
             String queryParameters = getConfigServerQueryParameters();
             // This is the method to load values.yml from the config server
-            loadConfigs(queryParameters);
+            boolean loadedFromConfigServer = loadConfigs(queryParameters);
+            if (loadedFromConfigServer) {
+                logger.info("Config reload source: config server");
+            } else {
+                logger.info("Config reload source: existing local values.yml cache (config server did not return usable configs)");
+            }
         } else {
-            logger.warn("Warning! {} is not provided; using local configs", CONFIG_SERVER_URI);
+            logger.warn("Warning! {} is not provided; using local values.yml", CONFIG_SERVER_URI);
         }
     }
 
@@ -225,14 +235,14 @@ public class DefaultConfigLoader implements IConfigLoader{
      * thread only as it is synchronized due to the Yaml constructor is not thread safe.
      * @param queryParameters query parameters
      */
-    private synchronized void loadConfigs(String queryParameters) {
+    private synchronized boolean loadConfigs(String queryParameters) {
         //config Server Configs Path
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
         if(serviceConfigs == null || serviceConfigs.isEmpty()) {
-            logger.error("Failed to load configs from config server. Please check the logs for more details.");
-            return;
+            logger.error("Failed to load usable configs from config server; retaining existing local values.yml cache when available.");
+            return false;
         }
         if(logger.isTraceEnabled())
             logger.trace("serviceConfigs received from Config Server: {}", JsonMapper.toJson(serviceConfigs));
@@ -265,6 +275,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         ConfigInjection.setUndecryptedValueMap(Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
 
         //You can call Server.getServerConfig() now.
+        return true;
     }
 
     /**
