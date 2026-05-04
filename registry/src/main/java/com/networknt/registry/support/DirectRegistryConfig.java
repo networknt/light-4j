@@ -140,12 +140,16 @@ public class DirectRegistryConfig {
     }
 
     private void setMap() {
-        Map<String, String> map = new LinkedHashMap<>();
+        directUrls = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         if(getMappedConfig() != null) {
-            if (getMappedConfig().get(DIRECT_URLS) instanceof String) {
-                String s = (String) getMappedConfig().get(DIRECT_URLS);
-                s = s.trim();
+            Object directUrlsObject = getMappedConfig().get(DIRECT_URLS);
+            if (directUrlsObject instanceof String) {
+                String s = ((String) directUrlsObject).trim();
                 if (logger.isTraceEnabled()) logger.trace("s = " + s);
+                if (s.isEmpty()) {
+                    return;
+                }
                 if (s.startsWith("{")) {
                     // json map
                     try {
@@ -155,22 +159,55 @@ public class DirectRegistryConfig {
                     }
                 } else {
                     for (String keyValue : s.split(" *& *")) {
+                        if (keyValue.isBlank()) {
+                            continue;
+                        }
                         String[] pairs = keyValue.split(" *= *", 2);
+                        if (pairs[0].isBlank()) {
+                            continue;
+                        }
                         map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
                     }
                 }
-            } else if (getMappedConfig().get(DIRECT_URLS) instanceof Map) {
-                map = (Map<String, String>) getMappedConfig().get(DIRECT_URLS);
-            } else {
+            } else if (directUrlsObject instanceof Map<?, ?> rawMap) {
+                for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                    if (entry.getKey() != null) {
+                        map.put(String.valueOf(entry.getKey()), entry.getValue());
+                    }
+                }
+            } else if (directUrlsObject != null) {
                 // change this to warning as the service.yml configuration is still supported.
-                logger.warn("mapping is missing or wrong type.");
+                logger.warn("mapping is wrong type.");
             }
             // now convert the value of the map to a list of URLs.
-            directUrls = new HashMap<>();
             map.entrySet().stream().forEach(x -> {
-                List<String> urls = Arrays.asList(x.getValue().split(","));
-                directUrls.put(x.getKey(), urls.stream().map(URLImpl::valueOf).collect(Collectors.toUnmodifiableList()));
+                List<URL> urls = parseDirectUrls(x.getValue());
+                if (!x.getKey().isBlank() && !urls.isEmpty()) {
+                    directUrls.put(x.getKey(), urls);
+                }
             });
+        }
+    }
+
+    private List<URL> parseDirectUrls(Object value) {
+        List<URL> urls = new ArrayList<>();
+        if (value instanceof Collection<?> collection) {
+            collection.forEach(item -> addDirectUrls(urls, item));
+        } else {
+            addDirectUrls(urls, value);
+        }
+        return urls.stream().collect(Collectors.toUnmodifiableList());
+    }
+
+    private void addDirectUrls(List<URL> urls, Object value) {
+        if (value == null) {
+            return;
+        }
+        for (String directUrl : String.valueOf(value).split(",")) {
+            String trimmed = directUrl.trim();
+            if (!trimmed.isEmpty()) {
+                urls.add(URLImpl.valueOf(trimmed));
+            }
         }
     }
 }

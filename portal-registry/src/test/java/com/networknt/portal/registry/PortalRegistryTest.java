@@ -23,6 +23,7 @@ import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.registry.URLParamType;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +35,7 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PortalRegistryTest {
     private MockPortalRegistryClient client;
@@ -44,6 +46,7 @@ public class PortalRegistryTest {
     @BeforeEach
     public void setUp() throws Exception {
         client = (MockPortalRegistryClient)SingletonServiceFactory.getBean(PortalRegistryClient.class);
+        client.reset();
         registry = (PortalRegistry)SingletonServiceFactory.getBean(Registry.class);
 
         serviceUrl = MockUtils.getMockUrl(8001);
@@ -152,6 +155,87 @@ public class PortalRegistryTest {
         Assertions.assertTrue(httpsUrls.stream().allMatch(url -> "https".equals(url.getProtocol())));
         Assertions.assertTrue(httpUrls.stream().anyMatch(url -> url.getPort() == 8001));
         Assertions.assertTrue(httpsUrls.stream().anyMatch(url -> url.getPort() == 8443));
+    }
+
+    @Test
+    public void discoverServiceUsesDirectUrlsBeforeControllerDiscovery() {
+        URL directUrl = new URLImpl("http", "localhost", 80, "com.networknt.direct-1.0.0", new HashMap<>());
+
+        List<URL> urls = registry.doDiscover(directUrl);
+
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertEquals("http", urls.get(0).getProtocol());
+        Assertions.assertEquals("localhost", urls.get(0).getHost());
+        Assertions.assertEquals(8080, urls.get(0).getPort());
+        Assertions.assertEquals(0, client.getEnsureWebSocketConnectedTimes());
+        Assertions.assertEquals(0, client.getSubscribeServiceTimes());
+    }
+
+    @Test
+    public void discoverServiceFallsBackToControllerWhenDirectUrlsMissing() {
+        URL controllerUrl = new URLImpl("http", "127.0.0.10", 8100, "com.networknt.controller-only-1.0.0", new HashMap<>());
+        registry.doRegister(controllerUrl);
+        client.resetCallCounts();
+
+        List<URL> urls = registry.doDiscover(controllerUrl);
+
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertEquals(controllerUrl, urls.get(0));
+        Assertions.assertEquals(1, client.getEnsureWebSocketConnectedTimes());
+        Assertions.assertEquals(1, client.getSubscribeServiceTimes());
+    }
+
+    @Test
+    public void discoverServiceUsesDirectUrlsWithEnvironmentTag() {
+        Map<String, String> params = new HashMap<>();
+        params.put(Constants.TAG_ENVIRONMENT, "prod");
+        URL directUrl = new URLImpl("https", "localhost", 443, "com.networknt.direct-tag-1.0.0", params);
+
+        List<URL> urls = registry.doDiscover(directUrl);
+
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertEquals("https", urls.get(0).getProtocol());
+        Assertions.assertEquals("prod.example.com", urls.get(0).getHost());
+        Assertions.assertEquals(9443, urls.get(0).getPort());
+        Assertions.assertEquals(0, client.getSubscribeServiceTimes());
+    }
+
+    @Test
+    public void discoverServiceReturnsEmptyWhenDirectUrlsProtocolDoesNotMatch() {
+        URL directUrl = new URLImpl("https", "localhost", 443, "com.networknt.direct-http-only-1.0.0", new HashMap<>());
+
+        List<URL> urls = registry.doDiscover(directUrl);
+
+        Assertions.assertTrue(urls.isEmpty());
+        Assertions.assertEquals(0, client.getEnsureWebSocketConnectedTimes());
+        Assertions.assertEquals(0, client.getSubscribeServiceTimes());
+    }
+
+    @Test
+    public void subscribeServiceUsesDirectUrlsWithoutControllerSubscription() {
+        URL directUrl = new URLImpl("http", "localhost", 80, "com.networknt.direct-1.0.0", new HashMap<>());
+        AtomicReference<List<URL>> notifiedUrls = new AtomicReference<>();
+
+        registry.doSubscribe(directUrl, (registryUrl, urls) -> notifiedUrls.set(urls));
+        registry.doUnsubscribe(directUrl, null);
+
+        Assertions.assertNotNull(notifiedUrls.get());
+        Assertions.assertEquals(1, notifiedUrls.get().size());
+        Assertions.assertEquals(8080, notifiedUrls.get().get(0).getPort());
+        Assertions.assertEquals(0, client.getEnsureWebSocketConnectedTimes());
+        Assertions.assertEquals(0, client.getSubscribeServiceTimes());
+        Assertions.assertEquals(0, client.getUnsubscribeServiceTimes());
+    }
+
+    @Test
+    public void unsubscribeServiceOnlyCallsControllerForControllerSubscriptions() {
+        URL controllerUrl = new URLImpl("http", "127.0.0.11", 8110, "com.networknt.controller-subscribe-1.0.0", new HashMap<>());
+
+        registry.doSubscribe(controllerUrl, null);
+        registry.doUnsubscribe(controllerUrl, null);
+
+        Assertions.assertEquals(1, client.getSubscribeServiceTimes());
+        Assertions.assertEquals(1, client.getUnsubscribeServiceTimes());
     }
 
     @Test

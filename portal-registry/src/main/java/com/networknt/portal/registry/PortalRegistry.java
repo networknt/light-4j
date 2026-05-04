@@ -16,7 +16,6 @@
 
 package com.networknt.portal.registry;
 
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.McpHandler;
 import com.networknt.portal.registry.client.PortalRegistryClient;
@@ -25,17 +24,15 @@ import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
+import com.networknt.registry.support.DirectRegistryConfig;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.*;
 import java.util.concurrent.*;
-
-import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 
 public class PortalRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistry.class);
@@ -95,14 +92,23 @@ public class PortalRegistry extends AbstractRegistry {
     @Override
     protected void doSubscribe(URL url, final NotifyListener listener) {
         if(logger.isInfoEnabled()) logger.info("PortalRegistry subscribe url: " + url.toSimpleString());
+        String serviceId = url.getPath();
+        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+        String protocol = url.getProtocol();
+        Optional<List<URL>> directUrls = lookupDirectUrls(serviceId, tag, protocol);
+        if (directUrls.isPresent()) {
+            if (listener != null) {
+                listener.notify(this.getUrl(), directUrls.get());
+            }
+            return;
+        }
+
         // you only need to subscribe once.
         if(!subscribedSet.contains(url)) {
-            String serviceId = url.getPath();
-            String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-            String key = discoveryKey(serviceId, tag, url.getProtocol());
+            String key = discoveryKey(serviceId, tag, protocol);
             client.ensureWebSocketConnected(getPortalToken(), this::handleWebSocketNotification);
-            List<Map<String, Object>> nodes = client.subscribeService(serviceId, tag, url.getProtocol(), getPortalToken());
-            ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId, tag, url.getProtocol(), nodes);
+            List<Map<String, Object>> nodes = client.subscribeService(serviceId, tag, protocol, getPortalToken());
+            ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId, tag, protocol, nodes);
             updateServiceCache(key, serviceUrls, false);
         }
         subscribedSet.add(url);
@@ -111,10 +117,11 @@ public class PortalRegistry extends AbstractRegistry {
     @Override
     protected void doUnsubscribe(URL url, NotifyListener listener) {
         if(logger.isInfoEnabled()) logger.info("PortalRegistry unsubscribe url: " + url.toSimpleString());
-        String serviceId = url.getPath();
-        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-        client.unsubscribeService(serviceId, tag, url.getProtocol(), getPortalToken());
-        subscribedSet.remove(url);
+        if (subscribedSet.remove(url)) {
+            String serviceId = url.getPath();
+            String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+            client.unsubscribeService(serviceId, tag, url.getProtocol(), getPortalToken());
+        }
     }
 
     @Override
@@ -124,6 +131,11 @@ public class PortalRegistry extends AbstractRegistry {
         String protocol = url.getProtocol();
         String key = discoveryKey(serviceId, tag, protocol);
         if(logger.isTraceEnabled()) logger.trace("discover protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
+        Optional<List<URL>> directUrls = lookupDirectUrls(serviceId, tag, protocol);
+        if (directUrls.isPresent()) {
+            return directUrls.get();
+        }
+
         List<URL> urls = serviceCache.get(key);
         if (urls == null || urls .isEmpty()) {
             synchronized (key.intern()) {
@@ -132,10 +144,42 @@ public class PortalRegistry extends AbstractRegistry {
                     ConcurrentHashMap<String, List<URL>> serviceUrls = subscribeAndLookup(protocol, serviceId, tag);
                     updateServiceCache(key, serviceUrls, false);
                     urls = serviceCache.get(key);
+                    subscribedSet.add(url);
                 }
             }
         }
         return urls;
+    }
+
+    private Optional<List<URL>> lookupDirectUrls(String serviceId, String tag, String protocol) {
+        DirectRegistryConfig directRegistryConfig = DirectRegistryConfig.load();
+        Map<String, List<URL>> directUrls = directRegistryConfig.getDirectUrls();
+        if (directUrls == null || directUrls.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String key = serviceKey(serviceId, tag);
+        if (!directUrls.containsKey(key)) {
+            return Optional.empty();
+        }
+
+        List<URL> configuredUrls = directUrls.get(key);
+        if (configuredUrls == null || configuredUrls.isEmpty()) {
+            return Optional.of(new ArrayList<>());
+        }
+
+        List<URL> matchedUrls = new ArrayList<>();
+        for (URL directUrl : configuredUrls) {
+            if (protocol == null || protocol.equals(directUrl.getProtocol())) {
+                matchedUrls.add(directUrl);
+            }
+        }
+        if (matchedUrls.isEmpty()) {
+            logger.warn("direct-registry.directUrls entry found for serviceId={} tag={} but no URL matched protocol={}", serviceId, tag, protocol);
+        } else if (logger.isDebugEnabled()) {
+            logger.debug("Resolved serviceId={} tag={} protocol={} from direct-registry.directUrls", serviceId, tag, protocol);
+        }
+        return Optional.of(matchedUrls);
     }
 
     private ConcurrentHashMap<String, List<URL>> subscribeAndLookup(String protocol, String serviceId, String tag) {

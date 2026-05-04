@@ -37,6 +37,9 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     private ConcurrentHashMap<String, Boolean> serviceStatus = new ConcurrentHashMap<String, Boolean>();
     // registered serviceId and service relationship
     private ConcurrentHashMap<String, PortalRegistryService> services = new ConcurrentHashMap<>();
+    private AtomicLong ensureWebSocketConnectedTimes = new AtomicLong();
+    private AtomicLong subscribeServiceTimes = new AtomicLong();
+    private AtomicLong unsubscribeServiceTimes = new AtomicLong();
 
     String host;
     int port;
@@ -82,7 +85,7 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
         for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
             if (entry.getValue()) {
                 PortalRegistryService service = services.get(entry.getKey());
-                if(service != null) {
+                if(service != null && matches(service, serviceName, tag)) {
                     Map<String, Object> node = new HashMap<>();
                     node.put("protocol",service.getProtocol());
                     node.put("address", service.getAddress());
@@ -101,6 +104,7 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
 
     @Override
     public void ensureWebSocketConnected(String token, java.util.function.BiConsumer<com.networknt.portal.registry.client.PortalRegistryWebSocketClient, Map<String, Object>> notificationHandler) {
+        ensureWebSocketConnectedTimes.incrementAndGet();
         // Test mock does not establish a real websocket connection.
     }
 
@@ -111,20 +115,24 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
 
     @Override
     public List<Map<String, Object>> subscribeService(String serviceId, String tag, String token) {
+        subscribeServiceTimes.incrementAndGet();
         return lookupHealthService(serviceId, tag, token);
     }
 
     @Override
     public List<Map<String, Object>> subscribeService(String serviceId, String tag, String protocol, String token) {
+        subscribeServiceTimes.incrementAndGet();
         return lookupHealthService(serviceId, tag, token);
     }
 
     @Override
     public void unsubscribeService(String serviceId, String tag, String token) {
+        unsubscribeServiceTimes.incrementAndGet();
     }
 
     @Override
     public void unsubscribeService(String serviceId, String tag, String protocol, String token) {
+        unsubscribeServiceTimes.incrementAndGet();
     }
 
     public long getCheckPassTimes(PortalRegistryService service) {
@@ -141,5 +149,37 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
 
     public boolean isWorking(PortalRegistryService service) {
         return serviceStatus.get(service.getServiceId() + service.getAddress() + service.getPort());
+    }
+
+    public long getEnsureWebSocketConnectedTimes() {
+        return ensureWebSocketConnectedTimes.get();
+    }
+
+    public long getSubscribeServiceTimes() {
+        return subscribeServiceTimes.get();
+    }
+
+    public long getUnsubscribeServiceTimes() {
+        return unsubscribeServiceTimes.get();
+    }
+
+    public void reset() {
+        checkPassTimesMap.clear();
+        serviceStatus.clear();
+        services.clear();
+        resetCallCounts();
+    }
+
+    public void resetCallCounts() {
+        ensureWebSocketConnectedTimes.set(0);
+        subscribeServiceTimes.set(0);
+        unsubscribeServiceTimes.set(0);
+    }
+
+    private boolean matches(PortalRegistryService service, String serviceName, String tag) {
+        if (serviceName != null && !serviceName.equals(service.getServiceId())) {
+            return false;
+        }
+        return tag == null || tag.equals(service.getTag());
     }
 }

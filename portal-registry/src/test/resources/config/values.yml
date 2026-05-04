@@ -1,0 +1,4 @@
+direct-registry.directUrls:
+  com.networknt.direct-1.0.0: http://localhost:8080,https://localhost:9443
+  com.networknt.direct-tag-1.0.0|prod: https://prod.example.com:9443
+  com.networknt.direct-http-only-1.0.0: http://localhost:5000
