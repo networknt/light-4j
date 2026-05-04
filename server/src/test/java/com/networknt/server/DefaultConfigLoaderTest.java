@@ -62,4 +62,24 @@ public class DefaultConfigLoaderTest {
         System.out.println(map);
 
     }
+
+    @Test
+    public void testNormalizeDownloadedFileName() {
+        Assertions.assertEquals("client.keystore",
+                DefaultConfigLoader.normalizeDownloadedFileName(
+                        "certs.client.keystore",
+                        DefaultConfigLoader.CONFIG_SERVER_CERTS_CONTEXT_ROOT));
+        Assertions.assertEquals("logback.xml",
+                DefaultConfigLoader.normalizeDownloadedFileName(
+                        "files.logback.xml",
+                        DefaultConfigLoader.CONFIG_SERVER_FILES_CONTEXT_ROOT));
+        Assertions.assertEquals("certs.client.keystore",
+                DefaultConfigLoader.normalizeDownloadedFileName(
+                        "certs.client.keystore",
+                        DefaultConfigLoader.CONFIG_SERVER_FILES_CONTEXT_ROOT));
+        Assertions.assertEquals("server.truststore",
+                DefaultConfigLoader.normalizeDownloadedFileName(
+                        "server.truststore",
+                        DefaultConfigLoader.CONFIG_SERVER_CERTS_CONTEXT_ROOT));
+    }
 }

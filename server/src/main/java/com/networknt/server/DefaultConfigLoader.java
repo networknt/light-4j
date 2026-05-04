@@ -301,13 +301,26 @@ public class DefaultConfigLoader implements IConfigLoader{
             }
             Base64.Decoder decoder = Base64.getMimeDecoder();
             for (String fileName : serviceFiles.keySet()) {
-                filePath=Paths.get(targetConfigsDirectory+"/"+fileName);
+                String downloadedFileName = normalizeDownloadedFileName(fileName, contextRoot);
+                filePath = Paths.get(targetConfigsDirectory, downloadedFileName);
                 byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes(StandardCharsets.UTF_8));
                 Files.write(filePath, ba);
             }
         }  catch (IOException e) {
             logger.error("Exception while creating {} dir or creating files there", targetConfigsDirectory, e);
         }
+    }
+
+    static String normalizeDownloadedFileName(String fileName, String contextRoot) {
+        String prefix = null;
+        if (CONFIG_SERVER_CERTS_CONTEXT_ROOT.equals(contextRoot)) {
+            prefix = "certs.";
+        } else if (CONFIG_SERVER_FILES_CONTEXT_ROOT.equals(contextRoot)) {
+            prefix = "files.";
+        }
+        return prefix != null && fileName.startsWith(prefix)
+            ? fileName.substring(prefix.length())
+            : fileName;
     }
 
     /**
