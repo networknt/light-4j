@@ -1,5 +1,35 @@
 # Change Log
 
+## [2.3.4](https://github.com/networknt/light-4j/tree/2.3.4) (2026-05-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2747 Vague Failed to get JWK Error Logging Enhancement [\#2748](https://github.com/networknt/light-4j/pull/2748) ([stevehu](https://github.com/stevehu))
+- fixes \#2745 add more debug info for mcp-router handler [\#2746](https://github.com/networknt/light-4j/pull/2746) ([stevehu](https://github.com/stevehu))
+- Bump com.sun.mail:jakarta.mail from 2.0.1 to 2.0.2 [\#2744](https://github.com/networknt/light-4j/pull/2744) ([dependabot](https://github.com/apps/dependabot))
+- fixes \#2742 Add masking, seaching and filtering for mcp router [\#2743](https://github.com/networknt/light-4j/pull/2743) ([stevehu](https://github.com/stevehu))
+- fixes \#2740 ExternalService handler retry mechanism failing with 500 [\#2741](https://github.com/networknt/light-4j/pull/2741) ([stevehu](https://github.com/stevehu))
+- fixes \#2738 implement module, cache and chaos monkey pages [\#2739](https://github.com/networknt/light-4j/pull/2739) ([stevehu](https://github.com/stevehu))
+- fixes \#2736 implement mcp handler for live log stream [\#2737](https://github.com/networknt/light-4j/pull/2737) ([stevehu](https://github.com/stevehu))
+- implement mcp handlers for admin endpoints in portal-registry [\#2735](https://github.com/networknt/light-4j/pull/2735) ([stevehu](https://github.com/stevehu))
+- fixes \#2731  resolve sonarcloud reaised issues [\#2732](https://github.com/networknt/light-4j/pull/2732) ([stevehu](https://github.com/stevehu))
+- fixes \#2729 resolve code small after the java doc update [\#2730](https://github.com/networknt/light-4j/pull/2730) ([stevehu](https://github.com/stevehu))
+- close BufferedReader in code [\#2728](https://github.com/networknt/light-4j/pull/2728) ([tejasae-afk](https://github.com/tejasae-afk))
+- fixes \#2726 switch the websocket client from undertow to jdk [\#2727](https://github.com/networknt/light-4j/pull/2727) ([stevehu](https://github.com/stevehu))
+- fixes \#2724 consolidate LIGHT_PORTAL_AUTHORIZATION env for portal reg… [\#2725](https://github.com/networknt/light-4j/pull/2725) ([stevehu](https://github.com/stevehu))
+- fixes \#2722 refactor the portal-registry for websocket controller [\#2723](https://github.com/networknt/light-4j/pull/2723) ([stevehu](https://github.com/stevehu))
+- fixes \#2720 update javadoc to resolve warnings [\#2721](https://github.com/networknt/light-4j/pull/2721) ([stevehu](https://github.com/stevehu))
+- fixes \#2717 resolve rule action issues and add tests [\#2718](https://github.com/networknt/light-4j/pull/2718) ([stevehu](https://github.com/stevehu))
+- fixes \#2715 Update mcp router to support response filter [\#2716](https://github.com/networknt/light-4j/pull/2716) ([stevehu](https://github.com/stevehu))
+- fixes \#2712 refactor the MultiThreadRuleExecutor to enable config reload [\#2713](https://github.com/networknt/light-4j/pull/2713) ([stevehu](https://github.com/stevehu))
+- fixes \#2710 JwtVerifier incorrectly reject WebSocket upgrade request [\#2711](https://github.com/networknt/light-4j/pull/2711) ([stevehu](https://github.com/stevehu))
+- fixes \#2703 alllow values.yml file to be self injected [\#2704](https://github.com/networknt/light-4j/pull/2704) ([stevehu](https://github.com/stevehu))
+- fixes \#2700 refactor the mcp-router to add FGA and change to new config [\#2701](https://github.com/networknt/light-4j/pull/2701) ([stevehu](https://github.com/stevehu))
+- Add audit attachment assertions to CORS rejection unit tests [\#2699](https://github.com/networknt/light-4j/pull/2699) ([copilot-swe-agent](https://github.com/apps/copilot-swe-agent))
+- fixes \#2697 CORS 403 responses not in audit log file [\#2698](https://github.com/networknt/light-4j/pull/2698) ([stevehu](https://github.com/stevehu))
+- fixes \#2688 replace RuleLoaderStartupHook with MultiThreadRuleExecutor [\#2689](https://github.com/networknt/light-4j/pull/2689) ([stevehu](https://github.com/stevehu))
 ## [2.3.3](https://github.com/networknt/light-4j/tree/2.3.3) (2026-02-19)
 
 
