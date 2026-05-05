@@ -30,6 +30,8 @@
 - Add audit attachment assertions to CORS rejection unit tests [\#2699](https://github.com/networknt/light-4j/pull/2699) ([copilot-swe-agent](https://github.com/apps/copilot-swe-agent))
 - fixes \#2697 CORS 403 responses not in audit log file [\#2698](https://github.com/networknt/light-4j/pull/2698) ([stevehu](https://github.com/stevehu))
 - fixes \#2688 replace RuleLoaderStartupHook with MultiThreadRuleExecutor [\#2689](https://github.com/networknt/light-4j/pull/2689) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.3.3](https://github.com/networknt/light-4j/tree/2.3.3) (2026-02-19)
 
 
