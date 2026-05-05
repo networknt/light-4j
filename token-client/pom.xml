@@ -12,6 +12,7 @@
 
     <artifactId>token-client</artifactId>
     <packaging>jar</packaging>
+    <name>token-client</name>
     <description>Hybrid Token Client for caching and bridging proxy tokens.</description>
 
     <dependencies>
