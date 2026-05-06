@@ -24,6 +24,7 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.server.ServerConfig;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -38,6 +39,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This is a simple audit handler that dump most important info per-request basis. The following
@@ -99,12 +101,43 @@ public class AuditHandler implements MiddlewareHandler {
     static final String SERVICE_ID_KEY = "serviceId";
     /** invalid config value status code */
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
+    /** error status field name */
+    static final String ERROR_STATUS_KEY = "status";
+    /** MCP tool name field name */
+    static final String TOOL_NAME_KEY = "toolName";
+    /** MCP tool arguments field name */
+    static final String TOOL_ARGUMENTS_KEY = "toolArguments";
+    /** MCP tool result field name */
+    static final String TOOL_RESULT_KEY = "toolResult";
+
+    private static final Set<String> KNOWN_AUDIT_KEYS = Set.of(
+            REQUEST_BODY_KEY,
+            RESPONSE_BODY_KEY,
+            QUERY_PARAMETERS_KEY,
+            PATH_PARAMETERS_KEY,
+            REQUEST_COOKIES_KEY,
+            SERVICE_ID_KEY,
+            STATUS_CODE,
+            RESPONSE_TIME,
+            TIMESTAMP,
+            Constants.CLIENT_ID_STRING,
+            Constants.USER_ID_STRING,
+            Constants.SCOPE_CLIENT_ID_STRING,
+            Constants.ENDPOINT_STRING,
+            Constants.STATUS,
+            Constants.STACK_TRACE,
+            ERROR_STATUS_KEY,
+            TOOL_NAME_KEY,
+            TOOL_ARGUMENTS_KEY,
+            TOOL_RESULT_KEY
+    );
 
 
     private volatile HttpHandler next;
     private volatile AuditConfig config;
     private volatile String serviceId;
     private volatile DateTimeFormatter dateTimeFormatter;
+    private volatile Set<String> warnedUnknownAuditKeys = ConcurrentHashMap.newKeySet();
 
     /**
      * Default constructor for AuditHandler.
@@ -142,6 +175,7 @@ public class AuditHandler implements MiddlewareHandler {
                     if (serverConfig != null) {
                         serviceId = serverConfig.getServiceId();
                     }
+                    warnedUnknownAuditKeys = ConcurrentHashMap.newKeySet();
                     String timestampFormat = config.getTimestampFormat();
                     if (!StringUtils.isBlank(timestampFormat)) {
                         try {
@@ -171,7 +205,7 @@ public class AuditHandler implements MiddlewareHandler {
         }
 
         // dump request header, request body, path parameters, query parameters and request cookies according to config
-        auditRequest(exchange, auditMap, config);
+        auditRequest(exchange, auditMap, auditInfo, config);
 
         // dump serviceId from server.yml
         if (config.hasAuditList() && config.getAuditList().contains(SERVICE_ID_KEY)) {
@@ -278,9 +312,11 @@ public class AuditHandler implements MiddlewareHandler {
      *
      * @param exchange the HttpServerExchange containing the request
      * @param auditMap the map to hold the audited request data
+     * @param auditInfo the map containing audit fields populated by other handlers
      * @param config the audit configuration
      */
-    private void auditRequest(final HttpServerExchange exchange, final Map<String, Object> auditMap, AuditConfig config) {
+    private void auditRequest(final HttpServerExchange exchange, final Map<String, Object> auditMap,
+                              final Map<String, Object> auditInfo, AuditConfig config) {
         if (config.hasHeaderList()) {
             AuditHandler.auditHeader(exchange, auditMap, config);
         }
@@ -302,9 +338,21 @@ public class AuditHandler implements MiddlewareHandler {
                     AuditHandler.auditPathParameters(exchange, auditMap, config);
                     break;
                 default:
-                    logger.error("Unknown audit key {} in audit.yml", key);
+                    warnUnknownAuditKey(key, auditInfo);
                     break;
             }
+        }
+    }
+
+    private void warnUnknownAuditKey(String key, Map<String, Object> auditInfo) {
+        if (KNOWN_AUDIT_KEYS.contains(key) || (auditInfo != null && auditInfo.containsKey(key))) {
+            return;
+        }
+        if (warnedUnknownAuditKeys.add(key)) {
+            logger.warn(
+                    "Unknown audit key {} in audit.yml. It will be ignored unless another handler populates AUDIT_INFO with the same key.",
+                    key
+            );
         }
     }
 

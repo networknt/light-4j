@@ -16,10 +16,14 @@
 
 package com.networknt.audit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -29,12 +33,15 @@ import io.undertow.util.Methods;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -245,6 +252,34 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
     public void testAuditWith401ServiceId() throws Exception {
         runTest("/error", "post", null, 401);
         verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
+    }
+
+    @Test
+    public void shouldWarnOnceForUnknownAuditKey() throws Exception {
+        AuditHandler auditHandler = new AuditHandler();
+        Method method = AuditHandler.class.getDeclaredMethod("warnUnknownAuditKey", String.class, Map.class);
+        method.setAccessible(true);
+
+        ch.qos.logback.classic.Logger handlerLogger =
+                (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AuditHandler.class);
+        Appender<ILoggingEvent> appender = Mockito.mock(Appender.class);
+        handlerLogger.addAppender(appender);
+
+        try {
+            method.invoke(auditHandler, "custom_key", null);
+            method.invoke(auditHandler, "custom_key", null);
+            method.invoke(auditHandler, Constants.CLIENT_ID_STRING, null);
+            method.invoke(auditHandler, "dynamic_key", Map.of("dynamic_key", "value"));
+
+            ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+            Mockito.verify(appender, Mockito.times(1)).doAppend(loggingEventCaptor.capture());
+
+            ILoggingEvent loggingEvent = loggingEventCaptor.getValue();
+            Assertions.assertEquals(Level.WARN, loggingEvent.getLevel());
+            Assertions.assertTrue(loggingEvent.getFormattedMessage().contains("custom_key"));
+        } finally {
+            handlerLogger.detachAppender(appender);
+        }
     }
 
     /*
