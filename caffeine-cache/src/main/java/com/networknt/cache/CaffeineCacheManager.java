@@ -57,6 +57,15 @@ public class CaffeineCacheManager implements CacheManager {
     }
 
     @Override
+    public void clear(String cacheName) {
+        Cache<Object, Object> cache = caches.get(cacheName);
+        if (cache != null) {
+            cache.invalidateAll();
+            cache.cleanUp();
+        }
+    }
+
+    @Override
     public void removeCache(String cacheName) {
         Cache<Object, Object> cache = caches.get(cacheName);
         if (cache != null) {

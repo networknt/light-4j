@@ -293,6 +293,26 @@ class McpHandlerTest {
     }
 
     @Test
+    void testToolsListIncludesClearCache() {
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/list");
+        envelope.put("id", 599);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(599), argThat(result -> {
+            if (!(result instanceof Map<?, ?> map) || !(map.get("tools") instanceof List<?> tools)) {
+                return false;
+            }
+            return tools.stream().anyMatch(tool -> tool instanceof Map<?, ?> toolMap
+                    && "clear_cache".equals(toolMap.get("name"))
+                    && toolMap.get("inputSchema") instanceof Map<?, ?> schema
+                    && schema.get("required") instanceof List<?> required
+                    && required.contains("name"));
+        }));
+    }
+
+    @Test
     void testListCachesReportsSupportStatus() {
         Map<String, Object> params = new HashMap<>();
         params.put("name", "list_caches");
@@ -346,6 +366,49 @@ class McpHandlerTest {
             return entriesMap.values().stream().allMatch(value ->
                     value instanceof Map<?, ?> summary && summary.containsKey("type"));
         }));
+    }
+
+    @Test
+    void testClearCacheReportsSupportStatusAndName() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "clear_cache");
+        params.put("arguments", Map.of("name", "test-cache"));
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 602);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendResult(eq(602), argThat(result -> {
+            if (!(result instanceof Map<?, ?> map)) {
+                return false;
+            }
+            if (!"test-cache".equals(map.get("name"))) {
+                return false;
+            }
+            if (!(map.get("supported") instanceof Boolean) || !(map.get("status") instanceof String)) {
+                return false;
+            }
+            if (Boolean.TRUE.equals(map.get("supported"))) {
+                return map.get("beforeSize") instanceof Number && map.get("afterSize") instanceof Number;
+            }
+            return "unsupported".equals(map.get("status"));
+        }));
+    }
+
+    @Test
+    void testClearCacheRejectsMissingName() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "clear_cache");
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("method", "tools/call");
+        envelope.put("id", 603);
+        envelope.put("params", params);
+
+        McpHandler.handle(client, envelope);
+
+        verify(client).sendError(eq(603), eq(-32602), contains("Missing required parameter: name"));
     }
 
     @Test

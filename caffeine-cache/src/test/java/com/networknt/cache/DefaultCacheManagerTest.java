@@ -24,4 +24,23 @@ public class DefaultCacheManagerTest {
         Object value = cacheManager.get("cache1", "key");
         Assertions.assertEquals("value", value);
     }
+
+    @Test
+    public void testClearCacheKeepsCacheRegistered() {
+        CacheManager cacheManager = CacheManager.getInstance();
+        cacheManager.addCache("clear-test", 100, 10);
+        try {
+            cacheManager.put("clear-test", "key", "value");
+
+            cacheManager.clear("clear-test");
+
+            Assertions.assertNull(cacheManager.get("clear-test", "key"));
+            Assertions.assertNotNull(cacheManager.getCache("clear-test"));
+
+            cacheManager.put("clear-test", "key", "reloaded");
+            Assertions.assertEquals("reloaded", cacheManager.get("clear-test", "key"));
+        } finally {
+            cacheManager.removeCache("clear-test");
+        }
+    }
 }

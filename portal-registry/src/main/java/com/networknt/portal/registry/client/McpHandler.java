@@ -50,10 +50,13 @@ public class McpHandler {
     private static final String CONFIG_ARG = "config";
     private static final String STATUS = "status";
     private static final String SUCCESS = "success";
+    private static final String UNSUPPORTED = "unsupported";
     private static final String MESSAGE = "message";
     private static final String SUPPORTED = "supported";
     private static final String TYPE = "type";
     private static final String SIZE = "size";
+    private static final String BEFORE_SIZE = "beforeSize";
+    private static final String AFTER_SIZE = "afterSize";
     private static final String KEYS = "keys";
     private static final String TOTAL = "total";
     private static final String LOGS = "logs";
@@ -201,6 +204,15 @@ public class McpHandler {
                         )
                 ),
                 Map.of(
+                        "name", "clear_cache",
+                        DESCRIPTION, "Clear all entries for a cache by name while keeping the cache registered",
+                        INPUT_SCHEMA, Map.of(
+                                "type", OBJECT,
+                                PROPERTIES, Map.of(NAME, Map.of("type", STRING)),
+                                REQUIRED, List.of(NAME)
+                        )
+                ),
+                Map.of(
                         "name", "get_chaos_monkey_config",
                         DESCRIPTION, "Retrieve current chaos monkey configuration",
                         INPUT_SCHEMA, Map.of("type", OBJECT, PROPERTIES, Map.of())
@@ -272,6 +284,9 @@ public class McpHandler {
                 break;
             case "get_cache_entries":
                 client.sendResult(id, getCacheEntries(args));
+                break;
+            case "clear_cache":
+                client.sendResult(id, clearCache(args));
                 break;
             case "get_chaos_monkey_config":
                 client.sendResult(id, getChaosMonkeyConfig());
@@ -693,6 +708,52 @@ public class McpHandler {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to retrieve cache entries", e);
         }
+    }
+
+    private static Map<String, Object> clearCache(Map<String, Object> args) {
+        String cacheName = readRequiredString(args.get(NAME));
+        if (cacheName == null) {
+            throw new IllegalArgumentException("Missing required parameter: name");
+        }
+        if (!isCacheAvailable()) {
+            return cacheUnsupportedResult(cacheName);
+        }
+        try {
+            Class<?> cacheManagerClass = resolveClass("com.networknt.cache.CacheManager");
+            Method getInstanceMethod = cacheManagerClass.getMethod("getInstance");
+            Object cacheManager = getInstanceMethod.invoke(null);
+            if (cacheManager == null) {
+                return cacheUnsupportedResult(cacheName);
+            }
+
+            Method getSizeMethod = cacheManagerClass.getMethod("getSize", String.class);
+            int beforeSize = ((Number) getSizeMethod.invoke(cacheManager, cacheName)).intValue();
+            Method clearMethod = cacheManagerClass.getMethod("clear", String.class);
+            clearMethod.invoke(cacheManager, cacheName);
+            int afterSize = ((Number) getSizeMethod.invoke(cacheManager, cacheName)).intValue();
+
+            return Map.of(
+                    SUPPORTED, true,
+                    STATUS, SUCCESS,
+                    NAME, cacheName,
+                    BEFORE_SIZE, beforeSize,
+                    AFTER_SIZE, afterSize
+            );
+        } catch (IllegalStateException e) {
+            logger.info("Cache support is not available", e);
+            return cacheUnsupportedResult(cacheName);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to clear cache", e);
+        }
+    }
+
+    private static Map<String, Object> cacheUnsupportedResult(String cacheName) {
+        return Map.of(
+                SUPPORTED, false,
+                STATUS, UNSUPPORTED,
+                MESSAGE, CACHE_UNAVAILABLE_MESSAGE,
+                NAME, cacheName
+        );
     }
 
     private static Map<String, Object> getChaosMonkeyConfig() {
