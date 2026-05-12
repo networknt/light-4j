@@ -1,10 +1,14 @@
 package com.networknt.server;
 
+import com.networknt.client.ssl.CompositeX509TrustManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.lang.reflect.Method;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,5 +85,57 @@ public class DefaultConfigLoaderTest {
                 DefaultConfigLoader.normalizeDownloadedFileName(
                         "server.truststore",
                         DefaultConfigLoader.CONFIG_SERVER_CERTS_CONTEXT_ROOT));
+    }
+
+    @Test
+    public void testComposeBootstrapTrustManagersUsesCompositeWhenDefaultTrustIsAvailable() {
+        TrustManager[] result = DefaultConfigLoader.composeBootstrapTrustManagers(
+                new TrustManager[] { new TestTrustManager() },
+                new TrustManager[] { new TestTrustManager() });
+
+        Assertions.assertEquals(1, result.length);
+        Assertions.assertTrue(result[0] instanceof CompositeX509TrustManager);
+    }
+
+    @Test
+    public void testComposeBootstrapTrustManagersFallsBackWhenDefaultTrustIsMissing() {
+        TrustManager[] bootstrapTrustManagers = new TrustManager[] { new TestTrustManager() };
+
+        TrustManager[] result = DefaultConfigLoader.composeBootstrapTrustManagers(
+                bootstrapTrustManagers,
+                null);
+
+        Assertions.assertSame(bootstrapTrustManagers, result);
+    }
+
+    @Test
+    public void testLoadDefaultTrustManagersFallsBackWhenDefaultTrustStoreIsInvalid() {
+        String trustStoreProperty = "javax.net.ssl.trustStore";
+        String previousTrustStore = System.getProperty(trustStoreProperty);
+        System.setProperty(trustStoreProperty, "target/missing-default-truststore.jks");
+        try {
+            Assertions.assertNull(DefaultConfigLoader.loadDefaultTrustManagers());
+        } finally {
+            if (previousTrustStore == null) {
+                System.clearProperty(trustStoreProperty);
+            } else {
+                System.setProperty(trustStoreProperty, previousTrustStore);
+            }
+        }
+    }
+
+    private static class TestTrustManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
     }
 }

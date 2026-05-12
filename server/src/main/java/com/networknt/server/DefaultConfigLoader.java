@@ -20,6 +20,8 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.networknt.client.ClientConfig;
+import com.networknt.client.Http2Client;
+import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
@@ -570,11 +572,42 @@ public class DefaultConfigLoader implements IConfigLoader{
         return trustManagers;
     }
 
+    static TrustManager[] composeBootstrapTrustManagers(TrustManager[] bootstrapTrustManagers,
+                                                        TrustManager[] defaultTrustManagers) {
+        if (defaultTrustManagers == null || defaultTrustManagers.length == 0) {
+            return bootstrapTrustManagers;
+        }
+
+        List<TrustManager> trustManagerList = new ArrayList<>();
+        if (bootstrapTrustManagers != null && bootstrapTrustManagers.length > 0) {
+            trustManagerList.addAll(Arrays.asList(bootstrapTrustManagers));
+        }
+        trustManagerList.addAll(Arrays.asList(defaultTrustManagers));
+        return new TrustManager[] {
+                new CompositeX509TrustManager(Http2Client.convertTrustManagers(trustManagerList))
+        };
+    }
+
+    static TrustManager[] loadDefaultTrustManagers() {
+        try {
+            return Http2Client.loadDefaultTrustStore();
+        } catch (Exception e) {
+            logger.warn("Unable to load Java default truststore for config server client: {}. " +
+                    "Continuing with bootstrap truststore only.", e.getMessage());
+            if (logger.isDebugEnabled()) logger.debug("Unable to load Java default truststore for config server client.", e);
+            return null;
+        }
+    }
+
+    static TrustManager[] buildBootstrapTrustManagers() {
+        TrustManager[] bootstrapTrustManagers = buildTrustManagers(loadBootstrapTrustStore());
+        return composeBootstrapTrustManagers(bootstrapTrustManagers, loadDefaultTrustManagers());
+    }
 
     private static SSLContext createBootstrapContext() throws RuntimeException {
         SSLContext sslContext = null;
         try {
-            TrustManager[] trustManagers = buildTrustManagers(loadBootstrapTrustStore());
+            TrustManager[] trustManagers = buildBootstrapTrustManagers();
             sslContext = SSLContext.getInstance("TLSv1.2");
             sslContext.init(null, trustManagers, null);
         } catch (Exception e) {
