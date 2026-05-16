@@ -33,6 +33,14 @@ public interface McpTool {
     String getInputSchema();
 
     /**
+     * Get tool metadata
+     * @return String
+     */
+    default String getToolMetadata() {
+        return null;
+    }
+
+    /**
      * Execute the tool
      * @param arguments map of arguments
      * @return map of result

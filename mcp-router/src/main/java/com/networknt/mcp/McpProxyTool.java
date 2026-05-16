@@ -29,8 +29,9 @@ public class McpProxyTool extends AbstractRemoteMcpTool {
     private static final String JSONRpc_VERSION = "2.0";
     private final ObjectMapper mapper = Config.getInstance().getMapper();
 
-    public McpProxyTool(String name, String description, String endpoint, String path, String method, String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
-        super(name, description, endpoint, path, method, inputSchema, protocol, serviceId, envTag, targetHost);
+    public McpProxyTool(String name, String description, String endpoint, String path, String method, String inputSchema,
+                        String protocol, String serviceId, String envTag, String targetHost, String toolMetadata) {
+        super(name, description, endpoint, path, method, inputSchema, protocol, serviceId, envTag, targetHost, toolMetadata);
     }
 
     @Override

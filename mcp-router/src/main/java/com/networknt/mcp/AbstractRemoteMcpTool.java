@@ -17,9 +17,11 @@ abstract class AbstractRemoteMcpTool implements McpTool {
     protected final String serviceId;
     protected final String envTag;
     protected final String targetHost;
+    protected final String toolMetadata;
 
     protected AbstractRemoteMcpTool(String name, String description, String endpoint, String path, String method,
-                                    String inputSchema, String protocol, String serviceId, String envTag, String targetHost) {
+                                    String inputSchema, String protocol, String serviceId, String envTag,
+                                    String targetHost, String toolMetadata) {
         this.name = name;
         this.description = description;
         this.endpoint = endpoint;
@@ -30,6 +32,7 @@ abstract class AbstractRemoteMcpTool implements McpTool {
         this.serviceId = serviceId;
         this.envTag = envTag;
         this.targetHost = targetHost;
+        this.toolMetadata = toolMetadata;
     }
 
     @Override
@@ -50,6 +53,11 @@ abstract class AbstractRemoteMcpTool implements McpTool {
     @Override
     public String getInputSchema() {
         return inputSchema != null ? inputSchema : DEFAULT_INPUT_SCHEMA;
+    }
+
+    @Override
+    public String getToolMetadata() {
+        return toolMetadata;
     }
 
     protected String resolveTargetUrl() {

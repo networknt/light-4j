@@ -51,6 +51,14 @@ public class McpHandler implements MiddlewareHandler {
     private static final String ERROR = "error";
     private static final String MESSAGE = "message";
     private static final String CODE = "code";
+    private static final String TOOL_POLICY_DECISION = "toolPolicyDecision";
+    private static final String TOOL_POLICY_REASON = "toolPolicyReason";
+    private static final String TOOL_SENSITIVITY_TIER = "toolSensitivityTier";
+    private static final String TOOL_MAX_SENSITIVITY_TIER = "toolMaxSensitivityTier";
+    private static final String TOOL_DESTRUCTIVE = "toolDestructive";
+    private static final String TOOL_REQUIRES_APPROVAL = "toolRequiresApproval";
+    private static final String TOOL_APPROVAL_CONFIGURED = "toolApprovalConfigured";
+    private static final String DEFAULT_SENSITIVITY_TIER = "internal";
 
     // Initialize Token Framework locally (L1/L2 -> L3 HTTP Fallback)
     private static final TokenClient tokenClient = new CacheTokenClient(new HttpTokenClient("https://tokenization.lightapi.net"));
@@ -92,13 +100,14 @@ public class McpHandler implements MiddlewareHandler {
                 String apiType = toolData.getApiType();
                 String targetHost = toolData.getTargetHost();
                 String serviceId = toolData.getServiceId();
+                String toolMetadata = toolData.getToolMetadata();
 
                 if (name != null && endpoint != null && ((serviceId != null && protocol != null) || targetHost != null)) {
                     McpTool tool;
                     if ("mcp".equalsIgnoreCase(apiType)) {
-                        tool = new McpProxyTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost());
+                        tool = new McpProxyTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost(), toolMetadata);
                     } else {
-                        tool = new HttpMcpTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost());
+                        tool = new HttpMcpTool(name, description, endpoint, path, method, inputSchema, protocol, toolData.getServiceId(), toolData.getEnvTag(), toolData.getTargetHost(), toolMetadata);
                     }
                     McpToolRegistry.registerTool(tool);
                     if (logger.isDebugEnabled()) logger.debug("Registered MCP tool: {}", name);
@@ -211,7 +220,7 @@ public class McpHandler implements MiddlewareHandler {
             if(logger.isDebugEnabled()) logger.debug("processMessage - notifications/initialized received, returning without response");
             return;
         } else if ("tools/list".equals(method)) {
-            addToolsListResponse(request, response);
+            addToolsListResponse(exch, request, response);
         } else if ("tools/call".equals(method)) {
             if (handleToolCall(exch, request, response)) {
                 return;
@@ -242,7 +251,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private void addToolsListResponse(Map<String, Object> request, Map<String, Object> response) {
+    private void addToolsListResponse(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) {
         Map<String, Object> params = (Map<String, Object>) request.get("params");
         String query = null;
         String intent = null;
@@ -256,7 +265,19 @@ public class McpHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - registry has {} tool(s), query={}, intent={}", registrySize, query, intent);
 
         List<Map<String, Object>> toolList = new ArrayList<>();
+        List<Map<String, Object>> blockedTools = new ArrayList<>();
         for (McpTool tool : tools.values()) {
+            ToolPolicyDecision decision = evaluateToolPolicy(tool);
+            if (!decision.allowed()) {
+                blockedTools.add(toolPolicyAuditMap(tool, decision));
+                if(logger.isDebugEnabled()) {
+                    logger.debug("MCP tools/list suppressed toolName={} endpoint={} reason={} sensitivityTier={} maxSensitivityTier={} destructive={} requiresApproval={} approvalConfigured={}",
+                            tool.getName(), tool.getEndpoint(), decision.reason(), decision.sensitivityTier(),
+                            decision.maxSensitivityTier(), decision.destructive(), decision.requiresApproval(),
+                            decision.approvalConfigured());
+                }
+                continue;
+            }
             if (!matchesToolFilter(tool, query, intent)) {
                 continue;
             }
@@ -266,6 +287,12 @@ public class McpHandler implements MiddlewareHandler {
             toolMap.put("description", tool.getDescription());
             toolMap.put("inputSchema", parseInputSchema(tool));
             toolList.add(toolMap);
+        }
+        if (!blockedTools.isEmpty()) {
+            Map<String, Object> auditInfo = ensureAuditInfo(exch);
+            auditInfo.put(TOOL_POLICY_DECISION, "filtered");
+            putAuditJson(auditInfo, "toolPolicyBlockedTools", blockedTools);
+            if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - suppressed {} tool(s) by policy", blockedTools.size());
         }
         if(logger.isDebugEnabled()) logger.debug("addToolsListResponse - returning {} tool(s) after filtering", toolList.size());
         response.put("result", Map.of("tools", toolList));
@@ -300,11 +327,7 @@ public class McpHandler implements MiddlewareHandler {
 
     @SuppressWarnings("unchecked")
     private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws JsonProcessingException {
-        Map<String, Object> auditInfo = exch.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if (auditInfo == null) {
-            auditInfo = new HashMap<>();
-            exch.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
-        }
+        Map<String, Object> auditInfo = ensureAuditInfo(exch);
 
         Object paramsObj = request.get("params");
         if (!(paramsObj instanceof Map)) {
@@ -345,6 +368,25 @@ public class McpHandler implements MiddlewareHandler {
             return false;
         }
 
+        ToolPolicyDecision decision = evaluateToolPolicy(tool);
+        if (!decision.allowed()) {
+            Map<String, Object> errorMap = toolPolicyError(tool, decision);
+            response.put(ERROR, errorMap);
+            putToolPolicyAudit(auditInfo, decision, "blocked");
+            putAuditJson(auditInfo, TOOL_RESULT, errorMap);
+            logger.warn("MCP tools/call blocked by policy toolName={} endpoint={} reason={} sensitivityTier={} maxSensitivityTier={} destructive={} requiresApproval={} approvalConfigured={}",
+                    tool.getName(), tool.getEndpoint(), decision.reason(), decision.sensitivityTier(),
+                    decision.maxSensitivityTier(), decision.destructive(), decision.requiresApproval(),
+                    decision.approvalConfigured());
+            return false;
+        }
+        putToolPolicyAudit(auditInfo, decision, "allowed");
+        if(logger.isDebugEnabled()) {
+            logger.debug("MCP tools/call allowed by policy toolName={} endpoint={} sensitivityTier={} maxSensitivityTier={} destructive={} requiresApproval={} approvalConfigured={}",
+                    tool.getName(), tool.getEndpoint(), decision.sensitivityTier(), decision.maxSensitivityTier(),
+                    decision.destructive(), decision.requiresApproval(), decision.approvalConfigured());
+        }
+
         if (!checkAccessControl(exch, tool.getEndpoint(), args, response)) {
             putAuditJson(auditInfo, TOOL_RESULT, response.get(ERROR));
             exch.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
@@ -377,6 +419,215 @@ public class McpHandler implements MiddlewareHandler {
             response.put(ERROR, errorMap);
             putAuditJson(auditInfo, TOOL_RESULT, errorMap);
         }
+    }
+
+    private record ToolPolicyDecision(boolean allowed, String reason, String sensitivityTier,
+                                      String maxSensitivityTier, boolean readOnly, boolean destructive,
+                                      boolean requiresApproval, boolean approvalConfigured) {
+    }
+
+    private Map<String, Object> ensureAuditInfo(HttpServerExchange exchange) {
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo == null) {
+            auditInfo = new HashMap<>();
+            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        }
+        return auditInfo;
+    }
+
+    private ToolPolicyDecision evaluateToolPolicy(McpTool tool) {
+        Map<String, Object> metadata = toolMetadata(tool);
+        Map<String, Object> routing = objectMap(metadata.get("routing"));
+        Map<String, Object> safety = objectMap(metadata.get("safety"));
+        Map<String, Object> policy = objectMap(metadata.get("policy"));
+        Map<String, Object> sensitivity = objectMap(metadata.get("sensitivity"));
+        Map<String, Object> approval = objectMap(metadata.get("approval"));
+        String sensitivityTier = normalizeSensitivityTier(firstNonBlank(
+                routing.get("sensitivityTier"),
+                safety.get("sensitivityTier"),
+                sensitivity.get("tier"),
+                metadata.get("sensitivityTier"),
+                metadata.get("sensitivity_tier")
+        ));
+        String maxSensitivityTier = normalizeSensitivityTier(firstNonBlank(
+                policy.get("maxSensitivityTier"),
+                policy.get("maxTier"),
+                sensitivity.get("maxTier"),
+                metadata.get("maxSensitivityTier")
+        ));
+        String method = endpointMethod(tool.getEndpoint());
+        boolean readOnlyDefault = "get".equals(method) || "head".equals(method) || "options".equals(method);
+        boolean destructiveDefault = "delete".equals(method);
+        boolean readOnly = booleanValue(firstValue(
+                safety.get("read_only"), safety.get("readOnly"), metadata.get("read_only"), metadata.get("readOnly")
+        ), readOnlyDefault);
+        boolean destructive = booleanValue(firstValue(
+                safety.get("destructive"), metadata.get("destructive")
+        ), destructiveDefault);
+        boolean requiresApproval = booleanValue(firstValue(
+                safety.get("requiresApproval"), safety.get("approvalRequired"), safety.get("humanApprovalRequired"),
+                metadata.get("requiresApproval"), metadata.get("approvalRequired"), metadata.get("humanApprovalRequired")
+        ), false);
+        boolean approvalConfigured = booleanValue(firstValue(
+                approval.get("configured"), policy.get("approvalConfigured"), metadata.get("approvalConfigured")
+        ), false) || firstNonBlank(
+                approval.get("workflowId"), approval.get("workflow"), policy.get("approvalWorkflowId"), policy.get("approvalWorkflow"),
+                metadata.get("approvalWorkflowId"), metadata.get("approvalWorkflow")
+        ) != null;
+
+        String reason = null;
+        if (sensitivityRank(sensitivityTier) > sensitivityRank(maxSensitivityTier)) {
+            reason = "sensitivity_tier_exceeds_policy";
+        } else if (destructive && !approvalConfigured) {
+            reason = "destructive_tool_requires_approval_workflow";
+        } else if (requiresApproval && !approvalConfigured) {
+            reason = "approval_required_missing_workflow";
+        }
+
+        return new ToolPolicyDecision(reason == null, reason, sensitivityTier, maxSensitivityTier,
+                readOnly, destructive, requiresApproval, approvalConfigured);
+    }
+
+    private Map<String, Object> toolMetadata(McpTool tool) {
+        String metadata = tool.getToolMetadata();
+        if (metadata == null || metadata.isBlank()) {
+            return Collections.emptyMap();
+        }
+        try {
+            Object value = mapper.readValue(metadata, Object.class);
+            return objectMap(value);
+        } catch (Exception e) {
+            logger.warn("Ignoring invalid MCP toolMetadata for tool {}: {}", tool.getName(), e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<String, Object> objectMap(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> result = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                result.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+            return result;
+        }
+        return Collections.emptyMap();
+    }
+
+    private Object firstValue(Object... values) {
+        for (Object value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private String firstNonBlank(Object... values) {
+        for (Object value : values) {
+            if (value != null && !value.toString().isBlank()) {
+                return value.toString();
+            }
+        }
+        return null;
+    }
+
+    private boolean booleanValue(Object value, boolean defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        String string = value.toString().trim();
+        if (string.isEmpty()) {
+            return defaultValue;
+        }
+        return switch (string.toLowerCase(Locale.ROOT)) {
+            case "true", "yes", "y", "1", "on" -> true;
+            case "false", "no", "n", "0", "off" -> false;
+            default -> defaultValue;
+        };
+    }
+
+    private String normalizeSensitivityTier(Object value) {
+        if (value == null || value.toString().isBlank()) {
+            return DEFAULT_SENSITIVITY_TIER;
+        }
+        String normalized = value.toString().trim().toLowerCase(Locale.ROOT)
+                .replace('_', '-')
+                .replace(' ', '-');
+        if (normalized.contains("restricted")) {
+            return "restricted";
+        }
+        if (normalized.contains("confidential")) {
+            return "confidential";
+        }
+        if (normalized.contains("internal")) {
+            return "internal";
+        }
+        if (normalized.contains("public")) {
+            return "public";
+        }
+        return DEFAULT_SENSITIVITY_TIER;
+    }
+
+    private int sensitivityRank(String tier) {
+        return switch (normalizeSensitivityTier(tier)) {
+            case "public" -> 0;
+            case "internal" -> 1;
+            case "confidential" -> 2;
+            case "restricted" -> 3;
+            default -> 1;
+        };
+    }
+
+    private String endpointMethod(String endpoint) {
+        if (endpoint == null) {
+            return "";
+        }
+        int atIndex = endpoint.lastIndexOf('@');
+        if (atIndex < 0 || atIndex >= endpoint.length() - 1) {
+            return "";
+        }
+        return endpoint.substring(atIndex + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private Map<String, Object> toolPolicyAuditMap(McpTool tool, ToolPolicyDecision decision) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("toolName", tool.getName());
+        map.put("endpoint", tool.getEndpoint());
+        map.put("reason", decision.reason());
+        map.put("sensitivityTier", decision.sensitivityTier());
+        map.put("maxSensitivityTier", decision.maxSensitivityTier());
+        map.put("readOnly", decision.readOnly());
+        map.put("destructive", decision.destructive());
+        map.put("requiresApproval", decision.requiresApproval());
+        map.put("approvalConfigured", decision.approvalConfigured());
+        return map;
+    }
+
+    private Map<String, Object> toolPolicyError(McpTool tool, ToolPolicyDecision decision) {
+        Map<String, Object> data = toolPolicyAuditMap(tool, decision);
+        Map<String, Object> errorMap = new LinkedHashMap<>();
+        errorMap.put(CODE, -32004);
+        errorMap.put(MESSAGE, "Tool blocked by gateway policy: " + decision.reason());
+        errorMap.put("data", data);
+        return errorMap;
+    }
+
+    private void putToolPolicyAudit(Map<String, Object> auditInfo, ToolPolicyDecision decision, String status) {
+        auditInfo.put(TOOL_POLICY_DECISION, status);
+        if (decision.reason() != null) {
+            auditInfo.put(TOOL_POLICY_REASON, decision.reason());
+        }
+        auditInfo.put(TOOL_SENSITIVITY_TIER, decision.sensitivityTier());
+        auditInfo.put(TOOL_MAX_SENSITIVITY_TIER, decision.maxSensitivityTier());
+        auditInfo.put(TOOL_DESTRUCTIVE, decision.destructive());
+        auditInfo.put(TOOL_REQUIRES_APPROVAL, decision.requiresApproval());
+        auditInfo.put(TOOL_APPROVAL_CONFIGURED, decision.approvalConfigured());
     }
 
     @SuppressWarnings("unchecked")

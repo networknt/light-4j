@@ -294,9 +294,66 @@ public class McpHandlerTest {
     }
 
     @Test
+    public void testPolicyBlocksDestructiveTool() throws Exception {
+        McpTool blockedTool = new McpTool() {
+            @Override
+            public String getName() { return "blockedDelete"; }
+            @Override
+            public String getDescription() { return "Delete protected data"; }
+            @Override
+            public String getEndpoint() { return "blockedDelete@call"; }
+            @Override
+            public String getInputSchema() { return "{\"type\": \"object\"}"; }
+            @Override
+            public String getToolMetadata() { return "{\"destructive\":true}"; }
+            @Override
+            public Map<String, Object> execute(Map<String, Object> arguments) {
+                Assertions.fail("Blocked destructive tool should not execute");
+                return null;
+            }
+        };
+        McpToolRegistry.registerTool(blockedTool);
+
+        final Http2Client client = Http2Client.getInstance();
+        final SimpleConnectionState.ConnectionToken token =
+                client.borrow(new URI("http://localhost:" + PORT), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+
+        try {
+            ClientConnection connection = (ClientConnection) token.getRawConnection();
+
+            CountDownLatch listLatch = new CountDownLatch(1);
+            AtomicReference<ClientResponse> listReference = new AtomicReference<>();
+            ClientRequest listRequest = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            listRequest.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            listRequest.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            listRequest.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(listRequest, client.createClientCallback(listReference, listLatch,
+                    "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"params\": {}, \"id\": 8}"));
+            listLatch.await(1000, TimeUnit.MILLISECONDS);
+            String listBody = listReference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assertions.assertFalse(listBody.contains("blockedDelete"));
+
+            CountDownLatch callLatch = new CountDownLatch(1);
+            AtomicReference<ClientResponse> callReference = new AtomicReference<>();
+            ClientRequest callRequest = new ClientRequest().setMethod(Methods.POST).setPath("/mcp");
+            callRequest.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
+            callRequest.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
+            callRequest.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
+            connection.sendRequest(callRequest, client.createClientCallback(callReference, callLatch,
+                    "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"blockedDelete\", \"arguments\": {}}, \"id\": 9}"));
+            callLatch.await(1000, TimeUnit.MILLISECONDS);
+            String callBody = callReference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assertions.assertTrue(callBody.contains("-32004"));
+            Assertions.assertTrue(callBody.contains("destructive_tool_requires_approval_workflow"));
+        } finally {
+            client.restore(token);
+        }
+    }
+
+    @Test
     public void testMcpProxy() throws Exception {
         // Register an MCP proxy tool
-        McpTool proxyTool = new McpProxyTool("mcpTool", "Proxy to backend MCP", "mcpTool@call", "/mcp-backend", "POST", null, null, null, null, "http://localhost:7081");
+        McpTool proxyTool = new McpProxyTool("mcpTool", "Proxy to backend MCP", "mcpTool@call", "/mcp-backend", "POST", null, null, null, null, "http://localhost:7081", null);
         McpToolRegistry.registerTool(proxyTool);
 
         final Http2Client client = Http2Client.getInstance();
@@ -342,7 +399,7 @@ public class McpHandlerTest {
 
     @Test
     public void testServiceIdWithoutClusterFailsGracefully() {
-        HttpMcpTool tool = new HttpMcpTool("weatherByService", "Get weather information", "weatherByService@call", "/weather", "GET", null, "http", "weather-service", null, null);
+        HttpMcpTool tool = new HttpMcpTool("weatherByService", "Get weather information", "weatherByService@call", "/weather", "GET", null, "http", "weather-service", null, null, null);
 
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> tool.execute(Map.of()));
         Assertions.assertTrue(exception.getMessage().contains("Cluster service is not available"));
@@ -350,7 +407,7 @@ public class McpHandlerTest {
 
     @Test
     public void testMcpProxyServiceIdWithoutClusterFailsGracefully() {
-        McpProxyTool tool = new McpProxyTool("mcpByService", "Proxy to backend MCP", "mcpByService@call", "/mcp-backend", "POST", null, "http", "mcp-service", null, null);
+        McpProxyTool tool = new McpProxyTool("mcpByService", "Proxy to backend MCP", "mcpByService@call", "/mcp-backend", "POST", null, "http", "mcp-service", null, null, null);
 
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> tool.execute(Map.of()));
         Assertions.assertTrue(exception.getMessage().contains("Cluster service is not available"));
