@@ -1,6 +1,16 @@
 package com.networknt.proxy;
 
+import com.networknt.info.ServerInfoConfig;
+import com.networknt.info.ServerInfoUtil;
+import com.networknt.server.ModuleRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExternalServiceConfigTest {
     @Test
@@ -37,5 +47,30 @@ public class ExternalServiceConfigTest {
             }
         }
         assert found;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testExternalServiceConfigRegisteredForServerInfo() {
+        ExternalServiceConfig.load();
+
+        String registryKey = ExternalServiceConfig.CONFIG_NAME + ":" + ExternalServiceHandler.class.getName();
+        assertTrue(ModuleRegistry.getModuleRegistry().containsKey(registryKey));
+
+        Map<String, Object> registeredConfig = (Map<String, Object>) ModuleRegistry.getModuleRegistry().get(registryKey);
+        assertEquals(Boolean.TRUE, registeredConfig.get("enabled"));
+
+        Map<String, Object> serverInfo = ServerInfoUtil.getServerInfo(ServerInfoConfig.load());
+        Map<String, Object> components = (Map<String, Object>) serverInfo.get("component");
+        assertTrue(components.containsKey(ExternalServiceConfig.CONFIG_NAME));
+    }
+
+    @Test
+    public void testOnlyDefaultConfigNameIsCached() {
+        ExternalServiceConfig defaultConfig = ExternalServiceConfig.load();
+        ExternalServiceConfig testConfig = ExternalServiceConfig.load(ProxyConfig.CONFIG_NAME);
+
+        assertSame(defaultConfig, ExternalServiceConfig.load());
+        assertNotSame(testConfig, ExternalServiceConfig.load(ProxyConfig.CONFIG_NAME));
     }
 }

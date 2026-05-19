@@ -10,6 +10,7 @@ import com.networknt.config.schema.IntegerField; // REQUIRED IMPORT
 import com.networknt.config.schema.StringField; // REQUIRED IMPORT
 import com.networknt.config.schema.ArrayField; // REQUIRED IMPORT
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,6 +179,7 @@ public class ExternalServiceConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile ExternalServiceConfig instance;
 
     // --- Constructor and Loading Logic ---
 
@@ -201,7 +203,7 @@ public class ExternalServiceConfig {
      * @return ExternalServiceConfig
      */
     public static ExternalServiceConfig load() {
-        return new ExternalServiceConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -210,7 +212,27 @@ public class ExternalServiceConfig {
      * @return ExternalServiceConfig
      */
     public static ExternalServiceConfig load(String configName) {
-        return new ExternalServiceConfig(configName);
+        if (!CONFIG_NAME.equals(configName)) {
+            return new ExternalServiceConfig(configName);
+        }
+
+        ExternalServiceConfig config = instance;
+        Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        if (config != null && config.getMappedConfig() == mappedConfig) {
+            return config;
+        }
+        synchronized (ExternalServiceConfig.class) {
+            mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            config = instance;
+            if (config != null && config.getMappedConfig() == mappedConfig) {
+                return config;
+            }
+            config = new ExternalServiceConfig(configName);
+            ModuleRegistry.registerModule(configName, ExternalServiceHandler.class.getName(),
+                    Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+            instance = config;
+            return config;
+        }
     }
 
     // --- Private Setters for Annotated Fields ---
