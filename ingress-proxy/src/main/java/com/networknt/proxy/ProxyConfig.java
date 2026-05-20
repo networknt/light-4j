@@ -1,6 +1,8 @@
 package com.networknt.proxy;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.ArrayField; // REQUIRED IMPORT
 import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.BooleanField; // REQUIRED IMPORT
@@ -11,6 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import com.networknt.server.ModuleRegistry;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +40,12 @@ public class ProxyConfig {
     private static final String HOSTS = "hosts";
     private static final String CONNECTIONS_PER_THREAD = "connectionsPerThread";
     private static final String MAX_REQUEST_TIME = "maxRequestTime";
+    private static final String STREAM_RESPONSE_CONTENT_TYPES = "streamResponseContentTypes";
+    private static final String STREAM_REQUEST_ACCEPT_TYPES = "streamRequestAcceptTypes";
+    private static final String STREAM_PATH_PREFIXES = "streamPathPrefixes";
+    private static final String STREAM_MAX_REQUEST_TIME = "streamMaxRequestTime";
+    private static final String STREAM_IDLE_TIMEOUT = "streamIdleTimeout";
+    private static final String STREAM_RESPONSE_HEADER_OVERWRITE = "streamResponseHeaderOverwrite";
     private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
     private static final String REUSE_X_FORWARDED = "reuseXForwarded";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
@@ -41,6 +53,15 @@ public class ProxyConfig {
     private static final String FORWARD_JWT_CLAIMS = "forwardJwtClaims";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final List<String> DEFAULT_STREAM_TYPES = Collections.singletonList("text/event-stream");
+    private static final List<String> DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE = Arrays.asList(
+            "Content-Type",
+            "Cache-Control",
+            "Connection",
+            "Transfer-Encoding",
+            "Content-Encoding",
+            "Content-Length"
+    );
 
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -88,6 +109,54 @@ public class ProxyConfig {
             defaultValue = "1000"
     )
     int maxRequestTime;
+
+    @ArrayField(
+            configFieldName = STREAM_RESPONSE_CONTENT_TYPES,
+            externalizedKeyName = STREAM_RESPONSE_CONTENT_TYPES,
+            description = "Response content types that should be treated as streaming passthrough responses.",
+            items = String.class
+    )
+    List<String> streamResponseContentTypes = new ArrayList<>(DEFAULT_STREAM_TYPES);
+
+    @ArrayField(
+            configFieldName = STREAM_REQUEST_ACCEPT_TYPES,
+            externalizedKeyName = STREAM_REQUEST_ACCEPT_TYPES,
+            description = "Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.",
+            items = String.class
+    )
+    List<String> streamRequestAcceptTypes = new ArrayList<>(DEFAULT_STREAM_TYPES);
+
+    @ArrayField(
+            configFieldName = STREAM_PATH_PREFIXES,
+            externalizedKeyName = STREAM_PATH_PREFIXES,
+            description = "Request path prefixes that should use streaming timeout behavior before downstream headers arrive.",
+            items = String.class
+    )
+    List<String> streamPathPrefixes = new ArrayList<>();
+
+    @IntegerField(
+            configFieldName = STREAM_MAX_REQUEST_TIME,
+            externalizedKeyName = STREAM_MAX_REQUEST_TIME,
+            description = "Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams.",
+            defaultValue = "0"
+    )
+    int streamMaxRequestTime;
+
+    @IntegerField(
+            configFieldName = STREAM_IDLE_TIMEOUT,
+            externalizedKeyName = STREAM_IDLE_TIMEOUT,
+            description = "Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout.",
+            defaultValue = "0"
+    )
+    int streamIdleTimeout;
+
+    @ArrayField(
+            configFieldName = STREAM_RESPONSE_HEADER_OVERWRITE,
+            externalizedKeyName = STREAM_RESPONSE_HEADER_OVERWRITE,
+            description = "Response headers to remove before copying downstream streaming response headers.",
+            items = String.class
+    )
+    List<String> streamResponseHeaderOverwrite = new ArrayList<>(DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE);
 
     @BooleanField(
             configFieldName = REWRITE_HOST_HEADER,
@@ -290,6 +359,54 @@ public class ProxyConfig {
         this.maxRequestTime = maxRequestTime;
     }
 
+    public List<String> getStreamResponseContentTypes() {
+        return streamResponseContentTypes;
+    }
+
+    public void setStreamResponseContentTypes(List<String> streamResponseContentTypes) {
+        this.streamResponseContentTypes = streamResponseContentTypes;
+    }
+
+    public List<String> getStreamRequestAcceptTypes() {
+        return streamRequestAcceptTypes;
+    }
+
+    public void setStreamRequestAcceptTypes(List<String> streamRequestAcceptTypes) {
+        this.streamRequestAcceptTypes = streamRequestAcceptTypes;
+    }
+
+    public List<String> getStreamPathPrefixes() {
+        return streamPathPrefixes;
+    }
+
+    public void setStreamPathPrefixes(List<String> streamPathPrefixes) {
+        this.streamPathPrefixes = streamPathPrefixes;
+    }
+
+    public int getStreamMaxRequestTime() {
+        return streamMaxRequestTime;
+    }
+
+    public void setStreamMaxRequestTime(int streamMaxRequestTime) {
+        this.streamMaxRequestTime = streamMaxRequestTime;
+    }
+
+    public int getStreamIdleTimeout() {
+        return streamIdleTimeout;
+    }
+
+    public void setStreamIdleTimeout(int streamIdleTimeout) {
+        this.streamIdleTimeout = streamIdleTimeout;
+    }
+
+    public List<String> getStreamResponseHeaderOverwrite() {
+        return streamResponseHeaderOverwrite;
+    }
+
+    public void setStreamResponseHeaderOverwrite(List<String> streamResponseHeaderOverwrite) {
+        this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
+    }
+
     /**
      * is rewrite host header
      * @return boolean
@@ -406,6 +523,18 @@ public class ProxyConfig {
         object = getMappedConfig().get(MAX_REQUEST_TIME);
         if(object != null) maxRequestTime = Config.loadIntegerValue(MAX_REQUEST_TIME, object);
 
+        streamResponseContentTypes = loadStringList(STREAM_RESPONSE_CONTENT_TYPES, DEFAULT_STREAM_TYPES);
+        streamRequestAcceptTypes = loadStringList(STREAM_REQUEST_ACCEPT_TYPES, DEFAULT_STREAM_TYPES);
+        streamPathPrefixes = loadStringList(STREAM_PATH_PREFIXES, Collections.emptyList());
+
+        object = getMappedConfig().get(STREAM_MAX_REQUEST_TIME);
+        if(object != null) streamMaxRequestTime = Config.loadIntegerValue(STREAM_MAX_REQUEST_TIME, object);
+
+        object = getMappedConfig().get(STREAM_IDLE_TIMEOUT);
+        if(object != null) streamIdleTimeout = Config.loadIntegerValue(STREAM_IDLE_TIMEOUT, object);
+
+        streamResponseHeaderOverwrite = loadStringList(STREAM_RESPONSE_HEADER_OVERWRITE, DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE);
+
         object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
         if(object != null) maxConnectionRetries = Config.loadIntegerValue(MAX_CONNECTION_RETRIES, object);
 
@@ -414,5 +543,23 @@ public class ProxyConfig {
 
         object = getMappedConfig().get(METRICS_INJECTION);
         if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
+    }
+
+    private List<String> loadStringList(String name, List<String> defaults) {
+        Object object = getMappedConfig().get(name);
+        if(object == null) return new ArrayList<>(defaults);
+        if(object instanceof String) {
+            String value = ((String)object).trim();
+            if(value.isEmpty()) return new ArrayList<>();
+            if(value.startsWith("[")) {
+                return new ArrayList<>((List<String>)JsonMapper.fromJson(value, List.class));
+            }
+            return new ArrayList<>(Collections.singletonList(value));
+        }
+        if(object instanceof List) {
+            return new ArrayList<>((List<String>)object);
+        }
+        logger.error("{} is the wrong type. Only JSON list, YAML list, or string is supported.", name);
+        return new ArrayList<>(defaults);
     }
 }

@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "http2Enabled", "httpsEnabled", "maxRequestTime", "pathPrefixMaxRequestTime", "connectionsPerThread", "maxQueueSize", "softMaxConnectionsPerThread", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "preResolveFQDN2IP", "hostWhitelist", "serviceIdQueryParameter", "urlRewriteRules", "methodRewriteRules", "queryParamRewriteRules", "headerRewriteRules", "metricsInjection", "metricsName" ],
+  "required" : [ "http2Enabled", "httpsEnabled", "maxRequestTime", "pathPrefixMaxRequestTime", "streamResponseContentTypes", "streamRequestAcceptTypes", "streamPathPrefixes", "streamMaxRequestTime", "streamIdleTimeout", "streamResponseHeaderOverwrite", "connectionsPerThread", "maxQueueSize", "softMaxConnectionsPerThread", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "preResolveFQDN2IP", "hostWhitelist", "serviceIdQueryParameter", "urlRewriteRules", "methodRewriteRules", "queryParamRewriteRules", "headerRewriteRules", "metricsInjection", "metricsName" ],
   "properties" : {
     "http2Enabled" : {
       "type" : "boolean",
@@ -24,6 +24,46 @@
       "description" : "If a particular downstream service has different timeout than the above global definition, you can\nadd the path prefix and give it another timeout in millisecond. For downstream APIs not defined here,\nthey will use the global timeout defined in router.maxRequestTime. The value is a map with key is the\npath prefix and value is the timeout.\nJSON format:\nrouter.pathPrefixMaxRequestTime: {\"/v1/address\":5000,\"/v2/address\":10000,\"/v3/address\":30000,\"/v1/pets/{petId}\":5000}\nYAML format:\nrouter.pathPrefixMaxRequestTime:\n  /v1/address: 5000\n  /v2/address: 10000\n  /v3/address: 30000\n  /v1/pets/{petId}: 5000",
       "additionalProperties" : {
         "type" : "integer"
+      }
+    },
+    "streamResponseContentTypes" : {
+      "type" : "array",
+      "description" : "Response content types that should be treated as streaming passthrough responses.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamRequestAcceptTypes" : {
+      "type" : "array",
+      "description" : "Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamPathPrefixes" : {
+      "type" : "array",
+      "description" : "Request path prefixes that should use streaming timeout behavior before downstream headers arrive.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamMaxRequestTime" : {
+      "type" : "integer",
+      "description" : "Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams.",
+      "default" : 0,
+      "format" : "int32"
+    },
+    "streamIdleTimeout" : {
+      "type" : "integer",
+      "description" : "Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout.",
+      "default" : 0,
+      "format" : "int32"
+    },
+    "streamResponseHeaderOverwrite" : {
+      "type" : "array",
+      "description" : "Response headers to remove before copying downstream streaming response headers.",
+      "items" : {
+        "type" : "string"
       }
     },
     "connectionsPerThread" : {

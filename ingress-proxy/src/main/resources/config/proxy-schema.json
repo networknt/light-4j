@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "http2Enabled", "hosts", "connectionsPerThread", "maxRequestTime", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "maxQueueSize", "forwardJwtClaims", "metricsInjection", "metricsName" ],
+  "required" : [ "enabled", "http2Enabled", "hosts", "connectionsPerThread", "maxRequestTime", "streamResponseContentTypes", "streamRequestAcceptTypes", "streamPathPrefixes", "streamMaxRequestTime", "streamIdleTimeout", "streamResponseHeaderOverwrite", "rewriteHostHeader", "reuseXForwarded", "maxConnectionRetries", "maxQueueSize", "forwardJwtClaims", "metricsInjection", "metricsName" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -29,6 +29,46 @@
       "description" : "Max request time in milliseconds before timeout.",
       "default" : 1000,
       "format" : "int32"
+    },
+    "streamResponseContentTypes" : {
+      "type" : "array",
+      "description" : "Response content types that should be treated as streaming passthrough responses.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamRequestAcceptTypes" : {
+      "type" : "array",
+      "description" : "Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamPathPrefixes" : {
+      "type" : "array",
+      "description" : "Request path prefixes that should use streaming timeout behavior before downstream headers arrive.",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "streamMaxRequestTime" : {
+      "type" : "integer",
+      "description" : "Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams.",
+      "default" : 0,
+      "format" : "int32"
+    },
+    "streamIdleTimeout" : {
+      "type" : "integer",
+      "description" : "Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout.",
+      "default" : 0,
+      "format" : "int32"
+    },
+    "streamResponseHeaderOverwrite" : {
+      "type" : "array",
+      "description" : "Response headers to remove before copying downstream streaming response headers.",
+      "items" : {
+        "type" : "string"
+      }
     },
     "rewriteHostHeader" : {
       "type" : "boolean",

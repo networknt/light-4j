@@ -16,6 +16,14 @@ maxRequestTime: 1000
 # they will use the global timeout defined in router.maxRequestTime.
 pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
 
+# Streaming passthrough configuration for SSE or similar downstream responses.
+streamResponseContentTypes: ${router.streamResponseContentTypes:["text/event-stream"]}
+streamRequestAcceptTypes: ${router.streamRequestAcceptTypes:["text/event-stream"]}
+streamPathPrefixes: ${router.streamPathPrefixes:}
+streamMaxRequestTime: ${router.streamMaxRequestTime:0}
+streamIdleTimeout: ${router.streamIdleTimeout:0}
+streamResponseHeaderOverwrite: ${router.streamResponseHeaderOverwrite:["Content-Type","Cache-Control","Connection","Transfer-Encoding","Content-Encoding","Content-Length"]}
+
 # Connections per thread.
 connectionsPerThread: 10
 

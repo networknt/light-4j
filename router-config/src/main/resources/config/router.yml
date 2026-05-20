@@ -21,6 +21,18 @@ maxRequestTime: ${router.maxRequestTime:1000}
 #   /v3/address: 30000
 #   /v1/pets/{petId}: 5000
 pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
+# Response content types that should be treated as streaming passthrough responses.
+streamResponseContentTypes: ${router.streamResponseContentTypes:["text/event-stream"]}
+# Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.
+streamRequestAcceptTypes: ${router.streamRequestAcceptTypes:["text/event-stream"]}
+# Request path prefixes that should use streaming timeout behavior before downstream headers arrive.
+streamPathPrefixes: ${router.streamPathPrefixes:}
+# Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams.
+streamMaxRequestTime: ${router.streamMaxRequestTime:0}
+# Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout.
+streamIdleTimeout: ${router.streamIdleTimeout:0}
+# Response headers to remove before copying downstream streaming response headers.
+streamResponseHeaderOverwrite: ${router.streamResponseHeaderOverwrite:["Content-Type","Cache-Control","Connection","Transfer-Encoding","Content-Encoding","Content-Length"]}
 # Connections per thread.
 connectionsPerThread: ${router.connectionsPerThread:10}
 # The max queue size for the requests if there is no connection to the downstream API in the connection pool.

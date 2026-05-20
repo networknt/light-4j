@@ -50,6 +50,12 @@ public class RouterConfig {
     private static final String REUSE_X_FORWARDED = "reuseXForwarded";
     private static final String MAX_REQUEST_TIME = "maxRequestTime";
     private static final String PATH_PREFIX_MAX_REQUEST_TIME = "pathPrefixMaxRequestTime";
+    private static final String STREAM_RESPONSE_CONTENT_TYPES = "streamResponseContentTypes";
+    private static final String STREAM_REQUEST_ACCEPT_TYPES = "streamRequestAcceptTypes";
+    private static final String STREAM_PATH_PREFIXES = "streamPathPrefixes";
+    private static final String STREAM_MAX_REQUEST_TIME = "streamMaxRequestTime";
+    private static final String STREAM_IDLE_TIMEOUT = "streamIdleTimeout";
+    private static final String STREAM_RESPONSE_HEADER_OVERWRITE = "streamResponseHeaderOverwrite";
     private static final String CONNECTION_PER_THREAD = "connectionsPerThread";
     private static final String SOFT_MAX_CONNECTIONS_PER_THREAD = "softMaxConnectionsPerThread";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
@@ -63,6 +69,15 @@ public class RouterConfig {
     public static final String METHOD_REWRITE_RULES = "methodRewriteRules";
     public static final String URL_REWRITE_RULES = "urlRewriteRules";
     public static final String SERVICE_ID_QUERY_PARAMETER = "serviceIdQueryParameter";
+    private static final List<String> DEFAULT_STREAM_TYPES = Collections.singletonList("text/event-stream");
+    private static final List<String> DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE = Arrays.asList(
+            "Content-Type",
+            "Cache-Control",
+            "Connection",
+            "Transfer-Encoding",
+            "Content-Encoding",
+            "Content-Length"
+    );
 
     @BooleanField(
             configFieldName = HTTP2_ENABLED,
@@ -109,6 +124,54 @@ public class RouterConfig {
             valueType = Integer.class
     )
     Map<String, Integer> pathPrefixMaxRequestTime;
+
+    @ArrayField(
+            configFieldName = STREAM_RESPONSE_CONTENT_TYPES,
+            externalizedKeyName = STREAM_RESPONSE_CONTENT_TYPES,
+            description = "Response content types that should be treated as streaming passthrough responses.",
+            items = String.class
+    )
+    List<String> streamResponseContentTypes = new ArrayList<>(DEFAULT_STREAM_TYPES);
+
+    @ArrayField(
+            configFieldName = STREAM_REQUEST_ACCEPT_TYPES,
+            externalizedKeyName = STREAM_REQUEST_ACCEPT_TYPES,
+            description = "Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.",
+            items = String.class
+    )
+    List<String> streamRequestAcceptTypes = new ArrayList<>(DEFAULT_STREAM_TYPES);
+
+    @ArrayField(
+            configFieldName = STREAM_PATH_PREFIXES,
+            externalizedKeyName = STREAM_PATH_PREFIXES,
+            description = "Request path prefixes that should use streaming timeout behavior before downstream headers arrive.",
+            items = String.class
+    )
+    List<String> streamPathPrefixes = new ArrayList<>();
+
+    @IntegerField(
+            configFieldName = STREAM_MAX_REQUEST_TIME,
+            externalizedKeyName = STREAM_MAX_REQUEST_TIME,
+            defaultValue = "0",
+            description = "Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams."
+    )
+    int streamMaxRequestTime;
+
+    @IntegerField(
+            configFieldName = STREAM_IDLE_TIMEOUT,
+            externalizedKeyName = STREAM_IDLE_TIMEOUT,
+            defaultValue = "0",
+            description = "Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout."
+    )
+    int streamIdleTimeout;
+
+    @ArrayField(
+            configFieldName = STREAM_RESPONSE_HEADER_OVERWRITE,
+            externalizedKeyName = STREAM_RESPONSE_HEADER_OVERWRITE,
+            description = "Response headers to remove before copying downstream streaming response headers.",
+            items = String.class
+    )
+    List<String> streamResponseHeaderOverwrite = new ArrayList<>(DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE);
 
     @IntegerField(
             configFieldName = CONNECTION_PER_THREAD,
@@ -365,6 +428,14 @@ public class RouterConfig {
         if(object != null) reuseXForwarded = Config.loadBooleanValue(REUSE_X_FORWARDED, object);
         object = getMappedConfig().get(MAX_REQUEST_TIME);
         if(object != null ) maxRequestTime = Config.loadIntegerValue(MAX_REQUEST_TIME, object);
+        streamResponseContentTypes = loadStringList(STREAM_RESPONSE_CONTENT_TYPES, DEFAULT_STREAM_TYPES);
+        streamRequestAcceptTypes = loadStringList(STREAM_REQUEST_ACCEPT_TYPES, DEFAULT_STREAM_TYPES);
+        streamPathPrefixes = loadStringList(STREAM_PATH_PREFIXES, Collections.emptyList());
+        object = getMappedConfig().get(STREAM_MAX_REQUEST_TIME);
+        if(object != null ) streamMaxRequestTime = Config.loadIntegerValue(STREAM_MAX_REQUEST_TIME, object);
+        object = getMappedConfig().get(STREAM_IDLE_TIMEOUT);
+        if(object != null ) streamIdleTimeout = Config.loadIntegerValue(STREAM_IDLE_TIMEOUT, object);
+        streamResponseHeaderOverwrite = loadStringList(STREAM_RESPONSE_HEADER_OVERWRITE, DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE);
         object = getMappedConfig().get(CONNECTION_PER_THREAD);
         if(object != null ) connectionsPerThread = Config.loadIntegerValue(CONNECTION_PER_THREAD, object);
         object = getMappedConfig().get(SOFT_MAX_CONNECTIONS_PER_THREAD);
@@ -401,6 +472,18 @@ public class RouterConfig {
     public Map<String, Integer> getPathPrefixMaxRequestTime() {
         return pathPrefixMaxRequestTime;
     }
+    public List<String> getStreamResponseContentTypes() { return streamResponseContentTypes; }
+    public void setStreamResponseContentTypes(List<String> streamResponseContentTypes) { this.streamResponseContentTypes = streamResponseContentTypes; }
+    public List<String> getStreamRequestAcceptTypes() { return streamRequestAcceptTypes; }
+    public void setStreamRequestAcceptTypes(List<String> streamRequestAcceptTypes) { this.streamRequestAcceptTypes = streamRequestAcceptTypes; }
+    public List<String> getStreamPathPrefixes() { return streamPathPrefixes; }
+    public void setStreamPathPrefixes(List<String> streamPathPrefixes) { this.streamPathPrefixes = streamPathPrefixes; }
+    public int getStreamMaxRequestTime() { return streamMaxRequestTime; }
+    public void setStreamMaxRequestTime(int streamMaxRequestTime) { this.streamMaxRequestTime = streamMaxRequestTime; }
+    public int getStreamIdleTimeout() { return streamIdleTimeout; }
+    public void setStreamIdleTimeout(int streamIdleTimeout) { this.streamIdleTimeout = streamIdleTimeout; }
+    public List<String> getStreamResponseHeaderOverwrite() { return streamResponseHeaderOverwrite; }
+    public void setStreamResponseHeaderOverwrite(List<String> streamResponseHeaderOverwrite) { this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite; }
     public int getConnectionsPerThread() {
         return connectionsPerThread;
     }
@@ -679,5 +762,23 @@ public class RouterConfig {
                 logger.error("pathPrefixMaxRequestTime is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
+    }
+
+    private List<String> loadStringList(String name, List<String> defaults) {
+        Object object = getMappedConfig().get(name);
+        if(object == null) return new ArrayList<>(defaults);
+        if(object instanceof String) {
+            String value = ((String)object).trim();
+            if(value.isEmpty()) return new ArrayList<>();
+            if(value.startsWith("[")) {
+                return new ArrayList<>((List<String>)JsonMapper.fromJson(value, List.class));
+            }
+            return new ArrayList<>(Collections.singletonList(value));
+        }
+        if(object instanceof List) {
+            return new ArrayList<>((List<String>)object);
+        }
+        logger.error("{} is the wrong type. Only JSON list, YAML list, or string is supported.", name);
+        return new ArrayList<>(defaults);
     }
 }

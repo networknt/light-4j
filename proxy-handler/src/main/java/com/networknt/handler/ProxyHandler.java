@@ -20,10 +20,13 @@ package com.networknt.handler;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
+import java.nio.channels.FileChannel;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.CertificateEncodingException;
 
@@ -50,9 +53,13 @@ import org.xnio.ChannelExceptionHandler;
 import org.xnio.ChannelListener;
 import org.xnio.ChannelListeners;
 import org.xnio.IoUtils;
+import org.xnio.Option;
 import org.xnio.StreamConnection;
+import org.xnio.XnioIoThread;
 import org.xnio.XnioExecutor;
+import org.xnio.XnioWorker;
 import org.xnio.channels.StreamSinkChannel;
+import org.xnio.channels.StreamSourceChannel;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.client.ClientCallback;
 import io.undertow.client.ClientConnection;
@@ -83,6 +90,16 @@ public class ProxyHandler implements HttpHandler {
 
     private static final int DEFAULT_MAX_RETRY_ATTEMPTS = Integer.getInteger("maxRetries", 1);
     private static final int DEFAULT_MAX_QUEUE_SIZE = Integer.getInteger("maxQueueSize", 0);
+    private static final List<String> DEFAULT_STREAM_RESPONSE_CONTENT_TYPES = Collections.singletonList("text/event-stream");
+    private static final List<String> DEFAULT_STREAM_REQUEST_ACCEPT_TYPES = Collections.singletonList("text/event-stream");
+    private static final List<String> DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE = Arrays.asList(
+            Headers.CONTENT_TYPE.toString(),
+            Headers.CACHE_CONTROL.toString(),
+            Headers.CONNECTION.toString(),
+            Headers.TRANSFER_ENCODING.toString(),
+            Headers.CONTENT_ENCODING.toString(),
+            Headers.CONTENT_LENGTH.toString()
+    );
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyHandler.class);
 
@@ -95,6 +112,12 @@ public class ProxyHandler implements HttpHandler {
     private final ProxyClient proxyClient;
     private int maxRequestTime;
     private final Map<String, Integer> pathPrefixMaxRequestTime;
+    private final List<String> streamResponseContentTypes;
+    private final List<String> streamRequestAcceptTypes;
+    private final List<String> streamPathPrefixes;
+    private final int streamMaxRequestTime;
+    private final int streamIdleTimeout;
+    private final List<HttpString> streamResponseHeaderOverwrite;
     /**
      * Map of additional headers to add to the request.
      */
@@ -119,6 +142,12 @@ public class ProxyHandler implements HttpHandler {
         this.proxyClient = builder.proxyClient;
         this.maxRequestTime = builder.maxRequestTime;
         this.pathPrefixMaxRequestTime = builder.pathPrefixMaxRequestTime;
+        this.streamResponseContentTypes = normalizeStringList(builder.streamResponseContentTypes, DEFAULT_STREAM_RESPONSE_CONTENT_TYPES);
+        this.streamRequestAcceptTypes = normalizeStringList(builder.streamRequestAcceptTypes, DEFAULT_STREAM_REQUEST_ACCEPT_TYPES);
+        this.streamPathPrefixes = normalizeStringList(builder.streamPathPrefixes, Collections.emptyList());
+        this.streamMaxRequestTime = builder.streamMaxRequestTime;
+        this.streamIdleTimeout = builder.streamIdleTimeout;
+        this.streamResponseHeaderOverwrite = normalizeHeaderList(builder.streamResponseHeaderOverwrite, DEFAULT_STREAM_RESPONSE_HEADER_OVERWRITE);
         this.next = builder.next;
         this.rewriteHostHeader = builder.rewriteHostHeader;
         this.reuseXForwarded = builder.reuseXForwarded;
@@ -156,30 +185,20 @@ public class ProxyHandler implements HttpHandler {
         }
         // check the path prefix for the timeout and then fall back to maxRequestTime.
         String reqPath = exchange.getRequestPath();
-        long timeout = maxRequestTime > 0 ? System.currentTimeMillis() + maxRequestTime : 0;
-        if (pathPrefixMaxRequestTime != null) {
-            for (Map.Entry<String, Integer> entry : pathPrefixMaxRequestTime.entrySet()) {
-                String key = entry.getKey();
-                LOG.trace("Checking path prefix {} against request path {}", key, reqPath);
-                if (reqPath.startsWith(key)) {
-                    maxRequestTime = entry.getValue();
-                    timeout = System.currentTimeMillis() + maxRequestTime;
-                    LOG.trace("Overwritten maxRequestTime {} and timeout {}.", maxRequestTime, timeout);
-                    break;
-                }
-            }
-        }
+        boolean streamingRequest = isStreamingRequest(exchange);
+        int effectiveMaxRequestTime = resolveMaxRequestTime(reqPath, streamingRequest);
+        long timeout = effectiveMaxRequestTime > 0 ? System.currentTimeMillis() + effectiveMaxRequestTime : 0;
 
         int maxRetries = maxConnectionRetries;
 
         if (target instanceof ProxyClient.MaxRetriesProxyTarget)
             maxRetries = Math.max(maxRetries, ((ProxyClient.MaxRetriesProxyTarget) target).getMaxRetries());
 
-        final ProxyClientHandler clientHandler = new ProxyClientHandler(exchange, target, timeout, maxRetries, idempotentRequestPredicate);
+        final ProxyClientHandler clientHandler = new ProxyClientHandler(exchange, target, timeout, maxRetries, idempotentRequestPredicate, streamingRequest);
 
         if (timeout > 0) {
-            LOG.trace("Adding timeout to exchange of {} ms to exchange: {}", maxRequestTime, exchange);
-            final XnioExecutor.Key key = WorkerUtils.executeAfter(exchange.getIoThread(), () -> clientHandler.cancel(exchange), maxRequestTime, TimeUnit.MILLISECONDS);
+            LOG.trace("Adding timeout to exchange of {} ms to exchange: {}", effectiveMaxRequestTime, exchange);
+            final XnioExecutor.Key key = WorkerUtils.executeAfter(exchange.getIoThread(), () -> clientHandler.cancel(exchange), effectiveMaxRequestTime, TimeUnit.MILLISECONDS);
             exchange.putAttachment(TIMEOUT_KEY, key);
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
                 LOG.trace("Exchange completed for exchange removing timeout key: {}", exchange1);
@@ -245,6 +264,99 @@ public class ProxyHandler implements HttpHandler {
         return proxyClient;
     }
 
+    private int resolveMaxRequestTime(String reqPath, boolean streamingRequest) {
+        if (streamingRequest) return streamMaxRequestTime;
+
+        int effectiveMaxRequestTime = maxRequestTime;
+        if (pathPrefixMaxRequestTime != null) {
+            for (Map.Entry<String, Integer> entry : pathPrefixMaxRequestTime.entrySet()) {
+                String key = entry.getKey();
+                LOG.trace("Checking path prefix {} against request path {}", key, reqPath);
+                if (reqPath.startsWith(key)) {
+                    effectiveMaxRequestTime = entry.getValue();
+                    LOG.trace("Using path prefix maxRequestTime {} for request path {}.", effectiveMaxRequestTime, reqPath);
+                    break;
+                }
+            }
+        }
+        return effectiveMaxRequestTime;
+    }
+
+    private boolean isStreamingRequest(HttpServerExchange exchange) {
+        return matchesPrefix(exchange.getRequestPath(), streamPathPrefixes)
+                || containsConfiguredMediaType(exchange.getRequestHeaders().get(Headers.ACCEPT), streamRequestAcceptTypes);
+    }
+
+    private static boolean isStreamingResponse(HeaderMap responseHeaders, List<String> streamResponseContentTypes) {
+        return containsConfiguredMediaType(responseHeaders.get(Headers.CONTENT_TYPE), streamResponseContentTypes);
+    }
+
+    private static boolean matchesPrefix(String path, List<String> prefixes) {
+        if (path == null || prefixes == null || prefixes.isEmpty()) return false;
+        for (String prefix : prefixes) {
+            if (prefix != null && !prefix.isEmpty() && path.startsWith(prefix)) return true;
+        }
+        return false;
+    }
+
+    private static boolean containsConfiguredMediaType(HeaderValues headerValues, List<String> configuredMediaTypes) {
+        if (headerValues == null || configuredMediaTypes == null || configuredMediaTypes.isEmpty()) return false;
+        for (String headerValue : headerValues) {
+            if (headerValue == null) continue;
+            String[] values = headerValue.split(",");
+            for (String value : values) {
+                String mediaType = normalizeMediaType(value);
+                if (mediaType.isEmpty()) continue;
+                for (String configuredMediaType : configuredMediaTypes) {
+                    if (mediaType.equals(normalizeMediaType(configuredMediaType))) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static String normalizeMediaType(String value) {
+        if (value == null) return "";
+        int parameterStart = value.indexOf(';');
+        String mediaType = parameterStart >= 0 ? value.substring(0, parameterStart) : value;
+        return mediaType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static List<String> normalizeStringList(List<String> values, List<String> defaults) {
+        List<String> source = values == null ? defaults : values;
+        List<String> normalized = new ArrayList<>();
+        if (source != null) {
+            for (String value : source) {
+                if (value != null && !value.trim().isEmpty()) normalized.add(value.trim());
+            }
+        }
+        return Collections.unmodifiableList(normalized);
+    }
+
+    private static List<HttpString> normalizeHeaderList(List<String> values, List<String> defaults) {
+        List<String> source = normalizeStringList(values, defaults);
+        List<HttpString> normalized = new ArrayList<>();
+        for (String value : source) {
+            normalized.add(HttpString.tryFromString(value));
+        }
+        return Collections.unmodifiableList(normalized);
+    }
+
+    private static void removeHeaders(HeaderMap headers, List<HttpString> headerNames) {
+        if (headers == null || headerNames == null) return;
+        for (HttpString headerName : headerNames) {
+            headers.remove(headerName);
+        }
+    }
+
+    private static void cancelExchangeTimeout(HttpServerExchange exchange) {
+        XnioExecutor.Key key = exchange.getAttachment(TIMEOUT_KEY);
+        if (key != null) {
+            key.remove();
+            exchange.removeAttachment(TIMEOUT_KEY);
+        }
+    }
+
     @Override
     public String toString() {
         var proxyTargets = proxyClient.getAllTargets();
@@ -271,14 +383,16 @@ public class ProxyHandler implements HttpHandler {
         private final int maxRetryAttempts;
         private final HttpServerExchange exchange;
         private final Predicate idempotentPredicate;
+        private final boolean streamingRequest;
         private ProxyClient.ProxyTarget target;
 
-        ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate) {
+        ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate, boolean streamingRequest) {
             this.exchange = exchange;
             this.timeout = timeout;
             this.maxRetryAttempts = maxRetryAttempts;
             this.target = target;
             this.idempotentPredicate = idempotentPredicate;
+            this.streamingRequest = streamingRequest;
         }
 
         @Override
@@ -290,7 +404,7 @@ public class ProxyHandler implements HttpHandler {
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             LOG.trace("ProxyCallback completed for exchange: {}", exchange);
             exchange.putAttachment(CONNECTION, connection);
-            exchange.dispatch(lightThreadExecutor, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules));
+            exchange.dispatch(lightThreadExecutor, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite));
         }
 
         @Override
@@ -397,11 +511,16 @@ public class ProxyHandler implements HttpHandler {
         private final List<MethodRewriteRule> methodRewriteRules;
         private final Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
         private final Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
+        private final boolean streamingRequest;
+        private final List<String> streamResponseContentTypes;
+        private final int streamIdleTimeout;
+        private final List<HttpString> streamResponseHeaderOverwrite;
 
         ProxyAction(final ProxyConnection clientConnection, final HttpServerExchange exchange, Map<HttpString, ExchangeAttribute> requestHeaders,
                     boolean rewriteHostHeader, boolean reuseXForwarded, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate,
                     List<UrlRewriteRule> urlRewriteRules, List<MethodRewriteRule> methodRewriteRules,
-                    Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
+                    Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules,
+                    boolean streamingRequest, List<String> streamResponseContentTypes, int streamIdleTimeout, List<HttpString> streamResponseHeaderOverwrite) {
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
@@ -413,6 +532,10 @@ public class ProxyHandler implements HttpHandler {
             this.methodRewriteRules = methodRewriteRules;
             this.queryParamRewriteRules = queryParamRewriteRules;
             this.headerRewriteRules = headerRewriteRules;
+            this.streamingRequest = streamingRequest;
+            this.streamResponseContentTypes = streamResponseContentTypes;
+            this.streamIdleTimeout = streamIdleTimeout;
+            this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
             this.lightThreadExecutor = new LightThreadExecutor(exchange);
         }
 
@@ -785,7 +908,7 @@ public class ProxyHandler implements HttpHandler {
                     if (exchange.getConnection().isPushSupported() && result.getConnection().isPushSupported())
                         this.handleServerPush(result);
 
-                    result.setResponseListener(new ResponseCallback(exchange, proxyClientHandler, idempotentPredicate, headerRewriteRules));
+                    result.setResponseListener(new ResponseCallback(exchange, proxyClientHandler, idempotentPredicate, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite));
 
                     final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
 
@@ -865,7 +988,7 @@ public class ProxyHandler implements HttpHandler {
                             if (i > 0)
                                 path = path.substring(0, i);
 
-                            exchange.dispatch(lightThreadExecutor, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules));
+                            exchange.dispatch(lightThreadExecutor, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite));
                         });
                         return true;
                     });
@@ -917,12 +1040,21 @@ public class ProxyHandler implements HttpHandler {
         private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
         private final Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
+        private final boolean streamingRequest;
+        private final List<String> streamResponseContentTypes;
+        private final int streamIdleTimeout;
+        private final List<HttpString> streamResponseHeaderOverwrite;
 
-        private ResponseCallback(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
+        private ResponseCallback(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules,
+                                 boolean streamingRequest, List<String> streamResponseContentTypes, int streamIdleTimeout, List<HttpString> streamResponseHeaderOverwrite) {
             this.exchange = exchange;
             this.proxyClientHandler = proxyClientHandler;
             this.idempotentPredicate = idempotentPredicate;
             this.headerRewriteRules = headerRewriteRules;
+            this.streamingRequest = streamingRequest;
+            this.streamResponseContentTypes = streamResponseContentTypes;
+            this.streamIdleTimeout = streamIdleTimeout;
+            this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
         }
 
         @Override
@@ -936,14 +1068,26 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap outbound = exchange.getResponseHeaders();
             exchange.setStatusCode(response.getResponseCode());
 
+            boolean streamingResponse = isStreamingResponse(inbound, streamResponseContentTypes);
+            if (streamingResponse) {
+                if (!streamingRequest) cancelExchangeTimeout(exchange);
+                removeHeaders(outbound, streamResponseHeaderOverwrite);
+            }
+
             copyHeaders(outbound, inbound, (List) CollectionUtils.matchEndpointKey(exchange.getRequestPath(), (Map) headerRewriteRules));
+            if (streamingResponse) outbound.remove(Headers.CONTENT_LENGTH);
 
             if (exchange.isUpgrade())
                 this.handleUpgradeChannelOnComplete(result);
 
             final IoExceptionHandler handler = new IoExceptionHandler(exchange, result.getConnection());
 
-            Transfer.initiateTransfer(result.getResponseChannel(), exchange.getResponseChannel(), ChannelListeners.closingChannelListener(), new HTTPTrailerChannelListener(result, exchange, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
+            StreamSourceChannel responseChannel = result.getResponseChannel();
+            if (streamingResponse && streamIdleTimeout > 0) {
+                responseChannel = new IdleTimeoutStreamSourceChannel(responseChannel, exchange, result.getConnection(), streamIdleTimeout);
+            }
+
+            Transfer.initiateTransfer(responseChannel, exchange.getResponseChannel(), ChannelListeners.closingChannelListener(), new HTTPTrailerChannelListener(result, exchange, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
 
             AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) exchange.getAttachment(AttachmentConstants.METRICS_HANDLER);
             if(metricsHandler != null) {
@@ -979,6 +1123,177 @@ public class ProxyHandler implements HttpHandler {
         @Override
         public void failed(IOException e) {
             handleFailure(exchange, proxyClientHandler, idempotentPredicate, e);
+        }
+    }
+
+    private static final class IdleTimeoutStreamSourceChannel implements StreamSourceChannel {
+        private final StreamSourceChannel delegate;
+        private final HttpServerExchange exchange;
+        private final ClientConnection clientConnection;
+        private final int idleTimeout;
+        private final AtomicLong idleGeneration = new AtomicLong();
+        private volatile XnioExecutor.Key idleKey;
+
+        private IdleTimeoutStreamSourceChannel(StreamSourceChannel delegate, HttpServerExchange exchange, ClientConnection clientConnection, int idleTimeout) {
+            this.delegate = delegate;
+            this.exchange = exchange;
+            this.clientConnection = clientConnection;
+            this.idleTimeout = idleTimeout;
+            resetIdleTimeout();
+        }
+
+        @Override
+        public int read(ByteBuffer dst) throws IOException {
+            int read = delegate.read(dst);
+            bytesTransferred(read);
+            return read;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts) throws IOException {
+            long read = delegate.read(dsts);
+            bytesTransferred(read);
+            return read;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
+            long read = delegate.read(dsts, offset, length);
+            bytesTransferred(read);
+            return read;
+        }
+
+        @Override
+        public long transferTo(long position, long count, FileChannel target) throws IOException {
+            long transferred = delegate.transferTo(position, count, target);
+            bytesTransferred(transferred);
+            return transferred;
+        }
+
+        @Override
+        public long transferTo(long count, ByteBuffer throughBuffer, StreamSinkChannel target) throws IOException {
+            long transferred = delegate.transferTo(count, throughBuffer, target);
+            bytesTransferred(transferred);
+            return transferred;
+        }
+
+        @Override
+        public void suspendReads() {
+            delegate.suspendReads();
+        }
+
+        @Override
+        public void resumeReads() {
+            delegate.resumeReads();
+        }
+
+        @Override
+        public boolean isReadResumed() {
+            return delegate.isReadResumed();
+        }
+
+        @Override
+        public void wakeupReads() {
+            delegate.wakeupReads();
+        }
+
+        @Override
+        public void shutdownReads() throws IOException {
+            cancelIdleTimeout();
+            delegate.shutdownReads();
+        }
+
+        @Override
+        public void awaitReadable() throws IOException {
+            delegate.awaitReadable();
+        }
+
+        @Override
+        public void awaitReadable(long time, TimeUnit timeUnit) throws IOException {
+            delegate.awaitReadable(time, timeUnit);
+        }
+
+        @Override
+        public XnioExecutor getReadThread() {
+            return delegate.getReadThread();
+        }
+
+        @Override
+        public ChannelListener.Setter<StreamSourceChannel> getReadSetter() {
+            return listener -> delegate.getReadSetter().set(listener == null ? null : channel -> listener.handleEvent(this));
+        }
+
+        @Override
+        public ChannelListener.Setter<StreamSourceChannel> getCloseSetter() {
+            return listener -> delegate.getCloseSetter().set(listener == null ? null : channel -> {
+                cancelIdleTimeout();
+                listener.handleEvent(this);
+            });
+        }
+
+        @Override
+        public XnioWorker getWorker() {
+            return delegate.getWorker();
+        }
+
+        @Override
+        public XnioIoThread getIoThread() {
+            return delegate.getIoThread();
+        }
+
+        @Override
+        public boolean supportsOption(Option<?> option) {
+            return delegate.supportsOption(option);
+        }
+
+        @Override
+        public <T> T getOption(Option<T> option) throws IOException {
+            return delegate.getOption(option);
+        }
+
+        @Override
+        public <T> T setOption(Option<T> option, T value) throws IllegalArgumentException, IOException {
+            return delegate.setOption(option, value);
+        }
+
+        @Override
+        public boolean isOpen() {
+            return delegate.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            cancelIdleTimeout();
+            delegate.close();
+        }
+
+        private void bytesTransferred(long transferred) {
+            if (transferred > 0) resetIdleTimeout();
+            else if (transferred < 0) cancelIdleTimeout();
+        }
+
+        private void resetIdleTimeout() {
+            XnioExecutor.Key key = idleKey;
+            if (key != null) key.remove();
+            long generation = idleGeneration.incrementAndGet();
+            idleKey = exchange.getIoThread().executeAfter(() -> idleTimedOut(generation), idleTimeout, TimeUnit.MILLISECONDS);
+        }
+
+        private void cancelIdleTimeout() {
+            idleGeneration.incrementAndGet();
+            XnioExecutor.Key key = idleKey;
+            if (key != null) {
+                key.remove();
+                idleKey = null;
+            }
+        }
+
+        private void idleTimedOut(long generation) {
+            if (generation != idleGeneration.get()) return;
+            UndertowLogger.PROXY_REQUEST_LOGGER.timingOutRequest(clientConnection.getPeerAddress() + "" + exchange.getRequestURI());
+            IoUtils.safeClose(delegate);
+            IoUtils.safeClose(clientConnection);
+            IoUtils.safeClose(exchange.getConnection());
         }
     }
 
@@ -1105,6 +1420,12 @@ public class ProxyHandler implements HttpHandler {
         private List<MethodRewriteRule> methodRewriteRules;
         private Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
         private Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
+        private List<String> streamResponseContentTypes;
+        private List<String> streamRequestAcceptTypes;
+        private List<String> streamPathPrefixes;
+        private int streamMaxRequestTime;
+        private int streamIdleTimeout;
+        private List<String> streamResponseHeaderOverwrite;
 
         Builder() {
         }
@@ -1178,6 +1499,36 @@ public class ProxyHandler implements HttpHandler {
 
         public Builder setHeaderRewriteRules(Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
             this.headerRewriteRules = headerRewriteRules;
+            return this;
+        }
+
+        public Builder setStreamResponseContentTypes(List<String> streamResponseContentTypes) {
+            this.streamResponseContentTypes = streamResponseContentTypes;
+            return this;
+        }
+
+        public Builder setStreamRequestAcceptTypes(List<String> streamRequestAcceptTypes) {
+            this.streamRequestAcceptTypes = streamRequestAcceptTypes;
+            return this;
+        }
+
+        public Builder setStreamPathPrefixes(List<String> streamPathPrefixes) {
+            this.streamPathPrefixes = streamPathPrefixes;
+            return this;
+        }
+
+        public Builder setStreamMaxRequestTime(int streamMaxRequestTime) {
+            this.streamMaxRequestTime = streamMaxRequestTime;
+            return this;
+        }
+
+        public Builder setStreamIdleTimeout(int streamIdleTimeout) {
+            this.streamIdleTimeout = streamIdleTimeout;
+            return this;
+        }
+
+        public Builder setStreamResponseHeaderOverwrite(List<String> streamResponseHeaderOverwrite) {
+            this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
             return this;
         }
 

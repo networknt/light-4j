@@ -42,6 +42,12 @@ public class RouterConfigTest {
         Assertions.assertEquals(routerConfig.getMaxRequestTime(), 1000);
         Assertions.assertEquals(routerConfig.getMaxConnectionRetries(), 3);
         Assertions.assertEquals(routerConfig.getMaxQueueSize(), 0);
+        Assertions.assertEquals("text/event-stream", routerConfig.getStreamResponseContentTypes().get(0));
+        Assertions.assertEquals("text/event-stream", routerConfig.getStreamRequestAcceptTypes().get(0));
+        Assertions.assertTrue(routerConfig.getStreamPathPrefixes().isEmpty());
+        Assertions.assertEquals(0, routerConfig.getStreamMaxRequestTime());
+        Assertions.assertEquals(0, routerConfig.getStreamIdleTimeout());
+        Assertions.assertTrue(routerConfig.getStreamResponseHeaderOverwrite().contains("Content-Type"));
     }
 
     @Test

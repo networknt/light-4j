@@ -11,6 +11,18 @@ hosts: ${proxy.hosts:http://localhost:8080}
 connectionsPerThread: ${proxy.connectionsPerThread:20}
 # Max request time in milliseconds before timeout.
 maxRequestTime: ${proxy.maxRequestTime:1000}
+# Response content types that should be treated as streaming passthrough responses.
+streamResponseContentTypes: ${proxy.streamResponseContentTypes:["text/event-stream"]}
+# Request Accept media types that should be treated as expected streaming responses before downstream headers arrive.
+streamRequestAcceptTypes: ${proxy.streamRequestAcceptTypes:["text/event-stream"]}
+# Request path prefixes that should use streaming timeout behavior before downstream headers arrive.
+streamPathPrefixes: ${proxy.streamPathPrefixes:}
+# Max whole-exchange request time for streaming requests in milliseconds. Zero disables the normal request timeout for streams.
+streamMaxRequestTime: ${proxy.streamMaxRequestTime:0}
+# Maximum silent period between downstream streaming bytes in milliseconds. Zero disables the idle timeout.
+streamIdleTimeout: ${proxy.streamIdleTimeout:0}
+# Response headers to remove before copying downstream streaming response headers.
+streamResponseHeaderOverwrite: ${proxy.streamResponseHeaderOverwrite:["Content-Type","Cache-Control","Connection","Transfer-Encoding","Content-Encoding","Content-Length"]}
 # Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host.
 rewriteHostHeader: ${proxy.rewriteHostHeader:true}
 # Reuse XForwarded for the target XForwarded header.
