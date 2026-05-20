@@ -19,13 +19,12 @@ package com.networknt.common;
 import com.networknt.utility.Constants;
 
 import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
-import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
-import java.security.spec.InvalidParameterSpecException;
+import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Base64;
 
@@ -48,7 +47,9 @@ public class AESEncryptor {
     }
 
     private static final int ITERATIONS = 65536;
-    private static final int KEY_SIZE = 128;
+    private static final int KEY_SIZE = 256;
+    private static final int GCM_IV_LENGTH = 12;
+    private static final int GCM_TAG_LENGTH = 128;
     private static final byte[] SALT = { (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 };
     private static final String STRING_ENCODING = "UTF-8";
     private SecretKeySpec secret;
@@ -58,16 +59,14 @@ public class AESEncryptor {
     public AESEncryptor() {
         try {
            /* Derive the key, given password and salt. */
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec;
 
             spec = new PBEKeySpec(Constants.FRAMEWORK_NAME.toCharArray(), SALT, ITERATIONS, KEY_SIZE);
             SecretKey tmp = factory.generateSecret(spec);
             secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-            // CBC = Cipher Block chaining
-            // PKCS5Padding Indicates that the keys are padded
-            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
             // For production use commons base64 encoder
             base64Encoder = Base64.getEncoder();
@@ -88,11 +87,9 @@ public class AESEncryptor {
         try
         {
             byte[] inputBytes = input.getBytes(STRING_ENCODING);
-            // CBC = Cipher Block chaining
-            // PKCS5Padding Indicates that the keys are padded
-            cipher.init(Cipher.ENCRYPT_MODE, secret);
-            AlgorithmParameters params = cipher.getParameters();
-            byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            new SecureRandom().nextBytes(iv);
+            cipher.init(Cipher.ENCRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
             byte[] ciphertext = cipher.doFinal(inputBytes);
             byte[] out = new byte[iv.length + ciphertext.length];
             System.arraycopy(iv, 0, out, 0, iv.length);
@@ -104,9 +101,9 @@ public class AESEncryptor {
             throw new RuntimeException("Unable to encrypt", e);
         } catch (InvalidKeyException e) {
             throw new RuntimeException("Unable to encrypt", e);
-        } catch (InvalidParameterSpecException e) {
-            throw new RuntimeException("Unable to encrypt", e);
         } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Unable to encrypt", e);
+        } catch (Exception e) {
             throw new RuntimeException("Unable to encrypt", e);
         }
     }

@@ -14,4 +14,4 @@ allowBearerToken: ${basic.allowBearerToken:false}
 # For each user, you can specify a list of paths that this user is allowed
 # a special user anonymous can be used to set the paths for client without
 # Basic auth and Bearer auth. The paths are optional and used for proxy only.
-users: [{"username":"user1","password":"user1pass","paths":["/v1/address"]},{"username":"user2","password":"CRYPT:0754fbc37347c136be7725cbf62b6942:71756e13c2400985d0402ed6f49613d0","paths":["/v2/pet","/v2/address","/v2/party"]},{"username":"anonymous","paths":["/v1/party","/info"]}]
+users: [{"username":"user1","password":"user1pass","paths":["/v1/address"]},{"username":"user2","password":"CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5","paths":["/v2/pet","/v2/address","/v2/party"]},{"username":"anonymous","paths":["/v1/party","/info"]}]

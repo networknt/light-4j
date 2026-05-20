@@ -26,7 +26,8 @@ public class HashUtilTest {
     @Test
     public void testMd5Hex() {
         String md5 = HashUtil.md5Hex("stevehu@gmail.com");
-        Assertions.assertEquals(md5, "417bed6d9644f12d8bc709059c225c27");
+        Assertions.assertEquals("ddf8270bdc3a15fae9f733cc7fdbf93fc34a0bd5ef0369e6bee079ecf1eee5d5", md5);
+        Assertions.assertEquals(md5, HashUtil.sha256Hex("stevehu@gmail.com"));
     }
     @Test
     public void testPasswordHash() throws Exception {

@@ -93,7 +93,7 @@ datasource.MysqlDataSource:
   DriverClassName: com.mysql.jdbc.Driver
   jdbcUrl: jdbc:mysql://localhost:3308/account_db?useSSL=false
   username: account_user
-  password: CRYPT:odPqWOazjDxeVcOU3j0YCc2+LdwfgiJmoFcWTSoKRUw=
+  password: CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5
   maximumPoolSize: 2
   connectionTimeout: 5000
   settings:

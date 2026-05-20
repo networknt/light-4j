@@ -30,6 +30,7 @@ public class FingerPrintUtil {
     private FingerPrintUtil() {
     }
     static final Logger logger = LoggerFactory.getLogger(CodeVerifierUtil.class);
+    private static final String CERT_FINGERPRINT_ALGORITHM = "SHA-256";
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
     /**
@@ -41,7 +42,7 @@ public class FingerPrintUtil {
         byte [] digest = null;
         try {
             byte[] encCertInfo = cert.getEncoded();
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            MessageDigest md = MessageDigest.getInstance(CERT_FINGERPRINT_ALGORITHM);
             digest = md.digest(encCertInfo);
         } catch (Exception e) {
             logger.error("Exception:", e);

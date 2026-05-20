@@ -20,7 +20,6 @@ import org.apache.commons.codec.binary.Base64;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -42,31 +41,29 @@ public class HashUtil {
     private HashUtil() {throw new UnsupportedOperationException("do not instantiate");}
 
     /**
-     * Calculates MD5 hash of an input string.
+     * Calculates a SHA-256 hash of an input string.
      * @param input String
-     * @return String MD5 hash
+     * @return String SHA-256 hash
      */
+    @Deprecated
     public static String md5(String input) {
+        return sha256(input);
+    }
 
-        String md5 = null;
-
+    /**
+     * Calculates a SHA-256 hash of an input string.
+     * @param input String
+     * @return String SHA-256 hash
+     */
+    public static String sha256(String input) {
         if(null == input) return null;
 
         try {
-
-            //Create MessageDigest object for MD5
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-
-            //Update input string in message digest
-            digest.update(input.getBytes(UTF_8), 0, input.length());
-
-            //Converts message digest value in base 16 (hex)
-            md5 = new BigInteger(1, digest.digest()).toString(16);
-
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return hex(digest.digest(input.getBytes(UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        return md5;
     }
 
     /**
@@ -83,19 +80,29 @@ public class HashUtil {
         return sb.toString();
     }
     /**
-     * Calculates MD5 hash in hex format.
+     * Calculates a SHA-256 hash in hex format.
      * @param message String
-     * @return String hex MD5 hash
+     * @return String hex SHA-256 hash
      */
+    @Deprecated
     public static String md5Hex (String message) {
+        return sha256Hex(message);
+    }
+
+    /**
+     * Calculates a SHA-256 hash in hex format.
+     * @param message String
+     * @return String hex SHA-256 hash
+     */
+    public static String sha256Hex (String message) {
+        if(message == null) return null;
         try {
             MessageDigest md =
-                    MessageDigest.getInstance("MD5");
-            return hex (md.digest(message.getBytes("CP1252")));
+                    MessageDigest.getInstance("SHA-256");
+            return hex (md.digest(message.getBytes(UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
@@ -119,7 +126,7 @@ public class HashUtil {
 
     private static String getSalt() throws NoSuchAlgorithmException
     {
-        SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+        SecureRandom sr = new SecureRandom();
         byte[] salt = new byte[16];
         sr.nextBytes(salt);
         return Arrays.toString(salt);

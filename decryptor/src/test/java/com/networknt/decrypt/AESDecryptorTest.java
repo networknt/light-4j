@@ -38,7 +38,7 @@ public class AESDecryptorTest {
     @Disabled
     @Test
     public void testDecryptWithEnv() {
-        String secretText = "CRYPT:ebfab3ef4261185776a026acf72d24ee:5eb239d133b840503eedf9b7de490341";
+        String secretText = "CRYPT:69c73ee9840e4d4f8b53115361236b52:aaf53a8a0efb269253fbb0a8:bbe1b8c479234458830998eeb39f78b6dbe038d5150f9f57";
         AutoAESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
         String clearText = decryptor.decrypt(secretText);
         System.out.println("clearText = " + clearText);

@@ -35,7 +35,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("564aa231f84039ce2b2b886e58f88dcee26fa3e3", fp);
+        Assertions.assertEquals("41a7d6cddc203fdd53190ee52f234872c446a739d79646a18ea95d5facd5dad1", fp);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("0775dcf9193095e791307a115c192cc897753499", fp);
+        Assertions.assertEquals("3f5693c41be2473f2efcd64ac842a0770b8d2decd1a87af184247c214f7b97ce", fp);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("0ea49f0d1f89ae839e96c3665beb4ff6d0033c33", fp);
+        Assertions.assertEquals("e8730cc584b1eb172d71544d8913ee4736438dbf5d3c0f5bfc757e7228a97f73", fp);
     }
 
     @Test
@@ -74,7 +74,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("921b97842f23474d8961bfd54911c298316aa558", fp);
+        Assertions.assertEquals("1ccfc8bbffa962b6c8c8f863878d5660bc24cc0e97532154d4311ccff9a05e69", fp);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("da2794f442f08a73ac9eef7f9378dd7a5bbcf8c6", fp);
+        Assertions.assertEquals("dc6264315f1dab24eb4bb0d1de763fc10da04ce253a56ac24221db5bfa4eec94", fp);
     }
 
     @Test
@@ -100,6 +100,6 @@ public class FingerPrintUtilTest {
             e.printStackTrace();
         }
         String fp = FingerPrintUtil.getCertFingerPrint(cert);
-        Assertions.assertEquals("f9d76aae4799610a3c904df073dc79f430b408b1", fp);
+        Assertions.assertEquals("6c1a0faf16898bee1eaea9195629d86dc14d8258c0436608c4c9161dbac5d65d", fp);
     }
 }

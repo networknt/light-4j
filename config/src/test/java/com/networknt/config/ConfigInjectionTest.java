@@ -86,7 +86,7 @@ public class ConfigInjectionTest {
     public void testDecryptEnvValueWithEncryptedValue() {
 
         Decryptor aesDecryptor = ConfigInjection.getDecryptor();
-        Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, "CRYPT:0754fbc37347c136be7725cbf62b6942:71756e13c2400985d0402ed6f49613d0");
+        Object envValue = ConfigInjection.decryptEnvValue(aesDecryptor, "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5");
         Assertions.assertEquals("password", envValue);
     }
 
