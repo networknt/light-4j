@@ -20,13 +20,13 @@ import org.apache.commons.codec.binary.Base64;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -37,6 +37,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Steve Hu
  */
 public class HashUtil {
+
+    private static final HexFormat HEX_FORMAT = HexFormat.of();
 
     private HashUtil() {throw new UnsupportedOperationException("do not instantiate");}
 
@@ -72,12 +74,7 @@ public class HashUtil {
      * @return String hex string
      */
     public static String hex(byte[] array) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < array.length; ++i) {
-            sb.append(Integer.toHexString((array[i]
-                    & 0xFF) | 0x100).substring(1,3));
-        }
-        return sb.toString();
+        return HEX_FORMAT.formatHex(array);
     }
     /**
      * Calculates a SHA-256 hash in hex format.
@@ -132,17 +129,9 @@ public class HashUtil {
         return Arrays.toString(salt);
     }
 
-    private static String toHex(byte[] array) throws NoSuchAlgorithmException
+    private static String toHex(byte[] array)
     {
-        BigInteger bi = new BigInteger(1, array);
-        String hex = bi.toString(16);
-        int paddingLength = (array.length * 2) - hex.length();
-        if(paddingLength > 0)
-        {
-            return String.format("%0"  +paddingLength + "d", 0) + hex;
-        }else{
-            return hex;
-        }
+        return hex(array);
     }
 
     /**

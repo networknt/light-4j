@@ -29,6 +29,12 @@ public class HashUtilTest {
         Assertions.assertEquals("ddf8270bdc3a15fae9f733cc7fdbf93fc34a0bd5ef0369e6bee079ecf1eee5d5", md5);
         Assertions.assertEquals(md5, HashUtil.sha256Hex("stevehu@gmail.com"));
     }
+
+    @Test
+    public void testHexPreservesLeadingZeros() {
+        Assertions.assertEquals("00010fff", HashUtil.hex(new byte[] {0x00, 0x01, 0x0f, (byte)0xff}));
+    }
+
     @Test
     public void testPasswordHash() throws Exception {
         String p = "123456";
