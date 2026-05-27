@@ -16,6 +16,9 @@
 
 package com.networknt.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 /**
@@ -27,6 +30,7 @@ import java.util.*;
  */
 public class ModuleRegistry {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ModuleRegistry.class);
     private static final Map<String, Object> moduleRegistry = new HashMap<>();
     private static final Map<String, Object> pluginRegistry = new HashMap<>();
     private static final List<Map<String, Object>> plugins = new ArrayList<>();
@@ -42,9 +46,12 @@ public class ModuleRegistry {
 
     public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
         String key = configName + ":" + moduleClass;
+        LOG.debug("Registering module '{}'", key);
+
         // Optimization: Check identity. If it is the same object, then return immediately.
         // This is to prevent the repetitive registration from the per-request config loading.
         if (config != null && registryCache.get(key) == config) {
+            LOG.warn("Provided configuration for {} matches the configuration in cache already.", key);
             return;
         }
 
@@ -57,6 +64,7 @@ public class ModuleRegistry {
             maskedConfig = deepCopy(config);
 
             if (ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
+                LOG.debug("Property masking is enabled in server.yml and {} has defined masks.", key);
                 for (String mask : masks) {
                     maskNode(maskedConfig, mask);
                 }
