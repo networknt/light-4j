@@ -51,7 +51,7 @@ public class ModuleRegistry {
         // Optimization: Check identity. If it is the same object, then return immediately.
         // This is to prevent the repetitive registration from the per-request config loading.
         if (config != null && registryCache.get(key) == config) {
-            LOG.warn("Provided configuration for {} matches the configuration in cache already.", key);
+            LOG.debug("Provided configuration for {} matches the configuration in cache already.", key);
             return;
         }
 
