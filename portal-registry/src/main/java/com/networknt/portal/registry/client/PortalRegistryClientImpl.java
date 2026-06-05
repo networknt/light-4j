@@ -42,13 +42,13 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     public PortalRegistryClientImpl() {
         this.config = PortalRegistryConfig.load();
-        String portalUrl = config.getPortalUrl().toLowerCase();
+        String portalUrl = config.getPortalUrl();
         logger.debug("url = {}", portalUrl);
         try {
-            this.microserviceWsUri = new URI(toWebSocketUrl(portalUrl) + "/ws/microservice");
-        } catch (URISyntaxException e) {
+            this.microserviceWsUri = toMicroserviceWebSocketUri(portalUrl);
+        } catch (IllegalArgumentException e) {
             logger.error("Invalid URI {}", portalUrl, e);
-            throw new RuntimeException("Invalid URI " + portalUrl, e);
+            throw e;
         }
     }
 
@@ -142,14 +142,46 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         activeServiceChannel().sendRequest("discovery/unsubscribe", discoveryParams(serviceId, tag, protocol));
     }
 
-    private static String toWebSocketUrl(String portalUrl) {
-        String lower = portalUrl.toLowerCase();
-        if (lower.startsWith("https://")) {
-            return "wss://" + portalUrl.substring("https://".length());
-        } else if (lower.startsWith("http://")) {
-            return "ws://" + portalUrl.substring("http://".length());
+    static URI toMicroserviceWebSocketUri(String portalUrl) {
+        URI portalUri;
+        try {
+            portalUri = new URI(portalUrl);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid portal url: " + portalUrl, e);
         }
-        throw new IllegalArgumentException("Unsupported portal url: " + portalUrl);
+
+        String scheme = portalUri.getScheme();
+        String webSocketScheme;
+        if ("https".equalsIgnoreCase(scheme)) {
+            webSocketScheme = "wss";
+        } else if ("http".equalsIgnoreCase(scheme)) {
+            webSocketScheme = "ws";
+        } else {
+            throw new IllegalArgumentException("Unsupported portal url: " + portalUrl);
+        }
+
+        String authority = portalUri.getRawAuthority();
+        if (StringUtils.isBlank(authority)) {
+            throw new IllegalArgumentException("Portal url must include an authority: " + portalUrl);
+        }
+
+        String basePath = trimTrailingSlashes(portalUri.getRawPath());
+        try {
+            return new URI(webSocketScheme + "://" + authority + basePath + "/ws/microservice");
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid portal url: " + portalUrl, e);
+        }
+    }
+
+    private static String trimTrailingSlashes(String path) {
+        if (StringUtils.isBlank(path) || "/".equals(path)) {
+            return "";
+        }
+        String trimmed = path;
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 
     private void registerControllerRsService(PortalRegistryService service, String token) {

@@ -18,12 +18,14 @@ package com.networknt.portal.registry.client;
 import com.networknt.portal.registry.PortalRegistryConfig;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PortalRegistryClientImplTest {
 
@@ -42,6 +44,55 @@ public class PortalRegistryClientImplTest {
         client.subscribeService("com.networknt.remote.v1", "prod", "https", "Bearer raw-jwt");
 
         assertEquals(List.of("service/register", "discovery/subscribe"), client.sentMethods());
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriForRootPortalUrl() {
+        assertEquals(
+                URI.create("wss://localhost:8443/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri("https://localhost:8443"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriForRootPortalUrlWithTrailingSlash() {
+        assertEquals(
+                URI.create("wss://localhost:8443/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri("https://localhost:8443/"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriPreservesIngressBasePath() {
+        assertEquals(
+                URI.create("wss://dev-apmh-api-platform.networknt.com/controlplane/v2/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri("https://dev-apmh-api-platform.networknt.com/controlplane/v2"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriTrimsIngressBasePathTrailingSlash() {
+        assertEquals(
+                URI.create("wss://dev-apmh-api-platform.networknt.com/controlplane/v2/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri("https://dev-apmh-api-platform.networknt.com/controlplane/v2/"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriDropsQueryAndFragment() {
+        assertEquals(
+                URI.create("wss://dev-apmh-api-platform.networknt.com/controlplane/v2/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri(
+                        "https://dev-apmh-api-platform.networknt.com/controlplane/v2?tenant=apmh#controller"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriUsesPlainWebSocketForHttp() {
+        assertEquals(
+                URI.create("ws://localhost:8080/controlplane/v2/ws/microservice"),
+                PortalRegistryClientImpl.toMicroserviceWebSocketUri("http://localhost:8080/controlplane/v2"));
+    }
+
+    @Test
+    void testMicroserviceWebSocketUriRejectsUnsupportedScheme() {
+        assertThrows(IllegalArgumentException.class,
+                () -> PortalRegistryClientImpl.toMicroserviceWebSocketUri("ftp://localhost/controlplane/v2"));
     }
 
     private com.networknt.portal.registry.PortalRegistryService service(String address, int port) {
