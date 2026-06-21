@@ -1093,6 +1093,16 @@ ERR11646:
   code: ERR11646
   message: AGGREGATE_VERSION_GREATER_THAN_MAX
   description: Aggregate version %d from user request is greater than the event store max aggregate version %d for the aggregate type %s and aggregate id %s.
+ERR11647:
+  statusCode: 401
+  code: ERR11647
+  message: JWT_BEARER_TOKEN_MISSING
+  description: JWT bearer token is missing.
+ERR11648:
+  statusCode: 400
+  code: ERR11648
+  message: TOKEN_EXCHANGE_FAILED
+  description: Token exchange failed: %s.
 
 
 # OAuth2 service error 12000-12099
