@@ -1102,7 +1102,7 @@ ERR11648:
   statusCode: 400
   code: ERR11648
   message: TOKEN_EXCHANGE_FAILED
-  description: Token exchange failed: %s.
+  description: Token exchange failed %s.
 
 
 # OAuth2 service error 12000-12099
