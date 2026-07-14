@@ -105,39 +105,104 @@ public class ResponseRowFilterAction implements IAction {
 
     private static List<Object> mapPermission(List<Object> list, Map<String, Object> permissionMap, String jwtPermission, JwtClaims jwtClaims) {
         if (logger.isTraceEnabled()) logger.trace("permissionMap = {} jwtPermission = {}", permissionMap, jwtPermission);
+        List<List<RowFilter>> matchedFilterGroups = new ArrayList<>();
         for (Map.Entry<String, Object> entry : permissionMap.entrySet()) {
             String key = entry.getKey();  // this is a role, group, position, attribute, user
-            List<Map<String, Object>> value = (List<Map<String, Object>>) entry.getValue(); // this is the list of colName, operator and colValue map.
             if (PermissionMatchUtils.hasPermission(jwtPermission, key)) {
-                if (logger.isTraceEnabled()) logger.trace("permission matched for key = {} value = {}", key, value);
-
-                Iterator<Object> iterator = list.iterator();
-                while (iterator.hasNext()) {
-                    Map<String, Object> map = (Map<String, Object>) iterator.next();
-                    boolean shouldRemove = false;
-                    for (Map<String, Object> filterMap : value) {
-                        String colName = (String) filterMap.get("colName");
-                        String operator = (String) filterMap.get("operator");
-                        String colValue = (String) filterMap.get("colValue");
-                        if(colValue.startsWith("@")) colValue = jwtClaims.getClaimValueAsString(colValue.substring(1));
-                        if (map.containsKey(colName)) {
-                            String itemValue = (String) map.get(colName);
-                            if (!matchFilterWithString(itemValue, operator, colValue)) {
-                                shouldRemove = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (shouldRemove) {
-                        iterator.remove(); // Correctly remove using the iterator
-                    }
+                Optional<List<RowFilter>> parsedFilters = parseFilters(entry.getValue(), jwtClaims);
+                if (logger.isTraceEnabled()) logger.trace("permission matched for key = {} value = {}", key, entry.getValue());
+                if (parsedFilters.isEmpty()) {
+                    logger.warn("Matched response row filter for permission {} is empty or invalid; all rows will be denied", key);
                 }
+                matchedFilterGroups.add(parsedFilters.orElseGet(Collections::emptyList));
             }
+        }
+        if (!matchedFilterGroups.isEmpty()) {
+            list.removeIf(item -> !matchedFilterGroups.stream().allMatch(filters -> rowMatches(item, filters)));
         }
         return list;
     }
 
-    private static boolean matchFilterWithString(Object itemValue, String filterOp, String filterValue){
+    private static Optional<List<RowFilter>> parseFilters(Object configuredValue, JwtClaims jwtClaims) {
+        if (!(configuredValue instanceof List<?> configuredFilters) || configuredFilters.isEmpty()) {
+            return Optional.empty();
+        }
+        List<RowFilter> filters = new ArrayList<>(configuredFilters.size());
+        for (Object configuredFilter : configuredFilters) {
+            if (!(configuredFilter instanceof Map<?, ?> filterMap)) {
+                return Optional.empty();
+            }
+            Object colNameValue = filterMap.get("colName");
+            Object operatorValue = filterMap.get("operator");
+            Object colValueValue = filterMap.get("colValue");
+            if (!(colNameValue instanceof String colName) || colName.isBlank()
+                    || (operatorValue != null && !(operatorValue instanceof String))
+                    || !isScalar(colValueValue)) {
+                return Optional.empty();
+            }
+            String operator = operatorValue == null ? "=" : (String) operatorValue;
+            if (!isSupportedOperator(operator)) {
+                return Optional.empty();
+            }
+            String colValue = String.valueOf(colValueValue);
+            if (colValue.startsWith("@")) {
+                colValue = jwtClaims.getClaimValueAsString(colValue.substring(1));
+                if (colValue == null) {
+                    return Optional.empty();
+                }
+            }
+            List<String> listValues = switch (operator) {
+                case "in", "not in" -> listTokens(colValue);
+                default -> Collections.emptyList();
+            };
+            filters.add(new RowFilter(colName, operator, colValue, listValues));
+        }
+        return Optional.of(filters);
+    }
+
+    private static boolean rowMatches(Object item, List<RowFilter> filters) {
+        if (!(item instanceof Map<?, ?> map) || filters.isEmpty()) {
+            return false;
+        }
+        return filters.stream().allMatch(filter -> map.containsKey(filter.colName())
+                && matchFilter(map.get(filter.colName()), filter));
+    }
+
+    private static boolean isScalar(Object value) {
+        return value instanceof String || value instanceof Number || value instanceof Boolean;
+    }
+
+    private static boolean isSupportedOperator(String operator) {
+        return switch (operator) {
+            case "=", "!=", "<", ">", "<=", ">=", "in", "not in", "range" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean matchFilter(Object itemValue, RowFilter filter) {
+        String filterOp = filter.operator();
+        String filterValue = filter.colValue();
+        if (itemValue == null
+                || itemValue instanceof Map<?, ?> || itemValue instanceof Collection<?>) {
+            return false;
+        }
+        if (itemValue instanceof Number number && isNumericOperator(filterOp)) {
+            return matchFilterWithNumber(number, filterOp, filterValue);
+        }
+        return matchFilterWithString(itemValue, filterOp, filterValue, filter.listValues());
+    }
+
+    private static boolean isNumericOperator(String filterOp) {
+        return switch (filterOp) {
+            case "=", "!=", "<", ">", "<=", ">=", "range" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean matchFilterWithString(Object itemValue, String filterOp, String filterValue, List<String> listValues){
+        if (itemValue == null || filterOp == null || filterValue == null) {
+            return false;
+        }
         String itemString = String.valueOf(itemValue);
         switch (filterOp){
             case "=":
@@ -145,31 +210,44 @@ public class ResponseRowFilterAction implements IAction {
             case "!=":
                 return !itemString.equals(filterValue);
             case "in":
-                if(filterValue.startsWith("[") && filterValue.endsWith("]")){
-                    String filterValueList = filterValue.substring(1, filterValue.length()-1);
-                    List<String> values = Arrays.stream(filterValueList.split(","))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-                    return values.contains(itemString);
-                }
-                return false;
+                return listValues.contains(itemString);
             case "not in":
-                if(filterValue.startsWith("[") && filterValue.endsWith("]")){
-                    String filterValueList = filterValue.substring(1, filterValue.length()-1);
-                    List<String> values = Arrays.stream(filterValueList.split(","))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-                    return !values.contains(itemString);
-                }
-                return false;
+                return !listValues.contains(itemString);
             default:
-                return true;
+                return false;
         }
     }
 
-    private boolean matchFilterWithNumber(Number itemValue, String filterOp, String filterValue){
+    private static boolean matchFilterWithNumber(Number itemValue, String filterOp, String filterValue){
+        if (itemValue == null || filterOp == null || filterValue == null) {
+            return false;
+        }
         double itemDouble = itemValue.doubleValue();
-        double filterDouble = Double.parseDouble(filterValue);
+        if ("range".equals(filterOp)) {
+            if (!filterValue.startsWith("[") || !filterValue.endsWith("]")) {
+                return false;
+            }
+            String filterValueList = filterValue.substring(1, filterValue.length() - 1);
+            List<String> values = Arrays.stream(filterValueList.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            if (values.size() != 2) {
+                return false;
+            }
+            try {
+                double minValue = Double.parseDouble(values.get(0));
+                double maxValue = Double.parseDouble(values.get(1));
+                return itemDouble >= minValue && itemDouble <= maxValue;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        final double filterDouble;
+        try {
+            filterDouble = Double.parseDouble(filterValue);
+        } catch (NumberFormatException e) {
+            return false;
+        }
         switch (filterOp){
             case "=":
                 return itemDouble == filterDouble;
@@ -183,23 +261,52 @@ public class ResponseRowFilterAction implements IAction {
                 return itemDouble <= filterDouble;
             case ">=":
                 return itemDouble >= filterDouble;
-            case "range":
-                if(filterValue.startsWith("[") && filterValue.endsWith("]")){
-                    String filterValueList = filterValue.substring(1, filterValue.length()-1);
-                    List<String> values = Arrays.stream(filterValueList.split(","))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-                    if(values.size() == 2){
-                        double minValue = Double.parseDouble(values.get(0));
-                        double maxValue = Double.parseDouble(values.get(1));
-                        return itemDouble >= minValue && itemDouble <= maxValue;
-                    }
-                    return false;
-                }
-                return false;
             default:
-                return true;
+                return false;
         }
     }
+
+    private static List<String> listTokens(String value) {
+        String normalized = value.trim();
+        if (normalized.startsWith("[") && normalized.endsWith("]")) {
+            try {
+                Object parsed = Config.getInstance().getMapper().readValue(normalized, Object.class);
+                if (parsed instanceof List<?> values) {
+                    return values.stream()
+                            .filter(ResponseRowFilterAction::isScalar)
+                            .map(String::valueOf)
+                            .map(String::trim)
+                            .filter(token -> !token.isEmpty())
+                            .collect(Collectors.toList());
+                }
+            } catch (Exception ignored) {
+                // Preserve the legacy bracketed form, for example [New York, CA].
+            }
+            normalized = normalized.substring(1, normalized.length() - 1);
+            return Arrays.stream(normalized.split(","))
+                    .map(String::trim)
+                    .map(ResponseRowFilterAction::stripMatchingQuotes)
+                    .filter(token -> !token.isEmpty())
+                    .collect(Collectors.toList());
+        }
+        if (normalized.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(normalized.split("[,\\s]+"))
+                .map(String::trim)
+                .filter(token -> !token.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private static String stripMatchingQuotes(String value) {
+        if (value.length() >= 2
+                && ((value.startsWith("\"") && value.endsWith("\""))
+                || (value.startsWith("'") && value.endsWith("'")))) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
+    }
+
+    private record RowFilter(String colName, String operator, String colValue, List<String> listValues) {}
 
 }
