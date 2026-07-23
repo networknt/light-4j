@@ -6,7 +6,6 @@ import com.networknt.exception.ClientException;
 import com.networknt.handler.ResponseInterceptorInjectionHandler;
 import com.networknt.rule.MultiThreadRuleExecutor;
 import com.networknt.rule.RuleExecutor;
-import com.networknt.server.StartupHookProvider;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
