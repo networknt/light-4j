@@ -1103,6 +1103,11 @@ ERR11648:
   code: ERR11648
   message: TOKEN_EXCHANGE_FAILED
   description: Token exchange failed %s.
+ERR11649:
+  statusCode: 400
+  code: ERR11649
+  message: LOGOUT_CSRF_VALIDATION_FAILED
+  description: CSRF cookie/header validation failed for logout.
 
 
 # OAuth2 service error 12000-12099

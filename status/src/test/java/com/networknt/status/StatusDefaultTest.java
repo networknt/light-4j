@@ -45,6 +45,16 @@ public class StatusDefaultTest {
     }
 
     @Test
+    public void testLogoutCsrfValidationStatusDoesNotExposeValues() {
+        Status status = new Status("ERR11649");
+        Assertions.assertEquals(400, status.getStatusCode());
+        Assertions.assertEquals("ERR11649", status.getCode());
+        Assertions.assertEquals("LOGOUT_CSRF_VALIDATION_FAILED", status.getMessage());
+        Assertions.assertEquals("CSRF cookie/header validation failed for logout.", status.getDescription());
+        Assertions.assertFalse(status.getDescription().contains("%"));
+    }
+
+    @Test
     public void testToString() {
         Status status = new Status("ERR10001");
         System.out.println(status);
