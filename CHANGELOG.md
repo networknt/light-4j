@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.3.6](https://github.com/networknt/light-4j/tree/2.3.6) (2026-08-05)
+
+
+**Merged pull requests:**
+
+
 ## [2.3.5](https://github.com/networknt/light-4j/tree/2.3.5) (2026-07-29)
 
 
