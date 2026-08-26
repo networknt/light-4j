@@ -27,6 +27,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
     }
 
     private volatile RuleConfig config;
+    private volatile RuleConfig rejectedConfig;
     private volatile RuntimeState state;
 
     public MultiThreadRuleExecutor() {
@@ -71,13 +72,20 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         // Skip reload check if config was not set (e.g., when using the test constructor)
         if (config == null) return;
         RuleConfig newConfig = RuleConfig.load();
-        if (newConfig != config) {
+        if (newConfig != config && newConfig != rejectedConfig) {
             synchronized (this) {
-                if (newConfig != config) {
+                if (newConfig != config && newConfig != rejectedConfig) {
                     if (logger.isInfoEnabled()) logger.info("RuleConfig has been reloaded, re-initializing rules and ruleEngine.");
-                    RuntimeState newState = buildRuntimeState(newConfig);
-                    state = newState;
-                    config = newConfig;
+                    try {
+                        RuntimeState newState = buildRuntimeState(newConfig);
+                        state = newState;
+                        config = newConfig;
+                        rejectedConfig = null;
+                    } catch (RuntimeException e) {
+                        rejectedConfig = newConfig;
+                        logger.error("Rejected invalid RuleConfig reload; retaining the last-known-good rules. "
+                                + "This configuration will not be retried until RuleConfig changes again.", e);
+                    }
                 }
             }
         }
@@ -128,7 +136,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             for(Rule rule: rules.values()) {
                 if(rule.getActions() != null) {
                     for (RuleAction action : rule.getActions()) {
-                        String actionClass = action.getActionRef();
+                        String actionClass = action.getActionClassName();
                         loadActionClass(actionClass, ruleEngine);
                     }
                 }

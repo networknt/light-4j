@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.3.8] - Unreleased
+
+- Updated `yaml-rule` to 3.0.1 for the restored legacy Java rule contract.
+- Rule configuration reloads are transactional: an invalid full `ruleBodies` document, including a CEL/new-spec body, is logged and rejected once while the last-known-good rules continue serving requests. Invalid rule configuration still fails initial startup.
+
 ## [2.3.7](https://github.com/networknt/light-4j/tree/2.3.7) (2026-08-12)
 
 
