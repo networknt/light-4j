@@ -153,6 +153,7 @@ public class Handler {
 
         if (config != null && config.getDefaultHandlers() != null) {
             defaultHandlers = getHandlersFromExecList(config.getDefaultHandlers());
+            validateMaterializedChain(defaultHandlers, "defaultHandlers");
             handlerListById.put("defaultHandlers", defaultHandlers);
         }
     }
@@ -200,6 +201,8 @@ public class Handler {
         var handlers = getHandlersFromExecList(pathChain.getExec());
 
         if (!handlers.isEmpty()) {
+            validateMaterializedChain(handlers,
+                    "path " + pathChain.getMethod() + ' ' + pathChain.getPath());
 
             // If a matcher already exists for the given type, at to that instead of
             // creating a new one.
@@ -212,6 +215,15 @@ public class Handler {
 
             methodToMatcherMap.put(method, pathTemplateMatcher);
             handlerListById.put(Integer.toString(randInt), handlers);
+        }
+    }
+
+    private static void validateMaterializedChain(List<HttpHandler> chain, String location) {
+        List<HttpHandler> immutableChain = List.copyOf(chain);
+        for (int index = 0; index < immutableChain.size(); index++) {
+            HttpHandler handler = immutableChain.get(index);
+            if (handler instanceof HandlerChainValidator validator)
+                validator.validateChain(immutableChain, index, location);
         }
     }
 

@@ -1,0 +1,8 @@
+# Copy this singleton entry into the application's service.yml for the default local replay store.
+singletons:
+  # HMAC must be first; non-mutating request interceptors may follow it.
+  - com.networknt.handler.RequestInterceptor:
+      - com.networknt.hmac.HmacRequestInterceptor
+  - com.networknt.hmac.WebhookReplayStore:
+      - com.networknt.hmac.LocalWebhookReplayStore:
+          maxEntries: 100000

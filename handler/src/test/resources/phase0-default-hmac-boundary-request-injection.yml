@@ -1,0 +1,5 @@
+enabled: true
+appliedBodyInjectionPathPrefixes:
+  - /phase0
+maxBuffers: 16384
+maxBodyBytes: 16777216

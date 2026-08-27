@@ -1,0 +1,4 @@
+singletons:
+  - com.networknt.hmac.WebhookReplayStore:
+      - com.networknt.hmac.LocalWebhookReplayStore:
+          maxEntries: 2

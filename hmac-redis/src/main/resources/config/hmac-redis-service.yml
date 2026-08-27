@@ -1,0 +1,8 @@
+# Copy this singleton entry into the application's service.yml when the optional Redis adapter is present.
+singletons:
+  - com.networknt.hmac.WebhookReplayStore,com.networknt.server.StartupHookProvider,com.networknt.server.ShutdownHookProvider:
+      - com.networknt.hmac.redis.RedisWebhookReplayStore:
+          urlEnv: WEBHOOK_REPLAY_REDIS_URL
+          keyPrefix: "light:hmac-replay:"
+          connectTimeoutMillis: 1000
+          operationTimeoutMillis: 1000

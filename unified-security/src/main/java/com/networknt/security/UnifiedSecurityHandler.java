@@ -5,6 +5,8 @@ import com.networknt.basicauth.BasicAuthHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.hmac.HmacAttachments;
+import com.networknt.hmac.HmacAuthenticationEvidence;
 import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -36,6 +38,7 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
     static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
     static final String HANDLER_NOT_FOUND = "ERR11200";
     static final String MISSING_PATH_PREFIX_AUTH = "ERR10078";
+    static final String HMAC_UNAVAILABLE = "ERR10095";
     // make this static variable public so that it can be accessed from the server-info module
     private volatile HttpHandler next;
     private volatile JwtVerifier jwtVerifier;
@@ -97,6 +100,15 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                     found = true;
                     if(logger.isTraceEnabled())
                         logger.trace("Found with requestPath = {} prefix = {}", reqPath, pathPrefixAuth.getPrefix());
+                    if (pathPrefixAuth.getHmacProfile() != null) {
+                        HmacAuthenticationEvidence evidence = exchange.getAttachment(HmacAttachments.AUTHENTICATION_EVIDENCE);
+                        if (evidence == null || !evidence.matches(pathPrefixAuth.getPrefix(),
+                                pathPrefixAuth.getHmacProfile(), reqPath)) {
+                            logger.error("Required HMAC evidence is missing or mismatched for profile={} prefix={}",
+                                    pathPrefixAuth.getHmacProfile(), pathPrefixAuth.getPrefix());
+                            return new Status(HMAC_UNAVAILABLE);
+                        }
+                    }
                     // check jwt and basic first with authorization header, then check the apikey if it is enabled.
                     if(pathPrefixAuth.isBasic() || pathPrefixAuth.isJwt() || pathPrefixAuth.isSwt() || pathPrefixAuth.isSjwt()) {
                         String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);

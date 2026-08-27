@@ -1,0 +1,19 @@
+enabled: true
+handlers:
+  - com.networknt.handler.RequestInterceptorInjectionHandler@injection
+  - com.networknt.handler.HandlerTest$ChainACounter@chainA
+  - com.networknt.handler.HandlerTest$ChainBCounter@chainB
+  - com.networknt.handler.HandlerTest$TerminalHandler@terminal
+paths:
+  - path: /chain-a
+    method: GET
+    exec:
+      - injection
+      - chainA
+      - terminal
+  - path: /chain-b
+    method: GET
+    exec:
+      - injection
+      - chainB
+      - terminal

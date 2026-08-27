@@ -78,7 +78,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
         var method = httpServerExchange.getRequestMethod().toString();
 
-        this.next = Handler.getNext(httpServerExchange);
+        HttpHandler nextHandler = Handler.getNext(httpServerExchange, this.next);
 
         RequestInjectionConfig config = RequestInjectionConfig.load(configName);
         if(logger.isTraceEnabled())
@@ -86,47 +86,29 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
         if (this.shouldReadBody(httpServerExchange, config)) {
             if(logger.isTraceEnabled()) logger.trace("Trying to read body");
-            final var channel = httpServerExchange.getRequestChannel();
-            final var bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
+            if (config.getMaxBodyBytes() > 0
+                    && httpServerExchange.getRequestContentLength() > config.getMaxBodyBytes()) {
+                setExchangeStatus(httpServerExchange, PAYLOAD_TOO_LARGE);
+                return;
+            }
 
-            int readBuffers = 0;
-            var buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
+            RequestBodyReadState readState = null;
 
             try {
-                for (; ; ) {
-                    int r;
-                    var b = buffer.getBuffer();
-                    r = channel.read(b);
+                readState = new RequestBodyReadState(httpServerExchange, config, nextHandler);
+                ReadOutcome outcome = readState.readAvailable();
+                if (outcome != ReadOutcome.COMPLETE)
+                    return;
 
-                    if (r == -1) {
-                        handleEndOfStream(b, bufferedData, readBuffers, buffer);
-                        break;
-
-                    } else if (r == 0) {
-                        this.setChannelRead(channel, buffer, readBuffers, bufferedData, httpServerExchange, config);
-                        channel.resumeReads();
-                        return;
-
-                    } else if (!b.hasRemaining()) {
-                        b.flip();
-                        bufferedData[readBuffers++] = buffer;
-
-                        if (readBuffers == config.getMaxBuffers())
-                            break;
-
-                        buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
-                    }
-                }
-
-                this.saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
+                this.saveBufferAndResetUndertowConnector(httpServerExchange, readState.bufferedData);
             } catch (RequestTooBigException e) {
                 logger.error(e.getMessage(), e);
-                safeCloseBuffers(bufferedData, buffer);
+                if (readState != null) readState.closeBuffers();
                 setExchangeStatus(httpServerExchange, PAYLOAD_TOO_LARGE);
                 return;
             } catch (Exception | Error e) {
                 logger.error(e.getMessage(), e);
-                safeCloseBuffers(bufferedData, buffer);
+                if (readState != null) readState.closeBuffers();
                 setExchangeStatus(httpServerExchange, GENERIC_EXCEPTION, e.getMessage());
                 return;
             }
@@ -141,7 +123,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
             logger.trace("Exchange response started status = {}", httpServerExchange.isResponseStarted());
 
         if(!httpServerExchange.isResponseStarted())
-            Handler.next(httpServerExchange, next);
+            Handler.next(httpServerExchange, nextHandler);
 
     }
 
@@ -171,56 +153,136 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 Arrays.stream(this.interceptors).anyMatch(RequestInterceptor::isRequiredContent);
     }
 
+    private enum ReadOutcome {
+        COMPLETE,
+        PENDING,
+        FAILED
+    }
+
     /**
-     * Create a new read channel listener for the request channel. This is needed for 'chunked' requests larger than our server buffer set.
-     *
-     * @param c            the request channel.
-     * @param cPooledBuffer the pooled byte buffer to read from.
-     * @param cRead        the number of bytes already read.
-     * @param bufferedData total buffered data array.
-     * @param ex           current httpServerExchange.
-     * @param config       RequestInjectionConfig to use.
+     * One request-body read state shared by the initial non-blocking read and any
+     * resumed channel callbacks. Positive maxBodyBytes mode must observe EOF and
+     * is never allowed to treat a full final buffer as a complete request.
      */
-    private void setChannelRead(final StreamSourceChannel c, final PooledByteBuffer cPooledBuffer, final int cRead, final PooledByteBuffer[] bufferedData, final HttpServerExchange ex, RequestInjectionConfig config) {
-        c.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
-            PooledByteBuffer buffer = cPooledBuffer;
-            int readBuffers = cRead;
+    private final class RequestBodyReadState implements ChannelListener<StreamSourceChannel> {
+        private final HttpServerExchange exchange;
+        private final RequestInjectionConfig config;
+        private final HttpHandler continuation;
+        private final StreamSourceChannel channel;
+        private final PooledByteBuffer[] bufferedData;
+        private final boolean exactLimit;
+        private PooledByteBuffer buffer;
+        private int readBuffers;
+        private long bytesRead;
 
-            @Override
-            public void handleEvent(StreamSourceChannel channel) {
+        private RequestBodyReadState(HttpServerExchange exchange, RequestInjectionConfig config, HttpHandler continuation) {
+            this.exchange = exchange;
+            this.config = config;
+            this.continuation = continuation;
+            this.channel = exchange.getRequestChannel();
+            this.bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
+            this.exactLimit = config.getMaxBodyBytes() > 0;
+            this.buffer = exchange.getConnection().getByteBufferPool().allocate();
+        }
+
+        private ReadOutcome readAvailable() throws Exception {
+            for (; ; ) {
+                if (readBuffers == bufferedData.length) {
+                    if (!exactLimit)
+                        return ReadOutcome.COMPLETE;
+                    return probeForEndOfStream();
+                }
+
+                ByteBuffer byteBuffer = buffer.getBuffer();
+                int originalLimit = byteBuffer.limit();
+                if (exactLimit) {
+                    long bytesThroughFirstExcess = (long) config.getMaxBodyBytes() - bytesRead + 1;
+                    if (bytesThroughFirstExcess < byteBuffer.remaining())
+                        byteBuffer.limit(byteBuffer.position() + (int) bytesThroughFirstExcess);
+                }
+
+                int read;
                 try {
+                    read = channel.read(byteBuffer);
+                } finally {
+                    byteBuffer.limit(originalLimit);
+                }
 
-                    for (; ; ) {
-                        int r;
-                        var b = buffer.getBuffer();
-                        r = channel.read(b);
+                if (read == -1) {
+                    handleEndOfStream(byteBuffer, bufferedData, readBuffers, buffer);
+                    buffer = null;
+                    return ReadOutcome.COMPLETE;
+                }
+                if (read == 0)
+                    return awaitMoreData();
 
-                        if (r == -1) {
-                            handleEndOfStream(b, bufferedData, readBuffers, buffer);
-                            suspendReads(ex, bufferedData, channel, next);
-                            return;
+                bytesRead += read;
+                if (exactLimit && bytesRead > config.getMaxBodyBytes())
+                    return rejectTooLarge();
 
-                        } else if (r == 0)
-                            return;
-
-                        else if (!b.hasRemaining()) {
-                            b.flip();
-                            bufferedData[readBuffers++] = buffer;
-
-                            if (readBuffers == config.getMaxBuffers()) {
-                                suspendReads(ex, bufferedData, channel, next);
-                                return;
-                            }
-
-                            buffer = ex.getConnection().getByteBufferPool().allocate();
-                        }
-                    }
-                } catch (Throwable e) {
-                    safeCloseBuffers(bufferedData, buffer);
-                    ex.endExchange();
+                if (!byteBuffer.hasRemaining()) {
+                    byteBuffer.flip();
+                    bufferedData[readBuffers++] = buffer;
+                    buffer = null;
+                    if (readBuffers < bufferedData.length)
+                        buffer = exchange.getConnection().getByteBufferPool().allocate();
                 }
             }
-        });
+        }
+
+        private ReadOutcome probeForEndOfStream() throws Exception {
+            ByteBuffer probe = ByteBuffer.allocate(1);
+            int read = channel.read(probe);
+            if (read == -1)
+                return ReadOutcome.COMPLETE;
+            if (read == 0)
+                return awaitMoreData();
+            return rejectTooLarge();
+        }
+
+        private ReadOutcome awaitMoreData() {
+            channel.getReadSetter().set(this);
+            channel.resumeReads();
+            return ReadOutcome.PENDING;
+        }
+
+        private ReadOutcome rejectTooLarge() {
+            stopReading();
+            closeBuffers();
+            setExchangeStatus(exchange, PAYLOAD_TOO_LARGE);
+            return ReadOutcome.FAILED;
+        }
+
+        private void stopReading() {
+            channel.getReadSetter().set(null);
+            channel.suspendReads();
+        }
+
+        private void closeBuffers() {
+            safeCloseBuffers(bufferedData, buffer);
+            buffer = null;
+        }
+
+        @Override
+        public void handleEvent(StreamSourceChannel ignored) {
+            try {
+                ReadOutcome outcome = readAvailable();
+                if (outcome == ReadOutcome.PENDING)
+                    return;
+
+                stopReading();
+                if (outcome == ReadOutcome.COMPLETE) {
+                    saveBufferAndResetUndertowConnector(exchange, bufferedData);
+                    if (!exchange.isResponseStarted())
+                        Connectors.executeRootHandler(ex -> Handler.next(ex, continuation), exchange);
+                }
+            } catch (Throwable e) {
+                LOG.error(e.getMessage(), e);
+                stopReading();
+                closeBuffers();
+                setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
+            }
+        }
     }
 
     /**
@@ -236,27 +298,6 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (buf != null && buf.isOpen())
             IoUtils.safeClose(buf);
     }
-
-    /**
-     * Suspend our reads and remove the channel listener we created.
-     *
-     * @param ex           current httpServerExchange.
-     * @param bufferedData total buffered data array.
-     * @param c            request channel.
-     * @param next         next http handler.
-     */
-    private void suspendReads(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData, StreamSourceChannel c, HttpHandler next) {
-        saveBufferAndResetUndertowConnector(ex, bufferedData);
-
-        c.getReadSetter().set(null);
-        c.suspendReads();
-
-        if (LOG.isTraceEnabled())
-            LOG.info("Next is: {}", next.getClass());
-
-        Connectors.executeRootHandler(next, ex);
-    }
-
 
     /**
      * Save the total buffer as an attachment. Update content length just in case

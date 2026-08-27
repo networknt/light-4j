@@ -1,0 +1,5 @@
+enabled: true
+appliedBodyInjectionPathPrefixes:
+  - /phase0
+maxBuffers: 1
+maxBodyBytes: 0

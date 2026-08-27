@@ -1,0 +1,5 @@
+# Raw-body HMAC webhook authentication configuration.
+# Enable raw-body HMAC webhook authentication.
+enabled: ${hmac.enabled:false}
+# Named HMAC verification profiles. Secret values are referenced only by environment-variable name.
+profiles: ${hmac.profiles:}

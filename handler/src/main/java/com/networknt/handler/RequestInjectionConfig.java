@@ -26,6 +26,7 @@ public class RequestInjectionConfig {
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
     private static final String MAX_BUFFERS = "maxBuffers";
+    private static final String MAX_BODY_BYTES = "maxBodyBytes";
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -68,6 +69,15 @@ public class RequestInjectionConfig {
      * Max number of buffers for the interceptor.
      */
     private int maxBuffers;
+
+    @IntegerField(
+            configFieldName = MAX_BODY_BYTES,
+            externalizedKeyName = MAX_BODY_BYTES,
+            defaultValue = "0",
+            min = 0,
+            description = "Optional exact request-body byte limit. A positive value requires the request reader to observe end-of-stream at or below the limit and returns 413 after observing one byte beyond it. Zero preserves the legacy maxBuffers truncation behavior."
+    )
+    private int maxBodyBytes;
     private Map<String, Object> mappedConfig;
 
     private static volatile RequestInjectionConfig instance;
@@ -139,6 +149,15 @@ public class RequestInjectionConfig {
     }
 
     /**
+     * Returns the opt-in exact request-body byte limit.
+     *
+     * @return a positive strict byte limit, or zero for legacy behavior
+     */
+    public int getMaxBodyBytes() {
+        return maxBodyBytes;
+    }
+
+    /**
      * Returns the list of applied body injection path prefixes.
      * @return A list of path prefixes.
      */
@@ -155,6 +174,9 @@ public class RequestInjectionConfig {
         if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = getMappedConfig().get(MAX_BUFFERS);
         if (object != null) maxBuffers = Config.loadIntegerValue(MAX_BUFFERS, object);
+        object = getMappedConfig().get(MAX_BODY_BYTES);
+        if (object != null) maxBodyBytes = Config.loadIntegerValue(MAX_BODY_BYTES, object);
+        if (maxBodyBytes < 0) throw new ConfigException(MAX_BODY_BYTES + " must be zero or a positive integer.");
     }
 
     private void setConfigList() {

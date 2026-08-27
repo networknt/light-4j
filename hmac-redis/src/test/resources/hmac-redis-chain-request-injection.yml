@@ -1,0 +1,5 @@
+enabled: true
+appliedBodyInjectionPathPrefixes:
+  - /github-webhook
+maxBuffers: 16
+maxBodyBytes: 4096

@@ -606,6 +606,31 @@ ERR10092:
   code: ERR10092
   message: CORS_PREFLIGHT_REQUEST_FAILED
   description: CORS preflight request failed. Origin not allowed or method/headers unsupported..
+ERR10093:
+  statusCode: 401
+  code: ERR10093
+  message: INVALID_WEBHOOK_AUTHENTICATION
+  description: Webhook authentication failed.
+ERR10094:
+  statusCode: 415
+  code: ERR10094
+  message: UNSUPPORTED_WEBHOOK_CONTENT_ENCODING
+  description: Webhook authentication requires an absent or identity Content-Encoding.
+ERR10095:
+  statusCode: 503
+  code: ERR10095
+  message: HMAC_AUTHENTICATION_UNAVAILABLE
+  description: HMAC authentication is unavailable because its runtime or handler wiring is invalid.
+ERR10096:
+  statusCode: 400
+  code: ERR10096
+  message: INVALID_HMAC_REPLAY_ADMIN_REQUEST
+  description: The HMAC replay administration request is invalid.
+ERR10097:
+  statusCode: 500
+  code: ERR10097
+  message: HMAC_REQUEST_BODY_CHANGED
+  description: The buffered request body changed after HMAC verification.
 
 
 # 11000-11499 swagger-validator errors

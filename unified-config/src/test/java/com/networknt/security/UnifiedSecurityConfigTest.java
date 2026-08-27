@@ -73,7 +73,7 @@ public class UnifiedSecurityConfigTest {
 
     @Test
     public void testPathPrefixAuth() {
-        String s = "[{\"prefix\":\"/adm/modules\",\"basic\":true},{\"prefix\":\"/adm/server\",\"basic\":true},{\"prefix\":\"/adm/logger\",\"basic\":true},{\"prefix\":\"/adm/health\",\"basic\":true},{\"prefix\":\"/gateway/NavigationTP\",\"jwt\":true,\"jwkServiceIds\":\"Navigation, NavigationJWT\"}]";
+        String s = "[{\"prefix\":\"/adm/modules\",\"basic\":true},{\"prefix\":\"/adm/server\",\"basic\":true},{\"prefix\":\"/adm/logger\",\"basic\":true},{\"prefix\":\"/adm/health\",\"basic\":true},{\"prefix\":\"/gateway/NavigationTP\",\"hmacProfile\":\"github\",\"jwt\":true,\"jwkServiceIds\":\"Navigation, NavigationJWT\"}]";
         if(s.startsWith("[")) {
             // json format
             try {
@@ -81,12 +81,65 @@ public class UnifiedSecurityConfigTest {
                 Assertions.assertEquals(5, values.size());
                 List<UnifiedPathPrefixAuth> pathPrefixAuths = UnifiedSecurityConfig.populatePathPrefixAuths(values);
                 Assertions.assertEquals(5, pathPrefixAuths.size());
+                Assertions.assertEquals("github", pathPrefixAuths.get(4).getHmacProfile());
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ConfigException("could not parse the pathPrefixAuths json with a list of string and object.");
             }
         } else {
             throw new ConfigException("pathPrefixAuths must be a list of string object map.");
+        }
+    }
+
+    @Test
+    public void rejectsUnsafeHmacStructureWithoutLoadingHmacComponents() {
+        String anonymousName = "unified-security-hmac-anonymous-standalone";
+        String shadowedName = "unified-security-hmac-shadowed-standalone";
+        String broaderHmacName = "unified-security-hmac-broader-than-earlier";
+        String nonStringProfileName = "unified-security-hmac-non-string-profile";
+        try {
+            Config.getInstance().putInConfigCache(anonymousName, Map.of(
+                    UnifiedSecurityConfig.ENABLED, true,
+                    UnifiedSecurityConfig.ANONYMOUS_PREFIXES, List.of("/webhook"),
+                    UnifiedSecurityConfig.PATH_PREFIX_AUTHS, List.of(Map.of(
+                            UnifiedSecurityConfig.PREFIX, "/webhook/github",
+                            UnifiedSecurityConfig.HMAC_PROFILE, "github"))));
+            Assertions.assertThrows(ConfigException.class, () -> UnifiedSecurityConfig.load(anonymousName));
+
+            Config.getInstance().putInConfigCache(shadowedName, Map.of(
+                    UnifiedSecurityConfig.ENABLED, true,
+                    UnifiedSecurityConfig.ANONYMOUS_PREFIXES, List.of(),
+                    UnifiedSecurityConfig.PATH_PREFIX_AUTHS, List.of(
+                            Map.of(UnifiedSecurityConfig.PREFIX, "/webhook",
+                                    UnifiedSecurityConfig.JWT, true),
+                            Map.of(UnifiedSecurityConfig.PREFIX, "/webhook/github",
+                                    UnifiedSecurityConfig.HMAC_PROFILE, "github"))));
+            Assertions.assertThrows(ConfigException.class, () -> UnifiedSecurityConfig.load(shadowedName));
+
+            Config.getInstance().putInConfigCache(broaderHmacName, Map.of(
+                    UnifiedSecurityConfig.ENABLED, true,
+                    UnifiedSecurityConfig.ANONYMOUS_PREFIXES, List.of(),
+                    UnifiedSecurityConfig.PATH_PREFIX_AUTHS, List.of(
+                            Map.of(UnifiedSecurityConfig.PREFIX, "/webhook/github/v2",
+                                    UnifiedSecurityConfig.APIKEY, true),
+                            Map.of(UnifiedSecurityConfig.PREFIX, "/webhook/github",
+                                    UnifiedSecurityConfig.HMAC_PROFILE, "github"))));
+            Assertions.assertThrows(ConfigException.class, () -> UnifiedSecurityConfig.load(broaderHmacName));
+
+            Config.getInstance().putInConfigCache(nonStringProfileName, Map.of(
+                    UnifiedSecurityConfig.ENABLED, true,
+                    UnifiedSecurityConfig.ANONYMOUS_PREFIXES, List.of(),
+                    UnifiedSecurityConfig.PATH_PREFIX_AUTHS, List.of(Map.of(
+                            UnifiedSecurityConfig.PREFIX, "/webhook",
+                            UnifiedSecurityConfig.HMAC_PROFILE, 123))));
+            ConfigException exception = Assertions.assertThrows(ConfigException.class,
+                    () -> UnifiedSecurityConfig.load(nonStringProfileName));
+            Assertions.assertEquals("hmacProfile must be a string value.", exception.getMessage());
+        } finally {
+            Config.getInstance().clearConfigCache(anonymousName);
+            Config.getInstance().clearConfigCache(shadowedName);
+            Config.getInstance().clearConfigCache(broaderHmacName);
+            Config.getInstance().clearConfigCache(nonStringProfileName);
         }
     }
 }

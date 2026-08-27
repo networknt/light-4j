@@ -113,6 +113,7 @@
         <version.http-client>1.0.18</version.http-client>
         <version.snakeyaml>2.4</version.snakeyaml>
         <version.caffeine>3.2.0</version.caffeine>
+        <version.redisson>3.45.1</version.redisson>
         <version.prometheus>0.16.0</version.prometheus>
         <version.javamail>2.0.2</version.javamail>
         <version.hikaricp>6.2.1</version.hikaricp>
@@ -223,6 +224,9 @@
         <module>caffeine-cache</module>
         <module>db-provider</module>
         <module>proxy-handler</module>
+        <module>hmac-config</module>
+        <module>hmac</module>
+        <module>hmac-redis</module>
         <module>unified-config</module>
         <module>unified-security</module>
         <module>token-limit</module>
@@ -630,6 +634,21 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>hmac-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>hmac</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>hmac-redis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>unified-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -762,6 +781,11 @@
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${version.caffeine}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${version.redisson}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.mail</groupId>

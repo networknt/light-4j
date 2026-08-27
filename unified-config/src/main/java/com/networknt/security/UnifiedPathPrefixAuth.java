@@ -26,6 +26,9 @@ public class UnifiedPathPrefixAuth {
     @BooleanField(configFieldName = "apikey")
     boolean apikey;
 
+    @StringField(configFieldName = "hmacProfile")
+    String hmacProfile;
+
     @ArrayField(configFieldName = "jwkServiceIds", items = String.class)
     List<String> jwkServiceIds;
 
@@ -81,6 +84,14 @@ public class UnifiedPathPrefixAuth {
 
     public void setApikey(boolean apikey) {
         this.apikey = apikey;
+    }
+
+    public String getHmacProfile() {
+        return hmacProfile;
+    }
+
+    public void setHmacProfile(String hmacProfile) {
+        this.hmacProfile = hmacProfile;
     }
 
     public List<String> getJwkServiceIds() {

@@ -39,6 +39,9 @@
           "apikey" : {
             "type" : "boolean"
           },
+          "hmacProfile" : {
+            "type" : "string"
+          },
           "jwkServiceIds" : {
             "type" : "array",
             "items" : {

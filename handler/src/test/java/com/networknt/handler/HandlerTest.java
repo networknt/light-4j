@@ -20,16 +20,24 @@ import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.PathChain;
 import com.networknt.utility.PathTemplateMatcher;
 import com.networknt.utility.Tuple;
+import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HandlerTest {
 
@@ -59,6 +67,83 @@ public class HandlerTest {
         Map<String, List<HttpHandler>> handlers = Handler.handlerListById;
         Assertions.assertEquals(1, handlers.get("third").size());
         Assertions.assertEquals(2, handlers.get("secondBeforeFirst").size());
+    }
+
+    @Test
+    public void requestInjectionUsesTheCurrentHandlerYmlChainForEveryRequest() throws Exception {
+        ChainACounter.calls.set(0);
+        ChainBCounter.calls.set(0);
+        Handler.setConfig("handler-request-injection-chains");
+        Undertow server = Undertow.builder()
+                .addHttpListener(0, "127.0.0.1")
+                .setHandler(new OrchestrationHandler())
+                .build();
+        server.start();
+        try {
+            InetSocketAddress address = (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
+            URI base = URI.create("http://127.0.0.1:" + address.getPort());
+            HttpClient client = HttpClient.newHttpClient();
+            Assertions.assertEquals(200, get(client, base.resolve("/chain-a")).statusCode());
+            Assertions.assertEquals(200, get(client, base.resolve("/chain-b")).statusCode());
+            Assertions.assertEquals(200, get(client, base.resolve("/chain-a")).statusCode());
+            Assertions.assertEquals(2, ChainACounter.calls.get());
+            Assertions.assertEquals(1, ChainBCounter.calls.get());
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void chainValidationSeesMaterializedNonDefaultConfigAfterDisabledHandlersAreRemoved() throws Exception {
+        ChainValidationProbe.validations.set(0);
+        Handler.setConfig("handler-materialized-validation");
+        Assertions.assertEquals(1, ChainValidationProbe.validations.get());
+    }
+
+    private HttpResponse<Void> get(HttpClient client, URI uri) throws Exception {
+        return client.send(HttpRequest.newBuilder(uri).GET().build(), HttpResponse.BodyHandlers.discarding());
+    }
+
+    public static final class ChainACounter implements HttpHandler {
+        static final AtomicInteger calls = new AtomicInteger();
+        @Override public void handleRequest(HttpServerExchange exchange) throws Exception {
+            calls.incrementAndGet();
+            Handler.next(exchange);
+        }
+    }
+
+    public static final class ChainBCounter implements HttpHandler {
+        static final AtomicInteger calls = new AtomicInteger();
+        @Override public void handleRequest(HttpServerExchange exchange) throws Exception {
+            calls.incrementAndGet();
+            Handler.next(exchange);
+        }
+    }
+
+    public static final class TerminalHandler implements HttpHandler {
+        @Override public void handleRequest(HttpServerExchange exchange) {
+            exchange.getResponseSender().send("done");
+        }
+    }
+
+    public static final class ChainValidationProbe implements MiddlewareHandler, HandlerChainValidator {
+        static final AtomicInteger validations = new AtomicInteger();
+        @Override public void validateChain(List<HttpHandler> chain, int index, String location) {
+            Assertions.assertEquals("path POST /validated", location);
+            Assertions.assertEquals(TerminalHandler.class, chain.get(index + 1).getClass());
+            validations.incrementAndGet();
+        }
+        @Override public void handleRequest(HttpServerExchange exchange) { }
+        @Override public HttpHandler getNext() { return null; }
+        @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
+        @Override public boolean isEnabled() { return true; }
+    }
+
+    public static final class DisabledMiddleware implements MiddlewareHandler {
+        @Override public void handleRequest(HttpServerExchange exchange) { }
+        @Override public HttpHandler getNext() { return null; }
+        @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
+        @Override public boolean isEnabled() { return false; }
     }
 
     private PathChain mkPathChain(String source, String path, String method, String... exec) {

@@ -21,3 +21,6 @@ appliedBodyInjectionPathPrefixes: ${request-injection.appliedBodyInjectionPathPr
 # Please be aware that the memory usage will be increased as well. So please use it with caution and test it with load test. Also,
 # please make sure that you update the server.maxTransferFileSize to a larger value that matches the maxBuffers * 1024.
 maxBuffers: ${request-injection.maxBuffers:1024}
+# Optional exact request-body byte limit. A positive value makes the reader observe end-of-stream at or below the limit and
+# return 413 after observing one byte beyond it. Zero preserves the legacy maxBuffers truncation behavior.
+maxBodyBytes: ${request-injection.maxBodyBytes:0}

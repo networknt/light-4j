@@ -1,0 +1,12 @@
+enabled: true
+handlers:
+  - com.networknt.handler.HandlerTest$ChainValidationProbe@validator
+  - com.networknt.handler.HandlerTest$DisabledMiddleware@disabled
+  - com.networknt.handler.HandlerTest$TerminalHandler@terminal
+paths:
+  - path: /validated
+    method: POST
+    exec:
+      - validator
+      - disabled
+      - terminal

@@ -1,0 +1,7 @@
+singletons:
+  - com.networknt.hmac.WebhookReplayStore,com.networknt.server.StartupHookProvider,com.networknt.server.ShutdownHookProvider:
+      - com.networknt.hmac.redis.RedisWebhookReplayStore:
+          urlEnv: TEST_WEBHOOK_REPLAY_REDIS_URL
+          keyPrefix: "test:hmac-replay:"
+          connectTimeoutMillis: 250
+          operationTimeoutMillis: 250

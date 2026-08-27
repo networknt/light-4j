@@ -34,6 +34,7 @@ public class UnifiedSecurityConfig {
     public static final String SJWT = "sjwt";
     public static final String SWT = "swt";
     public static final String APIKEY = "apikey";
+    public static final String HMAC_PROFILE = "hmacProfile";
     public static final String JWK_SERVICE_IDS = "jwkServiceIds";
     public static final String SJWK_SERVICE_IDS = "sjwkServiceIds";
     public static final String SWT_SERVICE_IDS = "swtServiceIds";
@@ -115,6 +116,7 @@ public class UnifiedSecurityConfig {
         if (mappedConfig != null) {
             setConfigData();
             setConfigList();
+            validateHmacRules();
         }
     }
 
@@ -255,6 +257,10 @@ public class UnifiedSecurityConfig {
             unifiedPathPrefixAuth.setSjwt(value.get(SJWT) == null ? false : (Boolean)value.get(SJWT));
             unifiedPathPrefixAuth.setSwt(value.get(SWT) == null ? false : (Boolean)value.get(SWT));
             unifiedPathPrefixAuth.setApikey(value.get(APIKEY) == null ? false : (Boolean)value.get(APIKEY));
+            Object hmacProfile = value.get(HMAC_PROFILE);
+            if (hmacProfile != null && !(hmacProfile instanceof String))
+                throw new ConfigException(HMAC_PROFILE + " must be a string value.");
+            unifiedPathPrefixAuth.setHmacProfile((String) hmacProfile);
             Object jwkIds = value.get(JWK_SERVICE_IDS);
             if(jwkIds instanceof String) {
                 String s = (String)value.get(JWK_SERVICE_IDS);
@@ -315,5 +321,42 @@ public class UnifiedSecurityConfig {
             pathPrefixAuths.add(unifiedPathPrefixAuth);
         }
         return pathPrefixAuths;
+    }
+
+    /**
+     * Validate HMAC-specific route structure in Unified Security itself. This
+     * must not depend on the optional HMAC interceptor or handler being wired,
+     * otherwise an anonymous or shadowed route could bypass the evidence check.
+     */
+    private void validateHmacRules() {
+        if (pathPrefixAuths == null) return;
+        for (int index = 0; index < pathPrefixAuths.size(); index++) {
+            UnifiedPathPrefixAuth rule = pathPrefixAuths.get(index);
+            String profile = rule.getHmacProfile();
+            if (profile == null) continue;
+            String path = PATH_PREFIX_AUTHS + '[' + index + ']';
+            if (profile.isBlank())
+                throw new ConfigException(path + ".hmacProfile must not be blank.");
+            if (rule.getPrefix() == null || rule.getPrefix().isBlank())
+                throw new ConfigException(path + ".prefix must not be blank for an HMAC rule.");
+            if (rule.isBasic() || rule.isSjwt() || rule.isSwt())
+                throw new ConfigException(path + " combines HMAC with an unsupported authentication factor.");
+            if (rule.isJwt() && rule.isApikey())
+                throw new ConfigException(path + " cannot combine HMAC with both JWT and API key.");
+
+            for (int earlier = 0; earlier < index; earlier++) {
+                String earlierPrefix = pathPrefixAuths.get(earlier).getPrefix();
+                if (earlierPrefix != null && (rule.getPrefix().startsWith(earlierPrefix)
+                        || earlierPrefix.startsWith(rule.getPrefix())))
+                    throw new ConfigException(path + " is shadowed by earlier prefix " + earlierPrefix + '.');
+            }
+            if (anonymousPrefixes != null) {
+                for (String anonymous : anonymousPrefixes) {
+                    if (anonymous != null && (rule.getPrefix().startsWith(anonymous)
+                            || anonymous.startsWith(rule.getPrefix())))
+                        throw new ConfigException(path + " overlaps anonymous prefix " + anonymous + '.');
+                }
+            }
+        }
     }
 }
