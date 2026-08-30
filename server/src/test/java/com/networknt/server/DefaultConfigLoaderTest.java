@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -109,6 +110,56 @@ public class DefaultConfigLoaderTest {
             Assertions.assertEquals(
                     "?host=dev.lightapi.net&serviceId=com.networknt.example-1.0.0&envTag=dev",
                     queryMethod.invoke(null));
+        } finally {
+            DefaultConfigLoader.startupConfig = previousStartupConfig;
+            DefaultConfigLoader.lightEnv = previousLightEnv;
+        }
+    }
+
+    @Test
+    public void testConfigServerQueryRequiresServiceId() throws Exception {
+        Map<String, Object> previousStartupConfig = DefaultConfigLoader.startupConfig;
+        String previousLightEnv = DefaultConfigLoader.lightEnv;
+        try {
+            DefaultConfigLoader.startupConfig = new HashMap<>();
+            DefaultConfigLoader.lightEnv = "dev";
+            Method queryMethod = DefaultConfigLoader.class.getDeclaredMethod(
+                    "getConfigServerQueryParameters");
+            queryMethod.setAccessible(true);
+
+            InvocationTargetException error = Assertions.assertThrows(
+                    InvocationTargetException.class,
+                    () -> queryMethod.invoke(null));
+            Assertions.assertInstanceOf(IllegalStateException.class, error.getCause());
+            Assertions.assertEquals(
+                    "startup.serviceId is required for Config Server",
+                    error.getCause().getMessage());
+        } finally {
+            DefaultConfigLoader.startupConfig = previousStartupConfig;
+            DefaultConfigLoader.lightEnv = previousLightEnv;
+        }
+    }
+
+    @Test
+    public void testConfigServerQueryRequiresEnvironment() throws Exception {
+        Map<String, Object> previousStartupConfig = DefaultConfigLoader.startupConfig;
+        String previousLightEnv = DefaultConfigLoader.lightEnv;
+        try {
+            Map<String, Object> startupConfig = new HashMap<>();
+            startupConfig.put(DefaultConfigLoader.SERVICE_ID, "com.networknt.example-1.0.0");
+            DefaultConfigLoader.startupConfig = startupConfig;
+            DefaultConfigLoader.lightEnv = "";
+            Method queryMethod = DefaultConfigLoader.class.getDeclaredMethod(
+                    "getConfigServerQueryParameters");
+            queryMethod.setAccessible(true);
+
+            InvocationTargetException error = Assertions.assertThrows(
+                    InvocationTargetException.class,
+                    () -> queryMethod.invoke(null));
+            Assertions.assertInstanceOf(IllegalStateException.class, error.getCause());
+            Assertions.assertEquals(
+                    "startup.envTag is required for Config Server",
+                    error.getCause().getMessage());
         } finally {
             DefaultConfigLoader.startupConfig = previousStartupConfig;
             DefaultConfigLoader.lightEnv = previousLightEnv;

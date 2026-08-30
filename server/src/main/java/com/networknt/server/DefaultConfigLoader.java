@@ -522,11 +522,21 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     private static String getConfigServerQueryParameters() {
         StringBuilder qs = new StringBuilder();
-        String host = startupConfig.get(HOST) != null ? (String)startupConfig.get(HOST) : "lightapi.net";
+        String host = Objects.toString(startupConfig.get(HOST), "lightapi.net").trim();
+        String serviceId = Objects.toString(startupConfig.get(SERVICE_ID), "").trim();
+        String envTag = Objects.toString(lightEnv, "").trim();
+        if (host.isEmpty()) {
+            throw new IllegalStateException("startup.host is required for Config Server");
+        }
+        if (serviceId.isEmpty()) {
+            throw new IllegalStateException("startup.serviceId is required for Config Server");
+        }
+        if (envTag.isEmpty()) {
+            throw new IllegalStateException("startup.envTag is required for Config Server");
+        }
         qs.append("?").append(HOST).append("=").append(host);
-        if(startupConfig.get(SERVICE_ID) != null) qs.append("&").append(SERVICE_ID).append("=").append(startupConfig.get(SERVICE_ID));
-        // lightEnv won't be null here.
-        qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
+        qs.append("&").append(SERVICE_ID).append("=").append(serviceId);
+        qs.append("&").append(ENV_TAG).append("=").append(envTag);
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
     }

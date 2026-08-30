@@ -7,17 +7,14 @@ dummy: dummyEntry
 # and fallback to local file systems for cached config files.
 # The following is the config for the DefaultConfigLoader.
 # configLoaderClass: com.networknt.server.DefaultConfigLoader
-# All variables below can be used to look up the config files for a particular service,
-# but only the productId is required. If other variables are not provided, the default
-# "current" value will be used from the config server.
+# The Config Server snapshot identity is host, serviceId, and envTag. productId,
+# productVersion, apiId, and apiVersion are not Config Server lookup parameters.
 
-# For multi-tenant only. If the service is not multi-tenant, the following variables are not required.
+# Host defaults to lightapi.net when it is omitted.
 # host: lightapi.net
-# productId is required for all services.
-# productId: light-gateway
-# productVersion: 2.0.0
-# apiId: com.networknt.petstore-1.0.0
-# apiVersion: 1.0.0
+# serviceId is required when configServerUri is configured.
+# serviceId: com.networknt.light-gateway-1.0.0
+# envTag defaults to light-env and then dev when it is omitted.
 # envTag: dev
 
 # Indicate to the config server we prefer yaml format over json format. default is json.
