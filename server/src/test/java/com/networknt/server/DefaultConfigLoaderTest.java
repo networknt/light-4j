@@ -88,6 +88,34 @@ public class DefaultConfigLoaderTest {
     }
 
     @Test
+    public void testConfigServerQueryUsesOnlyLogicalRuntimeIdentity() throws Exception {
+        Map<String, Object> previousStartupConfig = DefaultConfigLoader.startupConfig;
+        String previousLightEnv = DefaultConfigLoader.lightEnv;
+        try {
+            Map<String, Object> startupConfig = new HashMap<>();
+            startupConfig.put(DefaultConfigLoader.HOST, "dev.lightapi.net");
+            startupConfig.put(DefaultConfigLoader.SERVICE_ID, "com.networknt.example-1.0.0");
+            startupConfig.put(DefaultConfigLoader.PRODUCT_ID, "light-4j");
+            startupConfig.put(DefaultConfigLoader.PRODUCT_VERSION, "2.3.8");
+            startupConfig.put(DefaultConfigLoader.API_ID, "example");
+            startupConfig.put(DefaultConfigLoader.API_VERSION, "1.0.0");
+            DefaultConfigLoader.startupConfig = startupConfig;
+            DefaultConfigLoader.lightEnv = "dev";
+
+            Method queryMethod = DefaultConfigLoader.class.getDeclaredMethod(
+                    "getConfigServerQueryParameters");
+            queryMethod.setAccessible(true);
+
+            Assertions.assertEquals(
+                    "?host=dev.lightapi.net&serviceId=com.networknt.example-1.0.0&envTag=dev",
+                    queryMethod.invoke(null));
+        } finally {
+            DefaultConfigLoader.startupConfig = previousStartupConfig;
+            DefaultConfigLoader.lightEnv = previousLightEnv;
+        }
+    }
+
+    @Test
     public void testComposeBootstrapTrustManagersUsesCompositeWhenDefaultTrustIsAvailable() {
         TrustManager[] result = DefaultConfigLoader.composeBootstrapTrustManagers(
                 new TrustManager[] { new TestTrustManager() },
