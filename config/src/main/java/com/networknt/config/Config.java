@@ -153,6 +153,8 @@ public abstract class Config {
         private volatile Thread configLoaderInitializingThread;
         private volatile ClassLoader classLoader;
         private final String configLoaderClass;
+        // Shared across Config instances: a callback must never wait on another cache-entry lock.
+        private static final ThreadLocal<Boolean> activeCacheLoad = new ThreadLocal<>();
 
         // An entry is also the invalidation token for a name. Removing/replacing it detaches
         // in-flight loads: they may finish for their caller but cannot repopulate the cache.
@@ -175,9 +177,11 @@ public abstract class Config {
         }
 
         private <T> T withCacheEntry(String name, java.util.function.Function<CacheEntry, T> action) {
-            // A loader constructor may read its own settings. These bootstrap reads must
-            // neither wait on another entry nor publish default data as custom-loader data.
-            if (configLoaderInitializingThread == Thread.currentThread()) {
+            // Constructors and load callbacks may read other names. Reuse completed values,
+            // but load nested misses in a detached entry: no second shared entry lock, and
+            // no publication of bootstrap data or partially resolved nested representations.
+            if (configLoaderInitializingThread == Thread.currentThread()
+                    || Boolean.TRUE.equals(activeCacheLoad.get())) {
                 CacheEntry existing = configCache.get(name);
                 CacheEntry bootstrap = new CacheEntry(existing == null ? null : existing.injected);
                 if (existing != null) bootstrap.representations.putAll(existing.representations);
@@ -224,7 +228,14 @@ public abstract class Config {
                     value = entry.injected;
                 }
                 if (value == null) {
-                    value = loader.get();
+                    Boolean previousLoad = activeCacheLoad.get();
+                    activeCacheLoad.set(true);
+                    try {
+                        value = loader.get();
+                    } finally {
+                        if (previousLoad == null) activeCacheLoad.remove();
+                        else activeCacheLoad.set(previousLoad);
+                    }
                     if (value != null && !type.isInstance(value)) {
                         throw new ConfigException("Config loader returned " + value.getClass().getName()
                                 + " instead of " + type.getName());

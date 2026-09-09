@@ -456,6 +456,79 @@ class ConfigMixedRepresentationTest {
         }
     }
 
+    @Test
+    void mutuallyReferencingLoaderCallsDoNotAcquireEachOthersEntryLocks() throws Exception {
+        for (boolean objects : new boolean[]{false, true}) {
+            Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + CrossReadingLoader.class.getName() + "\n");
+            Config config = freshConfig();
+            CrossReadingLoader.target = config;
+            CrossReadingLoader.objects = objects;
+            CrossReadingLoader.barrier = new CyclicBarrier(2);
+            config.getJsonMapConfig("warmup"); // Construct the loader before testing its callbacks.
+            ExecutorService pool = Executors.newFixedThreadPool(2, work -> {
+                Thread thread = new Thread(work, "config-cross-read-regression");
+                thread.setDaemon(true);
+                return thread;
+            });
+            try {
+                Future<?> left = pool.submit(() -> CrossReadingLoader.read("left"));
+                Future<?> right = pool.submit(() -> CrossReadingLoader.read("right"));
+                Object leftValue = left.get(5, TimeUnit.SECONDS);
+                Object rightValue = right.get(5, TimeUnit.SECONDS);
+                assertSame(leftValue, CrossReadingLoader.read("left"));
+                assertSame(rightValue, CrossReadingLoader.read("right"));
+                if (objects) {
+                    assertEquals("left-root", ((TestConfig) leftValue).getValue());
+                    assertEquals("right-root", ((TestConfig) rightValue).getValue());
+                } else {
+                    assertEquals("left-root", ((Map<?, ?>) leftValue).get("value"));
+                    assertEquals("right-root", ((Map<?, ?>) rightValue).get("value"));
+                }
+            } finally {
+                pool.shutdownNow();
+            }
+        }
+    }
+
+    public static class CrossReadingLoader extends ControlledLoader {
+        static Config target;
+        static boolean objects;
+        static CyclicBarrier barrier;
+        private final ThreadLocal<Boolean> nested = new ThreadLocal<>();
+
+        static Object read(String name) {
+            return objects ? target.getJsonObjectConfig(name, TestConfig.class) : target.getJsonMapConfig(name);
+        }
+
+        private String value(String name) {
+            if (!"left".equals(name) && !"right".equals(name)) return name;
+            if (Boolean.TRUE.equals(nested.get())) return name + "-nested";
+            nested.set(true);
+            try {
+                barrier.await(5, TimeUnit.SECONDS);
+                assertNotNull(read("left".equals(name) ? "right" : "left"));
+                return name + "-root";
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            } catch (BrokenBarrierException | TimeoutException e) {
+                throw new IllegalStateException(e);
+            } finally {
+                nested.remove();
+            }
+        }
+
+        @Override public Map<String, Object> loadMapConfig(String name, String path) {
+            return new HashMap<>(Map.of("value", value(name)));
+        }
+
+        @Override public <T> Object loadObjectConfig(String name, Class<T> type, String path) {
+            TestConfig config = new TestConfig();
+            config.setValue(value(name));
+            return config;
+        }
+    }
+
     private Config customConfig() throws Exception {
         Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + ControlledLoader.class.getName() + "\n");
         return freshConfig();
