@@ -103,7 +103,7 @@ public class CentralizedManagement {
     }
 
     // Method used to convert map to object based on the reference class provided
-    private static Object convertMapToObj(Map<String, Object> map, Class clazz) {
+    static Object convertMapToObj(Map<String, Object> map, Class clazz) {
         ObjectMapper mapper = new ObjectMapper();
         Object obj = mapper.convertValue(map, clazz);
         return obj;
