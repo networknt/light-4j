@@ -271,22 +271,24 @@ public abstract class Config {
                 if (type == Map.class && (defaults || configLoaderClass == null)) {
                     return cachedMap(entry, name, path, defaults);
                 }
-                return cached(entry, type, () -> {
-                    // A configured loader may implement object binding differently.
-                    // Exclusions use SnakeYAML binding rather than Jackson.
-                    if (configLoaderClass == null && !ConfigInjection.isExclusionConfigFile(name)) {
-                        Map<String, Object> map = cachedMap(entry, name, path, defaults);
-                        try {
-                            return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
-                        } catch (IllegalArgumentException e) {
-                            logger.error("Unable to bind configuration {} at {} as {}", name, path, type.getName(), e);
-                            throw new RuntimeException("Unable to load configuration '" + name + "' as object.", e);
-                        }
-                    }
-                    return defaults ? loadObjectConfig(name, type, path)
-                            : loadJsonObjectConfigWithSpecificConfigLoader(name, type, path);
-                });
+                return cached(entry, type, () -> loadCachedObject(entry, name, type, path, defaults));
             });
+        }
+
+        private Object loadCachedObject(CacheEntry entry, String name, Class<?> type, String path, boolean defaults) {
+            // A configured loader may implement object binding differently.
+            // Exclusions use SnakeYAML binding rather than Jackson.
+            if (configLoaderClass == null && !ConfigInjection.isExclusionConfigFile(name)) {
+                Map<String, Object> map = cachedMap(entry, name, path, defaults);
+                try {
+                    return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
+                } catch (IllegalArgumentException e) {
+                    logger.error("Unable to bind configuration {} at {} as {}", name, path, type.getName(), e);
+                    throw new RuntimeException("Unable to load configuration '" + name + "' as object.", e);
+                }
+            }
+            return defaults ? loadObjectConfig(name, type, path)
+                    : loadJsonObjectConfigWithSpecificConfigLoader(name, type, path);
         }
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
