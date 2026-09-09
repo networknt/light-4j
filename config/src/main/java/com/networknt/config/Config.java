@@ -157,6 +157,7 @@ public abstract class Config {
         private final Map<String, CacheEntry> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         private static final class CacheEntry {
+            private final Object loadLock = new Object();
             final Map<Class<?>, Object> representations = new ConcurrentHashMap<>();
             Object injected;
         }
@@ -172,7 +173,7 @@ public abstract class Config {
         private Object cached(CacheEntry entry, Class<?> type, java.util.function.Supplier<Object> loader) {
             Object existing = entry.representations.get(type);
             if (existing != null) return existing;
-            synchronized (entry) {
+            synchronized (entry.loadLock) {
                 Object value = entry.representations.get(type);
                 if (value == null && type.isInstance(entry.injected)) {
                     value = entry.injected;
