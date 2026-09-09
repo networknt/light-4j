@@ -199,7 +199,7 @@ public final class ClientConfig {
                 masks.add("keyStorePass");
                 masks.add("keyPass");
                 masks.add("defaultCertPassword");
-                ModuleRegistry.registerModule(configName, "com.networknt.client.Http2Client", Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
+                ModuleRegistry.registerModule(configName, ClientConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), masks);
                 return instance;
             }
         } else {
