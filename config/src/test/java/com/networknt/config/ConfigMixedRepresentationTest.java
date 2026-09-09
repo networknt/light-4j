@@ -251,6 +251,211 @@ class ConfigMixedRepresentationTest {
         }
     }
 
+    @Test
+    void customMapObjectReadsPreserveFirstReaderDispatch() throws Exception {
+        Config config = customConfig();
+        Map<?, ?> objectMap = (Map<?, ?>) config.getJsonObjectConfig("custom", Map.class);
+        assertEquals("object", objectMap.get("value"));
+        assertSame(objectMap, config.getJsonMapConfig("custom"));
+        config.clearConfigCache("custom");
+        Map<?, ?> rawMap = config.getJsonMapConfig("custom");
+        assertEquals("map", rawMap.get("value"));
+        assertSame(rawMap, config.getJsonObjectConfig("custom", Map.class));
+    }
+
+    @Test
+    void derivedBindingFailureNamesTheConfigurationAndKeepsCause() throws Exception {
+        Config config = freshConfig();
+        config.putInConfigCache("bad-binding", Map.of("unknownProperty", "value"));
+        RuntimeException failure = assertThrows(RuntimeException.class,
+                () -> config.getJsonObjectConfig("bad-binding", TestConfig.class));
+        assertTrue(failure.getMessage().contains("bad-binding"));
+        assertInstanceOf(IllegalArgumentException.class, failure.getCause());
+    }
+
+    @Test
+    void classLoaderSwapRetainsInjectionsButRebuildsDerivedViews() throws Exception {
+        Config config = freshConfig();
+        Map<String, Object> map = new HashMap<>(Map.of("value", "injected"));
+        TestConfig injectedPojo = new TestConfig();
+        config.putInConfigCache("only-in-memory", map);
+        config.putInConfigCache("injected-pojo", injectedPojo);
+        Object derived = config.getJsonObjectConfig("only-in-memory", TestConfig.class);
+        config.setClassLoader(getClass().getClassLoader());
+        assertSame(map, config.getJsonMapConfig("only-in-memory"));
+        assertSame(injectedPojo, config.getJsonObjectConfig("injected-pojo", TestConfig.class));
+        Object rebuilt = config.getJsonObjectConfig("only-in-memory", TestConfig.class);
+        assertNotSame(derived, rebuilt);
+        assertEquals("injected", ((TestConfig) rebuilt).getValue());
+    }
+
+    @Test
+    void missingAndFailedLoadsDoNotRetainEmptyEntries() throws Exception {
+        Config config = freshConfig();
+        var field = config.getClass().getSuperclass().getDeclaredField("configCache");
+        field.setAccessible(true);
+        Map<?, ?> entries = (Map<?, ?>) field.get(config);
+        for (int i = 0; i < 10; i++) {
+            String name = "missing-config-" + i;
+            assertNull(config.getJsonMapConfig(name));
+            assertNull(config.getJsonObjectConfig(name, TestConfig.class));
+            assertFalse(entries.containsKey(name));
+        }
+        Files.writeString(directory.resolve("invalid.yml"), "value: [invalid\n");
+        assertThrows(RuntimeException.class, () -> config.getJsonMapConfig("invalid"));
+        assertFalse(entries.containsKey("invalid"));
+        Files.writeString(directory.resolve("missing-config-0.yml"), "value: appears\n");
+        Map<?, ?> found = config.getJsonMapConfig("missing-config-0");
+        assertEquals("appears", found.get("value"));
+        assertSame(found, config.getJsonMapConfig("missing-config-0"));
+    }
+
+    @Test
+    void aMissingLoadDoesNotDetachReadersWaitingToRetry() throws Exception {
+        Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + RetryingLoader.class.getName() + "\n");
+        Config config = freshConfig();
+        RetryingLoader.calls.set(0);
+        RetryingLoader.firstEntered = new CountDownLatch(1);
+        RetryingLoader.firstRelease = new CountDownLatch(1);
+        RetryingLoader.secondEntered = new CountDownLatch(1);
+        RetryingLoader.secondRelease = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(3);
+        var secondThread = new java.util.concurrent.atomic.AtomicReference<Thread>();
+        var thirdThread = new java.util.concurrent.atomic.AtomicReference<Thread>();
+        try {
+            Future<?> first = pool.submit(() -> config.getJsonMapConfig("retry"));
+            assertTrue(RetryingLoader.firstEntered.await(5, TimeUnit.SECONDS));
+            Future<?> second = pool.submit(() -> {
+                secondThread.set(Thread.currentThread());
+                return config.getJsonMapConfig("retry");
+            });
+            awaitBlocked(secondThread);
+            RetryingLoader.firstRelease.countDown();
+            assertNull(first.get(5, TimeUnit.SECONDS));
+            assertTrue(RetryingLoader.secondEntered.await(5, TimeUnit.SECONDS));
+            Future<?> third = pool.submit(() -> {
+                thirdThread.set(Thread.currentThread());
+                return config.getJsonMapConfig("retry");
+            });
+            awaitBlocked(thirdThread);
+            RetryingLoader.secondRelease.countDown();
+            Object value = second.get(5, TimeUnit.SECONDS);
+            assertSame(value, third.get(5, TimeUnit.SECONDS));
+            assertSame(value, config.getJsonMapConfig("retry"));
+            assertEquals(2, RetryingLoader.calls.get());
+        } finally {
+            RetryingLoader.firstRelease.countDown();
+            RetryingLoader.secondRelease.countDown();
+            pool.shutdownNow();
+        }
+    }
+
+    private void awaitBlocked(java.util.concurrent.atomic.AtomicReference<Thread> thread) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while ((thread.get() == null || thread.get().getState() != Thread.State.BLOCKED)
+                && System.nanoTime() < deadline) {
+            java.util.concurrent.locks.LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(5));
+        }
+        assertNotNull(thread.get());
+        assertEquals(Thread.State.BLOCKED, thread.get().getState());
+    }
+
+    public static class RetryingLoader extends ControlledLoader {
+        static final AtomicInteger calls = new AtomicInteger();
+        static CountDownLatch firstEntered;
+        static CountDownLatch firstRelease;
+        static CountDownLatch secondEntered;
+        static CountDownLatch secondRelease;
+
+        @Override public Map<String, Object> loadMapConfig(String name, String path) {
+            int call = calls.incrementAndGet();
+            CountDownLatch entered = call == 1 ? firstEntered : secondEntered;
+            CountDownLatch release = call == 1 ? firstRelease : secondRelease;
+            entered.countDown();
+            try {
+                if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Timed out");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+            return call == 1 ? null : new HashMap<>(Map.of("value", "retry"));
+        }
+    }
+
+    @Test
+    void injectedHitsDoNotConstructTheCustomLoader() throws Exception {
+        Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + ConstructorReadingLoader.class.getName() + "\n");
+        Config config = freshConfig();
+        ConstructorReadingLoader.constructions.set(0);
+        Map<String, Object> map = Map.of("value", "injected");
+        TestConfig typed = new TestConfig();
+        config.putInConfigCache("map-hit", map);
+        config.putInConfigCache("object-hit", typed);
+        assertSame(map, config.getJsonMapConfig("map-hit"));
+        assertSame(map, config.getJsonObjectConfig("map-hit", Map.class));
+        assertSame(typed, config.getJsonObjectConfig("object-hit", TestConfig.class));
+        assertEquals(0, ConstructorReadingLoader.constructions.get());
+    }
+
+    @Test
+    void loaderConstructorCanReadCachedSettingsWhileAnotherNameLoads() throws Exception {
+        Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + ConstructorReadingLoader.class.getName() + "\n");
+        Files.writeString(directory.resolve("settings.yml"), "value: bootstrap\n");
+        Files.writeString(directory.resolve("other-settings.yml"), "value: recursive-bootstrap\n");
+        Config config = freshConfig();
+        ConstructorReadingLoader.target = config;
+        config.putInConfigCache("injected-settings", Map.of("value", "in-memory"));
+        ConstructorReadingLoader.entered = new CountDownLatch(1);
+        ConstructorReadingLoader.proceed = new CountDownLatch(1);
+        ConstructorReadingLoader.constructions.set(0);
+        ExecutorService pool = Executors.newFixedThreadPool(2, work -> {
+            Thread thread = new Thread(work, "config-constructor-regression");
+            thread.setDaemon(true); // A regression must fail the test, not hang the test JVM.
+            return thread;
+        });
+        var secondThread = new java.util.concurrent.atomic.AtomicReference<Thread>();
+        try {
+            Future<?> first = pool.submit(() -> config.getJsonMapConfig("first"));
+            assertTrue(ConstructorReadingLoader.entered.await(5, TimeUnit.SECONDS));
+            Future<?> second = pool.submit(() -> {
+                secondThread.set(Thread.currentThread());
+                return config.getJsonMapConfig("settings");
+            });
+            awaitBlocked(secondThread);
+            ConstructorReadingLoader.proceed.countDown();
+            assertNotNull(first.get(5, TimeUnit.SECONDS));
+            assertNotNull(second.get(5, TimeUnit.SECONDS));
+            assertEquals(1, ConstructorReadingLoader.constructions.get());
+            assertEquals("map", config.getJsonMapConfig("settings").get("value"));
+            assertEquals("map", config.getJsonMapConfig("other-settings").get("value"));
+        } finally {
+            ConstructorReadingLoader.proceed.countDown();
+            pool.shutdownNow();
+            ConstructorReadingLoader.target = null;
+        }
+    }
+
+    public static class ConstructorReadingLoader extends ControlledLoader {
+        static Config target;
+        static CountDownLatch entered;
+        static CountDownLatch proceed;
+        static final AtomicInteger constructions = new AtomicInteger();
+
+        public ConstructorReadingLoader() {
+            constructions.incrementAndGet();
+            entered.countDown();
+            try {
+                if (!proceed.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Timed out");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+            assertEquals("in-memory", target.getDefaultJsonMapConfig("injected-settings").get("value"));
+            assertEquals("bootstrap", target.getDefaultJsonMapConfig("settings").get("value"));
+            assertEquals("recursive-bootstrap", target.getJsonMapConfig("other-settings").get("value"));
+        }
+    }
+
     private Config customConfig() throws Exception {
         Files.writeString(directory.resolve("config.yml"), "configLoaderClass: " + ControlledLoader.class.getName() + "\n");
         return freshConfig();
@@ -301,6 +506,7 @@ class ConfigMixedRepresentationTest {
                 }
             }
             if (wrongType) return Map.of("value", "wrong");
+            if (type == Map.class) return new HashMap<>(Map.of("value", "object"));
             TestConfig value = new TestConfig();
             value.setValue("object");
             return value;

@@ -149,6 +149,8 @@ public abstract class Config {
         static final Logger logger = LoggerFactory.getLogger(NoneDecryptedConfigImpl.class);
         public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(File.pathSeparator);
         private volatile ConfigLoader configLoader;
+        private final Object configLoaderLock = new Object();
+        private volatile Thread configLoaderInitializingThread;
         private volatile ClassLoader classLoader;
         private final String configLoaderClass;
 
@@ -159,14 +161,57 @@ public abstract class Config {
         private static final class CacheEntry {
             private final Object loadLock = new Object();
             final Map<Class<?>, Object> representations = new ConcurrentHashMap<>();
-            Object injected;
+            final Object injected;
+            int readers; // Guarded by configCache; tracks users of an initially empty entry.
+
+            CacheEntry() { this(null); }
+
+            CacheEntry(Object injected) {
+                this.injected = injected;
+                if (injected != null) {
+                    representations.put(injected instanceof Map ? Map.class : injected.getClass(), injected);
+                }
+            }
         }
 
-        private CacheEntry cacheEntry(String name) {
-            CacheEntry existing = configCache.get(name);
-            if (existing != null) return existing;
+        private <T> T withCacheEntry(String name, java.util.function.Function<CacheEntry, T> action) {
+            // A loader constructor may read its own settings. These bootstrap reads must
+            // neither wait on another entry nor publish default data as custom-loader data.
+            if (configLoaderInitializingThread == Thread.currentThread()) {
+                CacheEntry existing = configCache.get(name);
+                CacheEntry bootstrap = new CacheEntry(existing == null ? null : existing.injected);
+                if (existing != null) bootstrap.representations.putAll(existing.representations);
+                return action.apply(bootstrap);
+            }
+            CacheEntry entry = configCache.get(name);
+            if (entry != null && !entry.representations.isEmpty()) return action.apply(entry);
             synchronized (configCache) {
-                return configCache.computeIfAbsent(name, ignored -> new CacheEntry());
+                entry = configCache.computeIfAbsent(name, ignored -> new CacheEntry());
+                entry.readers++;
+            }
+            try {
+                return action.apply(entry);
+            } finally {
+                synchronized (configCache) {
+                    if (--entry.readers == 0 && entry.representations.isEmpty()) {
+                        configCache.remove(name, entry);
+                    }
+                }
+            }
+        }
+
+        private void initializeConfigLoader() {
+            if (configLoaderClass == null || configLoader != null
+                    || configLoaderInitializingThread == Thread.currentThread()) return;
+            synchronized (configLoaderLock) {
+                if (configLoader == null) {
+                    configLoaderInitializingThread = Thread.currentThread();
+                    try {
+                        configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
+                    } finally {
+                        configLoaderInitializingThread = null;
+                    }
+                }
             }
         }
 
@@ -195,18 +240,41 @@ public abstract class Config {
                     ? loadMapConfig(name, path) : loadJsonMapConfigWithSpecificConfigLoader(name, path));
         }
 
+        private Object cachedValue(String name, Class<?> type) {
+            CacheEntry entry = configCache.get(name);
+            if (entry == null) return null;
+            Object value = entry.representations.get(type);
+            if (value != null) return value;
+            return type.isInstance(entry.injected) ? entry.injected : null;
+        }
+
         private Object cachedObject(String name, Class<?> type, String path, boolean defaults) {
-            CacheEntry entry = cacheEntry(name);
-            if (type == Map.class) return cachedMap(entry, name, path, defaults);
-            return cached(entry, type, () -> {
-                // A configured loader may implement object binding differently, even before its
-                // lazy initialization. Exclusions use SnakeYAML binding rather than Jackson.
-                if (configLoaderClass == null && !ConfigInjection.isExclusionConfigFile(name)) {
-                    Map<String, Object> map = cachedMap(entry, name, path, defaults);
-                    return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
+            if (!defaults) {
+                Object existing = cachedValue(name, type);
+                if (existing != null) return existing;
+                initializeConfigLoader();
+            }
+            return withCacheEntry(name, entry -> {
+                // Share map identity, but preserve a custom loader's object dispatch when
+                // the object API is the first reader of this representation.
+                if (type == Map.class && (defaults || configLoaderClass == null)) {
+                    return cachedMap(entry, name, path, defaults);
                 }
-                return defaults ? loadObjectConfig(name, type, path)
-                        : loadJsonObjectConfigWithSpecificConfigLoader(name, type, path);
+                return cached(entry, type, () -> {
+                    // A configured loader may implement object binding differently.
+                    // Exclusions use SnakeYAML binding rather than Jackson.
+                    if (configLoaderClass == null && !ConfigInjection.isExclusionConfigFile(name)) {
+                        Map<String, Object> map = cachedMap(entry, name, path, defaults);
+                        try {
+                            return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
+                        } catch (IllegalArgumentException e) {
+                            logger.error("Unable to bind configuration {} at {} as {}", name, path, type.getName(), e);
+                            throw new RuntimeException("Unable to load configuration '" + name + "' as object.", e);
+                        }
+                    }
+                    return defaults ? loadObjectConfig(name, type, path)
+                            : loadJsonObjectConfigWithSpecificConfigLoader(name, type, path);
+                });
             });
         }
 
@@ -236,11 +304,11 @@ public abstract class Config {
 
         @Override
         public void clearConfigCache(String configName) {
-            Object object;
+            CacheEntry object;
             synchronized (configCache) {
                 object = configCache.remove(configName);
             }
-            if(object != null && logger.isInfoEnabled()) {
+            if(object != null && !object.representations.isEmpty() && logger.isInfoEnabled()) {
                 logger.info("Config file {} is removed from the cache for reloading.", configName);
             }
         }
@@ -249,7 +317,12 @@ public abstract class Config {
         public void setClassLoader(ClassLoader classLoader) {
             synchronized (configCache) {
                 this.classLoader = classLoader;
+                Map<String, CacheEntry> injections = new HashMap<>();
+                configCache.forEach((name, entry) -> {
+                    if (entry.injected != null) injections.put(name, new CacheEntry(entry.injected));
+                });
                 configCache.clear();
+                configCache.putAll(injections);
             }
         }
 
@@ -262,9 +335,7 @@ public abstract class Config {
 
         public void putInConfigCache(String configName, Object config) {
             Objects.requireNonNull(config);
-            CacheEntry entry = new CacheEntry();
-            entry.injected = config;
-            entry.representations.put(config instanceof Map ? Map.class : config.getClass(), config);
+            CacheEntry entry = new CacheEntry(config);
             synchronized (configCache) {
                 configCache.put(configName, entry);
             }
@@ -272,7 +343,7 @@ public abstract class Config {
 
         @Override
         public String getStringFromFile(String filename, String path) {
-            return (String) cached(cacheEntry(filename), String.class, () -> loadStringFromFile(filename, path));
+            return withCacheEntry(filename, entry -> (String) cached(entry, String.class, () -> loadStringFromFile(filename, path)));
         }
 
         @Override
@@ -366,7 +437,10 @@ public abstract class Config {
          */
         @Override
         public Map<String, Object> getJsonMapConfig(String configName, String path) {
-            return cachedMap(cacheEntry(configName), configName, path, false);
+            Object existing = cachedValue(configName, Map.class);
+            if (existing != null) return (Map<String, Object>) existing;
+            initializeConfigLoader();
+            return withCacheEntry(configName, entry -> cachedMap(entry, configName, path, false));
         }
 
         /**
@@ -381,7 +455,7 @@ public abstract class Config {
          */
         @Override
         public Map<String, Object> getDefaultJsonMapConfig(String configName, String path) {
-            return cachedMap(cacheEntry(configName), configName, path, true);
+            return withCacheEntry(configName, entry -> cachedMap(entry, configName, path, true));
         }
 
         /**
@@ -676,19 +750,12 @@ public abstract class Config {
         }
 
         private Map<String, Object> loadModuleConfig() {
-            return (Map<String, Object>) cached(cacheEntry(CONFIG_NAME), Map.class, this::loadModuleConfigNoCache);
+            return withCacheEntry(CONFIG_NAME, entry -> (Map<String, Object>) cached(entry, Map.class, this::loadModuleConfigNoCache));
         }
 
         private Map<String, Object> loadJsonMapConfigWithSpecificConfigLoader(String configName, String path) {
             Map<String, Object> config = null;
-            // Initialize config loader
-            if (configLoaderClass != null && this.configLoader == null) {
-                synchronized (this) {
-                    if (this.configLoader == null) {
-                        this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
-                    }
-                }
-            }
+            initializeConfigLoader();
             if (configLoader != null) {
                 logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.equals("")) {
@@ -707,14 +774,7 @@ public abstract class Config {
 
         private Object loadJsonObjectConfigWithSpecificConfigLoader(String configName, Class clazz, String path) {
             Object config = null;
-            // Initialize config loader
-            if (configLoaderClass != null && this.configLoader == null) {
-                synchronized (this) {
-                    if (this.configLoader == null) {
-                        this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
-                    }
-                }
-            }
+            initializeConfigLoader();
             if (this.configLoader != null) {
                 logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.isEmpty()) {
