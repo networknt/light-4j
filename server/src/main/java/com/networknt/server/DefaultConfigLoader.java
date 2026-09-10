@@ -538,7 +538,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         for (String name : LEGACY_LOOKUP_PARAMETERS) {
             String value = Objects.toString(startupConfig.get(name), "");
             if (!value.isBlank()) {
-                legacyParameters.put(name, value);
+                legacyParameters.put(name, value.trim());
             }
         }
         boolean legacyLookup = !legacyParameters.isEmpty();
@@ -549,7 +549,7 @@ public class DefaultConfigLoader implements IConfigLoader{
             throw new IllegalStateException("startup.envTag is required for Config Server");
         }
         qs.append("?").append(HOST).append("=").append(URLEncoder.encode(host, StandardCharsets.UTF_8));
-        if (startupConfig.get(SERVICE_ID) != null) {
+        if (!serviceId.isEmpty()) {
             qs.append("&").append(SERVICE_ID).append("=").append(URLEncoder.encode(serviceId, StandardCharsets.UTF_8));
         }
         legacyParameters.forEach((name, value) -> qs.append("&").append(name).append("=")

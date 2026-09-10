@@ -132,6 +132,7 @@ class LegacyConfigServerQueryTest {
             expected.put(name, " customer /+&=foo?#% café ");
         }
         DefaultConfigLoader.startupConfig.putAll(expected);
+        expected.replaceAll((name, value) -> value.trim());
         DefaultConfigLoader.lightEnv = expected.get("envTag");
         String query = (String) queryMethod.invoke(null);
         for (String endpoint : new String[] {"/configs", "/certs", "/files"}) {
@@ -145,6 +146,15 @@ class LegacyConfigServerQueryTest {
             assertEquals(expected, decoded);
         }
         assertEquals(1, appender.list.size());
+    }
+
+    @Test
+    void blankServiceIdIsOmittedFromLegacyRequests() throws Exception {
+        DefaultConfigLoader.startupConfig.put("productId", " light-4j ");
+        for (String serviceId : new String[] {"", " ", "\t\n"}) {
+            DefaultConfigLoader.startupConfig.put("serviceId", serviceId);
+            assertEquals("?host=lightapi.net&productId=light-4j&envTag=dev", queryMethod.invoke(null));
+        }
     }
 
     private void assertInvalid(String message) {
