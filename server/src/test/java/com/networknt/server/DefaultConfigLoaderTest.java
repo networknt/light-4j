@@ -96,10 +96,6 @@ public class DefaultConfigLoaderTest {
             Map<String, Object> startupConfig = new HashMap<>();
             startupConfig.put(DefaultConfigLoader.HOST, "dev.lightapi.net");
             startupConfig.put(DefaultConfigLoader.SERVICE_ID, "com.networknt.example-1.0.0");
-            startupConfig.put(DefaultConfigLoader.PRODUCT_ID, "light-4j");
-            startupConfig.put(DefaultConfigLoader.PRODUCT_VERSION, "2.3.8");
-            startupConfig.put(DefaultConfigLoader.API_ID, "example");
-            startupConfig.put(DefaultConfigLoader.API_VERSION, "1.0.0");
             DefaultConfigLoader.startupConfig = startupConfig;
             DefaultConfigLoader.lightEnv = "dev";
 

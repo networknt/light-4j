@@ -103,13 +103,13 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String HOST = "host";
     /** service ID property name */
     public static final String SERVICE_ID = "serviceId";
-    /** product ID property name */
+    /** product ID property name. Deprecated as a lookup parameter; retained for custom Config Server compatibility. */
     public static final String PRODUCT_ID = "productId";
-    /** product version property name */
+    /** product version property name. Deprecated as a lookup parameter; retained for custom Config Server compatibility. */
     public static final String PRODUCT_VERSION = "productVersion";
-    /** API ID property name */
+    /** API ID property name. Deprecated as a lookup parameter; retained for custom Config Server compatibility. */
     public static final String API_ID = "apiId";
-    /** API version property name */
+    /** API version property name. Deprecated as a lookup parameter; retained for custom Config Server compatibility. */
     public static final String API_VERSION = "apiVersion";
     /** environment tag property name */
     public static final String ENV_TAG = "envTag";
@@ -520,6 +520,11 @@ public class DefaultConfigLoader implements IConfigLoader{
         return res;
     }
 
+    // Legacy lookup parameters are deprecated. Our Config Server uses published snapshots
+    // identified only by host, serviceId, and envTag; custom servers may still need these.
+    private static final List<String> LEGACY_LOOKUP_PARAMETERS =
+            List.of(PRODUCT_ID, PRODUCT_VERSION, API_ID, API_VERSION);
+
     private static String getConfigServerQueryParameters() {
         StringBuilder qs = new StringBuilder();
         String host = Objects.toString(startupConfig.get(HOST), "lightapi.net").trim();
@@ -528,14 +533,29 @@ public class DefaultConfigLoader implements IConfigLoader{
         if (host.isEmpty()) {
             throw new IllegalStateException("startup.host is required for Config Server");
         }
-        if (serviceId.isEmpty()) {
+        boolean legacyLookup = LEGACY_LOOKUP_PARAMETERS.stream()
+                .anyMatch(name -> startupConfig.get(name) != null);
+        if (serviceId.isEmpty() && !legacyLookup) {
             throw new IllegalStateException("startup.serviceId is required for Config Server");
         }
         if (envTag.isEmpty()) {
             throw new IllegalStateException("startup.envTag is required for Config Server");
         }
         qs.append("?").append(HOST).append("=").append(host);
-        qs.append("&").append(SERVICE_ID).append("=").append(serviceId);
+        if (startupConfig.get(SERVICE_ID) != null) {
+            qs.append("&").append(SERVICE_ID).append("=").append(serviceId);
+        }
+        for (String name : LEGACY_LOOKUP_PARAMETERS) {
+            if (startupConfig.get(name) != null) {
+                qs.append("&").append(name).append("=").append(startupConfig.get(name));
+            }
+        }
+        if (legacyLookup) {
+            // Built once per bootstrap/reload and reused for all downloads.
+            logger.warn("Config Server lookup parameters productId, productVersion, apiId, and apiVersion "
+                    + "are deprecated and retained only for custom Config Server compatibility. "
+                    + "Use host, serviceId, and envTag with published configuration snapshots for new deployments.");
+        }
         qs.append("&").append(ENV_TAG).append("=").append(envTag);
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
