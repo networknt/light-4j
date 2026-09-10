@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -520,7 +521,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         return res;
     }
 
-    // Legacy lookup parameters are deprecated. Our Config Server uses published snapshots
+    // Legacy lookup parameters are deprecated. The portal-service Config Server uses published snapshots
     // identified only by host, serviceId, and envTag; custom servers may still need these.
     private static final List<String> LEGACY_LOOKUP_PARAMETERS =
             List.of(PRODUCT_ID, PRODUCT_VERSION, API_ID, API_VERSION);
@@ -533,30 +534,33 @@ public class DefaultConfigLoader implements IConfigLoader{
         if (host.isEmpty()) {
             throw new IllegalStateException("startup.host is required for Config Server");
         }
-        boolean legacyLookup = LEGACY_LOOKUP_PARAMETERS.stream()
-                .anyMatch(name -> startupConfig.get(name) != null);
+        Map<String, String> legacyParameters = new LinkedHashMap<>();
+        for (String name : LEGACY_LOOKUP_PARAMETERS) {
+            String value = Objects.toString(startupConfig.get(name), "");
+            if (!value.isBlank()) {
+                legacyParameters.put(name, value);
+            }
+        }
+        boolean legacyLookup = !legacyParameters.isEmpty();
         if (serviceId.isEmpty() && !legacyLookup) {
             throw new IllegalStateException("startup.serviceId is required for Config Server");
         }
         if (envTag.isEmpty()) {
             throw new IllegalStateException("startup.envTag is required for Config Server");
         }
-        qs.append("?").append(HOST).append("=").append(host);
+        qs.append("?").append(HOST).append("=").append(URLEncoder.encode(host, StandardCharsets.UTF_8));
         if (startupConfig.get(SERVICE_ID) != null) {
-            qs.append("&").append(SERVICE_ID).append("=").append(serviceId);
+            qs.append("&").append(SERVICE_ID).append("=").append(URLEncoder.encode(serviceId, StandardCharsets.UTF_8));
         }
-        for (String name : LEGACY_LOOKUP_PARAMETERS) {
-            if (startupConfig.get(name) != null) {
-                qs.append("&").append(name).append("=").append(startupConfig.get(name));
-            }
-        }
+        legacyParameters.forEach((name, value) -> qs.append("&").append(name).append("=")
+                .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
         if (legacyLookup) {
             // Built once per bootstrap/reload and reused for all downloads.
             logger.warn("Config Server lookup parameters productId, productVersion, apiId, and apiVersion "
                     + "are deprecated and retained only for custom Config Server compatibility. "
                     + "Use host, serviceId, and envTag with published configuration snapshots for new deployments.");
         }
-        qs.append("&").append(ENV_TAG).append("=").append(envTag);
+        qs.append("&").append(ENV_TAG).append("=").append(URLEncoder.encode(envTag, StandardCharsets.UTF_8));
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
     }

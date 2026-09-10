@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,6 +106,45 @@ class LegacyConfigServerQueryTest {
         DefaultConfigLoader.startupConfig.remove("host");
         DefaultConfigLoader.lightEnv = " ";
         assertInvalid("startup.envTag is required for Config Server");
+    }
+
+    @Test
+    void blankLegacyValuesNeitherEnableCompatibilityNorWarn() throws Exception {
+        for (String name : new String[] {"productId", "productVersion", "apiId", "apiVersion"}) {
+            for (String value : new String[] {"", " ", "\t\n", "\u2003"}) {
+                DefaultConfigLoader.startupConfig.clear();
+                DefaultConfigLoader.startupConfig.put(name, value);
+                assertInvalid("startup.serviceId is required for Config Server");
+                DefaultConfigLoader.startupConfig.put("serviceId", "service");
+                assertEquals("?host=lightapi.net&serviceId=service&envTag=dev", queryMethod.invoke(null));
+            }
+        }
+        assertTrue(appender.list.isEmpty());
+    }
+
+    @Test
+    void queryValuesRoundTripWithoutInjectingParametersOrFragments() throws Exception {
+        Map<String, String> expected = new HashMap<>();
+        expected.put("host", "example.com");
+        expected.put("serviceId", "service &other=1+#/?%");
+        expected.put("envTag", "dev &env=other+#");
+        for (String name : new String[] {"productId", "productVersion", "apiId", "apiVersion"}) {
+            expected.put(name, " customer /+&=foo?#% café ");
+        }
+        DefaultConfigLoader.startupConfig.putAll(expected);
+        DefaultConfigLoader.lightEnv = expected.get("envTag");
+        String query = (String) queryMethod.invoke(null);
+        for (String endpoint : new String[] {"/configs", "/certs", "/files"}) {
+            URI uri = URI.create("https://config.example" + endpoint + query);
+            assertNull(uri.getRawFragment());
+            Map<String, String> decoded = new HashMap<>();
+            for (String parameter : uri.getRawQuery().split("&")) {
+                String[] pair = parameter.split("=", 2);
+                assertNull(decoded.put(pair[0], URLDecoder.decode(pair[1], StandardCharsets.UTF_8)));
+            }
+            assertEquals(expected, decoded);
+        }
+        assertEquals(1, appender.list.size());
     }
 
     private void assertInvalid(String message) {
