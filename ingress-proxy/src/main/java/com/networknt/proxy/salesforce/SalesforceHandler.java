@@ -284,7 +284,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         client = clientBuilder.build();
     }
 
-    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth) throws Exception {
+    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth) {
         TokenResponse tokenResponse = null;
         try {
             if(pathPrefixAuth.getTokenUrl() == null) {
@@ -329,7 +329,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
+    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) {
         TokenResponse tokenResponse = null;
         try {
             if(serverUrl == null) {

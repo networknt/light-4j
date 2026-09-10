@@ -205,7 +205,7 @@ public class MrasHandler implements MiddlewareHandler {
                     // Audit log the endpoint info
                     AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + token, startTime, endpoint, config);
+                    invokeApi(exchange, (String)config.getAccessToken().get(MrasConfig.SERVICE_HOST), requestPath, "Bearer " + token, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
@@ -236,7 +236,7 @@ public class MrasHandler implements MiddlewareHandler {
                         }
                         microsoftToken = microsoft;
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoftToken, startTime, endpoint, config);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(MrasConfig.SERVICE_HOST), requestPath, "Bearer " + microsoftToken, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
