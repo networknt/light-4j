@@ -6,6 +6,7 @@ import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.OutputFormat;
 import com.networknt.handler.config.HandlerUtils;
+import com.networknt.server.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,7 @@ public class ServiceDictConfig {
 
     // the config object
     private Config config;
+    private static volatile ServiceDictConfig instance;
 
     private ServiceDictConfig() {
         this(CONFIG_NAME);
@@ -68,16 +70,31 @@ public class ServiceDictConfig {
 
     private ServiceDictConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setMap();
         setConfigData();
     }
 
     public static ServiceDictConfig load() {
-        return new ServiceDictConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ServiceDictConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ServiceDictConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ServiceDictConfig(configName);
+                ModuleRegistry.registerModule(configName, ServiceDictConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ServiceDictConfig(configName);
     }
 

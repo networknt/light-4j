@@ -7,6 +7,7 @@ import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,7 @@ public class TokenConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile TokenConfig instance;
 
     private TokenConfig() {
         this(CONFIG_NAME);
@@ -54,16 +56,31 @@ public class TokenConfig {
 
     private TokenConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigList();
         setConfigData();
     }
 
     public static TokenConfig load() {
-        return new TokenConfig();
+        return load(CONFIG_NAME);
     }
 
     public static TokenConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (TokenConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new TokenConfig(configName);
+                ModuleRegistry.registerModule(configName, TokenConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new TokenConfig(configName);
     }
 

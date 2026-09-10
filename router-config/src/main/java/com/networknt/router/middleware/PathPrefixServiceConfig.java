@@ -7,6 +7,7 @@ import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.nodes.MappingNode;
@@ -60,6 +61,7 @@ public class PathPrefixServiceConfig {
 
     // the config object
     private Config config;
+    private static volatile PathPrefixServiceConfig instance;
 
     private PathPrefixServiceConfig() {
         this(CONFIG_NAME);
@@ -67,16 +69,31 @@ public class PathPrefixServiceConfig {
 
     private PathPrefixServiceConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setMap();
         setConfigData();
     }
 
     public static PathPrefixServiceConfig load() {
-        return new PathPrefixServiceConfig();
+        return load(CONFIG_NAME);
     }
 
     public static PathPrefixServiceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (PathPrefixServiceConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new PathPrefixServiceConfig(configName);
+                ModuleRegistry.registerModule(configName, PathPrefixServiceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new PathPrefixServiceConfig(configName);
     }
 

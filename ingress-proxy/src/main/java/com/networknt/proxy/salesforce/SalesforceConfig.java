@@ -6,6 +6,7 @@ import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.config.PathPrefixAuth;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,7 @@ public class SalesforceConfig {
     List<PathPrefixAuth> pathPrefixAuths;
     private Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile SalesforceConfig instance;
 
     private SalesforceConfig() {
         this(CONFIG_NAME);
@@ -89,7 +91,7 @@ public class SalesforceConfig {
      * @return SalesforceConfig
      */
     public static SalesforceConfig load() {
-        return new SalesforceConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -98,7 +100,28 @@ public class SalesforceConfig {
      * @return SalesforceConfig
      */
     public static SalesforceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (SalesforceConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new SalesforceConfig(configName);
+                // Also mask pathPrefixAuths itself when credentials are supplied as a JSON string.
+                ModuleRegistry.registerModule(configName, SalesforceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName),
+                        List.of(CERT_PASSWORD, PASSWORD, CLIENT_SECRET, PATH_PREFIX_AUTHS));
+                return instance;
+            }
+        }
         return new SalesforceConfig(configName);
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public boolean isEnabled() {

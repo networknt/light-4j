@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,7 @@ public class MrasConfig {
     String serviceHost;
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile MrasConfig instance;
 
     private MrasConfig() {
         this(CONFIG_NAME);
@@ -129,7 +131,7 @@ public class MrasConfig {
      * @return MrasConfig
      */
     public static MrasConfig load() {
-        return new MrasConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -138,6 +140,24 @@ public class MrasConfig {
      * @return MrasConfig
      */
     public static MrasConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (MrasConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new MrasConfig(configName);
+                // Mask whole credential sections when supplied as strings; nested maps are masked by field name.
+                ModuleRegistry.registerModule(configName, MrasConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName),
+                        List.of(KEY_STORE_PASS, KEY_PASS, TRUST_STORE_PASS, PASSWORD, CLIENT_SECRET,
+                                BASIC_AUTH, ACCESS_TOKEN, MICROSOFT));
+                return instance;
+            }
+        }
         return new MrasConfig(configName);
     }
 

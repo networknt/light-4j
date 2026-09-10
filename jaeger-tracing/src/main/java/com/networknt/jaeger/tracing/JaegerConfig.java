@@ -18,6 +18,7 @@ package com.networknt.jaeger.tracing;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class JaegerConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile JaegerConfig instance;
 
     private JaegerConfig() {
         this(CONFIG_NAME);
@@ -45,15 +47,30 @@ public class JaegerConfig {
      */
     private JaegerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static JaegerConfig load() {
-        return new JaegerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static JaegerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (JaegerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new JaegerConfig(configName);
+                ModuleRegistry.registerModule(configName, JaegerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new JaegerConfig(configName);
     }
 

@@ -7,6 +7,7 @@ import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.BooleanField; // REQUIRED IMPORT
 import com.networknt.config.schema.ArrayField; // REQUIRED IMPORT
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class ResponseCacheConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile ResponseCacheConfig instance;
 
     // --- Annotated Fields ---
     @BooleanField(
@@ -61,15 +63,30 @@ public class ResponseCacheConfig {
 
     private ResponseCacheConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
     }
 
     public static ResponseCacheConfig load() {
-        return new ResponseCacheConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ResponseCacheConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ResponseCacheConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ResponseCacheConfig(configName);
+                ModuleRegistry.registerModule(configName, ResponseCacheConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ResponseCacheConfig(configName);
     }
 

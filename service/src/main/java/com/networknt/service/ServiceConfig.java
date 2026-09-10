@@ -19,6 +19,7 @@ package com.networknt.service;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class ServiceConfig {
     public static final String SINGLETONS = "singletons";
     private List<Map<String, Object>> singletons;
     private Map<String, Object> mappedConfig;
+    private static volatile ServiceConfig instance;
 
     private ServiceConfig() {
         this(CONFIG_NAME);
@@ -56,7 +58,7 @@ public class ServiceConfig {
      * @return ServiceConfig object
      */
     public static ServiceConfig load() {
-        return new ServiceConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -66,6 +68,21 @@ public class ServiceConfig {
      * @return ServiceConfig object
      */
     public static ServiceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ServiceConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ServiceConfig(configName);
+                ModuleRegistry.registerModule(configName, ServiceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ServiceConfig(configName);
     }
 

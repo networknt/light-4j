@@ -17,6 +17,7 @@
 package com.networknt.proxy.tableau;
 
 import com.networknt.config.Config;
+import com.networknt.server.ModuleRegistry;
 
 import java.util.Map;
 
@@ -39,6 +40,7 @@ public class TableauConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile TableauConfig instance;
 
     private TableauConfig() {
         this(CONFIG_NAME);
@@ -60,7 +62,7 @@ public class TableauConfig {
      * @return TableauConfig
      */
     public static TableauConfig load() {
-        return new TableauConfig();
+        return load(CONFIG_NAME);
     }
 
     /**
@@ -69,6 +71,21 @@ public class TableauConfig {
      * @return TableauConfig
      */
     public static TableauConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (TableauConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new TableauConfig(configName);
+                ModuleRegistry.registerModule(configName, TableauConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new TableauConfig(configName);
     }
 

@@ -387,7 +387,7 @@ public class RouterConfig {
         httpMethods.add("PUT");
         httpMethods.add("PATCH");
 
-        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();
@@ -402,6 +402,12 @@ public class RouterConfig {
     }
 
     public static RouterConfig load(String configName) {
+        // Only the default config name shares the singleton. A test or custom config name must not
+        // replace the instance for the whole process, otherwise the callers that load the default
+        // config rebuild it on every call and RouterHandler rebuilds its proxy on every request.
+        if (!CONFIG_NAME.equals(configName)) {
+            return new RouterConfig(configName);
+        }
         RouterConfig config = instance;
         if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
             synchronized (RouterConfig.class) {

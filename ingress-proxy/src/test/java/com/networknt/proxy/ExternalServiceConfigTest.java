@@ -54,7 +54,7 @@ public class ExternalServiceConfigTest {
     public void testExternalServiceConfigRegisteredForServerInfo() {
         ExternalServiceConfig.load();
 
-        String registryKey = ExternalServiceConfig.CONFIG_NAME + ":" + ExternalServiceHandler.class.getName();
+        String registryKey = ExternalServiceConfig.CONFIG_NAME + ":" + ExternalServiceConfig.class.getName();
         assertTrue(ModuleRegistry.getModuleRegistry().containsKey(registryKey));
 
         Map<String, Object> registeredConfig = (Map<String, Object>) ModuleRegistry.getModuleRegistry().get(registryKey);

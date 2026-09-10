@@ -7,6 +7,7 @@ import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.BooleanField; // REQUIRED IMPORT
 import com.networknt.config.schema.ArrayField; // REQUIRED IMPORT
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class ResponseFilterConfig {
 
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static volatile ResponseFilterConfig instance;
 
     // --- Annotated Fields ---
     @BooleanField(
@@ -61,16 +63,31 @@ public class ResponseFilterConfig {
 
     private ResponseFilterConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList(); // This method contains the custom logic
     }
 
     public static ResponseFilterConfig load() {
-        return new ResponseFilterConfig();
+        return load(CONFIG_NAME);
     }
 
     public static ResponseFilterConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (ResponseFilterConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new ResponseFilterConfig(configName);
+                ModuleRegistry.registerModule(configName, ResponseFilterConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new ResponseFilterConfig(configName);
     }
 
