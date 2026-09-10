@@ -95,7 +95,7 @@ public class TokenLimitConfig {
     String expireKey = "expires_in";
 
     private Map<String, Object> mappedConfig;
-    private static TokenLimitConfig instance;
+    private static volatile TokenLimitConfig instance;
 
     private TokenLimitConfig() {
         this(CONFIG_NAME);

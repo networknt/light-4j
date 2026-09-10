@@ -16,4 +16,15 @@ public class ProxyConfigTest {
         Assertions.assertEquals(0, config.getStreamIdleTimeout());
         Assertions.assertTrue(config.getStreamResponseHeaderOverwrite().contains("Content-Type"));
     }
+
+    @Test
+    public void testOnlyDefaultConfigNameIsCached() {
+        ProxyConfig defaultConfig = ProxyConfig.load();
+        // A handler constructed with a custom config name must not take over the shared instance.
+        ProxyConfig namedConfig = ProxyConfig.load(ExternalServiceConfig.CONFIG_NAME);
+
+        Assertions.assertNotSame(defaultConfig, namedConfig);
+        Assertions.assertNotSame(namedConfig, ProxyConfig.load(ExternalServiceConfig.CONFIG_NAME));
+        Assertions.assertSame(defaultConfig, ProxyConfig.load());
+    }
 }

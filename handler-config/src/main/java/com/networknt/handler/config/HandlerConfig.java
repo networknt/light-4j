@@ -152,7 +152,7 @@ public class HandlerConfig {
     private List<String> defaultHandlers;
     private final Map<String, Object> mappedConfig;
 
-    private static HandlerConfig instance;
+    private static volatile HandlerConfig instance;
 
     private HandlerConfig() {
         this(CONFIG_NAME);

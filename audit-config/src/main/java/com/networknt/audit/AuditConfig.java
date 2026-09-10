@@ -196,7 +196,7 @@ public class AuditConfig {
     private int responseBodyMaxSize;
 
 
-    private static AuditConfig instance;
+    private static volatile AuditConfig instance;
 
     private AuditConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
