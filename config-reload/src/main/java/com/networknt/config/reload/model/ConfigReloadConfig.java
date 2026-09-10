@@ -39,7 +39,7 @@ public class ConfigReloadConfig {
     private static final String ENABLED = "enabled";
     private final Map<String, Object> mappedConfig;
 
-    private static ConfigReloadConfig instance;
+    private static volatile ConfigReloadConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,

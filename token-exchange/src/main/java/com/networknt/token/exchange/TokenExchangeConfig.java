@@ -115,7 +115,7 @@ public class TokenExchangeConfig {
     @JsonProperty(DEFAULT_AUTH_TYPE)
     private AuthType defaultAuthType;
 
-    private static TokenExchangeConfig instance;
+    private static volatile TokenExchangeConfig instance;
 
     public TokenExchangeConfig() {
         this(CONFIG_NAME);

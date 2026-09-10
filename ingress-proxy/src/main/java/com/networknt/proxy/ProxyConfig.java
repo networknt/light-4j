@@ -254,6 +254,12 @@ public class ProxyConfig {
      * @return ProxyConfig
      */
     public static ProxyConfig load(String configName) {
+        // Only the default config name shares the singleton. A handler constructed with a custom
+        // config name must not replace the instance for the whole process, otherwise handlers on
+        // different names alternate it and LightProxyHandler rebuilds its proxy on every request.
+        if (!CONFIG_NAME.equals(configName)) {
+            return new ProxyConfig(configName);
+        }
         ProxyConfig config = instance;
         if (config == null || config.getMappedConfig() != Config.getInstance().getJsonMapConfig(configName)) {
             synchronized (ProxyConfig.class) {

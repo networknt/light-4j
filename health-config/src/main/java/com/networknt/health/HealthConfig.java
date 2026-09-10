@@ -43,7 +43,7 @@ public class HealthConfig {
     private static final String DOWNSTREAM_PATH = "downstreamPath";
 
     private Map<String, Object> mappedConfig;
-    private static HealthConfig instance;
+    private static volatile HealthConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
