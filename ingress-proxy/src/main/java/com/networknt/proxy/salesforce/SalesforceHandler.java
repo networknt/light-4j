@@ -85,7 +85,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     private int connectTimeout;
     private int timeout;
 
-    private HttpClient client;
+    private volatile HttpClient client;
 
     /**
      * Construct SalesforceHandler with default config name
@@ -176,27 +176,42 @@ public class SalesforceHandler implements MiddlewareHandler {
 
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
-                if(logger.isTraceEnabled()) logger.trace("current time = " + System.currentTimeMillis() + " expiration = " + pathPrefixAuth.getExpiration() + " waitLength = " + pathPrefixAuth.getWaitLength());
-                if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - pathPrefixAuth.getWaitLength())) { // leave 5 seconds room by default
-                    Result<TokenResponse> result;
-                    if(logger.isTraceEnabled()) logger.trace("grant type = " + pathPrefixAuth.getGrantType());
-                    if("password".equals(pathPrefixAuth.getGrantType())) {
-                        result = getPasswordToken(pathPrefixAuth, config);
-                    } else {
-                        // jwt
-                        String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), config);
-                        result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt, config);
-                    }
-                    if(result.isSuccess()) {
-                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + pathPrefixAuth.getTokenTtl() * 1000); // tokenTtl is the seconds the token is cached.
-                        pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends with an error.");
+                // Tokens are shared across handlers, but each handler needs its own initialized client.
+                if (client == null) {
+                    try {
+                        initializeClient(config);
+                    } catch (IOException e) {
+                        logger.error("Cannot create HttpClient:", e);
+                        setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
                         return;
                     }
                 }
-                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime, endpoint, config);
+                String accessToken;
+                // Config loads share this entry. Coordinate refresh and read both token fields under the same lock.
+                synchronized (pathPrefixAuth) {
+                    if(logger.isTraceEnabled()) logger.trace("current time = " + System.currentTimeMillis() + " expiration = " + pathPrefixAuth.getExpiration() + " waitLength = " + pathPrefixAuth.getWaitLength());
+                    if(pathPrefixAuth.getAccessToken() == null || System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - pathPrefixAuth.getWaitLength())) { // leave 5 seconds room by default
+                        Result<TokenResponse> result;
+                        if(logger.isTraceEnabled()) logger.trace("grant type = " + pathPrefixAuth.getGrantType());
+                        if("password".equals(pathPrefixAuth.getGrantType())) {
+                            result = getPasswordToken(pathPrefixAuth);
+                        } else {
+                            // jwt
+                            String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), config);
+                            result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
+                        }
+                        if(result.isSuccess()) {
+                            pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
+                            pathPrefixAuth.setExpiration(System.currentTimeMillis() + pathPrefixAuth.getTokenTtl() * 1000L); // tokenTtl is the seconds the token is cached.
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends with an error.");
+                            return;
+                        }
+                    }
+                    accessToken = pathPrefixAuth.getAccessToken();
+                }
+                invokeApi(exchange, "Bearer " + accessToken, pathPrefixAuth.getServiceHost(), requestPath, startTime, endpoint, config);
                 if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
                 return;
             }
@@ -248,33 +263,29 @@ public class SalesforceHandler implements MiddlewareHandler {
         return token.toString();
     }
 
-    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth, SalesforceConfig config) throws Exception {
-        TokenResponse tokenResponse = null;
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(connectTimeout))
-                        .sslContext(Http2Client.createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                client = clientBuilder.build();
-
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
-            }
+    private synchronized void initializeClient(SalesforceConfig config) throws IOException {
+        if (client != null) return;
+        HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofMillis(connectTimeout))
+                .sslContext(Http2Client.createSSLContext());
+        if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+        if (config.isEnableHttp2()) {
+            clientBuilder.version(HttpClient.Version.HTTP_2);
+        } else {
+            clientBuilder.version(HttpClient.Version.HTTP_1_1);
         }
+        // this a workaround to bypass the hostname verification in jdk11 http client.
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+        if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            final Properties props = System.getProperties();
+            props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+        }
+        client = clientBuilder.build();
+    }
+
+    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth) throws Exception {
+        TokenResponse tokenResponse = null;
         try {
             if(pathPrefixAuth.getTokenUrl() == null) {
                 return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));
@@ -318,33 +329,8 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt, SalesforceConfig config) throws Exception {
+    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
         TokenResponse tokenResponse = null;
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(connectTimeout))
-                        .sslContext(Http2Client.createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                client = clientBuilder.build();
-
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
-            }
-        }
         try {
             if(serverUrl == null) {
                 return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));

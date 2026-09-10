@@ -111,7 +111,9 @@ public class SalesforceConfig {
                     return instance;
                 }
                 instance = new SalesforceConfig(configName);
-                ModuleRegistry.registerModule(configName, SalesforceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                // Also mask pathPrefixAuths itself when credentials are supplied as a JSON string.
+                ModuleRegistry.registerModule(configName, SalesforceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName),
+                        List.of(CERT_PASSWORD, PASSWORD, CLIENT_SECRET, PATH_PREFIX_AUTHS));
                 return instance;
             }
         }

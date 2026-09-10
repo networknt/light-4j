@@ -151,7 +151,10 @@ public class MrasConfig {
                     return instance;
                 }
                 instance = new MrasConfig(configName);
-                ModuleRegistry.registerModule(configName, MrasConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                // Mask whole credential sections when supplied as strings; nested maps are masked by field name.
+                ModuleRegistry.registerModule(configName, MrasConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName),
+                        List.of(KEY_STORE_PASS, KEY_PASS, TRUST_STORE_PASS, PASSWORD, CLIENT_SECRET,
+                                BASIC_AUTH, ACCESS_TOKEN, MICROSOFT));
                 return instance;
             }
         }

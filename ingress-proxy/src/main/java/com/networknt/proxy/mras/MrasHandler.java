@@ -81,6 +81,11 @@ public class MrasHandler implements MiddlewareHandler {
     // the expiration time of access token in millisecond to control if we need to renew the token.
     private long accessTokenExpiration = 0;
     private long microsoftExpiration = 0;
+    // This handler is a singleton in the chain, so the cached tokens above are shared by all the worker
+    // threads. Each lock makes the refresh single-flight and publishes the token and its expiration
+    // together, so that a concurrent request cannot see a fresh expiration with a stale or null token.
+    private final Object accessTokenLock = new Object();
+    private final Object microsoftLock = new Object();
     private int connectTimeout;
     private int timeout;
     private HttpClient clientMicrosoft;
@@ -179,24 +184,28 @@ public class MrasHandler implements MiddlewareHandler {
                 // iterate the key set from the pathPrefixAuth map.
                 if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
                     // private access token for authentication.
-                    if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
-                        if(logger.isTraceEnabled())
-                            logger.trace("accessToken is about or already expired. current time = {} expiration = {}", System.currentTimeMillis(), accessTokenExpiration);
-                        Result<TokenResponse> result = getAccessToken(config);
-                        if(result.isSuccess()) {
-                            accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
-                            accessToken = result.getResult().getAccessToken();
-                        } else {
-                            setExchangeStatus(exchange, result.getError());
-                            if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
-                            return;
+                    String token;
+                    synchronized (accessTokenLock) {
+                        if(accessToken == null || System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
+                            if(logger.isTraceEnabled())
+                                logger.trace("accessToken is about or already expired. current time = {} expiration = {}", System.currentTimeMillis(), accessTokenExpiration);
+                            Result<TokenResponse> result = getAccessToken(config);
+                            if(result.isSuccess()) {
+                                accessToken = result.getResult().getAccessToken();
+                                accessTokenExpiration = System.currentTimeMillis() + 300 * 1000L;
+                            } else {
+                                setExchangeStatus(exchange, result.getError());
+                                if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
+                                return;
+                            }
                         }
+                        token = accessToken;
                     }
 
                     // Audit log the endpoint info
                     AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint, config);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + token, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
@@ -211,19 +220,23 @@ public class MrasHandler implements MiddlewareHandler {
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
-                    if(System.currentTimeMillis() >= (microsoftExpiration - 50000)) { // leave 50 seconds room.
-                        if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
-                        Result<TokenResponse> result = getMicrosoftToken(config);
-                        if(result.isSuccess()) {
-                            microsoftExpiration = System.currentTimeMillis() + result.getResult().getExpiresIn() * 1000;
-                            microsoft = result.getResult().getAccessToken();
-                        } else {
-                            setExchangeStatus(exchange, result.getError());
-                            if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
-                            return;
+                    String microsoftToken;
+                    synchronized (microsoftLock) {
+                        if(microsoft == null || System.currentTimeMillis() >= (microsoftExpiration - 50000)) { // leave 50 seconds room.
+                            if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
+                            Result<TokenResponse> result = getMicrosoftToken(config);
+                            if(result.isSuccess()) {
+                                microsoft = result.getResult().getAccessToken();
+                                microsoftExpiration = System.currentTimeMillis() + result.getResult().getExpiresIn() * 1000L;
+                            } else {
+                                setExchangeStatus(exchange, result.getError());
+                                if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
+                                return;
+                            }
                         }
+                        microsoftToken = microsoft;
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime, endpoint, config);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoftToken, startTime, endpoint, config);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
