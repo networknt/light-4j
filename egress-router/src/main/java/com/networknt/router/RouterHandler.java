@@ -45,7 +45,7 @@ import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_
  */
 public class RouterHandler implements HttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(RouterHandler.class);
-    private RouterConfig config;
+    private volatile RouterConfig config;
 
     protected volatile ProxyHandler proxyHandler;
     protected volatile AbstractMetricsHandler metricsHandler;

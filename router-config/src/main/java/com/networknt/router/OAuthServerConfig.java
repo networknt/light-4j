@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ public class OAuthServerConfig {
     private static final String TOKEN_SERVICE_ID = "tokenServiceId";
     private Map<String, Object> mappedConfig;
     private final Config config;
+    private static volatile OAuthServerConfig instance;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -79,16 +81,31 @@ public class OAuthServerConfig {
 
     private OAuthServerConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
     }
 
     public static OAuthServerConfig load() {
-        return new OAuthServerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static OAuthServerConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (OAuthServerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new OAuthServerConfig(configName);
+                ModuleRegistry.registerModule(configName, OAuthServerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new OAuthServerConfig(configName);
     }
 

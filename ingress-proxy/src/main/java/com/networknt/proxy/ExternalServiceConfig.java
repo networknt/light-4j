@@ -228,7 +228,7 @@ public class ExternalServiceConfig {
                 return config;
             }
             config = new ExternalServiceConfig(configName);
-            ModuleRegistry.registerModule(configName, ExternalServiceHandler.class.getName(),
+            ModuleRegistry.registerModule(configName, ExternalServiceConfig.class.getName(),
                     Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
             instance = config;
             return config;

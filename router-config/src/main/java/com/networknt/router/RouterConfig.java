@@ -387,7 +387,7 @@ public class RouterConfig {
         httpMethods.add("PUT");
         httpMethods.add("PATCH");
 
-        mappedConfig = Config.getInstance().getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();

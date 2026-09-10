@@ -6,6 +6,7 @@ import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.OutputFormat;
+import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,7 @@ public class PathServiceConfig {
 
     // the config object
     private Config config;
+    private static volatile PathServiceConfig instance;
 
     private PathServiceConfig() {
         this(CONFIG_NAME);
@@ -66,16 +68,31 @@ public class PathServiceConfig {
 
     private PathServiceConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = config.getJsonMapConfig(configName);
         setMap();
         setConfigData();
     }
 
     public static PathServiceConfig load() {
-        return new PathServiceConfig();
+        return load(CONFIG_NAME);
     }
 
     public static PathServiceConfig load(String configName) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                return instance;
+            }
+            synchronized (PathServiceConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new PathServiceConfig(configName);
+                ModuleRegistry.registerModule(configName, PathServiceConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
+                return instance;
+            }
+        }
         return new PathServiceConfig(configName);
     }
 
