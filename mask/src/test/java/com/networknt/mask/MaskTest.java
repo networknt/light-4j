@@ -29,7 +29,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MaskTest {
@@ -171,5 +175,57 @@ public class MaskTest {
         output = Mask.maskJson((DocumentContext) null, "uri");
         System.out.println("output = " + output);
         Assertions.assertEquals(null, output);
+    }
+
+    @Test
+    public void testMaskNonStringScalars() {
+        String input = "{\"accountNumber\":1234567890123456,\"balance\":1234.56,\"verified\":true}";
+        String output = Mask.maskJson(input, "testScalars");
+        System.out.println(output);
+        Assertions.assertEquals("****************", JsonPath.parse(output).read("$.accountNumber"));
+        Assertions.assertEquals("*******", JsonPath.parse(output).read("$.balance"));
+        Assertions.assertEquals("****", JsonPath.parse(output).read("$.verified"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMaskParsedMapBody() {
+        Map<String, Object> contact = new HashMap<>();
+        contact.put("phone", "416-111-1111");
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", "Steve");
+        body.put("contact", contact);
+        body.put("password", "secret");
+
+        Object output = Mask.maskObject(body, "test1");
+        System.out.println(output);
+        Assertions.assertTrue(output instanceof Map);
+        Map<String, Object> masked = (Map<String, Object>) output;
+        Assertions.assertEquals("Steve", masked.get("name"));
+        Assertions.assertEquals("******", masked.get("password"));
+        Assertions.assertEquals("************", ((Map<String, Object>) masked.get("contact")).get("phone"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMaskParsedListBody() {
+        Map<String, Object> element = new HashMap<>();
+        element.put("name", "Josh");
+        element.put("creditCardNumber", "4586996854721123");
+        List<Object> body = new ArrayList<>();
+        body.add(element);
+
+        Object output = Mask.maskObject(body, "testListBody");
+        System.out.println(output);
+        Assertions.assertTrue(output instanceof List);
+        Map<String, Object> masked = (Map<String, Object>) ((List<Object>) output).get(0);
+        Assertions.assertEquals("Josh", masked.get("name"));
+        Assertions.assertEquals("****************", masked.get("creditCardNumber"));
+    }
+
+    @Test
+    public void testMaskObjectLeavesOtherInputAlone() {
+        Assertions.assertNull(Mask.maskObject(null, "test1"));
+        Assertions.assertEquals("plain text", Mask.maskObject("plain text", "test1"));
     }
 }
