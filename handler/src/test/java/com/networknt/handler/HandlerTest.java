@@ -228,5 +228,33 @@ public class HandlerTest {
         Assertions.assertTrue(report.contains("handler2"));
     }
 
+    @Test
+    public void trailingSlashInRequestPath_matchPath_matchesConfiguredPath() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        // on its own the matcher only knows about the exact path configured in handler.yml
+        Assertions.assertNotNull(getMatcher.match("/test"));
+        Assertions.assertNull(getMatcher.match("/test/"));
+
+        // the handler resolves the same chain when the consumer adds a trailing slash
+        PathTemplateMatcher.PathMatchResult<String> matched = Handler.matchPath(getMatcher, "/test/");
+        Assertions.assertNotNull(matched);
+        Assertions.assertEquals("/test", matched.getMatchedTemplate());
+        Assertions.assertEquals(Handler.matchPath(getMatcher, "/test").getValue(), matched.getValue());
+
+        // a path that is not configured at all is still unmatched
+        Assertions.assertNull(Handler.matchPath(getMatcher, "/not-configured/"));
+    }
+
+    @Test
+    public void trimTrailingSlash_returnsNullWhenThereIsNothingToTrim() {
+        Assertions.assertEquals("/test", Handler.trimTrailingSlash("/test/"));
+        Assertions.assertNull(Handler.trimTrailingSlash("/test"));
+        Assertions.assertNull(Handler.trimTrailingSlash("/"));
+        Assertions.assertNull(Handler.trimTrailingSlash(""));
+        Assertions.assertNull(Handler.trimTrailingSlash(null));
+    }
+
 
 }
