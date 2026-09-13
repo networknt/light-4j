@@ -38,3 +38,11 @@ json:
 # I want to mask creditCardNumber field in all the list elements which in my test case include just one element
   testIssue942:
     "$.list.[*].creditCardNumber": "(.*)"
+
+  # a body that the body module has already parsed into a map or a list
+  testScalars:
+    "$.accountNumber": "(.*)"
+    "$.balance": "(.*)"
+    "$.verified": "(.*)"
+  testListBody:
+    "$.[*].creditCardNumber": "(.*)"
