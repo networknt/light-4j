@@ -362,7 +362,7 @@ public class Handler {
         if (pathTemplateMatcher != null) {
 
             // Match the current request path to the configured paths.
-            var result = pathTemplateMatcher.match(ex.getRequestPath());
+            var result = matchPath(pathTemplateMatcher, ex.getRequestPath());
 
             if (result != null) {
 
@@ -390,6 +390,46 @@ public class Handler {
             }
         }
         return false;
+    }
+
+    /**
+     * Match the request path against the paths configured for the request method. When there is no
+     * exact match and the request path ends with a slash, the match is retried without it so that a
+     * request to /foo/v1/ is handled by the chain configured for /foo/v1. An exact match always
+     * wins, so a request that resolves to a chain today keeps resolving to the same chain.
+     *
+     * @param pathTemplateMatcher The matcher holding the paths configured for the request method.
+     * @param requestPath The path of the current request.
+     * @return The match result, or null if neither form of the path is configured.
+     */
+    static PathTemplateMatcher.PathMatchResult<String> matchPath(PathTemplateMatcher<String> pathTemplateMatcher, String requestPath) {
+        var result = pathTemplateMatcher.match(requestPath);
+
+        if (result == null) {
+            var trimmedPath = trimTrailingSlash(requestPath);
+
+            if (trimmedPath != null) {
+                result = pathTemplateMatcher.match(trimmedPath);
+
+                if (result != null && LOG.isTraceEnabled())
+                    LOG.trace("Request path {} is matched to the configured path {} after the trailing slash is removed.", requestPath, trimmedPath);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Remove the trailing slash from the request path. The root path is left alone because it is
+     * nothing but a slash and there is no shorter path to fall back to.
+     *
+     * @param requestPath The path of the current request.
+     * @return The path without its trailing slash, or null if there is no trailing slash to remove.
+     */
+    static String trimTrailingSlash(String requestPath) {
+        if (requestPath == null || requestPath.length() < 2 || !requestPath.endsWith("/"))
+            return null;
+
+        return requestPath.substring(0, requestPath.length() - 1);
     }
 
 
