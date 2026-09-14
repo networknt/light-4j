@@ -7,15 +7,28 @@ dummy: dummyEntry
 # and fallback to local file systems for cached config files.
 # The following is the config for the DefaultConfigLoader.
 # configLoaderClass: com.networknt.server.DefaultConfigLoader
-# The Config Server snapshot identity is host, serviceId, and envTag. productId,
-# productVersion, apiId, and apiVersion are not Config Server lookup parameters.
+# The portal-service Config Server uses published snapshots identified only by host, serviceId, and envTag.
 
 # Host defaults to lightapi.net when it is omitted.
 # host: lightapi.net
-# serviceId is required when configServerUri is configured.
+# serviceId is required when configServerUri is configured, except for legacy custom-server lookups below.
 # serviceId: com.networknt.light-gateway-1.0.0
 # envTag defaults to light-env and then dev when it is omitted.
 # envTag: dev
+
+# Deprecated lookup parameters: retained only for backward compatibility with custom
+# Config Servers. Explicitly configured values are forwarded without a compatibility flag;
+# legacy lookups may omit serviceId. Null, blank, or omitted parameters are not forwarded.
+# New deployments should use host, serviceId, and envTag with published snapshots,
+# rather than select configuration from a live database. The portal-service Config Server does not
+# use these legacy parameters. The deprecated Java light-config-server retains legacy
+# lookup behavior. Legacy usage logs one warning per bootstrap/reload.
+# Nonblank legacy values are trimmed and URL-encoded for transport.
+# Blank serviceId values are omitted from legacy requests.
+# productId: light-4j
+# productVersion: 2.3.8
+# apiId: example
+# apiVersion: 1.0.0
 
 # Indicate to the config server we prefer yaml format over json format. default is json.
 # acceptHeader: application/yaml
