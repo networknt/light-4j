@@ -362,7 +362,7 @@ public class Handler {
         if (pathTemplateMatcher != null) {
 
             // Match the current request path to the configured paths.
-            var result = matchPath(pathTemplateMatcher, ex.getRequestPath());
+            var result = matchPath(pathTemplateMatcher, ex);
 
             if (result != null) {
 
@@ -393,43 +393,84 @@ public class Handler {
     }
 
     /**
-     * Match the request path against the paths configured for the request method. When there is no
-     * exact match and the request path ends with a slash, the match is retried without it so that a
-     * request to /foo/v1/ is handled by the chain configured for /foo/v1. An exact match always
-     * wins, so a request that resolves to a chain today keeps resolving to the same chain.
+     * Match the request path against the paths configured for the request method. An exact match
+     * always wins. When there is no exact match, the trailing slashes are removed from the request
+     * path and the match is retried, but only when trailingSlashFallback is enabled in handler.yml.
+     * The fallback is disabled by default, so the chain that an existing deployment resolves for a
+     * request does not change on upgrade. When the fallback matches, the request path of the
+     * exchange is normalized to the matched path, so that the chain and the path that is forwarded
+     * downstream agree with each other.
      *
      * @param pathTemplateMatcher The matcher holding the paths configured for the request method.
-     * @param requestPath The path of the current request.
+     * @param ex The current requests server exchange.
      * @return The match result, or null if neither form of the path is configured.
      */
-    static PathTemplateMatcher.PathMatchResult<String> matchPath(PathTemplateMatcher<String> pathTemplateMatcher, String requestPath) {
+    static PathTemplateMatcher.PathMatchResult<String> matchPath(PathTemplateMatcher<String> pathTemplateMatcher, HttpServerExchange ex) {
+        final var requestPath = ex.getRequestPath();
         var result = pathTemplateMatcher.match(requestPath);
 
-        if (result == null) {
-            var trimmedPath = trimTrailingSlash(requestPath);
+        if (result == null && config != null && config.isTrailingSlashFallback()) {
+            final var trimmedPath = trimTrailingSlashes(requestPath);
 
             if (trimmedPath != null) {
                 result = pathTemplateMatcher.match(trimmedPath);
 
-                if (result != null && LOG.isTraceEnabled())
-                    LOG.trace("Request path {} is matched to the configured path {} after the trailing slash is removed.", requestPath, trimmedPath);
+                if (result != null) {
+
+                    // keep the chain and the path that is forwarded downstream consistent with each other.
+                    normalizeRequestPath(ex, requestPath, trimmedPath);
+
+                    if (LOG.isInfoEnabled())
+                        LOG.info("Request path {} is matched to the configured path {} after the trailing slashes are removed. The request path of the exchange is normalized to the matched path.", requestPath, trimmedPath);
+                }
             }
         }
         return result;
     }
 
     /**
-     * Remove the trailing slash from the request path. The root path is left alone because it is
-     * nothing but a slash and there is no shorter path to fall back to.
+     * Remove every trailing slash from the request path, so that /foo/v1// falls back to /foo/v1 as
+     * well. The root path is left alone because it is nothing but a slash and there is no shorter
+     * path to fall back to.
      *
      * @param requestPath The path of the current request.
-     * @return The path without its trailing slash, or null if there is no trailing slash to remove.
+     * @return The path without its trailing slashes, or null if there is nothing to trim.
      */
-    static String trimTrailingSlash(String requestPath) {
-        if (requestPath == null || requestPath.length() < 2 || !requestPath.endsWith("/"))
+    static String trimTrailingSlashes(String requestPath) {
+        if (requestPath == null)
             return null;
 
-        return requestPath.substring(0, requestPath.length() - 1);
+        var end = requestPath.length();
+
+        while (end > 1 && requestPath.charAt(end - 1) == '/')
+            end--;
+
+        return end == requestPath.length() ? null : requestPath.substring(0, end);
+    }
+
+    /**
+     * Normalize the request path of the exchange to the configured path that the trailing slash
+     * fallback matched. Without this, the chain of /foo/v1 is executed while a proxy or router
+     * handler further down that chain still forwards /foo/v1/ to the backend, so the security
+     * configuration that is applied and the resource that is served could disagree. The request URI
+     * is only rewritten when it ends with the request path, which leaves an encoded URI untouched.
+     *
+     * @param ex The current requests server exchange.
+     * @param requestPath The path of the current request.
+     * @param trimmedPath The configured path that the fallback matched.
+     */
+    private static void normalizeRequestPath(HttpServerExchange ex, String requestPath, String trimmedPath) {
+        final var requestURI = ex.getRequestURI();
+
+        if (requestURI != null && requestURI.endsWith(requestPath))
+            ex.setRequestURI(requestURI.substring(0, requestURI.length() - requestPath.length()) + trimmedPath, ex.isHostIncludedInRequestURI());
+
+        final var trimmedRelativePath = trimTrailingSlashes(ex.getRelativePath());
+
+        if (trimmedRelativePath != null)
+            ex.setRelativePath(trimmedRelativePath);
+
+        ex.setRequestPath(trimmedPath);
     }
 
 
