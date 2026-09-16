@@ -229,31 +229,65 @@ public class HandlerTest {
     }
 
     @Test
-    public void trailingSlashInRequestPath_matchPath_matchesConfiguredPath() {
+    public void trailingSlashInRequestPath_matchPathWithoutTheFallback_isNotMatched() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        // the fallback is opt in, so the chain a request resolves to does not change on upgrade
+        Assertions.assertFalse(Handler.config.isTrailingSlashFallback());
+        Assertions.assertNull(Handler.matchPath(getMatcher, exchange("/test/")));
+    }
+
+    @Test
+    public void trailingSlashInRequestPath_matchPath_matchesConfiguredPathAndNormalizesTheExchange() {
         PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
         Assertions.assertNotNull(getMatcher);
 
         // on its own the matcher only knows about the exact path configured in handler.yml
         Assertions.assertNotNull(getMatcher.match("/test"));
-        Assertions.assertNull(getMatcher.match("/test/"));
+        Assertions.assertNull(getMatcher.match("/test//"));
 
-        // the handler resolves the same chain when the consumer adds a trailing slash
-        PathTemplateMatcher.PathMatchResult<String> matched = Handler.matchPath(getMatcher, "/test/");
-        Assertions.assertNotNull(matched);
-        Assertions.assertEquals("/test", matched.getMatchedTemplate());
-        Assertions.assertEquals(Handler.matchPath(getMatcher, "/test").getValue(), matched.getValue());
+        Handler.config.setTrailingSlashFallback(true);
 
-        // a path that is not configured at all is still unmatched
-        Assertions.assertNull(Handler.matchPath(getMatcher, "/not-configured/"));
+        try {
+
+            // the handler resolves the same chain when the consumer adds trailing slashes
+            HttpServerExchange ex = exchange("/test//");
+            PathTemplateMatcher.PathMatchResult<String> matched = Handler.matchPath(getMatcher, ex);
+            Assertions.assertNotNull(matched);
+            Assertions.assertEquals("/test", matched.getMatchedTemplate());
+            Assertions.assertEquals(Handler.matchPath(getMatcher, exchange("/test")).getValue(), matched.getValue());
+
+            // the chain and the path that is forwarded downstream have to agree with each other
+            Assertions.assertEquals("/test", ex.getRequestPath());
+            Assertions.assertEquals("/test", ex.getRelativePath());
+            Assertions.assertEquals("/test", ex.getRequestURI());
+
+            // a path that is not configured at all is still unmatched
+            Assertions.assertNull(Handler.matchPath(getMatcher, exchange("/not-configured/")));
+
+        } finally {
+            Handler.config.setTrailingSlashFallback(false);
+        }
     }
 
     @Test
-    public void trimTrailingSlash_returnsNullWhenThereIsNothingToTrim() {
-        Assertions.assertEquals("/test", Handler.trimTrailingSlash("/test/"));
-        Assertions.assertNull(Handler.trimTrailingSlash("/test"));
-        Assertions.assertNull(Handler.trimTrailingSlash("/"));
-        Assertions.assertNull(Handler.trimTrailingSlash(""));
-        Assertions.assertNull(Handler.trimTrailingSlash(null));
+    public void trimTrailingSlashes_returnsNullWhenThereIsNothingToTrim() {
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashes("/test/"));
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashes("/test///"));
+        Assertions.assertNull(Handler.trimTrailingSlashes("/test"));
+        Assertions.assertNull(Handler.trimTrailingSlashes("/"));
+        Assertions.assertNull(Handler.trimTrailingSlashes(""));
+        Assertions.assertNull(Handler.trimTrailingSlashes(null));
+    }
+
+    private HttpServerExchange exchange(String requestPath) {
+        HttpServerExchange ex = new HttpServerExchange(null);
+        ex.setRequestMethod(Methods.GET);
+        ex.setRequestPath(requestPath);
+        ex.setRelativePath(requestPath);
+        ex.setRequestURI(requestPath);
+        return ex;
     }
 
 
