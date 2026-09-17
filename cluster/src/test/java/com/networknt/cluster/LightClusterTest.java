@@ -91,6 +91,15 @@ public class LightClusterTest {
     }
 
     @Test
+    public void testHostHeader() {
+        Assertions.assertEquals("api.example.com", Cluster.hostHeader(URI.create("https://api.example.com:443/ns/svc")));
+        Assertions.assertEquals("api.example.com", Cluster.hostHeader(URI.create("http://api.example.com:80")));
+        Assertions.assertEquals("api.example.com:8443", Cluster.hostHeader(URI.create("https://api.example.com:8443")));
+        Assertions.assertEquals("api.example.com", Cluster.hostHeader(URI.create("https://api.example.com")));
+        Assertions.assertNull(Cluster.hostHeader(null));
+    }
+
+    @Test
     public void testServices() {
         List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
         Assertions.assertEquals(2, l.size());

@@ -90,4 +90,25 @@ public interface Cluster {
         }
         return path.startsWith(Constants.PATH_SEPARATOR) ? basePath + path : basePath + Constants.PATH_SEPARATOR + path;
     }
+
+    /**
+     * Build the Host header for a request to the target resolved by the serviceToUrl or the services. An ingress or
+     * a virtual host routes on the Host header, so the header must reflect the host of the target instead of the
+     * default localhost. The port is only included when it is not the default port of the protocol.
+     *
+     * @param uri the URI created from the serviceToUrl or returned from the services
+     * @return the value of the Host header or null if the URI doesn't have a host
+     */
+    static String hostHeader(URI uri) {
+        if (uri == null || uri.getHost() == null) {
+            return null;
+        }
+        String host = uri.getHost();
+        int port = uri.getPort();
+        String scheme = uri.getScheme();
+        boolean defaultPort = port == -1
+                || (port == 443 && "https".equalsIgnoreCase(scheme))
+                || (port == 80 && "http".equalsIgnoreCase(scheme));
+        return defaultPort ? host : host + ":" + port;
+    }
 }

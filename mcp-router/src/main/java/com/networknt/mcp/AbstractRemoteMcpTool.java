@@ -91,11 +91,6 @@ abstract class AbstractRemoteMcpTool implements McpTool {
     }
 
     protected String buildHostHeader(java.net.URI uri) {
-        String hostHeader = uri.getHost();
-        int port = uri.getPort();
-        if (port != -1 && port != 80 && port != 443) {
-            hostHeader += ":" + port;
-        }
-        return hostHeader;
+        return Cluster.hostHeader(uri);
     }
 }

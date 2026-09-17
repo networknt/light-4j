@@ -1896,8 +1896,7 @@ public class Http2Client {
                 throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
             }
             URI uri = new URI(url);
-            // the target service might be deployed behind a path based k8s ingress with a base path in the url.
-            request.setPath(Cluster.prependBasePath(uri, request.getPath()));
+            applyServiceTarget(uri, request);
             return callService(uri, request, requestBody);
         } catch (Exception e) {
             logger.error("Failed to call service: {}", serviceId);
@@ -1925,8 +1924,7 @@ public class Http2Client {
                 throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
             }
             URI uri = new URI(url);
-            // the target service might be deployed behind a path based k8s ingress with a base path in the url.
-            request.setPath(Cluster.prependBasePath(uri, request.getPath()));
+            applyServiceTarget(uri, request);
             return callService(uri, request, requestBody, isHttp2);
         } catch (Exception e) {
             logger.error("Failed to call service: {}", serviceId);
@@ -2013,6 +2011,26 @@ public class Http2Client {
                 futureClientResponseNoRequest.completeExceptionally(e);
             }
             return futureClientResponseNoRequest;
+        }
+    }
+
+    /**
+     * Apply the target resolved from the service discovery to the request. The base path of the target is prepended
+     * to the path when the service is deployed behind a path based k8s ingress, and the Host header is set to the
+     * host of the target unless the caller has set it explicitly. Without it, the default localhost Host header is
+     * sent and an ingress or a virtual host that routes on the Host header cannot find the service.
+     *
+     * @param uri the URI created from the url resolved by the cluster
+     * @param request the ClientRequest built by the caller
+     */
+    public static void applyServiceTarget(URI uri, ClientRequest request) {
+        if (uri == null || request == null) {
+            return;
+        }
+        request.setPath(Cluster.prependBasePath(uri, request.getPath()));
+        String hostHeader = Cluster.hostHeader(uri);
+        if (hostHeader != null && !request.getRequestHeaders().contains(Headers.HOST)) {
+            request.getRequestHeaders().put(Headers.HOST, hostHeader);
         }
     }
 

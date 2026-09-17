@@ -103,8 +103,9 @@ public class Http2ServiceRequest {
     public Http2ServiceRequest(ServiceDef serviceDef, String path, HttpVerb verb) throws URISyntaxException {
         Objects.requireNonNull(cluster);
         this.hostURI = new URI(cluster.serviceToUrl(serviceDef.getProtocol(), serviceDef.getServiceId(), serviceDef.getEnvironment(), serviceDef.getRequestKey()));
-        // the target service might be deployed behind a path based k8s ingress with a base path in the url.
-        this.clientRequest = new ClientRequest().setMethod(verb.verbHttpString).setPath(Cluster.prependBasePath(this.hostURI, path));
+        this.clientRequest = new ClientRequest().setMethod(verb.verbHttpString).setPath(path);
+        // the target might have a base path for a path based k8s ingress and a Host header for the ingress routing.
+        Http2Client.applyServiceTarget(this.hostURI, this.clientRequest);
     }
 
     /**
@@ -117,8 +118,9 @@ public class Http2ServiceRequest {
     public Http2ServiceRequest(ServiceDef serviceDef, String path, HttpString method) throws URISyntaxException {
         Objects.requireNonNull(cluster);
         this.hostURI = new URI(cluster.serviceToUrl(serviceDef.getProtocol(), serviceDef.getServiceId(), serviceDef.getEnvironment(), serviceDef.getRequestKey()));
-        // the target service might be deployed behind a path based k8s ingress with a base path in the url.
-        this.clientRequest = new ClientRequest().setMethod(method).setPath(Cluster.prependBasePath(this.hostURI, path));
+        this.clientRequest = new ClientRequest().setMethod(method).setPath(path);
+        // the target might have a base path for a path based k8s ingress and a Host header for the ingress routing.
+        Http2Client.applyServiceTarget(this.hostURI, this.clientRequest);
     }
 
     /**
