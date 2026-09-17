@@ -44,6 +44,12 @@ public class DirectRegistry extends AbstractRegistry {
     private final ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap<>();
     private Map<String, List<URL>> directUrls;
     private volatile DirectRegistryConfig config;
+    /**
+     * Indicate if the directUrls can be refreshed from the direct-registry.yml configuration. It is false when the
+     * mappings come from the service.yml parameters as they are not part of the configuration file and refreshing
+     * would replace them with the ones from direct-registry.yml, which is empty for that deployment.
+     */
+    private final boolean reloadable;
 
     /**
      * Constructs a DirectRegistry with a URL.
@@ -54,7 +60,8 @@ public class DirectRegistry extends AbstractRegistry {
     public DirectRegistry(URL url) {
         super(url);
         config = DirectRegistryConfig.load();
-        if(url.getParameters() != null && !url.getParameters().isEmpty()) {
+        reloadable = url.getParameters() == null || url.getParameters().isEmpty();
+        if(!reloadable) {
             logger.warn("Parameter is used for DirectRegistry and it cannot be reloaded. Please switch to direct-registry.yml file.");
             directUrls = new HashMap<>();
             // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
@@ -161,8 +168,9 @@ public class DirectRegistry extends AbstractRegistry {
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
         String serviceId = subscribeUrl.getPath();
         String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
-        // reload DirectRegistryConfig to check if the cached object is changed.
-        DirectRegistryConfig newConfig = DirectRegistryConfig.load();
+        // reload DirectRegistryConfig to check if the cached object is changed. The mappings from the service.yml
+        // parameters are not reloadable, so they must not be replaced with the ones from direct-registry.yml.
+        DirectRegistryConfig newConfig = reloadable ? DirectRegistryConfig.load() : config;
         if (newConfig != config) {
             synchronized (DirectRegistry.class) {
                 if (newConfig != config) {

@@ -15,10 +15,12 @@
  */
 package com.networknt.registry.support.command;
 
+import com.networknt.config.Config;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.registry.support.DirectRegistry;
+import com.networknt.registry.support.DirectRegistryConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
 import org.junit.jupiter.api.Assertions;
@@ -107,6 +109,28 @@ public class DirectRegistryTest {
         url = urls.get(0);
         Assertions.assertEquals("/namespace3/a&b", url.getParameter(Constants.BASE_PATH));
         Assertions.assertEquals("0001", url.getParameter(Constants.TAG_ENVIRONMENT));
+    }
+
+
+    @Test
+    public void testDirectRegistryFromParametersSurvivesConfigReload() {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("com.networknt.reload-1.0.0", "https://api.example.com/namespace1/service1");
+        Registry registry = new DirectRegistry(new URLImpl("direct", "localhost", 8080, "direct", parameters));
+
+        URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/com.networknt.reload-1.0.0");
+        Assertions.assertEquals(1, registry.discover(subscribeUrl).size());
+
+        // a config reload creates a new DirectRegistryConfig instance and the mappings from the service.yml
+        // parameters must not be replaced with the ones from the direct-registry.yml configuration.
+        Config.getInstance().clearConfigCache(DirectRegistryConfig.CONFIG_NAME);
+        DirectRegistryConfig reloaded = DirectRegistryConfig.load();
+        Assertions.assertFalse(reloaded.getDirectUrls().containsKey("com.networknt.reload-1.0.0"));
+
+        List<URL> urls = registry.discover(subscribeUrl);
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertEquals("api.example.com", urls.get(0).getHost());
+        Assertions.assertEquals("/namespace1/service1", urls.get(0).getParameter(Constants.BASE_PATH));
     }
 
 }
