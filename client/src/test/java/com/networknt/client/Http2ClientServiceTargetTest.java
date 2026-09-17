@@ -28,9 +28,9 @@ import java.net.URI;
  * Test the target resolved from the service discovery is applied to the request before it is sent. It covers the
  * base path of a path based k8s ingress and the Host header an ingress or a virtual host routes on.
  */
-public class Http2ClientServiceTargetTest {
+class Http2ClientServiceTargetTest {
     @Test
-    public void testBasePathAndHostHeaderAreApplied() {
+    void testBasePathAndHostHeaderAreApplied() {
         ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/pets");
 
         Http2Client.applyServiceTarget(URI.create("https://api.example.com:443/namespace1/service1"), request);
@@ -40,7 +40,7 @@ public class Http2ClientServiceTargetTest {
     }
 
     @Test
-    public void testHostHeaderKeepsANonDefaultPort() {
+    void testHostHeaderKeepsANonDefaultPort() {
         ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/pets");
 
         Http2Client.applyServiceTarget(URI.create("https://api.example.com:8443"), request);
@@ -50,7 +50,7 @@ public class Http2ClientServiceTargetTest {
     }
 
     @Test
-    public void testExplicitHostHeaderIsPreserved() {
+    void testExplicitHostHeaderIsPreserved() {
         ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/v1/pets");
         request.getRequestHeaders().put(Headers.HOST, "petstore.example.com");
 

@@ -2024,9 +2024,6 @@ public class Http2Client {
      * @param request the ClientRequest built by the caller
      */
     public static void applyServiceTarget(URI uri, ClientRequest request) {
-        if (uri == null || request == null) {
-            return;
-        }
         request.setPath(Cluster.prependBasePath(uri, request.getPath()));
         String hostHeader = Cluster.hostHeader(uri);
         if (hostHeader != null && !request.getRequestHeaders().contains(Headers.HOST)) {
