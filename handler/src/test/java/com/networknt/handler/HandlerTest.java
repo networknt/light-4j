@@ -281,6 +281,48 @@ public class HandlerTest {
         Assertions.assertNull(Handler.trimTrailingSlashes(null));
     }
 
+    @Test
+    public void encodedTrailingSlashInRequestURI_matchPath_skipsTheFallback() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        Handler.config.setTrailingSlashFallback(true);
+
+        try {
+
+            // Undertow decodes the request path but not the request URI, so the trailing slash of
+            // the path is not a trailing slash of the URI here. The fallback is skipped instead of
+            // resolving a chain for a path that is not the one forwarded downstream.
+            HttpServerExchange ex = exchange("/test/");
+            ex.setRequestURI("/test%2F");
+            Assertions.assertNull(Handler.matchPath(getMatcher, ex));
+            Assertions.assertEquals("/test/", ex.getRequestPath());
+            Assertions.assertEquals("/test%2F", ex.getRequestURI());
+
+            // the path parameters of the URI are kept and the slashes in front of them are trimmed
+            ex = exchange("/test/");
+            ex.setRequestURI("/test/;x=1");
+            Assertions.assertNotNull(Handler.matchPath(getMatcher, ex));
+            Assertions.assertEquals("/test", ex.getRequestPath());
+            Assertions.assertEquals("/test;x=1", ex.getRequestURI());
+
+        } finally {
+            Handler.config.setTrailingSlashFallback(false);
+        }
+    }
+
+    @Test
+    public void trimTrailingSlashesFromURI_trimsThePathPartOfTheRawURI() {
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashesFromURI("/test/", 1));
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashesFromURI("/test///", 3));
+        Assertions.assertEquals("/test;x=1", Handler.trimTrailingSlashesFromURI("/test//;x=1", 2));
+        Assertions.assertEquals("http://localhost/test", Handler.trimTrailingSlashesFromURI("http://localhost/test/", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test%2F", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test/", 0));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI(null, 1));
+    }
+
     private HttpServerExchange exchange(String requestPath) {
         HttpServerExchange ex = new HttpServerExchange(null);
         ex.setRequestMethod(Methods.GET);
