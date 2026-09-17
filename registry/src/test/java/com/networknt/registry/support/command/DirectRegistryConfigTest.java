@@ -50,6 +50,15 @@ public class DirectRegistryConfigTest {
     }
 
     @Test
+    public void directUrlWithDelimiterInPathKeepsTheWholeBasePath() {
+        DirectRegistryConfig config = DirectRegistryConfig.load();
+
+        URL url = config.getDirectUrls().get("com.networknt.delimiter-1.0.0").get(0);
+        Assertions.assertEquals("api.example.com", url.getHost());
+        Assertions.assertEquals("/namespace3/a&b", url.getParameter(Constants.BASE_PATH));
+    }
+
+    @Test
     public void directUrlWithPathAndEnvironmentKeepsBothParameters() {
         DirectRegistryConfig config = DirectRegistryConfig.load();
 

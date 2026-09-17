@@ -84,6 +84,7 @@ public class DirectRegistryTest {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("com.networknt.param-1.0.0", "https://api.example.com/namespace1/service1");
         parameters.put("com.networknt.paramtag-1.0.0", "https://api.example.com/namespace2/service2?environment=0000");
+        parameters.put("com.networknt.paramdelimiter-1.0.0", "https://api.example.com/namespace3/a&b?environment=0001");
         Registry registry = new DirectRegistry(new URLImpl("direct", "localhost", 8080, "direct", parameters));
 
         List<URL> urls = registry.discover(URLImpl.valueOf("light://localhost:7080/com.networknt.param-1.0.0"));
@@ -99,6 +100,13 @@ public class DirectRegistryTest {
         url = urls.get(0);
         Assertions.assertEquals("/namespace2/service2", url.getParameter(Constants.BASE_PATH));
         Assertions.assertEquals("0000", url.getParameter(Constants.TAG_ENVIRONMENT));
+
+        // a base path may contain a query delimiter and it must not be parsed as another parameter.
+        urls = registry.discover(URLImpl.valueOf("light://localhost:7080/com.networknt.paramdelimiter-1.0.0?environment=0001"));
+        Assertions.assertEquals(1, urls.size());
+        url = urls.get(0);
+        Assertions.assertEquals("/namespace3/a&b", url.getParameter(Constants.BASE_PATH));
+        Assertions.assertEquals("0001", url.getParameter(Constants.TAG_ENVIRONMENT));
     }
 
 }
