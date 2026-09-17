@@ -418,10 +418,19 @@ public class Handler {
                 if (result != null) {
 
                     // keep the chain and the path that is forwarded downstream consistent with each other.
-                    normalizeRequestPath(ex, requestPath, trimmedPath);
+                    if (normalizeRequestPath(ex, requestPath, trimmedPath)) {
 
-                    if (LOG.isInfoEnabled())
-                        LOG.info("Request path {} is matched to the configured path {} after the trailing slashes are removed. The request path of the exchange is normalized to the matched path.", requestPath, trimmedPath);
+                        if (LOG.isInfoEnabled())
+                            LOG.info("Request path {} is matched to the configured path {} after the trailing slashes are removed. The request path of the exchange is normalized to the matched path.", requestPath, trimmedPath);
+
+                    } else {
+
+                        // the request URI cannot be normalized, so the chain and the path forwarded downstream would disagree.
+                        result = null;
+
+                        if (LOG.isWarnEnabled())
+                            LOG.warn("Request path {} is matched to the configured path {} after the trailing slashes are removed, but the request URI {} cannot be normalized to the matched path, so the fallback is skipped.", requestPath, trimmedPath, ex.getRequestURI());
+                    }
                 }
             }
         }
@@ -452,18 +461,20 @@ public class Handler {
      * Normalize the request path of the exchange to the configured path that the trailing slash
      * fallback matched. Without this, the chain of /foo/v1 is executed while a proxy or router
      * handler further down that chain still forwards /foo/v1/ to the backend, so the security
-     * configuration that is applied and the resource that is served could disagree. The request URI
-     * is only rewritten when it ends with the request path, which leaves an encoded URI untouched.
+     * configuration that is applied and the resource that is served could disagree.
      *
      * @param ex The current requests server exchange.
      * @param requestPath The path of the current request.
      * @param trimmedPath The configured path that the fallback matched.
+     * @return true if the exchange is normalized, false if the request URI cannot be normalized.
      */
-    private static void normalizeRequestPath(HttpServerExchange ex, String requestPath, String trimmedPath) {
-        final var requestURI = ex.getRequestURI();
+    private static boolean normalizeRequestPath(HttpServerExchange ex, String requestPath, String trimmedPath) {
+        final var normalizedURI = trimTrailingSlashesFromURI(ex.getRequestURI(), requestPath.length() - trimmedPath.length());
 
-        if (requestURI != null && requestURI.endsWith(requestPath))
-            ex.setRequestURI(requestURI.substring(0, requestURI.length() - requestPath.length()) + trimmedPath, ex.isHostIncludedInRequestURI());
+        if (normalizedURI == null)
+            return false;
+
+        ex.setRequestURI(normalizedURI, ex.isHostIncludedInRequestURI());
 
         final var trimmedRelativePath = trimTrailingSlashes(ex.getRelativePath());
 
@@ -471,6 +482,38 @@ public class Handler {
             ex.setRelativePath(trimmedRelativePath);
 
         ex.setRequestPath(trimmedPath);
+
+        return true;
+    }
+
+    /**
+     * Remove the trailing slashes of the path part of the raw request URI. Undertow decodes the
+     * request path but not the request URI, so the slashes are trimmed from the URI itself rather
+     * than by cutting the decoded request path off its end. The path part ends at the first
+     * semicolon, so that the path parameters of a URI like /foo/v1/;x=1 are kept while the slashes
+     * in front of them are trimmed. When the path part does not end with the slashes that were
+     * trimmed from the request path, which is the case for an encoded slash, null is returned and
+     * the caller skips the fallback rather than forwarding a path that disagrees with the chain.
+     *
+     * @param requestURI The raw request URI of the exchange.
+     * @param count The number of trailing slashes that were trimmed from the request path.
+     * @return The URI without those slashes, or null when the path part does not end with them.
+     */
+    static String trimTrailingSlashesFromURI(String requestURI, int count) {
+        if (requestURI == null || count < 1)
+            return null;
+
+        final var semicolon = requestURI.indexOf(';');
+        final var path = semicolon < 0 ? requestURI : requestURI.substring(0, semicolon);
+
+        if (path.length() - count < 1)
+            return null;
+
+        for (var i = 1; i <= count; i++)
+            if (path.charAt(path.length() - i) != '/')
+                return null;
+
+        return path.substring(0, path.length() - count) + (semicolon < 0 ? "" : requestURI.substring(semicolon));
     }
 
 
