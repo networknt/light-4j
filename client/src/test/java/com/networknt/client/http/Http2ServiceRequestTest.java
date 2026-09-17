@@ -2,14 +2,19 @@ package com.networknt.client.http;
 
 
 import com.networknt.status.HttpStatus;
+import io.undertow.client.ClientRequest;
+import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
@@ -27,6 +32,28 @@ public class Http2ServiceRequestTest {
         statusCodesValid.add(HttpStatus.CREATED);
     }
 
+
+    @Test
+    public void testHostHeaderIsDerivedFromTheTarget() {
+        http2ServiceRequest.processClientRequest();
+
+        ClientRequest clientRequest = http2ServiceRequest.getClientRequest();
+        assertEquals(1, clientRequest.getRequestHeaders().get(Headers.HOST).size());
+        assertEquals("localhost:7080", clientRequest.getRequestHeaders().getFirst(Headers.HOST));
+    }
+
+    @Test
+    public void testConfiguredHostHeaderIsNotDuplicated() {
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put(Headers.HOST_STRING, "petstore.example.com");
+        http2ServiceRequest.setRequestHeaders(headerMap);
+
+        http2ServiceRequest.processClientRequest();
+
+        ClientRequest clientRequest = http2ServiceRequest.getClientRequest();
+        assertEquals(1, clientRequest.getRequestHeaders().get(Headers.HOST).size());
+        assertEquals("petstore.example.com", clientRequest.getRequestHeaders().getFirst(Headers.HOST));
+    }
 
     @Test
     public void testSuccessStatus() throws Exception{
