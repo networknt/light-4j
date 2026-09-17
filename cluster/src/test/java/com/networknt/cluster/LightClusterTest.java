@@ -71,6 +71,18 @@ public class LightClusterTest {
     }
 
     @Test
+    public void testEncodedBasePathIsNotEncodedTwice() {
+        String s = cluster.serviceToUrl("https", "com.networknt.encoded-1.0.0", null, null);
+        Assertions.assertEquals("https://api.example.com:443/ns/a%20b", s);
+
+        List<URI> l = cluster.services("https", "com.networknt.encoded-1.0.0", null);
+        Assertions.assertEquals(1, l.size());
+        Assertions.assertEquals("/ns/a%20b", l.get(0).getRawPath());
+        Assertions.assertEquals("/ns/a b", l.get(0).getPath());
+        Assertions.assertEquals("/ns/a%20b/v1/pets", Cluster.prependBasePath(l.get(0), "/v1/pets"));
+    }
+
+    @Test
     public void testPrependBasePath() throws Exception {
         URI uri = new URI("https://api.example.com:443/namespace1/service1");
         Assertions.assertEquals("/namespace1/service1/v1/pets", Cluster.prependBasePath(uri, "/v1/pets"));

@@ -16,6 +16,8 @@
 
 package com.networknt.cluster;
 
+import com.networknt.utility.Constants;
+
 import java.net.URI;
 import java.util.List;
 
@@ -74,18 +76,18 @@ public interface Cluster {
             return path;
         }
         String basePath = uri.getRawPath();
-        if (basePath == null || basePath.isBlank() || "/".equals(basePath)) {
+        if (basePath == null || basePath.isBlank() || Constants.PATH_SEPARATOR.equals(basePath)) {
             return path;
         }
-        while (basePath.endsWith("/")) {
+        while (basePath.endsWith(Constants.PATH_SEPARATOR)) {
             basePath = basePath.substring(0, basePath.length() - 1);
         }
-        if (!basePath.startsWith("/")) {
-            basePath = "/" + basePath;
+        if (!basePath.startsWith(Constants.PATH_SEPARATOR)) {
+            basePath = Constants.PATH_SEPARATOR + basePath;
         }
         if (path == null || path.isEmpty()) {
             return basePath;
         }
-        return path.startsWith("/") ? basePath + path : basePath + "/" + path;
+        return path.startsWith(Constants.PATH_SEPARATOR) ? basePath + path : basePath + Constants.PATH_SEPARATOR + path;
     }
 }

@@ -131,8 +131,11 @@ public class LightCluster implements Cluster {
     private URI toUri(URL url) {
         URI uri = null;
         try {
+            URI origin = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), null, null, null);
             String basePath = basePath(url);
-            uri = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), basePath.isEmpty() ? null : basePath, null, null);
+            // the base path is already encoded in the configuration, so it is appended to the origin as a raw
+            // string. Passing it to the multi-argument constructor would encode the percent signs a second time.
+            uri = basePath.isEmpty() ? origin : new URI(origin.toASCIIString() + basePath);
         } catch (URISyntaxException e) {
             logger.error("URISyntaxExcpetion", e);
         }

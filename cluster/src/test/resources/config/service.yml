@@ -13,6 +13,7 @@ singletons:
         com.networknt.chainwriter-1.0.0: https://localhost:8444?environment=0000
         com.networknt.portal.command-1.0.0: https://localhost:8440?environment=0000,https://localhost:8441?environment=0001,https://localhost:8442?environment=0002
         com.networknt.ingress-1.0.0: https://api.example.com/namespace1/service1
+        com.networknt.encoded-1.0.0: https://api.example.com/ns/a%20b
 - com.networknt.registry.Registry:
   - com.networknt.registry.support.DirectRegistry
 - com.networknt.balance.LoadBalance:
