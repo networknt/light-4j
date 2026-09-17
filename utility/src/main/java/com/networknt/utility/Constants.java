@@ -185,6 +185,12 @@ public class Constants {
     public static final String PROTOCOL_HTTPS = "https";
     /** tag environment constant */
     public static final String TAG_ENVIRONMENT = "environment";
+    /**
+     * base path constant. It is a url parameter that carries the path prefix of the target service. It is
+     * used when the service is deployed behind a path based k8s ingress in which the namespace and service
+     * are part of the url path and stripped by the ingress before the request reaches the pod.
+     */
+    public static final String BASE_PATH = "basePath";
     /** path separator constant string */
     public static final String PATH_SEPARATOR = "/";
 

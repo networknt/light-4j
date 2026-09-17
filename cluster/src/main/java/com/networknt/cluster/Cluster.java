@@ -16,6 +16,8 @@
 
 package com.networknt.cluster;
 
+import com.networknt.utility.Constants;
+
 import java.net.URI;
 import java.util.List;
 
@@ -58,5 +60,55 @@ public interface Cluster {
      */
     List<URI> services(String protocol, String serviceId, String tag);
 
+    /**
+     * The url returned from the serviceToUrl and the URI returned from the services might contain a base path
+     * when the target service is deployed behind a path based k8s ingress. For example, the url might be
+     * https://api.example.com:443/namespace1/service1 in which the /namespace1/service1 is used by the ingress
+     * to route the request to the right pod and stripped before the request reaches the pod. As the path of the
+     * request is built by the caller, the base path must be prepended to it before the request is sent.
+     *
+     * @param uri the URI created from the serviceToUrl or returned from the services
+     * @param path the path of the request built by the caller
+     * @return the path with the base path of the target service prepended
+     */
+    static String prependBasePath(URI uri, String path) {
+        if (uri == null) {
+            return path;
+        }
+        String basePath = uri.getRawPath();
+        if (basePath == null || basePath.isBlank() || Constants.PATH_SEPARATOR.equals(basePath)) {
+            return path;
+        }
+        while (basePath.endsWith(Constants.PATH_SEPARATOR)) {
+            basePath = basePath.substring(0, basePath.length() - 1);
+        }
+        if (!basePath.startsWith(Constants.PATH_SEPARATOR)) {
+            basePath = Constants.PATH_SEPARATOR + basePath;
+        }
+        if (path == null || path.isEmpty()) {
+            return basePath;
+        }
+        return path.startsWith(Constants.PATH_SEPARATOR) ? basePath + path : basePath + Constants.PATH_SEPARATOR + path;
+    }
 
+    /**
+     * Build the Host header for a request to the target resolved by the serviceToUrl or the services. An ingress or
+     * a virtual host routes on the Host header, so the header must reflect the host of the target instead of the
+     * default localhost. The port is only included when it is not the default port of the protocol.
+     *
+     * @param uri the URI created from the serviceToUrl or returned from the services
+     * @return the value of the Host header or null if the URI doesn't have a host
+     */
+    static String hostHeader(URI uri) {
+        if (uri == null || uri.getHost() == null) {
+            return null;
+        }
+        String host = uri.getHost();
+        int port = uri.getPort();
+        String scheme = uri.getScheme();
+        boolean defaultPort = port == -1
+                || (port == 443 && "https".equalsIgnoreCase(scheme))
+                || (port == 80 && "http".equalsIgnoreCase(scheme));
+        return defaultPort ? host : host + ":" + port;
+    }
 }

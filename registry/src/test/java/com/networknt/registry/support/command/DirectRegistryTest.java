@@ -18,11 +18,15 @@ package com.networknt.registry.support.command;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
+import com.networknt.registry.support.DirectRegistry;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by stevehu on 2017-01-18.
@@ -62,6 +66,47 @@ public class DirectRegistryTest {
         urls = registry.discover(subscribeUrl);
         Assertions.assertEquals(1, urls.size());
         Assertions.assertTrue(urls.get(0).getPort() == 8442);
+    }
+
+    @Test
+    public void testDirectRegistryFromConfigWithBasePath() {
+        Registry registry = SingletonServiceFactory.getBean(Registry.class);
+
+        URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/com.networknt.ingress-1.0.0");
+        List<URL> urls = registry.discover(subscribeUrl);
+        Assertions.assertEquals(1, urls.size());
+        Assertions.assertEquals("api.example.com", urls.get(0).getHost());
+        Assertions.assertEquals("/namespace1/service1", urls.get(0).getParameter(Constants.BASE_PATH));
+    }
+
+    @Test
+    public void testDirectRegistryFromParametersWithBasePath() {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("com.networknt.param-1.0.0", "https://api.example.com/namespace1/service1");
+        parameters.put("com.networknt.paramtag-1.0.0", "https://api.example.com/namespace2/service2?environment=0000");
+        parameters.put("com.networknt.paramdelimiter-1.0.0", "https://api.example.com/namespace3/a&b?environment=0001");
+        Registry registry = new DirectRegistry(new URLImpl("direct", "localhost", 8080, "direct", parameters));
+
+        List<URL> urls = registry.discover(URLImpl.valueOf("light://localhost:7080/com.networknt.param-1.0.0"));
+        Assertions.assertEquals(1, urls.size());
+        URL url = urls.get(0);
+        Assertions.assertEquals("api.example.com", url.getHost());
+        Assertions.assertEquals(443, url.getPort());
+        Assertions.assertEquals("/namespace1/service1", url.getParameter(Constants.BASE_PATH));
+        Assertions.assertEquals("com.networknt.param-1.0.0", url.getPath());
+
+        urls = registry.discover(URLImpl.valueOf("light://localhost:7080/com.networknt.paramtag-1.0.0?environment=0000"));
+        Assertions.assertEquals(1, urls.size());
+        url = urls.get(0);
+        Assertions.assertEquals("/namespace2/service2", url.getParameter(Constants.BASE_PATH));
+        Assertions.assertEquals("0000", url.getParameter(Constants.TAG_ENVIRONMENT));
+
+        // a base path may contain a query delimiter and it must not be parsed as another parameter.
+        urls = registry.discover(URLImpl.valueOf("light://localhost:7080/com.networknt.paramdelimiter-1.0.0?environment=0001"));
+        Assertions.assertEquals(1, urls.size());
+        url = urls.get(0);
+        Assertions.assertEquals("/namespace3/a&b", url.getParameter(Constants.BASE_PATH));
+        Assertions.assertEquals("0001", url.getParameter(Constants.TAG_ENVIRONMENT));
     }
 
 }

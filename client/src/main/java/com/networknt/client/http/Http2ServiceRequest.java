@@ -103,7 +103,9 @@ public class Http2ServiceRequest {
     public Http2ServiceRequest(ServiceDef serviceDef, String path, HttpVerb verb) throws URISyntaxException {
         Objects.requireNonNull(cluster);
         this.hostURI = new URI(cluster.serviceToUrl(serviceDef.getProtocol(), serviceDef.getServiceId(), serviceDef.getEnvironment(), serviceDef.getRequestKey()));
-        this.clientRequest = new ClientRequest().setMethod(verb.verbHttpString).setPath(path);
+        // the target service might be deployed behind a path based k8s ingress with a base path in the url. The Host
+        // header is set in processClientRequest so that a header configured by the caller takes precedence.
+        this.clientRequest = new ClientRequest().setMethod(verb.verbHttpString).setPath(Cluster.prependBasePath(this.hostURI, path));
     }
 
     /**
@@ -116,7 +118,9 @@ public class Http2ServiceRequest {
     public Http2ServiceRequest(ServiceDef serviceDef, String path, HttpString method) throws URISyntaxException {
         Objects.requireNonNull(cluster);
         this.hostURI = new URI(cluster.serviceToUrl(serviceDef.getProtocol(), serviceDef.getServiceId(), serviceDef.getEnvironment(), serviceDef.getRequestKey()));
-        this.clientRequest = new ClientRequest().setMethod(method).setPath(path);
+        // the target service might be deployed behind a path based k8s ingress with a base path in the url. The Host
+        // header is set in processClientRequest so that a header configured by the caller takes precedence.
+        this.clientRequest = new ClientRequest().setMethod(method).setPath(Cluster.prependBasePath(this.hostURI, path));
     }
 
     /**
@@ -400,7 +404,7 @@ public class Http2ServiceRequest {
         return this.authToken;
     }
 
-    private void processClientRequest() {
+    void processClientRequest() {
         if (authToken!=null&&!authToken.isEmpty()) {
             //TODO integrate the client module httpsClient
            // http2Client.addAuthToken(clientRequest, authToken);
@@ -420,11 +424,15 @@ public class Http2ServiceRequest {
             }
         }
 
-        // Ensure host header exists
-        if (this.clientRequest.getRequestHeaders().get(Headers.HOST) == null ||
-                this.clientRequest.getRequestHeaders().get(Headers.HOST).equals("")) {
-            String hostHeader = this.hostURI.getHost();
-            clientRequest.getRequestHeaders().put(Headers.HOST, hostHeader);
+        // Ensure host header exists. It is resolved here instead of in the constructor so that a header configured
+        // by the caller wins and is not duplicated by the one derived from the target. An ingress or a virtual host
+        // routes on this header, so it carries the host of the target with a non default port when there is one.
+        String configuredHost = this.clientRequest.getRequestHeaders().getFirst(Headers.HOST);
+        if (configuredHost == null || configuredHost.isEmpty()) {
+            String hostHeader = Cluster.hostHeader(this.hostURI);
+            if (hostHeader != null) {
+                clientRequest.getRequestHeaders().put(Headers.HOST, hostHeader);
+            }
         }
     }
 

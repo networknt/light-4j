@@ -7,6 +7,7 @@ import com.networknt.config.schema.OutputFormat;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.server.ModuleRegistry;
+import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,12 @@ public class DirectRegistryConfig {
                     "\n" +
                     "directUrls is the mapping between the serviceId to the hosts separated by comma. If environment tag is used, you\n" +
                     "can add it to the serviceId separated with a vertical bar |\n" +
+                    "\n" +
+                    "If the service is deployed in a k8s cluster behind a path based ingress, the namespace and the service are the\n" +
+                    "path prefix of the url. For example, https://api.example.com/namespace1/service1. The prefix is used by the\n" +
+                    "ingress to route the request to the right pod and removed before the request reaches the pod, so it is prepended\n" +
+                    "to the path of each request sent to the service. A url without a path, like https://192.168.1.142:8440 for a VM\n" +
+                    "deployment, is not impacted.\n" +
                     "The following is in YAML format.\n" +
                     "  code: http://192.168.1.100:6881,http://192.168.1.101:6881\n" +
                     "  token: http://192.168.1.100:6882\n" +
@@ -206,8 +213,53 @@ public class DirectRegistryConfig {
         for (String directUrl : String.valueOf(value).split(",")) {
             String trimmed = directUrl.trim();
             if (!trimmed.isEmpty()) {
-                urls.add(URLImpl.valueOf(trimmed));
+                urls.add(toUrl(trimmed));
             }
         }
+    }
+
+    /**
+     * Convert a direct url string to a URL object. If the url contains a path, the path is the base path of the
+     * target service deployed behind a path based k8s ingress. For example, https://api.example.com/ns1/svc1 means
+     * that the ingress routes the request to the pod based on the /ns1/svc1 prefix and strips it before forwarding.
+     * The base path is moved to the basePath parameter so that the path of the URL is not mixed up with the serviceId
+     * which is the path for the urls returned from the other registries.
+     *
+     * @param directUrl the direct url string from the configuration
+     * @return URL object with an optional basePath parameter
+     */
+    private URL toUrl(String directUrl) {
+        URL url = URLImpl.valueOf(directUrl);
+        String basePath = normalizeBasePath(url.getPath());
+        if (basePath == null) {
+            return url;
+        }
+        Map<String, String> parameters = new HashMap<>();
+        if (url.getParameters() != null) {
+            parameters.putAll(url.getParameters());
+        }
+        parameters.put(Constants.BASE_PATH, basePath);
+        if (logger.isTraceEnabled()) logger.trace("directUrl {} has basePath {}", directUrl, basePath);
+        return new URLImpl(url.getProtocol(), url.getHost(), url.getPort(), "", parameters);
+    }
+
+    /**
+     * Normalize the path of a direct url to a base path that starts with a slash and doesn't end with one.
+     *
+     * @param path the path parsed from the direct url
+     * @return the normalized base path or null if the url doesn't have a path
+     */
+    static String normalizeBasePath(String path) {
+        if (path == null) {
+            return null;
+        }
+        String trimmed = path.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        while (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+        return trimmed.isEmpty() ? null : Constants.PATH_SEPARATOR + trimmed;
     }
 }

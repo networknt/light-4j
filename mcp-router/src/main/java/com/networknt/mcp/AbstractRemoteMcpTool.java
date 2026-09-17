@@ -77,12 +77,20 @@ abstract class AbstractRemoteMcpTool implements McpTool {
         throw new RuntimeException("No targetHost or serviceId provided for tool " + name);
     }
 
+    /**
+     * Build the path of the request to the target service. When the target is resolved to a url with a base path,
+     * either from the targetHost or from the service discovery for a service behind a path based k8s ingress, the
+     * base path must be prepended to the path of the tool.
+     *
+     * @param uri the URI created from the resolved target url
+     * @param path the path of the tool
+     * @return the path with the base path prepended
+     */
+    protected String buildRequestPath(java.net.URI uri, String path) {
+        return Cluster.prependBasePath(uri, path);
+    }
+
     protected String buildHostHeader(java.net.URI uri) {
-        String hostHeader = uri.getHost();
-        int port = uri.getPort();
-        if (port != -1 && port != 80 && port != 443) {
-            hostHeader += ":" + port;
-        }
-        return hostHeader;
+        return Cluster.hostHeader(uri);
     }
 }

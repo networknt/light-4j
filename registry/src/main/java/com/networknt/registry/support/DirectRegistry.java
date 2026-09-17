@@ -66,8 +66,7 @@ public class DirectRegistry extends AbstractRegistry {
                     if (entry.getValue().contains(",")) {
                         String[] directUrlArray = entry.getValue().split(",");
                         for (String directUrl : directUrlArray) {
-                            String s = buildUrl(directUrl, entry.getKey());
-                            URL u = URLImpl.valueOf(s);
+                            URL u = buildUrl(directUrl, entry.getKey());
                             tag = u.getParameter(Constants.TAG_ENVIRONMENT);
                             String key = serviceKey(entry.getKey(), tag);
                             List<URL> urls = directUrls.get(key);
@@ -81,8 +80,7 @@ public class DirectRegistry extends AbstractRegistry {
                         }
                     } else {
                         List<URL> urls = new ArrayList<>();
-                        String s = buildUrl(entry.getValue(), entry.getKey());
-                        URL u = URLImpl.valueOf(s);
+                        URL u = buildUrl(entry.getValue(), entry.getKey());
                         tag = u.getParameter(Constants.TAG_ENVIRONMENT);
                         String key = serviceKey(entry.getKey(), tag);
                         urls.add(u);
@@ -99,16 +97,38 @@ public class DirectRegistry extends AbstractRegistry {
         }
     }
 
-    private String buildUrl(String url, String key) {
-        if(url.contains("?")) {
+    /**
+     * Build the URL of a service instance from a direct url defined in the service.yml parameters. The serviceId is
+     * the path of the URL for the registry, so the path of the direct url, which is the base path of a service behind
+     * a path based k8s ingress, is set as the basePath parameter of the URL object. It cannot be serialized into the
+     * query string of the url as a base path may contain a query delimiter that would be parsed as another parameter.
+     *
+     * @param url the direct url of the service instance
+     * @param key the serviceId, optionally with the environment tag, of the entry in the parameters
+     * @return the URL of the service instance with an optional basePath parameter
+     */
+    private URL buildUrl(String url, String key) {
+        String u = url.trim();
+        String p = "";
+        int q = u.indexOf("?");
+        if(q >= 0) {
             // allow the environment parameter here as an option to for tag based lookup.
-            String u = url.substring(0, url.indexOf("?"));
-            String p = url.substring(url.indexOf("?"));
-            // insert the path to the middle and move the parameter to the end to form a valid url
-            return u.trim() + "/" + key + p;
-        } else {
-            return url.trim() + "/" + key;
+            p = u.substring(q);
+            u = u.substring(0, q).trim();
         }
+        String basePath = null;
+        int i = u.indexOf(Constants.PROTOCOL_SEPARATOR);
+        int s = u.indexOf(Constants.PATH_SEPARATOR, i >= 0 ? i + Constants.PROTOCOL_SEPARATOR.length() : 0);
+        if(s >= 0) {
+            basePath = DirectRegistryConfig.normalizeBasePath(u.substring(s));
+            u = u.substring(0, s);
+        }
+        // insert the path to the middle and move the parameter to the end to form a valid url
+        URL result = URLImpl.valueOf(u + Constants.PATH_SEPARATOR + key + p);
+        if(basePath != null) {
+            result.addParameter(Constants.BASE_PATH, basePath);
+        }
+        return result;
     }
 
     @Override
