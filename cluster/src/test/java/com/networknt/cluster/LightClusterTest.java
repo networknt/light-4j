@@ -58,6 +58,27 @@ public class LightClusterTest {
     }
 
     @Test
+    public void testServiceToUrlWithBasePath() {
+        String s = cluster.serviceToUrl("https", "com.networknt.ingress-1.0.0", null, null);
+        Assertions.assertEquals("https://api.example.com:443/namespace1/service1", s);
+    }
+
+    @Test
+    public void testServicesWithBasePath() {
+        List<URI> l = cluster.services("https", "com.networknt.ingress-1.0.0", null);
+        Assertions.assertEquals(1, l.size());
+        Assertions.assertEquals("/namespace1/service1", l.get(0).getPath());
+    }
+
+    @Test
+    public void testPrependBasePath() throws Exception {
+        URI uri = new URI("https://api.example.com:443/namespace1/service1");
+        Assertions.assertEquals("/namespace1/service1/v1/pets", Cluster.prependBasePath(uri, "/v1/pets"));
+        Assertions.assertEquals("/v1/pets", Cluster.prependBasePath(new URI("https://api.example.com:443"), "/v1/pets"));
+        Assertions.assertEquals("/v1/pets", Cluster.prependBasePath(new URI("https://api.example.com:443/"), "/v1/pets"));
+    }
+
+    @Test
     public void testServices() {
         List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
         Assertions.assertEquals(2, l.size());

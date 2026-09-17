@@ -59,9 +59,9 @@ public class HttpMcpTool extends AbstractRemoteMcpTool {
                     }
                     queryParams.setLength(queryParams.length() - 1); // Remove trailing &
                 }
-                request.setPath(path + queryParams.toString());
+                request.setPath(buildRequestPath(uri, path + queryParams.toString()));
             } else {
-                request.setPath(path);
+                request.setPath(buildRequestPath(uri, path));
                 request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
                 request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                 // Body will be sent in callback

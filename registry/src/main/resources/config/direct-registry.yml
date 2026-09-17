@@ -5,6 +5,13 @@
 #
 # directUrls is the mapping between the serviceId to the hosts separated by comma. If environment tag is used, you
 # can add it to the serviceId separated with a vertical bar |
+#
+# If the service is deployed in a k8s cluster behind a path based ingress, the namespace and the service are the
+# path prefix of the url. For example, https://api.example.com/namespace1/service1. The prefix is used by the
+# ingress to route the request to the right pod and removed before the request reaches the pod, so it is prepended
+# to the path of each request sent to the service. A url without a path, like https://192.168.1.142:8440 for a VM
+# deployment, is not impacted.
+#
 # The following is in YAML format.
 #   code: http://192.168.1.100:6881,http://192.168.1.101:6881
 #   token: http://192.168.1.100:6882

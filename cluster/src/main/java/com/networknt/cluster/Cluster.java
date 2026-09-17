@@ -58,5 +58,34 @@ public interface Cluster {
      */
     List<URI> services(String protocol, String serviceId, String tag);
 
-
+    /**
+     * The url returned from the serviceToUrl and the URI returned from the services might contain a base path
+     * when the target service is deployed behind a path based k8s ingress. For example, the url might be
+     * https://api.example.com:443/namespace1/service1 in which the /namespace1/service1 is used by the ingress
+     * to route the request to the right pod and stripped before the request reaches the pod. As the path of the
+     * request is built by the caller, the base path must be prepended to it before the request is sent.
+     *
+     * @param uri the URI created from the serviceToUrl or returned from the services
+     * @param path the path of the request built by the caller
+     * @return the path with the base path of the target service prepended
+     */
+    static String prependBasePath(URI uri, String path) {
+        if (uri == null) {
+            return path;
+        }
+        String basePath = uri.getRawPath();
+        if (basePath == null || basePath.isBlank() || "/".equals(basePath)) {
+            return path;
+        }
+        while (basePath.endsWith("/")) {
+            basePath = basePath.substring(0, basePath.length() - 1);
+        }
+        if (!basePath.startsWith("/")) {
+            basePath = "/" + basePath;
+        }
+        if (path == null || path.isEmpty()) {
+            return basePath;
+        }
+        return path.startsWith("/") ? basePath + path : basePath + "/" + path;
+    }
 }

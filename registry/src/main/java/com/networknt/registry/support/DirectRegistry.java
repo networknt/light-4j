@@ -100,15 +100,33 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private String buildUrl(String url, String key) {
-        if(url.contains("?")) {
+        String u = url.trim();
+        String p = "";
+        int q = u.indexOf("?");
+        if(q >= 0) {
             // allow the environment parameter here as an option to for tag based lookup.
-            String u = url.substring(0, url.indexOf("?"));
-            String p = url.substring(url.indexOf("?"));
-            // insert the path to the middle and move the parameter to the end to form a valid url
-            return u.trim() + "/" + key + p;
-        } else {
-            return url.trim() + "/" + key;
+            p = u.substring(q + 1);
+            u = u.substring(0, q).trim();
         }
+        // the path of the host is the base path of the service deployed behind a path based k8s ingress. It must
+        // be moved to the basePath parameter as the path of the url is used for the serviceId in the registry.
+        String basePath = null;
+        int i = u.indexOf(Constants.PROTOCOL_SEPARATOR);
+        int s = u.indexOf("/", i >= 0 ? i + Constants.PROTOCOL_SEPARATOR.length() : 0);
+        if(s >= 0) {
+            basePath = DirectRegistryConfig.normalizeBasePath(u.substring(s));
+            u = u.substring(0, s);
+        }
+        // insert the path to the middle and move the parameter to the end to form a valid url
+        StringBuilder builder = new StringBuilder(u).append("/").append(key);
+        if(!p.isEmpty() || basePath != null) {
+            builder.append("?").append(p);
+            if(basePath != null) {
+                if(!p.isEmpty()) builder.append("&");
+                builder.append(Constants.BASE_PATH).append("=").append(basePath);
+            }
+        }
+        return builder.toString();
     }
 
     @Override

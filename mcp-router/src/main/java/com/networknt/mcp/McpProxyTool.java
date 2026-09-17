@@ -57,7 +57,7 @@ public class McpProxyTool extends AbstractRemoteMcpTool {
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
-            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(buildRequestPath(uri, path));
             request.getRequestHeaders().put(Headers.HOST, buildHostHeader(uri));
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");

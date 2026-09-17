@@ -1895,7 +1895,10 @@ public class Http2Client {
                 logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
                 throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
             }
-            return callService(new URI(url), request, requestBody);
+            URI uri = new URI(url);
+            // the target service might be deployed behind a path based k8s ingress with a base path in the url.
+            request.setPath(Cluster.prependBasePath(uri, request.getPath()));
+            return callService(uri, request, requestBody);
         } catch (Exception e) {
             logger.error("Failed to call service: {}", serviceId);
             throw new RuntimeException("Failed to call service: " + serviceId, e);
@@ -1921,7 +1924,10 @@ public class Http2Client {
                 logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
                 throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
             }
-            return callService(new URI(url), request, requestBody, isHttp2);
+            URI uri = new URI(url);
+            // the target service might be deployed behind a path based k8s ingress with a base path in the url.
+            request.setPath(Cluster.prependBasePath(uri, request.getPath()));
+            return callService(uri, request, requestBody, isHttp2);
         } catch (Exception e) {
             logger.error("Failed to call service: {}", serviceId);
             throw new RuntimeException("Failed to call service: " + serviceId, e);

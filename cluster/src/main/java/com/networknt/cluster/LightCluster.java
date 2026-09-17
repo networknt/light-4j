@@ -73,8 +73,8 @@ public class LightCluster implements Cluster {
         URL url = loadBalance.select(discovery(protocol, serviceId, tag), serviceId, tag, requestKey);
         if (url != null) {
             logger.debug("Final url after load balance = {}.", url);
-            // construct a url in string
-            return protocol + "://" + url.getHost() + ":" + url.getPort();
+            // construct a url in string. The base path is appended for the service behind a path based k8s ingress.
+            return protocol + "://" + url.getHost() + ":" + url.getPort() + basePath(url);
         } else {
             logger.debug("The service: {} cannot be found from service discovery.", serviceId);
             return null;
@@ -131,11 +131,29 @@ public class LightCluster implements Cluster {
     private URI toUri(URL url) {
         URI uri = null;
         try {
-            uri = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), null, null, null);
+            String basePath = basePath(url);
+            uri = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), basePath.isEmpty() ? null : basePath, null, null);
         } catch (URISyntaxException e) {
             logger.error("URISyntaxExcpetion", e);
         }
         return uri;
+    }
+
+    /**
+     * Get the base path of the target service from the url. The base path is only available for the services that
+     * are deployed behind a path based k8s ingress in which the namespace and service are the path prefix of the
+     * url and stripped by the ingress before the request is routed to the pod.
+     *
+     * @param url the url selected from the service discovery
+     * @return the base path that starts with a slash or an empty string if the service doesn't have one
+     */
+    public static String basePath(URL url) {
+        String basePath = url.getParameter(Constants.BASE_PATH);
+        if (StringUtils.isBlank(basePath)) {
+            return "";
+        }
+        basePath = basePath.trim();
+        return basePath.startsWith(Constants.PATH_SEPARATOR) ? basePath : Constants.PATH_SEPARATOR + basePath;
     }
 
     static class ClusterNotifyListener implements NotifyListener {
