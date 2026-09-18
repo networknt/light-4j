@@ -106,10 +106,11 @@ public class Http2ClientTest extends Http2ClientBase {
     @BeforeAll
     public static void beforeClass() throws IOException {
         config = ClientConfig.get(CONFIG_NAME);
-        // Create xnio worker
-        final Xnio xnio = Xnio.getInstance();
-        final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-        worker = xnioWorker;
+        // Use the client's shared worker. Http2Client caches one pool per URI for the whole JVM and a
+        // pool keeps the worker it was created with, so a per-class worker shut down in afterClass
+        // leaves a stale pool behind for whichever test class runs next against the same URI.
+        Http2Client.getInstance();
+        worker = Http2Client.WORKER;
 
         if(server == null) {
             System.out.println("starting server");
@@ -205,7 +206,6 @@ public class Http2ClientTest extends Http2ClientBase {
 
     @AfterAll
     public static void afterClass() {
-        worker.shutdown();
         if(server != null) {
             try {
                 Thread.sleep(100);
