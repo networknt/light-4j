@@ -177,6 +177,26 @@ public class Mask {
         return maskJson(ctx, key);
     }
 
+    /**
+     * Replace values in a body that has already been parsed into a Map or a List by the body
+     * module. The masked body is returned in the same format instead of a JSON string so that
+     * the caller does not have to parse it again to keep working with it. Anything that is not
+     * a parsed JSON object or array is returned untouched.
+     *
+     * @param input Object the parsed body, normally a Map or a List, that needs to be masked
+     * @param key String The key maps to a list of json path for masking
+     * @return Object Masked result in the same format as the input
+     */
+    public static Object maskObject(Object input, String key) {
+        if(input == null)
+            return null;
+        if(!(input instanceof Map || input instanceof List))
+            return input;
+        DocumentContext ctx = JsonPath.parse(input);
+        maskJson(ctx, key);
+        return ctx.json();
+    }
+
     public static String maskJson(DocumentContext ctx, String key) {
         if(ctx == null)
             return null;
@@ -236,7 +256,7 @@ public class Mask {
         Object value;
         try {
             value = ctx.read(jsonPath);
-            if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
+            if (!(value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof List<?>)) {
                 logger.error("The value specified by path {} cannot be masked", jsonPath);
             } else {
                 if (!(value instanceof List<?>)) {
