@@ -50,6 +50,7 @@ public class HandlerConfig {
     private static final String BASE_PATH = "basePath";
     private static final String REPORT_HANDLER_DURATION = "reportHandlerDuration";
     private static final String HANDLER_METRICS_LOG_LEVEL = "handlerMetricsLogLevel";
+    private static final String TRAILING_SLASH_FALLBACK = "trailingSlashFallback";
 
     private static final String PATH = "path";
     private static final String SOURCE = "source";
@@ -88,6 +89,17 @@ public class HandlerConfig {
             description = "Base Path of the API endpoints"
     )
     private String basePath;
+
+    @BooleanField(
+            configFieldName = TRAILING_SLASH_FALLBACK,
+            externalizedKeyName = TRAILING_SLASH_FALLBACK,
+            defaultValue = "false",
+            description = """
+                    Indicate if a request path with trailing slashes should fall back to the configured path without them.
+                    Disabled by default so that chain resolution does not change for existing deployments on upgrade. When
+                    enabled, the request path is normalized to the matched path so the chain and the forwarded path agree."""
+    )
+    private boolean trailingSlashFallback;
 
     @ArrayField(
             configFieldName = HANDLERS,
@@ -327,6 +339,22 @@ public class HandlerConfig {
     }
 
     /**
+     * Get the trailing slash fallback flag
+     * @return true if the trailing slash fallback is enabled
+     */
+    public boolean isTrailingSlashFallback() {
+        return trailingSlashFallback;
+    }
+
+    /**
+     * Set the trailing slash fallback flag
+     * @param trailingSlashFallback trailing slash fallback
+     */
+    public void setTrailingSlashFallback(boolean trailingSlashFallback) {
+        this.trailingSlashFallback = trailingSlashFallback;
+    }
+
+    /**
      * Get the mapped config object
      * @return map of config
      */
@@ -342,6 +370,8 @@ public class HandlerConfig {
             if(object != null) enabledHandlerMetrics = Config.loadBooleanValue(REPORT_HANDLER_DURATION, object);
             object = mappedConfig.get(BASE_PATH);
             if(object != null) basePath = (String)object;
+            object = mappedConfig.get(TRAILING_SLASH_FALLBACK);
+            if(object != null) trailingSlashFallback = Config.loadBooleanValue(TRAILING_SLASH_FALLBACK, object);
         }
     }
 

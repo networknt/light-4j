@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "enabled", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "handlers", "chains", "paths", "defaultHandlers" ],
+  "required" : [ "enabled", "reportHandlerDuration", "handlerMetricsLogLevel", "basePath", "trailingSlashFallback", "handlers", "chains", "paths", "defaultHandlers" ],
   "properties" : {
     "enabled" : {
       "type" : "boolean",
@@ -23,6 +23,11 @@
       "type" : "string",
       "description" : "Base Path of the API endpoints",
       "default" : "/"
+    },
+    "trailingSlashFallback" : {
+      "type" : "boolean",
+      "description" : "Indicate if a request path with trailing slashes should fall back to the configured path without them.\nDisabled by default so that chain resolution does not change for existing deployments on upgrade. When\nenabled, the request path is normalized to the matched path so the chain and the forwarded path agree.",
+      "default" : false
     },
     "handlers" : {
       "type" : "array",

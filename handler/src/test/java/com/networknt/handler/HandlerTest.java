@@ -228,5 +228,109 @@ public class HandlerTest {
         Assertions.assertTrue(report.contains("handler2"));
     }
 
+    @Test
+    public void trailingSlashInRequestPath_matchPathWithoutTheFallback_isNotMatched() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        // the fallback is opt in, so the chain a request resolves to does not change on upgrade
+        Assertions.assertFalse(Handler.config.isTrailingSlashFallback());
+        Assertions.assertNull(Handler.matchPath(getMatcher, exchange("/test/")));
+    }
+
+    @Test
+    public void trailingSlashInRequestPath_matchPath_matchesConfiguredPathAndNormalizesTheExchange() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        // on its own the matcher only knows about the exact path configured in handler.yml
+        Assertions.assertNotNull(getMatcher.match("/test"));
+        Assertions.assertNull(getMatcher.match("/test//"));
+
+        Handler.config.setTrailingSlashFallback(true);
+
+        try {
+
+            // the handler resolves the same chain when the consumer adds trailing slashes
+            HttpServerExchange ex = exchange("/test//");
+            PathTemplateMatcher.PathMatchResult<String> matched = Handler.matchPath(getMatcher, ex);
+            Assertions.assertNotNull(matched);
+            Assertions.assertEquals("/test", matched.getMatchedTemplate());
+            Assertions.assertEquals(Handler.matchPath(getMatcher, exchange("/test")).getValue(), matched.getValue());
+
+            // the chain and the path that is forwarded downstream have to agree with each other
+            Assertions.assertEquals("/test", ex.getRequestPath());
+            Assertions.assertEquals("/test", ex.getRelativePath());
+            Assertions.assertEquals("/test", ex.getRequestURI());
+
+            // a path that is not configured at all is still unmatched
+            Assertions.assertNull(Handler.matchPath(getMatcher, exchange("/not-configured/")));
+
+        } finally {
+            Handler.config.setTrailingSlashFallback(false);
+        }
+    }
+
+    @Test
+    public void trimTrailingSlashes_returnsNullWhenThereIsNothingToTrim() {
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashes("/test/"));
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashes("/test///"));
+        Assertions.assertNull(Handler.trimTrailingSlashes("/test"));
+        Assertions.assertNull(Handler.trimTrailingSlashes("/"));
+        Assertions.assertNull(Handler.trimTrailingSlashes(""));
+        Assertions.assertNull(Handler.trimTrailingSlashes(null));
+    }
+
+    @Test
+    public void encodedTrailingSlashInRequestURI_matchPath_skipsTheFallback() {
+        PathTemplateMatcher<String> getMatcher = Handler.methodToMatcherMap.get(Methods.GET);
+        Assertions.assertNotNull(getMatcher);
+
+        Handler.config.setTrailingSlashFallback(true);
+
+        try {
+
+            // Undertow decodes the request path but not the request URI, so the trailing slash of
+            // the path is not a trailing slash of the URI here. The fallback is skipped instead of
+            // resolving a chain for a path that is not the one forwarded downstream.
+            HttpServerExchange ex = exchange("/test/");
+            ex.setRequestURI("/test%2F");
+            Assertions.assertNull(Handler.matchPath(getMatcher, ex));
+            Assertions.assertEquals("/test/", ex.getRequestPath());
+            Assertions.assertEquals("/test%2F", ex.getRequestURI());
+
+            // the path parameters of the URI are kept and the slashes in front of them are trimmed
+            ex = exchange("/test/");
+            ex.setRequestURI("/test/;x=1");
+            Assertions.assertNotNull(Handler.matchPath(getMatcher, ex));
+            Assertions.assertEquals("/test", ex.getRequestPath());
+            Assertions.assertEquals("/test;x=1", ex.getRequestURI());
+
+        } finally {
+            Handler.config.setTrailingSlashFallback(false);
+        }
+    }
+
+    @Test
+    public void trimTrailingSlashesFromURI_trimsThePathPartOfTheRawURI() {
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashesFromURI("/test/", 1));
+        Assertions.assertEquals("/test", Handler.trimTrailingSlashesFromURI("/test///", 3));
+        Assertions.assertEquals("/test;x=1", Handler.trimTrailingSlashesFromURI("/test//;x=1", 2));
+        Assertions.assertEquals("http://localhost/test", Handler.trimTrailingSlashesFromURI("http://localhost/test/", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test%2F", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test", 1));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI("/test/", 0));
+        Assertions.assertNull(Handler.trimTrailingSlashesFromURI(null, 1));
+    }
+
+    private HttpServerExchange exchange(String requestPath) {
+        HttpServerExchange ex = new HttpServerExchange(null);
+        ex.setRequestMethod(Methods.GET);
+        ex.setRequestPath(requestPath);
+        ex.setRelativePath(requestPath);
+        ex.setRequestURI(requestPath);
+        return ex;
+    }
+
 
 }
