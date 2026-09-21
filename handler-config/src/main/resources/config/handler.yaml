@@ -6,6 +6,10 @@ reportHandlerDuration: ${handler.reportHandlerDuration:false}
 handlerMetricsLogLevel: ${handler.handlerMetricsLogLevel:DEBUG}
 # Base Path of the API endpoints
 basePath: ${handler.basePath:/}
+# Indicate if a request path with trailing slashes should fall back to the configured path without them.
+# Disabled by default so that chain resolution does not change for existing deployments on upgrade. When
+# enabled, the request path is normalized to the matched path so the chain and the forwarded path agree.
+trailingSlashFallback: ${handler.trailingSlashFallback:false}
 # ------------------------------------------------------------------------------
 # Support individual handler chains for each separate endpoint. It allows framework
 # handlers like health check, server info to bypass majority of the middleware handlers
