@@ -193,6 +193,8 @@ public class Mask {
         if(!(input instanceof Map || input instanceof List))
             return input;
         DocumentContext ctx = JsonPath.parse(input);
+        if(ctx == null)
+            return input;
         maskJson(ctx, key);
         return ctx.json();
     }
