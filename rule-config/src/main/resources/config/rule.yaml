@@ -25,13 +25,8 @@
 #            actionValueId: "permission-roles"
 #            value: "$roles"
 ruleBodies: ${rule.ruleBodies:}
-# Map of rule assignments mapping endpoints to rules
-#  - endpoint: "example_endpoint@call"
-#    apiVersion: "1.0.0"
-#    endpointId: "example-endpoint-id"
-#    ruleType: "req-acc"
-#    hostId: "example-host"
-#    ruleId: "example-rule"
-#    apiId: "EXAMPLE0001"
-#    aggregateVersion: 1
+# Map of endpoints to rule types and their rule assignments
+#  "example_endpoint@call":
+#    req-acc:
+#      - ruleId: "example-rule"
 endpointRules: ${rule.endpointRules:}

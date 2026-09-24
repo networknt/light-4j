@@ -9,7 +9,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleExecutor;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -147,8 +146,8 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 }
 
                 // chances are there are no response transform rules for this endpoint.
-                List<Map<String, Object>> responseTransformRules = serviceEntryRules.get(RESPONSE_TRANSFORM);
-                if (responseTransformRules == null) {
+                List<?> responseTransformRules = serviceEntryRules.get(RESPONSE_TRANSFORM);
+                if (responseTransformRules == null || responseTransformRules.isEmpty()) {
                     if (logger.isDebugEnabled())
                         logger.debug("no response transform rules found for endpoint: {}", serviceEntry);
                     return;
@@ -156,19 +155,9 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 if (logger.isDebugEnabled())
                     logger.debug("responseTransformRules size: {}", responseTransformRules.size());
 
-                boolean finalResult = true;
-                Map<String, Object> result = null;
-                String ruleId = null;
-                // iterate the rules and execute them in sequence. Break only if one rule is successful.
-                for(Map<String, Object> ruleMap: responseTransformRules) {
-                    ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                    result = ruleExecutor.executeRule(ruleId, objMap);
-                    boolean res = (Boolean)result.get(RuleConstants.RESULT);
-                    if(!res) {
-                        finalResult = false;
-                        break;
-                    }
-                }
+                // The executor runs response transforms in order and stops at the first failure.
+                Map<String, Object> result = ruleExecutor.executeRules(serviceEntry, RESPONSE_TRANSFORM, objMap);
+                boolean finalResult = (Boolean) result.get(RuleConstants.RESULT);
                 if(finalResult) {
                     for (Map.Entry<String, Object> entry : result.entrySet()) {
 

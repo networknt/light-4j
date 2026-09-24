@@ -483,7 +483,7 @@ public class McpHandlerTest {
         McpToolRegistry.registerTool(tool);
         testRuleExecutor.setEndpointRules(Map.of(
                 "/v1/pets@get",
-                Map.of("res-fil", List.of("filterStructured"))));
+                Map.of("res-fil", List.of(Map.of("ruleId", "filterStructured")))));
 
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);

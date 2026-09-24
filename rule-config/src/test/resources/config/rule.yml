@@ -10,4 +10,4 @@ ruleBodies:
 endpointRules:
   "/v1/test@post":
     req-acc:
-      - "test-rule-id"
+      - ruleId: test-rule-id

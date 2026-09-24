@@ -9,6 +9,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
+import com.networknt.rule.RuleAssignment;
 import com.networknt.rule.RuleExecutor;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConfigUtils;
@@ -800,7 +801,7 @@ public class McpHandler implements MiddlewareHandler {
             return result;
         }
 
-        List<String> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
+        List<?> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
         if (responseRules == null || responseRules.isEmpty()) {
             return result;
         }
@@ -824,7 +825,8 @@ public class McpHandler implements MiddlewareHandler {
 
         boolean finalResult = true;
         Map<String, Object> ruleResult = null;
-        for (String ruleId : responseRules) {
+        for (Object assignment : responseRules) {
+            String ruleId = RuleAssignment.ruleId(assignment);
             Map<String, Object> permissionMap = (Map<String, Object>) serviceEntryRules.get(PERMISSION);
             if (permissionMap != null) {
                 objMap.put(Constants.COL, permissionMap.get(Constants.COL));
