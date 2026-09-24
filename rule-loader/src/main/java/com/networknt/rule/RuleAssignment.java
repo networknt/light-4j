@@ -21,7 +21,7 @@ public final class RuleAssignment {
     }
 
     public static List<String> ruleIds(List<?> assignments) {
-        if (assignments == null) return List.of();
+        if (assignments == null) return new ArrayList<>();
         List<String> ids = new ArrayList<>(assignments.size());
         for (Object assignment : assignments) {
             ids.add(ruleId(assignment));
