@@ -157,6 +157,11 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
                 // The executor runs response transforms in order and stops at the first failure.
                 Map<String, Object> result = ruleExecutor.executeRules(serviceEntry, RESPONSE_TRANSFORM, objMap);
+                if (result == null) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("Response transform rules disappeared for serviceEntry: {}", serviceEntry);
+                    return;
+                }
                 boolean finalResult = (Boolean) result.get(RuleConstants.RESULT);
                 if(finalResult) {
                     for (Map.Entry<String, Object> entry : result.entrySet()) {
