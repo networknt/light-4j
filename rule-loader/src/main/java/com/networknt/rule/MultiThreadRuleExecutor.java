@@ -271,7 +271,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         }
 
         List<String> ruleIds = RuleAssignment.ruleIds((List<?>) rulesConfig.get(ruleType));
-        if (ruleIds == null || ruleIds.isEmpty()) {
+        if (ruleIds.isEmpty()) {
             if (logger.isDebugEnabled()) logger.debug("No rules found for type: {} in serviceEntry: {}", ruleType, serviceEntry);
             return null;
         }

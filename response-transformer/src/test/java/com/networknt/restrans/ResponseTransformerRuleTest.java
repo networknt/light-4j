@@ -22,10 +22,10 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 
-public class ResponseTransformerRuleTest {
+class ResponseTransformerRuleTest {
 
     @Test
-    public void testResponseFilterAcceptsRuleIdMapping() throws Exception {
+    void testResponseFilterAcceptsRuleIdMapping() throws Exception {
         String serviceEntry = "/v1/notifications@get";
         RuleExecutor originalExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
         RuleExecutor executor = Mockito.mock(RuleExecutor.class);
@@ -58,7 +58,7 @@ public class ResponseTransformerRuleTest {
     }
 
     @Test
-    public void testResponseTransformUsesNormalizedRuleIds() throws Exception {
+    void testResponseTransformUsesNormalizedRuleIds() throws Exception {
         String serviceEntry = "/v1/notifications@get";
         RuleExecutor originalExecutor = SingletonServiceFactory.getBean(RuleExecutor.class);
         RuleExecutor executor = Mockito.mock(RuleExecutor.class);
