@@ -13,3 +13,4 @@ service.singletons: [{"com.networknt.rule.RuleExecutor":["com.networknt.rule.Mul
 
 # response-transformer.yml
 response-transformer.appliedPathPrefixes: ["/v1/notifications"]
+response-filter.appliedPathPrefixes: ["/v1/notifications"]

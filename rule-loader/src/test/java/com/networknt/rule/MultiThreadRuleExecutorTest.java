@@ -55,7 +55,13 @@ public class MultiThreadRuleExecutorTest {
             Assertions.assertEquals("transform-request", result.get("legacyActionId"));
             Assertions.assertEquals("expected", result.get("legacyResolvedValue"));
             Map<String, Object> endpoint = (Map<String, Object>) executor.getEndpointRules().get("/ws/LabProxy/1.0@post");
-            Assertions.assertEquals(List.of("soap2json-transformer-request"), endpoint.get("req-tra"));
+            Assertions.assertEquals(List.of(Map.of("ruleId", "soap2json-transformer-request")), endpoint.get("req-tra"));
+            Assertions.assertEquals(List.of(Map.of("ruleId", "json2soap-transformer-response")), endpoint.get("res-tra"));
+
+            Map<String, Object> responseResult = executor.executeRules(
+                    "/ws/LabProxy/1.0@post", "res-tra", new HashMap<>(Map.of("name", "expected")));
+            Assertions.assertEquals(Boolean.TRUE, responseResult.get(RuleConstants.RESULT));
+            Assertions.assertEquals("transform-response", responseResult.get("legacyActionId"));
         } finally {
             restoreRuleConfig(config, originalRuleConfig);
         }

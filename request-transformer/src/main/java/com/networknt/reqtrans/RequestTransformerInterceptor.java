@@ -126,7 +126,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                             }
                         }
                     }
-                    // Execute request transform rules via RuleExecutor, which resolves List<String> ruleIds from endpointRules correctly
+                    // Execute request transform rules via RuleExecutor, which resolves rule IDs from endpoint assignments.
                     Map<String, Object> result = ruleExecutor.executeRules(serviceEntry, REQUEST_TRANSFORM, objMap);
                     if(result != null) {
                         boolean finalResult = Boolean.TRUE.equals(result.get(RuleConstants.RESULT));

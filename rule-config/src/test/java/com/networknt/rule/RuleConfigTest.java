@@ -27,8 +27,8 @@ public class RuleConfigTest {
         Assertions.assertTrue(endpointRules.containsKey("/v1/test@post"), "endpointRules should contain /v1/test@post");
 
         Map<String, Object> endpointRule = (Map<String, Object>) endpointRules.get("/v1/test@post");
-        List<String> ruleIds = (List<String>) endpointRule.get("req-acc");
-        Assertions.assertNotNull(ruleIds, "ruleIds for req-acc should not be null");
-        Assertions.assertEquals("test-rule-id", ruleIds.get(0));
+        List<Map<String, Object>> assignments = (List<Map<String, Object>>) endpointRule.get("req-acc");
+        Assertions.assertNotNull(assignments, "assignments for req-acc should not be null");
+        Assertions.assertEquals("test-rule-id", assignments.get(0).get("ruleId"));
     }
 }

@@ -48,7 +48,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         }
 
         // Load endpoint rules from RuleConfig (now a Map directly)
-        Map<String, Object> localEndpointRules = normalizeEndpointRules(ruleConfig.getEndpointRules());
+        Map<String, Object> localEndpointRules = ruleConfig.getEndpointRules();
         if (localEndpointRules == null) {
             localEndpointRules = new HashMap<>();
         }
@@ -62,34 +62,6 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         }
 
         return new RuntimeState(localEndpointRules, localRules, localRuleEngine);
-    }
-
-    private Map<String, Object> normalizeEndpointRules(Map<String, Object> endpointRules) {
-        if (endpointRules == null) return new HashMap<>();
-
-        Map<String, Object> normalized = new HashMap<>();
-        for (Map.Entry<String, Object> endpoint : endpointRules.entrySet()) {
-            if (!(endpoint.getValue() instanceof Map)) {
-                normalized.put(endpoint.getKey(), endpoint.getValue());
-                continue;
-            }
-            Map<String, Object> assignments = new HashMap<>((Map<String, Object>) endpoint.getValue());
-            for (Map.Entry<String, Object> assignment : assignments.entrySet()) {
-                if (!(assignment.getValue() instanceof List)) continue;
-                List<String> ruleIds = new ArrayList<>();
-                for (Object entry : (List<?>) assignment.getValue()) {
-                    Object ruleId = entry instanceof Map ? ((Map<?, ?>) entry).get("ruleId") : entry;
-                    if (!(ruleId instanceof String)) {
-                        throw new IllegalArgumentException("Expected a rule ID or ruleId mapping for "
-                                + endpoint.getKey() + " / " + assignment.getKey());
-                    }
-                    ruleIds.add((String) ruleId);
-                }
-                assignments.put(assignment.getKey(), ruleIds);
-            }
-            normalized.put(endpoint.getKey(), assignments);
-        }
-        return normalized;
     }
 
     /**
@@ -298,7 +270,7 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
             return null;
         }
 
-        List<String> ruleIds = (List<String>) rulesConfig.get(ruleType);
+        List<String> ruleIds = RuleAssignment.ruleIds((List<?>) rulesConfig.get(ruleType));
         if (ruleIds == null || ruleIds.isEmpty()) {
             if (logger.isDebugEnabled()) logger.debug("No rules found for type: {} in serviceEntry: {}", ruleType, serviceEntry);
             return null;
