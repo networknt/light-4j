@@ -35,11 +35,6 @@ ruleBodies: ${rule.ruleBodies:}
 #            value: "$roles"
 
 endpointRules: ${rule.endpointRules:}
-#  - endpoint: "example_endpoint@call"
-#    apiVersion: "1.0.0"
-#    endpointId: "example-endpoint-id"
-#    ruleType: "req-acc"
-#    hostId: "example-host"
-#    ruleId: "example-rule"
-#    apiId: "EXAMPLE0001"
-#    aggregateVersion: 1
+#  "example_endpoint@call":
+#    req-acc:
+#      - ruleId: "example-rule"

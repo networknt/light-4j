@@ -7,6 +7,7 @@ import com.networknt.handler.ResponseInterceptor;
 import com.networknt.http.UndertowConverter;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
+import com.networknt.rule.RuleAssignment;
 import com.networknt.rule.RuleExecutor;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConfigUtils;
@@ -144,7 +145,7 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                 }
 
                 boolean finalResult = true;
-                List<String> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
+                List<?> responseRules = serviceEntryRules.get(RESPONSE_FILTER);
                 if(responseRules == null) {
                     if(logger.isTraceEnabled()) logger.trace("response filter rules is null");
                     return;
@@ -152,7 +153,8 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                     if(logger.isTraceEnabled()) logger.trace("responseRules: {}", responseRules);
                 }
                 Map<String, Object> result = null;
-                for(String ruleId: responseRules) {
+                for(Object assignment: responseRules) {
+                    String ruleId = RuleAssignment.ruleId(assignment);
                     // copy the col and row objects to the objMap.
                     if(logger.isTraceEnabled()) logger.trace("ruleId: {}", ruleId);
                     Map<String, Object> permissionMap = (Map<String, Object>)serviceEntryRules.get(PERMISSION);

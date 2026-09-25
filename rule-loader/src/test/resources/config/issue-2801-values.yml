@@ -1,0 +1,47 @@
+rule.endpointRules:
+  /ws/LabProxy/1.0@post:
+    req-tra:
+      - ruleId: soap2json-transformer-request
+    res-tra:
+      - ruleId: json2soap-transformer-response
+rule.ruleBodies:
+  soap2json-transformer-request:
+    ruleId: soap2json-transformer-request
+    ruleName: soap2json-transformer-request
+    ruleVersion: 1.0.0
+    ruleType: req-tra
+    common: Y
+    conditions:
+      - conditionId: name-matches
+        propertyPath: name
+        operatorCode: equals
+        conditionValues:
+          - conditionValueId: expected-name
+            valueTypeCode: STRING
+            conditionValue: expected
+    actions:
+      - actionId: transform-request
+        actionClassName: com.networknt.rule.MultiThreadRuleExecutorTest$LegacyTestAction
+        actionValues:
+          - actionValueId: transformed-name
+            value: ${name}
+  json2soap-transformer-response:
+    ruleId: json2soap-transformer-response
+    ruleName: json2soap-transformer-response
+    ruleVersion: 1.0.0
+    ruleType: res-tra
+    common: Y
+    conditions:
+      - conditionId: name-matches
+        propertyPath: name
+        operatorCode: equals
+        conditionValues:
+          - conditionValueId: expected-name
+            valueTypeCode: STRING
+            conditionValue: expected
+    actions:
+      - actionId: transform-response
+        actionClassName: com.networknt.rule.MultiThreadRuleExecutorTest$LegacyTestAction
+        actionValues:
+          - actionValueId: transformed-name
+            value: ${name}

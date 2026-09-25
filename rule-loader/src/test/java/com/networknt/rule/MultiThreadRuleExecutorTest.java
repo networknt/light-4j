@@ -5,7 +5,9 @@ import com.networknt.rule.exception.RuleEngineException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,6 +31,39 @@ public class MultiThreadRuleExecutorTest {
                 throws RuleEngineException {
             resultMap.put("legacyActionId", actionId);
             resultMap.put("legacyResolvedValue", actionValues.iterator().next().getResolvedValue());
+        }
+    }
+
+    @Test
+    public void testIssue2801ValuesStyleEndpointRuleLoadsAndExecutes() throws Exception {
+        Config config = Config.getInstance();
+        Map<String, Object> originalRuleConfig = config.getJsonMapConfig(RuleConfig.CONFIG_NAME);
+
+        try (InputStream input = getClass().getResourceAsStream("/config/issue-2801-values.yml")) {
+            Assertions.assertNotNull(input);
+            Map<String, Object> values = new Yaml().load(input);
+            config.putInConfigCache(RuleConfig.CONFIG_NAME, Map.of(
+                    RuleConfig.RULE_BODIES, values.get("rule.ruleBodies"),
+                    RuleConfig.ENDPOINT_RULES, values.get("rule.endpointRules")));
+            setRuleConfigInstance(null);
+
+            MultiThreadRuleExecutor executor = new MultiThreadRuleExecutor();
+            Map<String, Object> result = executor.executeRules(
+                    "/ws/LabProxy/1.0@post", "req-tra", new HashMap<>(Map.of("name", "expected")));
+
+            Assertions.assertEquals(Boolean.TRUE, result.get(RuleConstants.RESULT));
+            Assertions.assertEquals("transform-request", result.get("legacyActionId"));
+            Assertions.assertEquals("expected", result.get("legacyResolvedValue"));
+            Map<String, Object> endpoint = (Map<String, Object>) executor.getEndpointRules().get("/ws/LabProxy/1.0@post");
+            Assertions.assertEquals(List.of(Map.of("ruleId", "soap2json-transformer-request")), endpoint.get("req-tra"));
+            Assertions.assertEquals(List.of(Map.of("ruleId", "json2soap-transformer-response")), endpoint.get("res-tra"));
+
+            Map<String, Object> responseResult = executor.executeRules(
+                    "/ws/LabProxy/1.0@post", "res-tra", new HashMap<>(Map.of("name", "expected")));
+            Assertions.assertEquals(Boolean.TRUE, responseResult.get(RuleConstants.RESULT));
+            Assertions.assertEquals("transform-response", responseResult.get("legacyActionId"));
+        } finally {
+            restoreRuleConfig(config, originalRuleConfig);
         }
     }
 
