@@ -11,3 +11,7 @@ credential: ${ldap.credential:}
 searchFilter: ${ldap.searchFilter:}
 # The search base DN (Distinguished Name).
 searchBase: ${ldap.searchBase:}
+# LDAP connection timeout in milliseconds. Must be positive.
+connectTimeoutMs: ${ldap.connectTimeoutMs:5000}
+# LDAP read timeout in milliseconds. Must be positive.
+readTimeoutMs: ${ldap.readTimeoutMs:10000}

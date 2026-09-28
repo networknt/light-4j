@@ -1,7 +1,9 @@
 package com.networknt.ldap;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 import com.networknt.config.schema.ConfigSchema; // REQUIRED IMPORT
+import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.OutputFormat; // REQUIRED IMPORT
 import com.networknt.config.schema.StringField; // REQUIRED IMPORT
 import com.networknt.server.ModuleRegistry;
@@ -30,6 +32,8 @@ public class LdapConfig {
     public static final String CREDENTIAL = "credential";
     public static final String SEARCH_FILTER = "searchFilter";
     public static final String SEARCH_BASE = "searchBase";
+    public static final String CONNECT_TIMEOUT_MS = "connectTimeoutMs";
+    public static final String READ_TIMEOUT_MS = "readTimeoutMs";
 
     // --- Annotated Fields ---
     private final Config config;
@@ -76,6 +80,24 @@ public class LdapConfig {
             description = "The search base DN (Distinguished Name)."
     )
     String searchBase;
+
+    @IntegerField(
+            configFieldName = CONNECT_TIMEOUT_MS,
+            externalizedKeyName = CONNECT_TIMEOUT_MS,
+            defaultValue = "5000",
+            min = 1,
+            description = "LDAP connection timeout in milliseconds. Must be positive."
+    )
+    int connectTimeoutMs = 5000;
+
+    @IntegerField(
+            configFieldName = READ_TIMEOUT_MS,
+            externalizedKeyName = READ_TIMEOUT_MS,
+            defaultValue = "10000",
+            min = 1,
+            description = "LDAP read timeout in milliseconds. Must be positive."
+    )
+    int readTimeoutMs = 10000;
 
     // --- Constructor and Loading Logic ---
 
@@ -159,6 +181,10 @@ public class LdapConfig {
 
     public void setSearchBase(String searchBase) { this.searchBase = searchBase; }
 
+    public int getConnectTimeoutMs() { return connectTimeoutMs; }
+
+    public int getReadTimeoutMs() { return readTimeoutMs; }
+
     private void setConfigData() {
         Object object = mappedConfig.get(URI);
         if (object != null) uri = (String)object;
@@ -177,5 +203,24 @@ public class LdapConfig {
 
         object = mappedConfig.get(SEARCH_BASE);
         if (object != null) searchBase = (String)object;
+
+        object = mappedConfig.get(CONNECT_TIMEOUT_MS);
+        if (object != null) connectTimeoutMs = positiveTimeout(object, CONNECT_TIMEOUT_MS);
+
+        object = mappedConfig.get(READ_TIMEOUT_MS);
+        if (object != null) readTimeoutMs = positiveTimeout(object, READ_TIMEOUT_MS);
+    }
+
+    private static int positiveTimeout(Object value, String name) {
+        final int milliseconds;
+        try {
+            milliseconds = Config.loadIntegerValue(name, value);
+        } catch (NumberFormatException e) {
+            throw new ConfigException(name + " must be a positive integer in milliseconds.");
+        }
+        if (milliseconds <= 0) {
+            throw new ConfigException(name + " must be a positive integer in milliseconds.");
+        }
+        return milliseconds;
     }
 }

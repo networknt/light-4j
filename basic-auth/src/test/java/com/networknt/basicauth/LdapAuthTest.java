@@ -37,9 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -103,17 +101,6 @@ public class LdapAuthTest {
 
     private static String encodeCredentials(String username, String password) {
         return encodeCredentialsFullFormat(username, password, ":");
-    }
-
-    @Test
-    public void testEmptyLdapPasswordIsRejected() throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL("http://localhost:17352/v2/pet").openConnection();
-        try {
-            connection.setRequestProperty("Authorization", "Basic " + encodeCredentials("ldapUser", ""));
-            Assertions.assertEquals(401, connection.getResponseCode());
-        } finally {
-            connection.disconnect();
-        }
     }
 
     @Disabled

@@ -5,10 +5,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
 import javax.naming.directory.*;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * A utility class that interacts with LDAP server for authentication and authorization.
@@ -32,10 +34,14 @@ public class LdapUtil {
      * @return boolean true if authenticated
      */
     public static boolean authenticate(String username, String password) {
+        return authenticate(username, password, LdapConfig::load);
+    }
+
+    static boolean authenticate(String username, String password, Supplier<LdapConfig> configSupplier) {
         if (password == null || password.isEmpty()) {
             return false;
         }
-        LdapConfig config = LdapConfig.load();
+        LdapConfig config = configSupplier.get();
         try {
             String dn = getUid(username, config);
             if (dn != null) {
@@ -71,28 +77,30 @@ public class LdapUtil {
             ctx = ldapContext(config);
             SearchControls ctrls = new SearchControls();
             ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            String filter = String.format(config.searchFilter, username);
+            String filter = String.format(config.searchFilter, escapeFilterValue(username));
             NamingEnumeration<SearchResult> results = ctx.search(config.searchBase, filter, ctrls);
-            if(!results.hasMore()) {
-                logger.error("Principal name '" + username + "' not found");
-                return null;
-            }
-            SearchResult result = results.next();
-            if(logger.isDebugEnabled()) logger.debug("distinguisedName: " + result.getNameInNamespace());
-
-            Attribute memberOf = result.getAttributes().get("memberOf");
-            if(memberOf!=null) {
-                for(int idx=0; idx<memberOf.size(); idx++) {
-                    groups.add(memberOf.get(idx).toString());
+            try {
+                if(!results.hasMore()) {
+                    logger.error("LDAP principal was not found.");
+                    return null;
                 }
+                SearchResult result = results.next();
+                if(logger.isDebugEnabled()) logger.debug("distinguisedName: " + result.getNameInNamespace());
+
+                Attribute memberOf = result.getAttributes().get("memberOf");
+                if(memberOf!=null) {
+                    for(int idx=0; idx<memberOf.size(); idx++) {
+                        groups.add(memberOf.get(idx).toString());
+                    }
+                }
+            } finally {
+                closeQuietly(results);
             }
         } catch (Exception e) {
             logger.error("Failed to authorize user " + username, e);
             return null;
         } finally {
-            try {
-                if(ctx != null) ctx.close();
-            } catch(Exception e) {}
+            closeQuietly(ctx);
         }
         return groups;
     }
@@ -120,6 +128,8 @@ public class LdapUtil {
     private static DirContext ldapContext (Hashtable<String,String> env, LdapConfig config) throws Exception {
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());
+        env.put("com.sun.jndi.ldap.connect.timeout", Integer.toString(config.getConnectTimeoutMs()));
+        env.put("com.sun.jndi.ldap.read.timeout", Integer.toString(config.getReadTimeoutMs()));
         if(config.getUri().toUpperCase().startsWith("LDAPS://")) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
             env.put("java.naming.ldap.factory.socket", "com.networknt.ldap.LdapSSLSocketFactory");
@@ -134,30 +144,63 @@ public class LdapUtil {
 
     private static String getUid (String username, LdapConfig config) throws Exception {
         DirContext ctx = ldapContext(config);
-        String filter = String.format(config.searchFilter, username);
-        SearchControls ctrl = new SearchControls();
-        ctrl.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        NamingEnumeration answer = ctx.search(config.searchBase, filter, ctrl);
+        try {
+            String filter = String.format(config.searchFilter, escapeFilterValue(username));
+            SearchControls ctrl = new SearchControls();
+            ctrl.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            NamingEnumeration<SearchResult> answer = ctx.search(config.searchBase, filter, ctrl);
+            try {
+                return answer.hasMore() ? answer.next().getNameInNamespace() : null;
+            } finally {
+                closeQuietly(answer);
+            }
+        } finally {
+            closeQuietly(ctx);
+        }
+    }
 
-        String dn;
-        if (answer.hasMore()) {
-            SearchResult result = (SearchResult) answer.next();
-            dn = result.getNameInNamespace();
+    private static void closeQuietly(NamingEnumeration<?> results) {
+        if (results != null) {
+            try {
+                results.close();
+            } catch (NamingException e) {
+                logger.warn("Failed to close LDAP search results", e);
+            }
         }
-        else {
-            dn = null;
+    }
+
+    private static void closeQuietly(DirContext ctx) {
+        if (ctx != null) {
+            try {
+                ctx.close();
+            } catch (NamingException e) {
+                logger.warn("Failed to close LDAP context", e);
+            }
         }
-        answer.close();
-        return dn;
+    }
+
+    static String escapeFilterValue(String value) {
+        StringBuilder escaped = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            switch (ch) {
+                case '*': escaped.append("\\2a"); break;
+                case '(': escaped.append("\\28"); break;
+                case ')': escaped.append("\\29"); break;
+                case '\\': escaped.append("\\5c"); break;
+                case '\0': escaped.append("\\00"); break;
+                default: escaped.append(ch);
+            }
+        }
+        return escaped.toString();
     }
 
     private static boolean testBind (String dn, String password, LdapConfig config) throws Exception {
-        if (password == null || password.isEmpty()) {
-            return false;
-        }
         Hashtable<String,String> env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());
+        env.put("com.sun.jndi.ldap.connect.timeout", Integer.toString(config.getConnectTimeoutMs()));
+        env.put("com.sun.jndi.ldap.read.timeout", Integer.toString(config.getReadTimeoutMs()));
         if(config.getUri().toUpperCase().startsWith("LDAPS://")) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
             env.put("java.naming.ldap.factory.socket", "com.networknt.ldap.LdapSSLSocketFactory");

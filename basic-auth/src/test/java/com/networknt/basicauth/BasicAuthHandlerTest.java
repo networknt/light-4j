@@ -121,6 +121,21 @@ public class BasicAuthHandlerTest {
     }
 
     @Test
+    public void testShortMalformedAuthorizationHeadersAreRejected() throws Exception {
+        for (String header : new String[] {"x", "Basic eA"}) {
+            HttpURLConnection connection = (HttpURLConnection) new URL("http://localhost:17352/v2/pet").openConnection();
+            try {
+                connection.setConnectTimeout(3000);
+                connection.setReadTimeout(3000);
+                connection.setRequestProperty("Authorization", header);
+                Assertions.assertEquals(401, connection.getResponseCode(), header);
+            } finally {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
     public void testWithRightCredentialsWrongPath() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);

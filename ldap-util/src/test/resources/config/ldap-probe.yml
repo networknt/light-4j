@@ -1,0 +1,7 @@
+uri: ldap://127.0.0.1
+principal: uid=probe,dc=example,dc=com
+credential: probe
+searchFilter: (uid=%s)
+searchBase: ''
+connectTimeoutMs: 750
+readTimeoutMs: 1250
