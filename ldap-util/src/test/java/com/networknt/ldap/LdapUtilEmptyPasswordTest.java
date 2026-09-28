@@ -12,22 +12,22 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LdapUtilEmptyPasswordTest {
+class LdapUtilEmptyPasswordTest {
 
     @Test
-    public void emptyPasswordsNeverContactLdap() throws Exception {
+    void emptyPasswordsNeverContactLdap() throws Exception {
         assertLdapContact("", false);
         assertLdapContact(null, false);
         assertLdapContact("wrong", true);
     }
 
     @Test
-    public void escapesLdapFilterValues() {
+    void escapesLdapFilterValues() {
         Assertions.assertEquals("alice\\2a\\28x\\29\\5c\\00", LdapUtil.escapeFilterValue("alice*(x)\\\0"));
     }
 
     @Test
-    public void loadsConfiguredTimeouts() {
+    void loadsConfiguredTimeouts() {
         LdapConfig config = LdapConfig.load("ldap-probe");
         Assertions.assertEquals(750, config.getConnectTimeoutMs());
         Assertions.assertEquals(1250, config.getReadTimeoutMs());
@@ -42,9 +42,9 @@ public class LdapUtilEmptyPasswordTest {
             AtomicBoolean contacted = new AtomicBoolean();
             AtomicReference<IOException> listenerError = new AtomicReference<>();
             Thread listener = new Thread(() -> {
-                try (Socket ignored = server.accept()) {
-                    contacted.set(true);
-                } catch (SocketTimeoutException ignored) {
+                try (Socket connection = server.accept()) {
+                    contacted.set(connection.isConnected());
+                } catch (SocketTimeoutException _) {
                     // An empty password must not connect.
                 } catch (IOException e) {
                     listenerError.set(e);

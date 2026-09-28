@@ -44,19 +44,13 @@ public class LdapUtil {
         LdapConfig config = configSupplier.get();
         try {
             String dn = getUid(username, config);
-            if (dn != null) {
-                /* Found user - test password */
-                if ( testBind( dn, password, config ) ) {
-                    if(logger.isDebugEnabled()) logger.debug("user '" + username + "' authentication succeeded");
-                    return true;
-                } else {
-                    if(logger.isDebugEnabled()) logger.debug("user '" + username + "' authentication failed");
-                    return false;
-                }
-            } else {
-                if(logger.isDebugEnabled()) logger.debug("user '" + username + "' not found");
+            if (dn == null) {
+                if(logger.isDebugEnabled()) logger.debug("LDAP user not found");
                 return false;
             }
+            boolean authenticated = testBind(dn, password, config);
+            if(logger.isDebugEnabled()) logger.debug("LDAP authentication {}", authenticated ? "succeeded" : "failed");
+            return authenticated;
         } catch (Exception e) {
             logger.error("Exception:", e);
             return false;

@@ -98,7 +98,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     if(!b) return;
                 }
             } else if (auth.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
-                boolean b = this.handleBearerToken(exchange, requestPath, auth, config);
+                boolean b = this.handleBearerToken(exchange, requestPath, config);
                 if(!b) return;
             } else {
                 logger.error("Invalid/Unsupported authorization header.");
@@ -228,8 +228,10 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 }
             }
             if (!match) {
-                logger.error("Request path '{}' is not authorized for user '{}'",
-                        requestPath.replace('\r', ' ').replace('\n', ' '), user.getUsername());
+                if (logger.isErrorEnabled()) {
+                    logger.error("Request path '{}' is not authorized for user '{}'",
+                            requestPath.replace('\r', ' ').replace('\n', ' '), user.getUsername());
+                }
                 setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, user.getUsername());
                 if(logger.isDebugEnabled())
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
@@ -268,10 +270,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
      *
      * @param exchange - current exchange.
      * @param requestPath - path for request
-     * @param auth - auth string
      * @return boolean to indicate if an error or success.
      */
-    private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, String auth, BasicAuthConfig config) {
+    private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, BasicAuthConfig config) {
         // not basic token. check if the OAuth 2.0 bearer token is allowed.
         if (!config.allowBearerToken) {
             logger.error("Not a basic authentication header, and bearer token is not allowed.");

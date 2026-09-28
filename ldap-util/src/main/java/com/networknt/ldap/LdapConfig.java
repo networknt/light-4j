@@ -215,7 +215,7 @@ public class LdapConfig {
         final int milliseconds;
         try {
             milliseconds = Config.loadIntegerValue(name, value);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             throw new ConfigException(name + " must be a positive integer in milliseconds.");
         }
         if (milliseconds <= 0) {
