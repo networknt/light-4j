@@ -184,6 +184,11 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 return false;
             }
+            if (password.isEmpty()) {
+                setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                exchange.endExchange();
+                return false;
+            }
             // At this point, we know the user is found in the config file.
             if (username.equals(user.getUsername())
                 && StringUtils.isEmpty(user.getPassword())

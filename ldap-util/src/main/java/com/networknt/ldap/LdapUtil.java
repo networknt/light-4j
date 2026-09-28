@@ -32,6 +32,9 @@ public class LdapUtil {
      * @return boolean true if authenticated
      */
     public static boolean authenticate(String username, String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
         LdapConfig config = LdapConfig.load();
         try {
             String dn = getUid(username, config);
@@ -149,6 +152,9 @@ public class LdapUtil {
     }
 
     private static boolean testBind (String dn, String password, LdapConfig config) throws Exception {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
         Hashtable<String,String> env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());
