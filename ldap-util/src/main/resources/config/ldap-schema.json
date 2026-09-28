@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "uri", "domain", "principal", "credential", "searchFilter", "searchBase" ],
+  "required" : [ "uri", "domain", "principal", "credential", "searchFilter", "searchBase", "connectTimeoutMs", "readTimeoutMs" ],
   "properties" : {
     "uri" : {
       "type" : "string",
@@ -26,6 +26,20 @@
     "searchBase" : {
       "type" : "string",
       "description" : "The search base DN (Distinguished Name)."
+    },
+    "connectTimeoutMs" : {
+      "type" : "integer",
+      "description" : "LDAP connection timeout in milliseconds. Must be positive.",
+      "default" : 5000,
+      "minimum" : 1,
+      "format" : "int32"
+    },
+    "readTimeoutMs" : {
+      "type" : "integer",
+      "description" : "LDAP read timeout in milliseconds. Must be positive.",
+      "default" : 10000,
+      "minimum" : 1,
+      "format" : "int32"
     }
   }
 }
