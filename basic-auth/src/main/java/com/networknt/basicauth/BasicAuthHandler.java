@@ -273,7 +273,6 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @return boolean to indicate if an error or success.
      */
     private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, BasicAuthConfig config) {
-        // not basic token. check if the OAuth 2.0 bearer token is allowed.
         if (!config.allowBearerToken) {
             logger.error("Not a basic authentication header, and bearer token is not allowed.");
             setExchangeStatus(exchange, INVALID_BASIC_HEADER, BEARER_PREFIX);
@@ -281,37 +280,32 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");
             exchange.endExchange();
             return false;
-        } else {
-            // bearer token is allowed, we need to validate it and check the allowed paths.
-            UserAuth user = config.getUsers().get(BasicAuthConfig.BEARER);
-            if (user != null) {
-                // check the path for authorization
-                List<String> paths = user.getPaths();
-                boolean match = false;
-                for (String path : paths) {
-                    if (requestPath.startsWith(path)) {
-                        match = true;
-                        break;
-                    }
-                }
-                if (!match) {
-                    logger.error("Request path '{}' is not authorized for user '{}' ", requestPath, BasicAuthConfig.BEARER);
-                    setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.BEARER);
-                    if(logger.isDebugEnabled())
-                        logger.debug("BasicAuthHandler.handleRequest ends with an error.");
-                    exchange.endExchange();
-                    return false;
-                }
-            } else {
-                logger.error("Bearer token is allowed but missing the bearer user path definitions for authorization");
-                setExchangeStatus(exchange, BEARER_USER_NOT_FOUND);
-                if(logger.isDebugEnabled())
-                    logger.debug("BasicAuthHandler.handleRequest ends with an error.");
-                exchange.endExchange();
-                return false;
+        }
+
+        UserAuth user = config.getUsers().get(BasicAuthConfig.BEARER);
+        if (user == null) {
+            logger.error("Bearer token is allowed but missing the bearer user path definitions for authorization");
+            setExchangeStatus(exchange, BEARER_USER_NOT_FOUND);
+            if(logger.isDebugEnabled())
+                logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+            exchange.endExchange();
+            return false;
+        }
+
+        for (String path : user.getPaths()) {
+            if (requestPath.startsWith(path)) {
+                return true;
             }
         }
-        return true;
+        if (logger.isErrorEnabled()) {
+            logger.error("Request path '{}' is not authorized for user '{}'",
+                    requestPath.replace('\r', ' ').replace('\n', ' '), BasicAuthConfig.BEARER);
+        }
+        setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.BEARER);
+        if(logger.isDebugEnabled())
+            logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+        exchange.endExchange();
+        return false;
     }
 
     @Override
