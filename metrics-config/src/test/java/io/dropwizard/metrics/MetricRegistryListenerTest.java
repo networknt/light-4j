@@ -27,7 +27,7 @@ import io.dropwizard.metrics.MetricRegistryListener;
 import io.dropwizard.metrics.Timer;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public class MetricRegistryListenerTest {
     private static final MetricName BLAH = MetricName.build("blah");
@@ -45,35 +45,35 @@ public class MetricRegistryListenerTest {
     public void noOpsOnGaugeAdded() throws Exception {
         listener.onGaugeAdded(BLAH, gauge);
 
-        verifyZeroInteractions(gauge);
+        verifyNoInteractions(gauge);
     }
 
     @Test
     public void noOpsOnCounterAdded() throws Exception {
         listener.onCounterAdded(BLAH, counter);
 
-        verifyZeroInteractions(counter);
+        verifyNoInteractions(counter);
     }
 
     @Test
     public void noOpsOnHistogramAdded() throws Exception {
         listener.onHistogramAdded(BLAH, histogram);
 
-        verifyZeroInteractions(histogram);
+        verifyNoInteractions(histogram);
     }
 
     @Test
     public void noOpsOnMeterAdded() throws Exception {
         listener.onMeterAdded(BLAH, meter);
 
-        verifyZeroInteractions(meter);
+        verifyNoInteractions(meter);
     }
 
     @Test
     public void noOpsOnTimerAdded() throws Exception {
         listener.onTimerAdded(BLAH, timer);
 
-        verifyZeroInteractions(timer);
+        verifyNoInteractions(timer);
     }
 
     @Test

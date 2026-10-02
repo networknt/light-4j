@@ -124,7 +124,7 @@ public class TimerTest {
         assertThat(timer.getCount())
                 .isZero();
 
-        verifyZeroInteractions(reservoir);
+        verifyNoInteractions(reservoir);
     }
 
     @Test
