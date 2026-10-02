@@ -115,11 +115,14 @@ public class LdapUtil {
     }
 
     private static DirContext ldapContext (LdapConfig config) throws Exception {
-        Hashtable<String,String> env = new Hashtable <String,String>();
-        return ldapContext(env, config);
+        Hashtable<String,String> env = ldapEnvironment(config);
+        env.put(Context.SECURITY_PRINCIPAL, config.getPrincipal());
+        env.put(Context.SECURITY_CREDENTIALS, config.getCredential());
+        return new InitialDirContext(env);
     }
 
-    private static DirContext ldapContext (Hashtable<String,String> env, LdapConfig config) throws Exception {
+    private static Hashtable<String,String> ldapEnvironment(LdapConfig config) {
+        Hashtable<String,String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
         env.put(Context.PROVIDER_URL, config.getUri());
         env.put("com.sun.jndi.ldap.connect.timeout", Integer.toString(config.getConnectTimeoutMs()));
@@ -129,11 +132,7 @@ public class LdapUtil {
             env.put("java.naming.ldap.factory.socket", "com.networknt.ldap.LdapSSLSocketFactory");
         }
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-        env.put(Context.SECURITY_PRINCIPAL, config.getPrincipal());
-        env.put(Context.SECURITY_CREDENTIALS, config.getCredential());
-
-        DirContext ctx = new InitialDirContext(env);
-        return ctx;
+        return env;
     }
 
     private static String getUid (String username, LdapConfig config) throws Exception {
@@ -189,17 +188,11 @@ public class LdapUtil {
         return escaped.toString();
     }
 
-    private static boolean testBind (String dn, String password, LdapConfig config) throws Exception {
-        Hashtable<String,String> env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
-        env.put(Context.PROVIDER_URL, config.getUri());
-        env.put("com.sun.jndi.ldap.connect.timeout", Integer.toString(config.getConnectTimeoutMs()));
-        env.put("com.sun.jndi.ldap.read.timeout", Integer.toString(config.getReadTimeoutMs()));
-        if(config.getUri().toUpperCase().startsWith("LDAPS://")) {
-            env.put(Context.SECURITY_PROTOCOL, "ssl");
-            env.put("java.naming.ldap.factory.socket", "com.networknt.ldap.LdapSSLSocketFactory");
+    static boolean testBind (String dn, String password, LdapConfig config) throws Exception {
+        if (dn == null || dn.isEmpty() || password == null || password.isEmpty()) {
+            return false;
         }
-        env.put(Context.SECURITY_AUTHENTICATION, "simple");
+        Hashtable<String,String> env = ldapEnvironment(config);
         env.put(Context.SECURITY_PRINCIPAL, dn);
         env.put(Context.SECURITY_CREDENTIALS, password);
         DirContext ctx = null;
@@ -209,9 +202,7 @@ public class LdapUtil {
         catch (javax.naming.AuthenticationException e) {
             return false;
         } finally {
-            try {
-                if(ctx != null) ctx.close();
-            } catch(Exception e) {}
+            closeQuietly(ctx);
         }
         return true;
     }
