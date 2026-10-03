@@ -1,6 +1,5 @@
 package com.networknt.config.schema.generator;
 
-import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -13,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MapExamplesGeneratorTest {
     @Test
-    void exampleIsAFieldValueInJsonAndCopyableYamlComments() throws Exception {
+    void exampleIsAFieldValueInJsonAndCopyableYamlComments() {
         var map = FieldType.MAP.newBuilder("profiles")
                 .externalizedKeyName("profiles")
                 .description("Short help.")
@@ -33,6 +32,53 @@ class MapExamplesGeneratorTest {
         assertTrue(yaml.contains("# github:\n#   signatureHeader: X-Signature"));
         Map<?, ?> active = new Yaml().load(yaml);
         assertEquals("${hmac.profiles:}", active.get("profiles"));
+    }
+
+    @Test
+    void fieldReferenceIncludesObjectHelpAndOmitsEmptyHeaders() {
+        var secrets = FieldType.OBJECT.newBuilder("secrets").description("Required secret sources.")
+                .ref(FieldType.OBJECT.newBuilder("secretConfig").childNodes(List.of(
+                        FieldType.STRING.newBuilder("name").description("Environment name.").build())).build()).build();
+        var values = FieldType.OBJECT.newBuilder("profile").childNodes(List.of(secrets)).build();
+        String yaml = renderExample(values);
+        assertTrue(yaml.contains("secrets: Required secret sources."));
+        assertTrue(yaml.contains("secrets.name: Environment name."));
+        for (var value : List.of(FieldType.STRING.newBuilder("scalar").build(),
+                FieldType.ARRAY.newBuilder("array").ref(FieldType.STRING.newBuilder("item").build()).build(),
+                FieldType.OBJECT.newBuilder("union").oneOf(List.of(values)).build())) {
+            assertFalse(renderExample(value).contains(YamlGenerator.FIELD_REFERENCE_HEADER));
+        }
+    }
+
+    private String renderExample(com.networknt.config.schema.FieldNode value) {
+        var map = FieldType.MAP.newBuilder("values").externalizedKeyName("values")
+                .examples(new String[]{"{\"example\": {}}"}).ref(value).build();
+        var root = FieldType.OBJECT.newBuilder("root").childNodes(List.of(map)).build();
+        var writer = new StringWriter();
+        new YamlGenerator("test", "test").writeSchemaToFile(writer, root);
+        return writer.toString();
+    }
+
+    @Test
+    void stringUnionsAllowPatternsAndMixedUnionsRejectThem() {
+        var generator = new JsonSchemaGenerator("test", "test");
+        var strings = List.of(FieldType.STRING.newBuilder("first").build(),
+                FieldType.STRING.newBuilder("second").build());
+        var mixed = List.of(strings.get(0), FieldType.INTEGER.newBuilder("number").build());
+        for (String keyword : List.of("oneOf", "allOf", "anyOf")) {
+            var builder = FieldType.ARRAY.newBuilder("values").itemsPattern("\\S");
+            var mixedBuilder = FieldType.ARRAY.newBuilder("values").itemsPattern("\\S");
+            switch (keyword) {
+                case "oneOf" -> { builder.oneOf(strings); mixedBuilder.oneOf(mixed); }
+                case "allOf" -> { builder.allOf(strings); mixedBuilder.allOf(mixed); }
+                default -> { builder.anyOf(strings); mixedBuilder.anyOf(mixed); }
+            }
+            var items = (Map<?, ?>) generator.convertArrayNode(builder.build()).get("items");
+            assertEquals("\\S", items.get("pattern"));
+            assertEquals(2, ((List<?>) items.get(keyword)).size());
+            var invalid = mixedBuilder.build();
+            assertThrows(IllegalArgumentException.class, () -> generator.convertArrayNode(invalid));
+        }
     }
 
     @Test
@@ -73,8 +119,9 @@ class MapExamplesGeneratorTest {
     @Test
     void malformedExamplesAndNonStringItemPatternsFailGeneration() {
         var generator = new JsonSchemaGenerator("hmac", "hmac");
-        assertThrows(IllegalArgumentException.class, () ->
-                FieldType.MAP.newBuilder("profiles").examples(new String[]{"[]"}).build());
+        var builder = FieldType.MAP.newBuilder("profiles");
+        var invalidExamples = new String[]{"[]"};
+        assertThrows(IllegalArgumentException.class, () -> builder.examples(invalidExamples));
         var array = FieldType.ARRAY.newBuilder("values").itemsPattern("\\S")
                 .ref(FieldType.INTEGER.newBuilder("value").build()).build();
         assertThrows(IllegalArgumentException.class, () -> generator.convertArrayNode(array));

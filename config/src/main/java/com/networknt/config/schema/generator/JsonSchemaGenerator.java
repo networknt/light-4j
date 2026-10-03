@@ -201,14 +201,25 @@ public class JsonSchemaGenerator extends Generator {
         });
         var items = buildNestedJsonProperties(annotatedField);
         annotatedField.getItemsPattern().ifPresent(pattern -> {
-            if (!"string".equals(items.get(TYPE_KEY)))
-                throw new IllegalArgumentException("itemsPattern requires string items");
+            if (!hasOnlyStringTypes(items))
+                throw new IllegalArgumentException("itemsPattern requires string items or a union containing only string schemas");
             items.put(PATTERN_KEY, pattern);
         });
         props.put(ITEMS_KEY, items);
         return props;
     }
 
+
+    private static boolean hasOnlyStringTypes(Map<?, ?> schema) {
+        if ("string".equals(schema.get(TYPE_KEY)))
+            return true;
+        for (String keyword : List.of("oneOf", "allOf", "anyOf")) {
+            if (schema.get(keyword) instanceof List<?> members && !members.isEmpty())
+                return members.stream().allMatch(member ->
+                        member instanceof Map<?, ?> nested && hasOnlyStringTypes(nested));
+        }
+        return false;
+    }
 
     @Override
     protected LinkedHashMap<String, Object> convertNullNode(final FieldNode annotatedField) {

@@ -215,11 +215,10 @@ public class YamlGenerator extends Generator {
         private static void appendFieldReference(StringBuilder text, FieldNode node, String prefix) {
             node.getChildren().ifPresent(children -> children.forEach(child -> {
                 String path = prefix + child.getConfigFieldName();
+                child.getDescription().ifPresent(description ->
+                        text.append(path).append(": ").append(description).append('\n'));
                 if (child.getType() == FieldType.OBJECT) {
                     appendFieldReference(text, child.getRef().orElse(child), path + ".");
-                } else {
-                    child.getDescription().ifPresent(description ->
-                            text.append(path).append(": ").append(description).append('\n'));
                 }
             }));
         }
@@ -231,105 +230,107 @@ public class YamlGenerator extends Generator {
             exampleOptions.setPrettyFlow(false);
             exampleOptions.setIndent(2);
             exampleYaml = new Yaml(exampleOptions);
-            this.representers.put(String.class, new RepresentString() {
+            this.representers.put(String.class, new CommentedStringRepresenter(rootAnnotatedField));
+        }
 
-                @Override
-                public Node representData(Object nodeData) {
-                    final String nodeConfigName;
-                    final String nodeId;
+        private final class CommentedStringRepresenter extends RepresentString {
+            private final FieldNode rootAnnotatedField;
 
-                    final var stringData = (String) nodeData;
-                    if (stringData.contains(REPRESENTER_SEPARATOR)) {
-                        final var parts = stringData.split(REPRESENTER_SEPARATOR);
-                        nodeConfigName = parts[0];
-                        nodeId = parts[1];
-                    } else {
-                        nodeConfigName = stringData;
-                        nodeId = null;
-                    }
-                    final var node = super.representData(nodeConfigName);
-                    final var start = node.getStartMark();
-                    final var end = node.getEndMark();
-                    final var descriptionBuilder = new StringBuilder();
-                    final var nodeDescription = findCommentForNode(rootAnnotatedField, nodeConfigName, nodeId);
-                    if (!firstNodeProcessed.compareAndExchange(false, true)) {
-                        rootAnnotatedField.getDescription().ifPresent(description -> {
-                            descriptionBuilder.append(description);
-                            descriptionBuilder.append(LINE_SEPARATOR);
-                        });
-                    }
-                    nodeDescription.ifPresent(descriptionBuilder::append);
-                    final var description = descriptionBuilder.toString();
-                    if (!description.isBlank())
-                        this.addCommentsToNode(start, end, description, node);
-                    return node;
+            private CommentedStringRepresenter(FieldNode rootAnnotatedField) {
+                this.rootAnnotatedField = rootAnnotatedField;
+            }
+
+            @Override
+            public Node representData(Object nodeData) {
+                final String nodeConfigName;
+                final String nodeId;
+
+                final var stringData = (String) nodeData;
+                if (stringData.contains(REPRESENTER_SEPARATOR)) {
+                    final var parts = stringData.split(REPRESENTER_SEPARATOR);
+                    nodeConfigName = parts[0];
+                    nodeId = parts[1];
+                } else {
+                    nodeConfigName = stringData;
+                    nodeId = null;
                 }
-
-                /**
-                 * Adds comments to the node. If the description contains multiple lines, each line will be added as a separate comment.
-                 * @param start - The start mark of the node.
-                 * @param end - The end mark of the node.
-                 * @param description - The description to add as a comment.
-                 * @param node - The node to add the comments to.
-                 */
-                private void addCommentsToNode(final Mark start, final Mark end, final String description, final Node node) {
-                    final var commentLines = new ArrayList<CommentLine>();
-
-                    // Split the description by newline and add comments to the node.
-                    Arrays.stream(description.split(String.valueOf(LINE_SEPARATOR))).forEach(line -> {
-                        final String spacedLine;
-                        if (line.isBlank())
-                            spacedLine = line;
-                        else spacedLine = " " + line;
-                        commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, spacedLine, start, end)));
+                final var node = super.representData(nodeConfigName);
+                final var start = node.getStartMark();
+                final var end = node.getEndMark();
+                final var descriptionBuilder = new StringBuilder();
+                final var nodeDescription = findCommentForNode(rootAnnotatedField, nodeConfigName, nodeId);
+                if (!firstNodeProcessed.compareAndExchange(false, true)) {
+                    rootAnnotatedField.getDescription().ifPresent(description -> {
+                        descriptionBuilder.append(description);
+                        descriptionBuilder.append(LINE_SEPARATOR);
                     });
-                    node.setBlockComments(commentLines);
                 }
+                nodeDescription.ifPresent(descriptionBuilder::append);
+                final var description = descriptionBuilder.toString();
+                if (!description.isBlank())
+                    this.addCommentsToNode(start, end, description, node);
+                return node;
+            }
 
-                /**
-                 * Recursive function to search for the description of the current node based on the name and id.
-                 * @param annotatedField - The metadata to search through.
-                 * @param nodeName - The name of the node to search for.
-                 * @param uuid - The id of the node to search for.
-                 * @return The description of the node if found, otherwise null.
-                 */
-                private Optional<String> findCommentForNode(final FieldNode annotatedField, final String nodeName, final String uuid) {
-                    if (annotatedField.getConfigFieldName().equals(nodeName) && annotatedField.getId().toString().equals(uuid)) {
-                        if (annotatedField.getExamples().isEmpty())
-                            return annotatedField.getDescription();
-                        StringBuilder text = new StringBuilder(annotatedField.getDescription().orElse(""));
-                        for (var example : annotatedField.getExamples()) {
-                            text.append('\n').append(EXAMPLE_HEADER).append('\n')
-                                    .append(exampleYaml.dump(example));
-                        }
-                        text.append(FIELD_REFERENCE_HEADER).append('\n');
-                        appendFieldReference(text, annotatedField.getRef().orElse(annotatedField), "");
-                        return Optional.of(text.toString());
-                    } else
-                        return annotatedField.getRef().flatMap(ref -> this.findCommentForNode(ref, nodeName, uuid))
-                                .or(() -> annotatedField.getChildren().flatMap(nodes -> nodes.stream()
-                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .findAny())
-                                ).or(() -> annotatedField.getAnyOf().flatMap(nodes -> nodes.stream()
-                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
-                                        .filter(Optional::isPresent).map(Optional::get)
-                                        .findAny())
-                                ).or(() -> annotatedField.getAllOf().flatMap(nodes -> nodes.stream()
-                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .findAny()))
-                                .or(() -> annotatedField.getOneOf().flatMap(nodes -> nodes.stream()
-                                        .map(node -> this.findCommentForNode(node, nodeName, uuid))
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .findAny())
-                                );
+            /**
+             * Adds comments to the node. If the description contains multiple lines, each line will be added as a separate comment.
+             * @param start - The start mark of the node.
+             * @param end - The end mark of the node.
+             * @param description - The description to add as a comment.
+             * @param node - The node to add the comments to.
+             */
+            private void addCommentsToNode(final Mark start, final Mark end, final String description, final Node node) {
+                final var commentLines = new ArrayList<CommentLine>();
+
+                // Split the description by newline and add comments to the node.
+                Arrays.stream(description.split(String.valueOf(LINE_SEPARATOR))).forEach(line -> {
+                    final String spacedLine;
+                    if (line.isBlank())
+                        spacedLine = line;
+                    else spacedLine = " " + line;
+                    commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, spacedLine, start, end)));
+                });
+                node.setBlockComments(commentLines);
+            }
+
+            /**
+             * Recursive function to search for the description of the current node based on the name and id.
+             * @param annotatedField - The metadata to search through.
+             * @param nodeName - The name of the node to search for.
+             * @param uuid - The id of the node to search for.
+             * @return The description of the node if found, otherwise null.
+             */
+            private Optional<String> findCommentForNode(final FieldNode annotatedField, final String nodeName, final String uuid) {
+                if (annotatedField.getConfigFieldName().equals(nodeName) && annotatedField.getId().toString().equals(uuid))
+                    return describeField(annotatedField);
+
+                var children = new ArrayList<FieldNode>();
+                annotatedField.getRef().ifPresent(children::add);
+                annotatedField.getChildren().ifPresent(children::addAll);
+                annotatedField.getAnyOf().ifPresent(children::addAll);
+                annotatedField.getAllOf().ifPresent(children::addAll);
+                annotatedField.getOneOf().ifPresent(children::addAll);
+                return children.stream()
+                        .map(child -> findCommentForNode(child, nodeName, uuid))
+                        .flatMap(Optional::stream)
+                        .findFirst();
+            }
+
+            private Optional<String> describeField(FieldNode field) {
+                if (field.getExamples().isEmpty())
+                    return field.getDescription();
+                StringBuilder text = new StringBuilder(field.getDescription().orElse(""));
+                for (var example : field.getExamples()) {
+                    text.append('\n').append(EXAMPLE_HEADER).append('\n')
+                            .append(exampleYaml.dump(example));
                 }
+                StringBuilder reference = new StringBuilder();
+                appendFieldReference(reference, field.getRef().orElse(field), "");
+                if (!reference.isEmpty())
+                    text.append(FIELD_REFERENCE_HEADER).append('\n').append(reference);
+                return Optional.of(text.toString());
+            }
 
-            });
         }
     }
 }

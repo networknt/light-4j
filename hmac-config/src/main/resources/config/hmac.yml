@@ -49,9 +49,11 @@ enabled: ${hmac.enabled:false}
 # signaturePrefix: Optional; defaults to an empty string. Exact case-sensitive prefix removed before decoding; GitHub uses sha256=. Characters below U+0020 are forbidden; DEL and C1 characters are not rejected by the current runtime.
 # signatureEncoding: Optional; defaults to hex. Supports hex or base64, normalized to lowercase.
 # maxBodyBytes: Optional positive byte limit; defaults to 16777216 (16 MiB). Request injection must have enough exact-body buffering capacity.
+# secrets: Required secret source: configure bySelector or defaultEnvNames. Store environment-variable names only, never secret values.
 # secrets.selectorHeader: Optional; defaults to an empty string. Required when bySelector is non-empty. Selects a secret list using an exact header value after trimming HTTP whitespace.
 # secrets.bySelector: Optional map; defaults to empty. Each selector maps to one or two distinct nonblank environment-variable names, current first and previous second. Quote numeric selector keys in YAML.
 # secrets.defaultEnvNames: Optional; defaults to an empty list (no fallback). One or two distinct nonblank environment-variable names for a shared secret or an explicit fallback for missing/unknown selectors. At least this list or bySelector must be non-empty.
+# replay: Optional replay suppression policy; disabled by default. Storage implementation is selected in service.yml, not here.
 # replay.enabled: Optional; defaults to false. Enable delivery-ID replay suppression; requires idHeader and a configured WebhookReplayStore singleton.
 # replay.idHeader: Optional when replay is disabled; required nonblank HTTP header name when enabled. GitHub uses X-GitHub-Delivery.
 # replay.retentionSeconds: Optional positive retention time in seconds; defaults to 604800 (seven days).
