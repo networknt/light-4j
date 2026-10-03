@@ -177,6 +177,7 @@ public class MetadataParser {
                 .minItems(field.minItems())
                 .maxItems(field.maxItems())
                 .uniqueItems(field.uniqueItems())
+                .itemsPattern(field.itemsPattern())
                 .contains(field.contains())
                 .subObjectDefault(field.useSubObjectDefault())
                 .defaultValue(field.defaultValue())
@@ -195,7 +196,11 @@ public class MetadataParser {
                         .map(builder::allOf))
                 .or(() -> handleReferenceClassArray(element, MapField.class, "valueTypeAnyOf", pe)
                         .map(builder::anyOf));
-        if (parsed.isEmpty()) {
+        if (field.valueArray().length > 1)
+            throw new IllegalArgumentException("MapField accepts at most one valueArray declaration");
+        if (field.valueArray().length == 1) {
+            builder.ref(parseArrayMetadata(element, field.valueArray()[0], pe));
+        } else if (parsed.isEmpty()) {
             String canonicalName;
             try {
                 canonicalName = field.valueType().getCanonicalName();
@@ -209,6 +214,8 @@ public class MetadataParser {
         }
         return builder.externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
+                .examples(field.examples())
+                .requiredProperties(field.requiredProperties())
                 .defaultValue(field.defaultValue())
                 .build();
     }

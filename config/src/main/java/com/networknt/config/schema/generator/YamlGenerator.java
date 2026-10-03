@@ -1,6 +1,7 @@
 package com.networknt.config.schema.generator;
 
 import com.networknt.config.schema.FieldNode;
+import com.networknt.config.schema.FieldType;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.comments.CommentLine;
@@ -26,6 +27,8 @@ public class YamlGenerator extends Generator {
 
     private static final String EXTERNAL_CONFIG_PREFIX = "${";
     private static final String EXTERNAL_CONFIG_SUFFIX = "}";
+    public static final String EXAMPLE_HEADER = "Example value (replace the field placeholder; no outer wrapper):";
+    public static final String FIELD_REFERENCE_HEADER = "Value fields (required/optional, defaults and constraints):";
     protected static final DumperOptions YAML_OPTIONS = new DumperOptions();
 
     static {
@@ -205,10 +208,29 @@ public class YamlGenerator extends Generator {
     public static class YamlCommentRepresenter extends Representer {
         private static final char LINE_SEPARATOR = '\n';
         public static final String REPRESENTER_SEPARATOR = "___";
+        private final Yaml exampleYaml;
+
         private final AtomicBoolean firstNodeProcessed = new AtomicBoolean(false);
+
+        private static void appendFieldReference(StringBuilder text, FieldNode node, String prefix) {
+            node.getChildren().ifPresent(children -> children.forEach(child -> {
+                String path = prefix + child.getConfigFieldName();
+                if (child.getType() == FieldType.OBJECT) {
+                    appendFieldReference(text, child.getRef().orElse(child), path + ".");
+                } else {
+                    child.getDescription().ifPresent(description ->
+                            text.append(path).append(": ").append(description).append('\n'));
+                }
+            }));
+        }
 
         public YamlCommentRepresenter(final DumperOptions options, final FieldNode rootAnnotatedField) {
             super(options);
+            var exampleOptions = new DumperOptions();
+            exampleOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            exampleOptions.setPrettyFlow(false);
+            exampleOptions.setIndent(2);
+            exampleYaml = new Yaml(exampleOptions);
             this.representers.put(String.class, new RepresentString() {
 
                 @Override
@@ -273,7 +295,16 @@ public class YamlGenerator extends Generator {
                  */
                 private Optional<String> findCommentForNode(final FieldNode annotatedField, final String nodeName, final String uuid) {
                     if (annotatedField.getConfigFieldName().equals(nodeName) && annotatedField.getId().toString().equals(uuid)) {
-                        return annotatedField.getDescription();
+                        if (annotatedField.getExamples().isEmpty())
+                            return annotatedField.getDescription();
+                        StringBuilder text = new StringBuilder(annotatedField.getDescription().orElse(""));
+                        for (var example : annotatedField.getExamples()) {
+                            text.append('\n').append(EXAMPLE_HEADER).append('\n')
+                                    .append(exampleYaml.dump(example));
+                        }
+                        text.append(FIELD_REFERENCE_HEADER).append('\n');
+                        appendFieldReference(text, annotatedField.getRef().orElse(annotatedField), "");
+                        return Optional.of(text.toString());
                     } else
                         return annotatedField.getRef().flatMap(ref -> this.findCommentForNode(ref, nodeName, uuid))
                                 .or(() -> annotatedField.getChildren().flatMap(nodes -> nodes.stream()

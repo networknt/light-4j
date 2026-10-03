@@ -5,93 +5,164 @@
   "properties" : {
     "enabled" : {
       "type" : "boolean",
-      "description" : "Enable raw-body HMAC webhook authentication.",
+      "description" : "Enable raw-body HMAC webhook authentication. Requires a nonempty profiles map and nonempty secret environment variables at runtime. A unified-security hmacProfile reference with HMAC disabled fails runtime initialization. See https://github.com/networknt/light-4j/blob/master/hmac-config/README.md",
       "default" : false
     },
     "profiles" : {
       "type" : "object",
-      "description" : "Named HMAC verification profiles. Secret values are referenced only by environment-variable name.",
+      "description" : "Named verification profiles, required nonempty when enabled. Profile names are selected by unified-security pathPrefixAuths.hmacProfile. Store environment-variable names only. Configuration guide: https://github.com/networknt/light-4j/blob/master/hmac-config/README.md",
+      "examples" : [ {
+        "github" : {
+          "signedInput" : "rawBody",
+          "algorithm" : "hmacSha256",
+          "allowedMethods" : [ "POST" ],
+          "signatureHeader" : "X-Hub-Signature-256",
+          "signaturePrefix" : "sha256=",
+          "signatureEncoding" : "hex",
+          "maxBodyBytes" : 16777216,
+          "secrets" : {
+            "selectorHeader" : "X-GitHub-Hook-ID",
+            "bySelector" : {
+              "12345678" : [ "GITHUB_HOOK_CURRENT_SECRET", "GITHUB_HOOK_PREVIOUS_SECRET" ]
+            },
+            "defaultEnvNames" : [ ]
+          },
+          "replay" : {
+            "enabled" : true,
+            "idHeader" : "X-GitHub-Delivery",
+            "retentionSeconds" : 604800
+          }
+        },
+        "shared-build" : {
+          "signedInput" : "rawBody",
+          "algorithm" : "hmacSha256",
+          "allowedMethods" : [ "POST" ],
+          "signatureHeader" : "X-Build-Signature",
+          "signaturePrefix" : "",
+          "signatureEncoding" : "base64",
+          "maxBodyBytes" : 16777216,
+          "secrets" : {
+            "selectorHeader" : "",
+            "bySelector" : { },
+            "defaultEnvNames" : [ "BUILD_WEBHOOK_SECRET" ]
+          },
+          "replay" : {
+            "enabled" : false,
+            "idHeader" : "",
+            "retentionSeconds" : 604800
+          }
+        }
+      } ],
       "additionalProperties" : {
         "type" : "object",
         "properties" : {
           "signedInput" : {
             "type" : "string",
-            "default" : "rawBody"
+            "description" : "Optional; defaults to rawBody, the only supported signed input. Verify the exact received body bytes without parsing or normalization.",
+            "default" : "rawBody",
+            "minLength" : 1,
+            "pattern" : "^rawBody$"
           },
           "algorithm" : {
             "type" : "string",
-            "default" : "hmacSha256"
+            "description" : "Optional; defaults to hmacSha256, the only supported algorithm.",
+            "default" : "hmacSha256",
+            "minLength" : 1,
+            "pattern" : "^hmacSha256$"
           },
           "allowedMethods" : {
             "type" : "array",
-            "minItems" : 1,
+            "description" : "Optional; omitted, null or empty defaults to [POST]. Unique subset of POST, PUT and PATCH; method names are normalized to uppercase.",
+            "uniqueItems" : true,
             "default" : [ "POST" ],
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "pattern" : "^([pP][oO][sS][tT]|[pP][uU][tT]|[pP][aA][tT][cC][hH])$"
             }
           },
           "signatureHeader" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Required nonblank HTTP header name carrying the signature. GitHub uses X-Hub-Signature-256. Header names are case-insensitive.",
+            "minLength" : 1,
+            "pattern" : "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
           },
           "signaturePrefix" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Optional; defaults to an empty string. Exact case-sensitive prefix removed before decoding; GitHub uses sha256=. Characters below U+0020 are forbidden; DEL and C1 characters are not rejected by the current runtime."
           },
           "signatureEncoding" : {
             "type" : "string",
-            "default" : "hex"
+            "description" : "Optional; defaults to hex. Supports hex or base64, normalized to lowercase.",
+            "default" : "hex",
+            "minLength" : 1,
+            "pattern" : "^([hH][eE][xX]|[bB][aA][sS][eE]64)$"
           },
           "maxBodyBytes" : {
             "type" : "integer",
+            "description" : "Optional positive byte limit; defaults to 16777216 (16 MiB). Request injection must have enough exact-body buffering capacity.",
             "default" : 16777216,
             "minimum" : 1,
             "format" : "int32"
           },
           "secrets" : {
             "type" : "object",
+            "description" : "Required secret source: configure bySelector or defaultEnvNames. Store environment-variable names only, never secret values.",
             "properties" : {
               "selectorHeader" : {
-                "type" : "string"
+                "type" : "string",
+                "description" : "Optional; defaults to an empty string. Required when bySelector is non-empty. Selects a secret list using an exact header value after trimming HTTP whitespace."
               },
               "bySelector" : {
                 "type" : "object",
+                "description" : "Optional map; defaults to empty. Each selector maps to one or two distinct nonblank environment-variable names, current first and previous second. Quote numeric selector keys in YAML.",
                 "additionalProperties" : {
                   "type" : "array",
                   "minItems" : 1,
                   "maxItems" : 2,
+                  "uniqueItems" : true,
                   "items" : {
-                    "type" : "string"
+                    "type" : "string",
+                    "pattern" : "[^\\s]"
                   }
                 }
               },
               "defaultEnvNames" : {
                 "type" : "array",
+                "description" : "Optional; defaults to an empty list (no fallback). One or two distinct nonblank environment-variable names for a shared secret or an explicit fallback for missing/unknown selectors. At least this list or bySelector must be non-empty.",
                 "maxItems" : 2,
+                "uniqueItems" : true,
                 "default" : [ ],
                 "items" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "pattern" : "[^\\s]"
                 }
               }
             }
           },
           "replay" : {
             "type" : "object",
+            "description" : "Optional replay suppression policy; disabled by default. Storage implementation is selected in service.yml, not here.",
             "properties" : {
               "enabled" : {
                 "type" : "boolean",
+                "description" : "Optional; defaults to false. Enable delivery-ID replay suppression; requires idHeader and a configured WebhookReplayStore singleton.",
                 "default" : false
               },
               "idHeader" : {
-                "type" : "string"
+                "type" : "string",
+                "description" : "Optional when replay is disabled; required nonblank HTTP header name when enabled. GitHub uses X-GitHub-Delivery."
               },
               "retentionSeconds" : {
                 "type" : "integer",
+                "description" : "Optional positive retention time in seconds; defaults to 604800 (seven days).",
                 "default" : 604800,
                 "minimum" : 1,
                 "format" : "int32"
               }
             }
           }
-        }
+        },
+        "required" : [ "signatureHeader", "secrets" ]
       }
     }
   }

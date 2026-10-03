@@ -153,7 +153,11 @@ public class JsonSchemaGenerator extends Generator {
         props.put(TYPE_KEY, annotatedField.getType().toString());
         annotatedField.getDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
 
+        if (!annotatedField.getExamples().isEmpty())
+            props.put("examples", annotatedField.getExamples());
         var additionalProps = buildNestedJsonProperties(annotatedField);
+        if (!annotatedField.getRequiredProperties().isEmpty())
+            additionalProps.put(REQUIRED_KEY, annotatedField.getRequiredProperties());
         props.put(ADDITIONAL_PROPERTIES_KEY, additionalProps);
         return props;
     }
@@ -196,6 +200,11 @@ public class JsonSchemaGenerator extends Generator {
             }
         });
         var items = buildNestedJsonProperties(annotatedField);
+        annotatedField.getItemsPattern().ifPresent(pattern -> {
+            if (!"string".equals(items.get(TYPE_KEY)))
+                throw new IllegalArgumentException("itemsPattern requires string items");
+            items.put(PATTERN_KEY, pattern);
+        });
         props.put(ITEMS_KEY, items);
         return props;
     }
