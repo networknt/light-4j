@@ -213,7 +213,7 @@ public class JsonSchemaGenerator extends Generator {
     private static boolean hasOnlyStringTypes(Map<?, ?> schema) {
         if ("string".equals(schema.get(TYPE_KEY)))
             return true;
-        for (String keyword : List.of("oneOf", "allOf", "anyOf")) {
+        for (String keyword : List.of(ONE_OF_KEY, ALL_OF_KEY, ANY_OF_KEY)) {
             if (schema.get(keyword) instanceof List<?> members && !members.isEmpty())
                 return members.stream().allMatch(member ->
                         member instanceof Map<?, ?> nested && hasOnlyStringTypes(nested));
