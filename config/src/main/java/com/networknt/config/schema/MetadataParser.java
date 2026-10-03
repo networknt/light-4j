@@ -160,12 +160,7 @@ public class MetadataParser {
                 .or(() -> resolveClassArray(field::itemsAnyOf, processingEnvironment)
                         .map(builder::anyOf));
         if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.items().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+            String canonicalName = className(field::items);
             AnnotationUtils.getElement(canonicalName, processingEnvironment).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, processingEnvironment).build();
                 builder.ref(data);
@@ -205,12 +200,7 @@ public class MetadataParser {
         if (valueArrays.length == 1) {
             builder.ref(parseArrayMetadata(valueArrays[0], pe));
         } else if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.valueType().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+            String canonicalName = className(field::valueType);
             AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, pe).build();
                 builder.ref(data);
@@ -340,12 +330,7 @@ public class MetadataParser {
                         .map(builder::anyOf));
 
         if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.ref().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+            String canonicalName = className(field::ref);
             AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, pe).build();
                 builder.ref(data);

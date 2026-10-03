@@ -1,11 +1,14 @@
 package com.networknt.config.schema;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for annotation processing.
@@ -109,6 +112,52 @@ public class AnnotationUtils {
 
             else return Optional.of(annotation);
         }
+    }
+
+    /**
+     * Reads Class[] members of an annotation placed directly on the supplied element.
+     * Annotations nested inside another annotation, such as {@link ArrayField} inside
+     * {@link MapField#valueArray()}, are not visible through this element-based API.
+     * This supported method is retained for downstream annotation processor compatibility.
+     *
+     * @param element               - The annotated element.
+     * @param annotationClass       - The annotation class containing Class[]
+     * @param memberName            - The name of the Class[] annotation member.
+     * @param processingEnvironment - The current annotation processing environment
+     * @return The member's type mirrors, including an empty list for an empty Class[] value;
+     *         an empty optional if the direct annotation or member is absent.
+     */
+    public static Optional<List<TypeMirror>> getClassArrayMirrors(
+            final Element element,
+            final Class<? extends Annotation> annotationClass,
+            final String memberName,
+            final ProcessingEnvironment processingEnvironment
+    ) {
+        final var elements = processingEnvironment.getElementUtils();
+        final var annotationMirror = element.getAnnotationMirrors()
+                .stream()
+                .filter(mirror -> mirror.getAnnotationType().toString().equals(annotationClass.getCanonicalName()))
+                .findFirst();
+
+        if (annotationMirror.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final var elementValues = elements.getElementValuesWithDefaults(annotationMirror.get());
+
+        return elementValues
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getKey().getSimpleName().toString().equals(memberName))
+                .findFirst()
+                .map(entry -> {
+                    AnnotationValue valueWrapper = entry.getValue();
+                    @SuppressWarnings("unchecked")
+                    List<? extends AnnotationValue> values = (List<? extends AnnotationValue>) valueWrapper.getValue();
+                    return values.stream()
+                            .map(v -> (TypeMirror) v.getValue())
+                            .collect(Collectors.toList());
+                });
     }
 
 }

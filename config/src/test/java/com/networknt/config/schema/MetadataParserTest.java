@@ -19,6 +19,9 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -106,11 +109,35 @@ class MetadataParserTest {
         }
     }
 
+    @Test
+    void publicClassArrayLookupSupportsDirectAnnotationsButDoesNotInspectNestedAnnotations() throws IOException {
+        var processor = compile("""
+                package fixture;
+                import com.networknt.config.schema.*;
+                class ArrayUnions {
+                    @ArrayField(configFieldName="direct", itemsOneOf={String.class, Integer.class}) Object direct;
+                    @ArrayField(configFieldName="empty") Object empty;
+                    @MapField(configFieldName="nested", valueArray=@ArrayField(
+                        configFieldName="values", itemsOneOf={String.class, Integer.class})) Object nested;
+                    Object absent;
+                }
+                """, new CompatibilityProcessor());
+        assertEquals(Optional.of(List.of("java.lang.String", "java.lang.Integer")),
+                processor.results.get("direct"));
+        assertEquals(Optional.of(List.of()), processor.results.get("empty"));
+        assertEquals(Optional.empty(), processor.results.get("nested"));
+        assertEquals(Optional.empty(), processor.results.get("absent"));
+        assertEquals(Optional.empty(), processor.missingMember);
+    }
+
     private CapturingProcessor compile(String source) throws IOException {
+        return compile(source, new CapturingProcessor());
+    }
+
+    private <T extends CapturingProcessor> T compile(String source, T processor) throws IOException {
         var compiler = ToolProvider.getSystemJavaCompiler();
         assumeTrue(compiler != null, "Annotation-processing regression needs a JDK");
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
-        var processor = new CapturingProcessor();
         try (var files = compiler.getStandardFileManager(diagnostics, null, null)) {
             var unit = new SimpleJavaFileObject(URI.create("string:///fixture/ArrayUnions.java"),
                     JavaFileObject.Kind.SOURCE) {
@@ -126,6 +153,27 @@ class MetadataParserTest {
             assertTrue(task.call(), () -> diagnostics.getDiagnostics().toString());
         }
         return processor;
+    }
+
+    private static class CompatibilityProcessor extends CapturingProcessor {
+        private final Map<String, Optional<List<String>>> results = new HashMap<>();
+        private Optional<List<String>> missingMember;
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            if (!roundEnv.processingOver() && results.isEmpty()) {
+                var root = processingEnv.getElementUtils().getTypeElement("fixture.ArrayUnions");
+                for (var element : root.getEnclosedElements()) {
+                    String name = element.getSimpleName().toString();
+                    results.put(name, AnnotationUtils.getClassArrayMirrors(element, ArrayField.class,
+                            "itemsOneOf", processingEnv).map(types -> types.stream().map(Object::toString).toList()));
+                    if (name.equals("direct"))
+                        missingMember = AnnotationUtils.getClassArrayMirrors(element, ArrayField.class,
+                                "missingMember", processingEnv).map(types -> types.stream().map(Object::toString).toList());
+                }
+            }
+            return true;
+        }
     }
 
     private static class CapturingProcessor extends AbstractProcessor {
