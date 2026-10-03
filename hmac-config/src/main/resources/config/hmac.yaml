@@ -1,5 +1,60 @@
 # Raw-body HMAC webhook authentication configuration.
-# Enable raw-body HMAC webhook authentication.
+# Enable raw-body HMAC webhook authentication. Requires a nonempty profiles map and nonempty secret environment variables at runtime. A unified-security hmacProfile reference with HMAC disabled fails runtime initialization. See https://github.com/networknt/light-4j/blob/master/hmac-config/README.md
 enabled: ${hmac.enabled:false}
-# Named HMAC verification profiles. Secret values are referenced only by environment-variable name.
+# Named verification profiles, required nonempty when enabled. Profile names are selected by unified-security pathPrefixAuths.hmacProfile. Store environment-variable names only. Configuration guide: https://github.com/networknt/light-4j/blob/master/hmac-config/README.md
+# Example value (replace the field placeholder; no outer wrapper):
+# github:
+#   signedInput: rawBody
+#   algorithm: hmacSha256
+#   allowedMethods:
+#   - POST
+#   signatureHeader: X-Hub-Signature-256
+#   signaturePrefix: sha256=
+#   signatureEncoding: hex
+#   maxBodyBytes: 16777216
+#   secrets:
+#     selectorHeader: X-GitHub-Hook-ID
+#     bySelector:
+#       '12345678':
+#       - GITHUB_HOOK_CURRENT_SECRET
+#       - GITHUB_HOOK_PREVIOUS_SECRET
+#     defaultEnvNames: []
+#   replay:
+#     enabled: true
+#     idHeader: X-GitHub-Delivery
+#     retentionSeconds: 604800
+# shared-build:
+#   signedInput: rawBody
+#   algorithm: hmacSha256
+#   allowedMethods:
+#   - POST
+#   signatureHeader: X-Build-Signature
+#   signaturePrefix: ''
+#   signatureEncoding: base64
+#   maxBodyBytes: 16777216
+#   secrets:
+#     selectorHeader: ''
+#     bySelector: {}
+#     defaultEnvNames:
+#     - BUILD_WEBHOOK_SECRET
+#   replay:
+#     enabled: false
+#     idHeader: ''
+#     retentionSeconds: 604800
+# Value fields (required/optional, defaults and constraints):
+# signedInput: Optional; defaults to rawBody, the only supported signed input. Verify the exact received body bytes without parsing or normalization.
+# algorithm: Optional; defaults to hmacSha256, the only supported algorithm.
+# allowedMethods: Optional; omitted, null or empty defaults to [POST]. Unique subset of POST, PUT and PATCH; method names are normalized to uppercase.
+# signatureHeader: Required nonblank HTTP header name carrying the signature. GitHub uses X-Hub-Signature-256. Header names are case-insensitive.
+# signaturePrefix: Optional; defaults to an empty string. Exact case-sensitive prefix removed before decoding; GitHub uses sha256=. Characters below U+0020 are forbidden; DEL and C1 characters are not rejected by the current runtime.
+# signatureEncoding: Optional; defaults to hex. Supports hex or base64, normalized to lowercase.
+# maxBodyBytes: Optional positive byte limit; defaults to 16777216 (16 MiB). Request injection must have enough exact-body buffering capacity.
+# secrets: Required secret source: configure bySelector or defaultEnvNames. Store environment-variable names only, never secret values.
+# secrets.selectorHeader: Optional; defaults to an empty string. Required when bySelector is non-empty. Selects a secret list using an exact header value after trimming HTTP whitespace.
+# secrets.bySelector: Optional map; defaults to empty. Each selector maps to one or two distinct nonblank environment-variable names, current first and previous second. Quote numeric selector keys in YAML.
+# secrets.defaultEnvNames: Optional; defaults to an empty list (no fallback). One or two distinct nonblank environment-variable names for a shared secret or an explicit fallback for missing/unknown selectors. At least this list or bySelector must be non-empty.
+# replay: Optional replay suppression policy; disabled by default. Storage implementation is selected in service.yml, not here.
+# replay.enabled: Optional; defaults to false. Enable delivery-ID replay suppression; requires idHeader and a configured WebhookReplayStore singleton.
+# replay.idHeader: Optional when replay is disabled; required nonblank HTTP header name when enabled. GitHub uses X-GitHub-Delivery.
+# replay.retentionSeconds: Optional positive retention time in seconds; defaults to 604800 (seven days).
 profiles: ${hmac.profiles:}

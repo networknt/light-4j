@@ -24,13 +24,13 @@ import com.networknt.config.schema.StringField;
 public class HmacReplayConfig {
     public static final int DEFAULT_RETENTION_SECONDS = 604800;
 
-    @BooleanField(configFieldName = "enabled", defaultValue = "false")
+    @BooleanField(configFieldName = "enabled", defaultValue = "false", description = "Optional; defaults to false. Enable delivery-ID replay suppression; requires idHeader and a configured WebhookReplayStore singleton.")
     private boolean enabled;
 
-    @StringField(configFieldName = "idHeader", defaultValue = "")
+    @StringField(configFieldName = "idHeader", defaultValue = "", description = "Optional when replay is disabled; required nonblank HTTP header name when enabled. GitHub uses X-GitHub-Delivery.")
     private String idHeader = "";
 
-    @IntegerField(configFieldName = "retentionSeconds", defaultValue = "604800", min = 1)
+    @IntegerField(configFieldName = "retentionSeconds", defaultValue = "604800", min = 1, description = "Optional positive retention time in seconds; defaults to 604800 (seven days).")
     private int retentionSeconds = DEFAULT_RETENTION_SECONDS;
 
     public boolean isEnabled() {

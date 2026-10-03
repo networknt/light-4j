@@ -87,6 +87,9 @@ public @interface ArrayField {
      */
     Class<?> items() default Object.class;
 
+    /** Optional pattern for string items. */
+    String itemsPattern() default ConfigSchema.DEFAULT_STRING;
+
     /**
      * The items flag of the field.
      * If defined, the items in the array must match the schema.

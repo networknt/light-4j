@@ -2,6 +2,12 @@ package com.networknt.config.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +20,7 @@ import java.util.UUID;
  * @author Kalev Gonvick
  */
 public class FieldNode {
+    private static final ObjectMapper EXAMPLE_MAPPER = new ObjectMapper();
 
     /**
      * Randomly generated id.
@@ -49,6 +56,15 @@ public class FieldNode {
 
     @JsonProperty
     String description;
+
+    @JsonProperty
+    List<Map<String, Object>> examples;
+
+    @JsonProperty
+    List<String> requiredProperties;
+
+    @JsonProperty
+    String itemsPattern;
 
     @JsonProperty
     String defaultValue;
@@ -151,6 +167,21 @@ public class FieldNode {
     @JsonIgnore
     public Optional<String> getExternalizedKeyName() {
         return this.getOptional(this.externalizedKeyName);
+    }
+
+    @JsonIgnore
+    public List<Map<String, Object>> getExamples() {
+        return examples == null ? List.of() : examples;
+    }
+
+    @JsonIgnore
+    public List<String> getRequiredProperties() {
+        return requiredProperties == null ? List.of() : requiredProperties;
+    }
+
+    @JsonIgnore
+    public Optional<String> getItemsPattern() {
+        return Optional.ofNullable(itemsPattern);
     }
 
     @JsonIgnore
@@ -298,6 +329,33 @@ public class FieldNode {
         public Builder externalizedKeyName(final String value) {
             if (!value.equals(ConfigSchema.DEFAULT_STRING))
                 this.node.externalizedKeyName = value;
+            return this;
+        }
+
+        public Builder examples(final String[] values) {
+            var parsed = new ArrayList<Map<String, Object>>();
+            for (String value : values) {
+                try {
+                    Map<String, Object> example = EXAMPLE_MAPPER.readValue(value, new TypeReference<>() { });
+                    if (example == null)
+                        throw new IllegalArgumentException("Map example must be a JSON object");
+                    parsed.add(example);
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Invalid map example: " + node.configFieldName, e);
+                }
+            }
+            this.node.examples = List.copyOf(parsed);
+            return this;
+        }
+
+        public Builder requiredProperties(final String[] values) {
+            this.node.requiredProperties = List.of(values);
+            return this;
+        }
+
+        public Builder itemsPattern(final String value) {
+            if (!value.equals(ConfigSchema.DEFAULT_STRING))
+                this.node.itemsPattern = value;
             return this;
         }
 

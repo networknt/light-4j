@@ -33,6 +33,15 @@ public @interface MapField {
      */
     String description() default ConfigSchema.DEFAULT_STRING;
 
+    /** JSON object examples, emitted as YAML comments and draft-07 examples. */
+    String[] examples() default {};
+
+    /** Required properties of each object value, not the dynamic map keys. */
+    String[] requiredProperties() default {};
+
+    /** Array-valued map entries; at most one array declaration. */
+    ArrayField[] valueArray() default {};
+
     /**
      * The externalized key name of the field.
      * If set, the value of the field will be formatted in the Light4J configuration style.

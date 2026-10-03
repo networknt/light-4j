@@ -27,15 +27,13 @@ import java.util.Map;
 
 /** Environment-variable references used by one HMAC profile. */
 public class HmacSecretsConfig {
-    @StringField(configFieldName = "selectorHeader", defaultValue = "")
+    @StringField(configFieldName = "selectorHeader", defaultValue = "", description = "Optional; defaults to an empty string. Required when bySelector is non-empty. Selects a secret list using an exact header value after trimming HTTP whitespace.")
     private String selectorHeader = "";
 
-    // The schema generator cannot describe generic map values yet. The checked-in
-    // schema narrows each value to an array of one or two strings.
-    @MapField(configFieldName = "bySelector", additionalProperties = true, valueType = List.class)
+    @MapField(configFieldName = "bySelector", additionalProperties = true, valueArray = @ArrayField(configFieldName = "selectorSecrets", items = String.class, minItems = 1, maxItems = 2, uniqueItems = true, itemsPattern = "[^\\s]" ), description = "Optional map; defaults to empty. Each selector maps to one or two distinct nonblank environment-variable names, current first and previous second. Quote numeric selector keys in YAML.")
     private Map<String, List<String>> bySelector = new LinkedHashMap<>();
 
-    @ArrayField(configFieldName = "defaultEnvNames", items = String.class, defaultValue = "[]", maxItems = 2)
+    @ArrayField(configFieldName = "defaultEnvNames", items = String.class, defaultValue = "[]", maxItems = 2, uniqueItems = true, itemsPattern = "[^\\s]", description = "Optional; defaults to an empty list (no fallback). One or two distinct nonblank environment-variable names for a shared secret or an explicit fallback for missing/unknown selectors. At least this list or bySelector must be non-empty.")
     private List<String> defaultEnvNames = new ArrayList<>();
 
     public String getSelectorHeader() {

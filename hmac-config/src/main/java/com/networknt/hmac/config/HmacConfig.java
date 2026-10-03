@@ -50,7 +50,7 @@ public final class HmacConfig {
             configFieldName = "enabled",
             externalizedKeyName = "enabled",
             defaultValue = "false",
-            description = "Enable raw-body HMAC webhook authentication."
+            description = "Enable raw-body HMAC webhook authentication. Requires a nonempty profiles map and nonempty secret environment variables at runtime. A unified-security hmacProfile reference with HMAC disabled fails runtime initialization. See https://github.com/networknt/light-4j/blob/master/hmac-config/README.md"
     )
     private boolean enabled;
 
@@ -59,7 +59,61 @@ public final class HmacConfig {
             externalizedKeyName = "profiles",
             additionalProperties = true,
             valueType = HmacProfileConfig.class,
-            description = "Named HMAC verification profiles. Secret values are referenced only by environment-variable name."
+            requiredProperties = {"signatureHeader", "secrets"},
+            description = "Named verification profiles, required nonempty when enabled. Profile names are selected by unified-security pathPrefixAuths.hmacProfile. Store environment-variable names only. Configuration guide: https://github.com/networknt/light-4j/blob/master/hmac-config/README.md",
+            examples = """
+                    {
+                      "github": {
+                        "signedInput": "rawBody",
+                        "algorithm": "hmacSha256",
+                        "allowedMethods": [
+                          "POST"
+                        ],
+                        "signatureHeader": "X-Hub-Signature-256",
+                        "signaturePrefix": "sha256=",
+                        "signatureEncoding": "hex",
+                        "maxBodyBytes": 16777216,
+                        "secrets": {
+                          "selectorHeader": "X-GitHub-Hook-ID",
+                          "bySelector": {
+                            "12345678": [
+                              "GITHUB_HOOK_CURRENT_SECRET",
+                              "GITHUB_HOOK_PREVIOUS_SECRET"
+                            ]
+                          },
+                          "defaultEnvNames": []
+                        },
+                        "replay": {
+                          "enabled": true,
+                          "idHeader": "X-GitHub-Delivery",
+                          "retentionSeconds": 604800
+                        }
+                      },
+                      "shared-build": {
+                        "signedInput": "rawBody",
+                        "algorithm": "hmacSha256",
+                        "allowedMethods": [
+                          "POST"
+                        ],
+                        "signatureHeader": "X-Build-Signature",
+                        "signaturePrefix": "",
+                        "signatureEncoding": "base64",
+                        "maxBodyBytes": 16777216,
+                        "secrets": {
+                          "selectorHeader": "",
+                          "bySelector": {},
+                          "defaultEnvNames": [
+                            "BUILD_WEBHOOK_SECRET"
+                          ]
+                        },
+                        "replay": {
+                          "enabled": false,
+                          "idHeader": "",
+                          "retentionSeconds": 604800
+                        }
+                      }
+                    }
+                    """
     )
     private Map<String, HmacProfileConfig> profiles = Collections.emptyMap();
 

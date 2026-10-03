@@ -1,0 +1,51 @@
+{
+  "github": {
+    "signedInput": "rawBody",
+    "algorithm": "hmacSha256",
+    "allowedMethods": [
+      "POST"
+    ],
+    "signatureHeader": "X-Hub-Signature-256",
+    "signaturePrefix": "sha256=",
+    "signatureEncoding": "hex",
+    "maxBodyBytes": 16777216,
+    "secrets": {
+      "selectorHeader": "X-GitHub-Hook-ID",
+      "bySelector": {
+        "12345678": [
+          "GITHUB_HOOK_CURRENT_SECRET",
+          "GITHUB_HOOK_PREVIOUS_SECRET"
+        ]
+      },
+      "defaultEnvNames": []
+    },
+    "replay": {
+      "enabled": true,
+      "idHeader": "X-GitHub-Delivery",
+      "retentionSeconds": 604800
+    }
+  },
+  "shared-build": {
+    "signedInput": "rawBody",
+    "algorithm": "hmacSha256",
+    "allowedMethods": [
+      "POST"
+    ],
+    "signatureHeader": "X-Build-Signature",
+    "signaturePrefix": "",
+    "signatureEncoding": "base64",
+    "maxBodyBytes": 16777216,
+    "secrets": {
+      "selectorHeader": "",
+      "bySelector": {},
+      "defaultEnvNames": [
+        "BUILD_WEBHOOK_SECRET"
+      ]
+    },
+    "replay": {
+      "enabled": false,
+      "idHeader": "",
+      "retentionSeconds": 604800
+    }
+  }
+}
