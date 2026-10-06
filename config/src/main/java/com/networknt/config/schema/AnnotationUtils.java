@@ -115,13 +115,17 @@ public class AnnotationUtils {
     }
 
     /**
-     * Safely accesses Class[] type members of an annotation class.
+     * Reads Class[] members of an annotation placed directly on the supplied element.
+     * Annotations nested inside another annotation, such as {@link ArrayField} inside
+     * {@link MapField#valueArray()}, are not visible through this element-based API.
+     * This supported method is retained for downstream annotation processor compatibility.
      *
      * @param element               - The annotated element.
      * @param annotationClass       - The annotation class containing Class[]
-     * @param memberName            - The method in from the annotation class to access the class array.
+     * @param memberName            - The name of the Class[] annotation member.
      * @param processingEnvironment - The current annotation processing environment
-     * @return                      - Returns a list of type mirrors for. None if it was not found.
+     * @return The member's type mirrors, including an empty list for an empty Class[] value;
+     *         an empty optional if the direct annotation or member is absent.
      */
     public static Optional<List<TypeMirror>> getClassArrayMirrors(
             final Element element,

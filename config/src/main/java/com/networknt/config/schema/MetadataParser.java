@@ -4,8 +4,9 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
-import java.lang.annotation.Annotation;
+import javax.lang.model.type.MirroredTypesException;
 import java.util.*;
+import java.util.function.Supplier;
 
 
 /**
@@ -128,45 +129,38 @@ public class MetadataParser {
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, NullField.class, processingEnvironment)
                         .map(MetadataParser::parseNullMetadata))
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, ObjectField.class, processingEnvironment)
-                        .map(annotation -> parseObjectMetadata(annotatedClassField, annotation, processingEnvironment)))
+                        .map(annotation -> parseObjectMetadata(annotation, processingEnvironment)))
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, StringField.class, processingEnvironment)
                         .map(MetadataParser::parseStringMetadata))
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, NumberField.class, processingEnvironment)
                         .map(MetadataParser::parseNumberMetadata))
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, ArrayField.class, processingEnvironment)
-                        .map(annotation -> parseArrayMetadata(annotatedClassField, annotation, processingEnvironment)))
+                        .map(annotation -> parseArrayMetadata(annotation, processingEnvironment)))
                 .or(() -> AnnotationUtils.getAnnotation(annotatedClassField, MapField.class, processingEnvironment)
-                        .map(annotation -> parseMapMetadata(annotatedClassField, annotation, processingEnvironment)));
+                        .map(annotation -> parseMapMetadata(annotation, processingEnvironment)));
     }
 
     /**
      * Parses the 'ArrayField' annotation and returns a FieldNode containing the metadata.
      * Review the ArrayField interface to view all available fields.
      *
-     * @param element               The field that is annotated with 'ArrayField'
      * @param field                 The field of the config to parse.
      * @param processingEnvironment The processing environment to resolve subtypes.
      * @return A FieldNode containing the metadata.
      */
     private static FieldNode parseArrayMetadata(
-            final Element element,
             final ArrayField field,
             final ProcessingEnvironment processingEnvironment
     ) {
         final var builder = new FieldNode.Builder(FieldType.ARRAY, field.configFieldName());
-        var parsed = handleReferenceClassArray(element, ArrayField.class, "itemsOneOf", processingEnvironment)
+        var parsed = resolveClassArray(field::itemsOneOf, processingEnvironment)
                 .map(builder::oneOf)
-                .or(() -> handleReferenceClassArray(element, ArrayField.class, "itemsAllOf", processingEnvironment)
+                .or(() -> resolveClassArray(field::itemsAllOf, processingEnvironment)
                         .map(builder::allOf))
-                .or(() -> handleReferenceClassArray(element, ArrayField.class, "itemsAnyOf", processingEnvironment)
+                .or(() -> resolveClassArray(field::itemsAnyOf, processingEnvironment)
                         .map(builder::anyOf));
         if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.items().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+            String canonicalName = className(field::items);
             AnnotationUtils.getElement(canonicalName, processingEnvironment).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, processingEnvironment).build();
                 builder.ref(data);
@@ -177,6 +171,7 @@ public class MetadataParser {
                 .minItems(field.minItems())
                 .maxItems(field.maxItems())
                 .uniqueItems(field.uniqueItems())
+                .itemsPattern(field.itemsPattern())
                 .contains(field.contains())
                 .subObjectDefault(field.useSubObjectDefault())
                 .defaultValue(field.defaultValue())
@@ -184,24 +179,28 @@ public class MetadataParser {
     }
 
     private static FieldNode parseMapMetadata(
-            final Element element,
             final MapField field,
             final ProcessingEnvironment pe
     ) {
         final var builder = FieldType.MAP.newBuilder(field.configFieldName());
-        var parsed = handleReferenceClassArray(element, MapField.class, "valueTypeOneOf", pe)
+        var valueArrays = field.valueArray();
+        if (valueArrays.length > 1)
+            throw new IllegalArgumentException("MapField accepts at most one valueArray declaration");
+        if (valueArrays.length == 1 && (!classNames(field::valueTypeOneOf).isEmpty()
+                || !classNames(field::valueTypeAllOf).isEmpty()
+                || !classNames(field::valueTypeAnyOf).isEmpty()
+                || !Object.class.getCanonicalName().equals(className(field::valueType))))
+            throw new IllegalArgumentException("MapField valueArray cannot be combined with valueType or value type unions");
+        var parsed = resolveClassArray(field::valueTypeOneOf, pe)
                 .map(builder::oneOf)
-                .or(() -> handleReferenceClassArray(element, MapField.class, "valueTypeAllOf", pe)
+                .or(() -> resolveClassArray(field::valueTypeAllOf, pe)
                         .map(builder::allOf))
-                .or(() -> handleReferenceClassArray(element, MapField.class, "valueTypeAnyOf", pe)
+                .or(() -> resolveClassArray(field::valueTypeAnyOf, pe)
                         .map(builder::anyOf));
-        if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.valueType().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+        if (valueArrays.length == 1) {
+            builder.ref(parseArrayMetadata(valueArrays[0], pe));
+        } else if (parsed.isEmpty()) {
+            String canonicalName = className(field::valueType);
             AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, pe).build();
                 builder.ref(data);
@@ -209,6 +208,8 @@ public class MetadataParser {
         }
         return builder.externalizedKeyName(field.externalizedKeyName())
                 .description(field.description())
+                .examples(field.examples())
+                .requiredProperties(field.requiredProperties())
                 .defaultValue(field.defaultValue())
                 .build();
     }
@@ -275,55 +276,61 @@ public class MetadataParser {
                 .build();
     }
 
-    private static <A extends Annotation> Optional<List<FieldNode>> handleReferenceClassArray(
-            final Element element,
-            final Class<A> annotationClass,
-            final String memberName,
+    /** Read class-array members from annotation proxies, including nested annotations. */
+    private static Optional<List<FieldNode>> resolveClassArray(
+            final Supplier<Class<?>[]> member,
             final ProcessingEnvironment pe
     ) {
-        return AnnotationUtils.getClassArrayMirrors(element, annotationClass, memberName, pe)
-                .filter(list -> !list.isEmpty())
-                .map(list -> {
-                    final var dataList = new ArrayList<FieldNode>();
-                    list.forEach(mirror -> {
-                        AnnotationUtils.getElement(mirror.toString(), pe).ifPresent(el -> {
-                            var fieldNode = gatherObjectSchemaData(el, pe).build();
-                            dataList.add(fieldNode);
-                        });
-                    });
-                    return dataList;
-                });
+        return resolveItemTypes(classNames(member), pe);
+    }
+
+    private static List<String> classNames(Supplier<Class<?>[]> member) {
+        try {
+            return Arrays.stream(member.get()).map(Class::getCanonicalName).toList();
+        } catch (MirroredTypesException e) {
+            return e.getTypeMirrors().stream().map(Object::toString).toList();
+        }
+    }
+
+    private static String className(Supplier<Class<?>> member) {
+        try {
+            return member.get().getCanonicalName();
+        } catch (MirroredTypeException e) {
+            return e.getTypeMirror().toString();
+        }
+    }
+
+    private static Optional<List<FieldNode>> resolveItemTypes(List<String> names, ProcessingEnvironment pe) {
+        if (names.isEmpty())
+            return Optional.empty();
+        var nodes = new ArrayList<FieldNode>();
+        names.forEach(name -> AnnotationUtils.getElement(name, pe)
+                .ifPresent(element -> nodes.add(gatherObjectSchemaData(element, pe).build())));
+        return nodes.isEmpty() ? Optional.empty() : Optional.of(nodes);
     }
 
     /**
      * Parses the 'ObjectField' annotation and returns a FieldNode containing the metadata.
      * Review the ObjectField interface to view all available fields.
      *
-     * @param element
      * @param field
      * @param pe
      * @return
      */
     private static FieldNode parseObjectMetadata(
-            final Element element,
             final ObjectField field,
             final ProcessingEnvironment pe
     ) {
         var builder = FieldType.OBJECT.newBuilder(field.configFieldName());
-        var parsed = handleReferenceClassArray(element, ObjectField.class, "refOneOf", pe)
+        var parsed = resolveClassArray(field::refOneOf, pe)
                 .map(builder::oneOf)
-                .or(() -> handleReferenceClassArray(element, ObjectField.class, "refAllOf", pe)
+                .or(() -> resolveClassArray(field::refAllOf, pe)
                         .map(builder::allOf))
-                .or(() -> handleReferenceClassArray(element, ObjectField.class, "refAnyOf", pe)
+                .or(() -> resolveClassArray(field::refAnyOf, pe)
                         .map(builder::anyOf));
 
         if (parsed.isEmpty()) {
-            String canonicalName;
-            try {
-                canonicalName = field.ref().getCanonicalName();
-            } catch (MirroredTypeException e) {
-                canonicalName = e.getTypeMirrors().get(0).toString();
-            }
+            String canonicalName = className(field::ref);
             AnnotationUtils.getElement(canonicalName, pe).ifPresent(ref -> {
                 var data = gatherObjectSchemaData(ref, pe).build();
                 builder.ref(data);

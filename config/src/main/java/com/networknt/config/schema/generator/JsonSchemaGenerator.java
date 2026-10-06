@@ -153,7 +153,11 @@ public class JsonSchemaGenerator extends Generator {
         props.put(TYPE_KEY, annotatedField.getType().toString());
         annotatedField.getDescription().ifPresent(value -> props.put(DESCRIPTION_KEY, value));
 
+        if (!annotatedField.getExamples().isEmpty())
+            props.put("examples", annotatedField.getExamples());
         var additionalProps = buildNestedJsonProperties(annotatedField);
+        if (!annotatedField.getRequiredProperties().isEmpty())
+            additionalProps.put(REQUIRED_KEY, annotatedField.getRequiredProperties());
         props.put(ADDITIONAL_PROPERTIES_KEY, additionalProps);
         return props;
     }
@@ -196,10 +200,26 @@ public class JsonSchemaGenerator extends Generator {
             }
         });
         var items = buildNestedJsonProperties(annotatedField);
+        annotatedField.getItemsPattern().ifPresent(pattern -> {
+            if (!hasOnlyStringTypes(items))
+                throw new IllegalArgumentException("itemsPattern requires string items or a union containing only string schemas");
+            items.put(PATTERN_KEY, pattern);
+        });
         props.put(ITEMS_KEY, items);
         return props;
     }
 
+
+    private static boolean hasOnlyStringTypes(Map<?, ?> schema) {
+        if ("string".equals(schema.get(TYPE_KEY)))
+            return true;
+        for (String keyword : List.of(ONE_OF_KEY, ALL_OF_KEY, ANY_OF_KEY)) {
+            if (schema.get(keyword) instanceof List<?> members && !members.isEmpty())
+                return members.stream().allMatch(member ->
+                        member instanceof Map<?, ?> nested && hasOnlyStringTypes(nested));
+        }
+        return false;
+    }
 
     @Override
     protected LinkedHashMap<String, Object> convertNullNode(final FieldNode annotatedField) {
