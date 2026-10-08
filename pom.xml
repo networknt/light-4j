@@ -113,7 +113,7 @@
         <version.yaml-rule>3.0.1</version.yaml-rule>
         <version.snakeyaml>2.7</version.snakeyaml>
         <version.caffeine>3.3.0</version.caffeine>
-        <version.redisson>3.45.1</version.redisson>
+        <version.redisson>4.8.0</version.redisson>
         <version.prometheus>0.16.0</version.prometheus>
         <version.javamail>2.0.2</version.javamail>
         <version.hikaricp>7.1.0</version.hikaricp>
