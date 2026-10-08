@@ -101,7 +101,7 @@
         <version.jose4j>0.9.7</version.jose4j>
         <version.commons.codec>1.18.0</version.commons.codec>
         <version.encoder>1.5.0</version.encoder>
-        <version.logback>1.6.3</version.logback>
+        <version.logback>1.6.5</version.logback>
         <version.junit>5.11.4</version.junit>
         <version.mockito>5.24.0</version.mockito>
         <version.powermock>2.0.9</version.powermock>
