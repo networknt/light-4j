@@ -228,21 +228,21 @@ public final class RedisWebhookReplayStore
         @Override
         public CompletionStage<Boolean> reserve(String key, String owner, long retentionMillis) {
             RFuture<Long> future = script.evalAsync(RScript.Mode.READ_WRITE, RESERVE_SCRIPT,
-                    RScript.ReturnType.INTEGER, List.of(key), owner, retentionMillis);
+                    RScript.ReturnType.LONG, List.of(key), owner, retentionMillis);
             return future.thenApply(value -> value != null && value == 1L);
         }
 
         @Override
         public CompletionStage<Boolean> release(String key, String owner) {
             RFuture<Long> future = script.evalAsync(RScript.Mode.READ_WRITE, RELEASE_SCRIPT,
-                    RScript.ReturnType.INTEGER, List.of(key), owner);
+                    RScript.ReturnType.LONG, List.of(key), owner);
             return future.thenApply(value -> value != null && value == 1L);
         }
 
         @Override
         public CompletionStage<Boolean> remove(String key) {
             RFuture<Long> future = script.evalAsync(RScript.Mode.READ_WRITE, REMOVE_SCRIPT,
-                    RScript.ReturnType.INTEGER, List.of(key));
+                    RScript.ReturnType.LONG, List.of(key));
             return future.thenApply(value -> value != null && value == 1L);
         }
 

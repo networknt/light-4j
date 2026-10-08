@@ -11,19 +11,14 @@ import org.apache.directory.server.core.api.partition.Partition;
 import org.apache.directory.server.core.factory.DefaultDirectoryServiceFactory;
 import org.apache.directory.server.core.factory.DirectoryServiceFactory;
 import org.apache.directory.server.core.factory.PartitionFactory;
-import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
-import org.apache.directory.server.kerberos.KerberosConfig;
-import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
-import org.apache.directory.server.protocol.shared.transport.UdpTransport;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +29,7 @@ import java.util.Map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Utility class to start up a test KDC backed by a directory server.
+ * Utility class to start up an LDAPS directory server for LDAP tests.
  *
  * It is better to start the server once instead of once per test but once running
  * the overhead is minimal. However a better solution may be to use the suite runner.
@@ -48,7 +43,6 @@ public class ApacheDirectoryServer {
 
     static final int LDAP_PORT = 11389;
     static final int LDAPS_PORT = 10636;
-    static final int KDC_PORT = 6088;
 
     private static final String DIRECTORY_NAME = "Test Service";
     private static boolean initialised;
@@ -60,20 +54,11 @@ public class ApacheDirectoryServer {
     private static DirectoryService directoryService;
     private static LdapServer ldapServer;
 
-    /*
-     * KDC Related
-     */
-    private static KdcServer kdcServer;
-
-
-
     public static boolean startServer() throws Exception {
         if (initialised) {
             return false;
         }
-        setupEnvironment();
         startLdapServer();
-        startKDC();
 
         initialised = true;
         return true;
@@ -84,7 +69,6 @@ public class ApacheDirectoryServer {
         DirectoryServiceFactory dsf = new DefaultDirectoryServiceFactory();
         dsf.init(DIRECTORY_NAME);
         directoryService = dsf.getDirectoryService();
-        directoryService.addLast(new KeyDerivationInterceptor()); // Derives the Kerberos keys for new entries.
         directoryService.getChangeLog().setEnabled(false);
         SchemaManager schemaManager = directoryService.getSchemaManager();
 
@@ -94,9 +78,8 @@ public class ApacheDirectoryServer {
         //Map<String, String> mappings = Collections.singletonMap("hostname", DefaultServer.getDefaultServerAddress().getHostString());
         Map<String, String> mappings = Collections.singletonMap("hostname", "localhost");
         processLdif(schemaManager, adminSession, "partition.ldif", mappings);
-        processLdif(schemaManager, adminSession, "krbtgt.ldif", mappings);
+        // The legacy user data retains Kerberos attributes, but this fixture tests LDAP only.
         processLdif(schemaManager, adminSession, "user.ldif", mappings);
-        processLdif(schemaManager, adminSession, "server.ldif", mappings);
 
         ldapServer = new LdapServer();
         ldapServer.setServiceName("DefaultLDAP");
@@ -105,7 +88,6 @@ public class ApacheDirectoryServer {
         ldapServer.addTransports(ldap);
         ldapServer.setKeystoreFile(ApacheDirectoryServer.class.getResource("/config/server.keystore").getFile());
         ldapServer.setCertificatePassword("password");
-        ldapServer.loadKeyStore();
         ldapServer.setDirectoryService(directoryService);
         ldapServer.start();
     }
@@ -113,8 +95,7 @@ public class ApacheDirectoryServer {
     private static void createPartition(final DirectoryServiceFactory dsf, final SchemaManager schemaManager, final String id,
                                         final String suffix) throws Exception {
         PartitionFactory pf = dsf.getPartitionFactory();
-        Partition p = pf.createPartition(schemaManager, id, suffix, 1000, workingDir.toFile());
-        pf.addIndex(p, "krb5PrincipalName", 10);
+        Partition p = pf.createPartition(schemaManager, directoryService.getDnFactory(), id, suffix, 1000, workingDir.toFile());
         p.initialize();
         directoryService.addPartition(p);
     }
@@ -160,28 +141,6 @@ public class ApacheDirectoryServer {
         }
         ldifReader.close();
         ldifInput.close();
-    }
-
-    private static void startKDC() throws Exception {
-        kdcServer = new KdcServer();
-        kdcServer.setServiceName("Test KDC");
-        kdcServer.setSearchBaseDn("ou=users,dc=undertow,dc=io");
-        KerberosConfig config = kdcServer.getConfig();
-        config.setServicePrincipal("krbtgt/UNDERTOW.IO@UNDERTOW.IO");
-        config.setPrimaryRealm("UNDERTOW.IO");
-
-        config.setPaEncTimestampRequired(false);
-
-        UdpTransport udp = new UdpTransport("0.0.0.0", KDC_PORT);
-        kdcServer.addTransports(udp);
-
-        kdcServer.setDirectoryService(directoryService);
-        kdcServer.start();
-    }
-
-    private static void setupEnvironment() {
-        final URL configPath = ApacheDirectoryServer.class.getResource("/krb5.conf");
-        System.setProperty("java.security.krb5.conf", configPath.getFile());
     }
 
     private static void createWorkingDir() throws IOException {
