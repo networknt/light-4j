@@ -122,7 +122,7 @@
         <version.postgres>42.7.14</version.postgres>
         <version.sqlserver>13.6.0.jre11</version.sqlserver>
         <version.httpclient>4.5.14</version.httpclient>
-        <version.jsonpath>2.10.0</version.jsonpath>
+        <version.json-path>3.0.0</version.json-path>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.uuid>6.1.1</version.uuid>
         <version.maven-version>2.7</version.maven-version>
@@ -719,7 +719,7 @@
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
-                <version>${version.jsonpath}</version>
+                <version>${version.json-path}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
