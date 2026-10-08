@@ -111,7 +111,6 @@
         <version.hdrhistogram>2.2.2</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.yaml-rule>3.0.1</version.yaml-rule>
-        <version.http-client>1.0.18</version.http-client>
         <version.snakeyaml>2.4</version.snakeyaml>
         <version.caffeine>3.3.0</version.caffeine>
         <version.redisson>3.45.1</version.redisson>
@@ -707,7 +706,7 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>http-client</artifactId>
-                <version>${version.http-client}</version>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
