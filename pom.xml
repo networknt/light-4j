@@ -99,7 +99,7 @@
         <version.jackson>2.22.3</version.jackson>
         <version.slf4j>2.0.20</version.slf4j>
         <version.jose4j>0.9.7</version.jose4j>
-        <version.commons.codec>1.18.0</version.commons.codec>
+        <version.commons-codec>1.22.1</version.commons-codec>
         <version.encoder>1.5.0</version.encoder>
         <version.logback>1.6.5</version.logback>
         <version.junit>5.11.4</version.junit>
@@ -734,7 +734,7 @@
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
-                <version>${version.commons.codec}</version>
+                <version>${version.commons-codec}</version>
             </dependency>
             <dependency>
                 <groupId>org.owasp.encoder</groupId>
