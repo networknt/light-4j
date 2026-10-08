@@ -119,7 +119,7 @@
         <version.hikaricp>7.1.0</version.hikaricp>
         <version.h2>2.5.252</version.h2>
         <version.mysql>9.2.0</version.mysql>
-        <version.postgres>42.7.13</version.postgres>
+        <version.postgres>42.7.14</version.postgres>
         <version.sqlserver>12.10.2.jre11</version.sqlserver>
         <version.httpclient>4.5.14</version.httpclient>
         <version.jsonpath>2.10.0</version.jsonpath>
