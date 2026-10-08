@@ -118,7 +118,7 @@
         <version.javamail>2.0.2</version.javamail>
         <version.hikaricp>7.1.0</version.hikaricp>
         <version.h2>2.5.252</version.h2>
-        <version.mysql>9.2.0</version.mysql>
+        <version.mysql>26.7.0</version.mysql>
         <version.postgres>42.7.14</version.postgres>
         <version.sqlserver>13.6.0.jre11</version.sqlserver>
         <version.httpclient>4.5.14</version.httpclient>
