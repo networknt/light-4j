@@ -106,7 +106,7 @@
         <version.mockito>5.24.0</version.mockito>
         <version.powermock>2.0.9</version.powermock>
         <version.undertow>2.4.4.Final</version.undertow>
-        <version.hamcrest>1.3</version.hamcrest>
+        <version.hamcrest>3.0</version.hamcrest>
         <version.assertj>3.27.7</version.assertj>
         <version.hdrhistogram>2.2.2</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
@@ -840,7 +840,7 @@
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
-                <artifactId>hamcrest-library</artifactId>
+                <artifactId>hamcrest</artifactId>
                 <version>${version.hamcrest}</version>
                 <scope>test</scope>
             </dependency>
