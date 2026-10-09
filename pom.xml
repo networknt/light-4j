@@ -102,7 +102,7 @@
         <version.commons-codec>1.22.1</version.commons-codec>
         <version.encoder>1.5.0</version.encoder>
         <version.logback>1.6.5</version.logback>
-        <version.junit>5.11.4</version.junit>
+        <version.junit>6.1.3</version.junit>
         <version.mockito>5.24.0</version.mockito>
         <version.powermock>2.0.9</version.powermock>
         <version.undertow>2.4.4.Final</version.undertow>
@@ -128,7 +128,7 @@
         <version.maven-version>2.7</version.maven-version>
         <version.maven-source>3.0.1</version.maven-source>
         <version.maven-surefire>3.6.0</version.maven-surefire>
-        <version.maven-failsafe>2.22.0</version.maven-failsafe>
+        <version.maven-failsafe>3.6.0</version.maven-failsafe>
         <version.jacoco>0.8.14</version.jacoco>
         <version.maven-compiler>3.8.0</version.maven-compiler>
         <version.maven-deploy>3.1.1</version.maven-deploy>
@@ -240,6 +240,13 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${version.junit}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- Modules in this project -->
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -808,12 +815,6 @@
             </dependency>
 
             <!-- Test dependencies -->
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${version.junit}</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
