@@ -1,5 +1,30 @@
 # Change Log
 
+## [2.4.1](https://github.com/networknt/light-4j/tree/2.4.1) (2026-10-11)
+
+**Commits:**
+
+- upgrade to version 2.4.1 before release in master branch ([f2c2fd0](https://github.com/networknt/light-4j/commit/f2c2fd099235c47e65d333af2004cd30eac7f1ba)) (by Steve Hu)
+- upgrade maven-gpg to 3.2.8 from 3.2.7 ([998abda](https://github.com/networknt/light-4j/commit/998abda7c7e6fa223cccc56c57fb971cf67ec372)) (by Steve Hu)
+- upgrade maven-source to 3.4.0 ([ece6335](https://github.com/networknt/light-4j/commit/ece6335b8f8a9786807e1faa9edc6e515ae3a946)) (by Steve Hu)
+- build: upgrade JUnit to 6.1.3 ([810c986](https://github.com/networknt/light-4j/commit/810c986abfba9ae45703562f4c0036c8082112c5)) (by Steve Hu)
+- upgrade hamcrest to 3.0 from 1.3 ([87de526](https://github.com/networknt/light-4j/commit/87de5265a9b0b121acd36401fc7001f8108490c4)) (by Steve Hu)
+- fixes #2810 Make client token-expiry and refresh tests deterministic ([797b733](https://github.com/networknt/light-4j/commit/797b7339aeb27f7c5c7af7c6128fe113f816509f)) (by Steve Hu)
+- remove unused curator-test dependency ([cf3aa3e](https://github.com/networknt/light-4j/commit/cf3aa3ed9dc95c2c7dd5ee6ab2c0373f660b1326)) (by Steve Hu)
+- upgrade json-path to 3.0.0 from 2.10.0 ([d879e4c](https://github.com/networknt/light-4j/commit/d879e4c00e120d4d52006a91cc3432225eea08e7)) (by Steve Hu)
+- upgrade commons-codec from 1.18.0 to 1.22.1 ([b25eafc](https://github.com/networknt/light-4j/commit/b25eafcdbad4d33d43da4b08987fdd9cbcc14b7f)) (by Steve Hu)
+- upgrade redisson to 4.8.0 from 3.45.1 ([428fcd4](https://github.com/networknt/light-4j/commit/428fcd4dc1aeafe363452335ff0e180a55b5c26a)) (by Steve Hu)
+- upgrade udertow to 2.4.4.Final from 2.4.1.Final ([940621e](https://github.com/networknt/light-4j/commit/940621ed142886b923656d0ca304914a288305ee)) (by Steve Hu)
+- upgrade mysql version ([35697c9](https://github.com/networknt/light-4j/commit/35697c9369293b59eda86bb8d82c53d78a19b30b)) (by Steve Hu)
+- fixes #2809 migrate integration test to Junit 5 ([4ce781d](https://github.com/networknt/light-4j/commit/4ce781d9d475caaa15449549f0553d41e34e42d6)) (by Steve Hu)
+- upgrade logback to 1.6.5 from 1.6.3 ([abce4a9](https://github.com/networknt/light-4j/commit/abce4a9af8ccbb67a82a5a47436524afe653804f)) (by Steve Hu)
+- upgrade testcontainers to 2.0.5 from 1.8.0 ([0c94f3b](https://github.com/networknt/light-4j/commit/0c94f3bb0d6c2fed1dc237bb557aad4b649b1848)) (by Steve Hu)
+- upgrade snakeyaml to 2.7 from 2.4 ([4877169](https://github.com/networknt/light-4j/commit/487716917ba013cce89cdcec87be1dd6be81d436)) (by Steve Hu)
+- upgrade postgres to 42.7.14 from 42.7.13 ([9aeb0ce](https://github.com/networknt/light-4j/commit/9aeb0ce35366f56425cb4346905b8c36164b7947)) (by Steve Hu)
+- upgrade http-client with project version ([09cc101](https://github.com/networknt/light-4j/commit/09cc101b9a6b76c5edf374f39140998ae29743fb)) (by Steve Hu)
+- upgrade encoder to 1.5.0 from 1.3.1 ([fd73c54](https://github.com/networknt/light-4j/commit/fd73c542dcf64295c2f1d4e7cc9c8d3c8e4ec290)) (by Steve Hu)
+- upgrade to version 2.4.1-SNAPSHOT after release in master branch ([f5f7510](https://github.com/networknt/light-4j/commit/f5f751026226cc585031a9396ac5e7eeb3e93825)) (by Steve Hu)
+
 ## [2.4.0](https://github.com/networknt/light-4j/tree/2.4.0) (2026-10-07)
 
 **Commits:**
