@@ -112,7 +112,7 @@
         <version.jsr305>3.0.2</version.jsr305>
         <version.yaml-rule>3.0.1</version.yaml-rule>
         <version.snakeyaml>2.7</version.snakeyaml>
-        <version.caffeine>3.3.0</version.caffeine>
+        <version.caffeine>3.3.1</version.caffeine>
         <version.redisson>4.8.0</version.redisson>
         <version.prometheus>0.16.0</version.prometheus>
         <version.javamail>2.0.2</version.javamail>
