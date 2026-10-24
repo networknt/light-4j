@@ -2,7 +2,7 @@ package com.networknt.config.schema.generator;
 
 import com.networknt.config.schema.FieldType;
 import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.yml.YamlUtils;
 
 import java.io.StringWriter;
 import java.util.List;
@@ -30,7 +30,7 @@ class MapExamplesGeneratorTest {
         new YamlGenerator("hmac", "hmac").writeSchemaToFile(writer, root);
         String yaml = writer.toString();
         assertTrue(yaml.contains("# github:\n#   signatureHeader: X-Signature"));
-        Map<?, ?> active = new Yaml().load(yaml);
+        Map<?, ?> active = (Map<?, ?>) YamlUtils.newLoad().loadFromString(yaml);
         assertEquals("${hmac.profiles:}", active.get("profiles"));
     }
 

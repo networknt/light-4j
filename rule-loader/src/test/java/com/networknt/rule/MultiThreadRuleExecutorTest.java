@@ -5,7 +5,7 @@ import com.networknt.rule.exception.RuleEngineException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.yml.YamlUtils;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -24,6 +24,35 @@ import static org.mockito.ArgumentMatchers.eq;
  */
 public class MultiThreadRuleExecutorTest {
 
+    @Test
+    public void testYaml12StringValuesSurviveExternalRuleMapper() throws Exception {
+        Config config = Config.getInstance();
+        Map<String, Object> originalRuleConfig = config.getJsonMapConfig(RuleConfig.CONFIG_NAME);
+        try {
+            for (String value : List.of("yes", "no", "on", "off", "012", "2026-10-24",
+                    "first\u0085second", "first\u2028second", "first\u2029second", "first\nsecond")) {
+                Map<String, Object> ruleConfig = legacyConfig("scalar-rule", "/v1/scalar@get");
+                Map<String, Object> bodies = (Map<String, Object>) ruleConfig.get(RuleConfig.RULE_BODIES);
+                Map<String, Object> rule = (Map<String, Object>) bodies.get("scalar-rule");
+                rule.put("ruleName", value);
+                rule.put("ruleDesc", value);
+                config.putInConfigCache(RuleConfig.CONFIG_NAME, ruleConfig);
+                setRuleConfigInstance(null);
+                Rule parsed = new MultiThreadRuleExecutor().getRules().get("scalar-rule");
+                Assertions.assertEquals(value, parsed.getRuleName());
+                Assertions.assertEquals(value, parsed.getRuleDesc());
+            }
+            String longId = "rule-" + "x".repeat(2048);
+            config.putInConfigCache(RuleConfig.CONFIG_NAME, legacyConfig(longId, "/v1/long-key@get"));
+            setRuleConfigInstance(null);
+            Rule parsed = new MultiThreadRuleExecutor().getRules().get(longId);
+            Assertions.assertNotNull(parsed);
+            Assertions.assertEquals(longId, parsed.getRuleId());
+        } finally {
+            restoreRuleConfig(config, originalRuleConfig);
+        }
+    }
+
     public static class LegacyTestAction implements IAction {
         @Override
         public void performAction(String ruleId, String actionId, Map<String, Object> objMap,
@@ -41,7 +70,7 @@ public class MultiThreadRuleExecutorTest {
 
         try (InputStream input = getClass().getResourceAsStream("/config/issue-2801-values.yml")) {
             Assertions.assertNotNull(input);
-            Map<String, Object> values = new Yaml().load(input);
+            Map<String, Object> values = (Map<String, Object>) YamlUtils.newLoad().loadFromInputStream(input);
             config.putInConfigCache(RuleConfig.CONFIG_NAME, Map.of(
                     RuleConfig.RULE_BODIES, values.get("rule.ruleBodies"),
                     RuleConfig.ENDPOINT_RULES, values.get("rule.endpointRules")));

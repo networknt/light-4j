@@ -1,6 +1,6 @@
 package com.networknt.config.yml;
 
-import org.yaml.snakeyaml.nodes.Tag;
+import org.snakeyaml.engine.v2.nodes.Tag;
 
 import java.util.regex.Pattern;
 

@@ -3,8 +3,7 @@ package com.networknt.rule;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -40,10 +39,8 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         Map<String, Rule> localRules = null;
         Map<String, Object> ruleBodies = ruleConfig.getRuleBodies();
         if (ruleBodies != null && !ruleBodies.isEmpty()) {
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            String ruleString = new Yaml(options).dump(ruleBodies);
-            localRules = RuleMapper.string2RuleMap(ruleString);
+            // Bind data directly: serializing through YAML would reinterpret strings and map keys.
+            localRules = RuleMapper.yamlMapper.convertValue(ruleBodies, new TypeReference<Map<String, Rule>>() {});
             if (logger.isInfoEnabled()) logger.info("Load YAML rules from RuleConfig with size = {}", localRules.size());
         }
 

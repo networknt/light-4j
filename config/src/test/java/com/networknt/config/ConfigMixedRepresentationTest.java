@@ -210,7 +210,7 @@ class ConfigMixedRepresentationTest {
         Map<String, Object> map = config.getJsonMapConfig("test_exclusion");
         Files.writeString(file, "value: second\n");
         TestConfig typed = (TestConfig) config.getJsonObjectConfig("test_exclusion", TestConfig.class);
-        assertEquals("second", typed.getValue()); // Exclusions retain the separate loadAs path.
+        assertEquals("second", typed.getValue()); // Exclusions retain direct binding without injection.
         Files.writeString(file, "value: [invalid\n");
         assertSame(typed, config.getJsonObjectConfig("test_exclusion", TestConfig.class));
         assertSame(map, config.getJsonMapConfig("test_exclusion"));

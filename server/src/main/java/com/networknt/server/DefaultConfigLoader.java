@@ -29,8 +29,8 @@ import com.networknt.config.JsonMapper;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.yml.YamlUtils;
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -250,22 +250,8 @@ public class DefaultConfigLoader implements IConfigLoader{
         if(logger.isTraceEnabled())
             logger.trace("serviceConfigs received from Config Server: {}", JsonMapper.toJson(serviceConfigs));
 
-        // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
-
-        // save the values.yml to the target folder. This is for the case of reload to overwrite and start without config server.
-        try {
-            Path filePath = Paths.get(targetConfigsDirectory);
-            if (!Files.exists(filePath)) {
-                Files.createDirectories(filePath);
-                logger.info("target configs directory {} created", targetConfigsDirectory);
-            }
-
-            filePath = Paths.get(targetConfigsDirectory + "/values.yml");
-            Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            logger.error("Exception while creating " + targetConfigsDirectory, e);
+        if (!writeValuesFile(serviceConfigs)) {
+            return false;
         }
 
         // clear config cache: this is required just in case other classes have already loaded something in cache
@@ -278,6 +264,25 @@ public class DefaultConfigLoader implements IConfigLoader{
         ConfigInjection.setUndecryptedValueMap(Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT));
 
         //You can call Server.getServerConfig() now.
+        return true;
+    }
+
+    /** Persist fallback values before invalidating the active caches. */
+    boolean writeValuesFile(Map<String, Object> serviceConfigs) {
+        try {
+            Path filePath = Paths.get(targetConfigsDirectory);
+            if (!Files.exists(filePath)) {
+                Files.createDirectories(filePath);
+                logger.info("target configs directory {} created", targetConfigsDirectory);
+            }
+
+            filePath = Paths.get(targetConfigsDirectory + "/values.yml");
+            Files.write(filePath, YamlUtils.newDump().dumpToString(serviceConfigs).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException | YamlEngineException e) {
+            logger.error("Exception while creating " + targetConfigsDirectory, e);
+            return false;
+        }
+
         return true;
     }
 
@@ -405,7 +410,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                         configs = JsonMapper.string2Map(body);
                         processNestedMap(configs);
                     } else if (contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
-                        configs = Config.getNoneDecryptedInstance().getYaml().load(body);
+                        configs = YamlUtils.loadMap(Config.getNoneDecryptedInstance().getYaml(), body);
                     } else {
                         // the content type is not supported, throw an exception.
                         logger.error("The content type {} in the response from the config server is not supported.", contentType.get());

@@ -4,7 +4,7 @@ import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.Yaml;
+import org.snakeyaml.engine.v2.api.Dump;
 
 import java.util.List;
 
@@ -248,8 +248,8 @@ public class YamlGeneratorTest {
 
         var root = FieldType.OBJECT.newBuilder("root").childNodes(List.of(obj3)).build();
         var result = generator.convertConfigRoot(root);
-        final var yaml = new Yaml(new YamlGenerator.YamlCommentRepresenter(YAML_OPTIONS, root), YAML_OPTIONS);
-        final var fileContent = yaml.dump(result);
+        final var yaml = new Dump(YAML_OPTIONS, new YamlGenerator.YamlCommentRepresenter(YAML_OPTIONS, root));
+        final var fileContent = yaml.dumpToString(result);
 
         Assertions.assertTrue(fileContent.contains("${configTest.externalarr1:[\"test1\", \"test2\"]}"));
         Assertions.assertTrue(fileContent.contains("${configTest.strstr1:abc123}"));

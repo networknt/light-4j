@@ -10,7 +10,6 @@ import com.networknt.config.schema.OutputFormat;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.nodes.MappingNode;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -37,7 +36,7 @@ public class PathPrefixServiceConfig {
     private static final String MAPPING = "mapping";
 
     // variables
-    private  Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -60,7 +59,7 @@ public class PathPrefixServiceConfig {
     private Map<String, String> mapping;
 
     // the config object
-    private Config config;
+    private final Config config;
     private static volatile PathPrefixServiceConfig instance;
 
     private PathPrefixServiceConfig() {

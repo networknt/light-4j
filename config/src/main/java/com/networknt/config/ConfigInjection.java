@@ -50,8 +50,8 @@ public class ConfigInjection {
 
     // Define the injection order
     private static final String INJECTION_ORDER = "injection_order";
-    private static final String INJECTION_ORDER_CODE = (!System.getProperty(INJECTION_ORDER, "").equals("")) ?
-            System.getProperty(INJECTION_ORDER, "") : "2";
+    private static final String INJECTION_ORDER_CODE = System.getProperty(INJECTION_ORDER, "").equals("") ?
+            "2" : System.getProperty(INJECTION_ORDER, "");
 
     // Define one of the injection value source "values.yaml" and list of exclusion config files
     /** Constant for centralized management: values */
@@ -68,7 +68,7 @@ public class ConfigInjection {
 
     private static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
-    private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
+    private static final Decryptor decryptor = DecryptConstructor.create().getDecryptor();
 
     private static volatile Map<String, Object> decryptedValueMap;
     private static volatile Map<String, Object> undecryptedValueMap;

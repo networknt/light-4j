@@ -16,8 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.yml.YamlUtils;
 
 import com.networknt.client.simplepool.SimpleConnectionState;
 
@@ -189,10 +188,7 @@ public class UrlConfigLoader implements IConfigLoader {
 
 		// pass serviceConfigs through Config.yaml's load method so that it can decrypt
 		// any encrypted values
-		DumperOptions options = new DumperOptions();
-		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);// to get yaml string without curly brackets and
-																	// commas
-		serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
+		serviceConfigs = YamlUtils.loadMap(Config.getInstance().getYaml(), YamlUtils.newDump().dumpToString(serviceConfigs));
 
 		// clear config cache: this is required just in case other classes have already
 		// loaded something in cache
@@ -258,7 +254,7 @@ public class UrlConfigLoader implements IConfigLoader {
 		if (StringUtils.isNotBlank(respBody)) {
 			try {
 				if (!CONFIG_EXT_JSON.equals(fileExtension)) {
-					respBody = JSONValue.toJSONString(Config.getInstance().getYaml().load(respBody));
+					respBody = JSONValue.toJSONString(YamlUtils.loadMap(Config.getInstance().getYaml(), respBody));
 				}
 				return mapper.readValue(respBody, mapType);
 			} catch (Exception e) {

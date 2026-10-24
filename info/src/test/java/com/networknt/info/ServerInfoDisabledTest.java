@@ -19,6 +19,7 @@ package com.networknt.info;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
+import com.networknt.config.yml.YamlUtils;
 import com.networknt.exception.ClientException;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
@@ -66,7 +67,9 @@ public class ServerInfoDisabledTest {
         Config.getInstance().clear();
         Map<String, Object> map = new HashMap<>();
         map.put("enableServerInfo", false);
-        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml"), Charset.defaultCharset().name()));
+        try (PrintWriter writer = new PrintWriter(new File(homeDir + "/info.yml"), Charset.defaultCharset().name())) {
+            writer.write(YamlUtils.newDump().dumpToString(map));
+        }
         // Add home directory to the classpath of the system class loader.
         AppURLClassLoader classLoader = new AppURLClassLoader(new URL[0], ClassLoader.getSystemClassLoader());
         classLoader.addURL(new File(homeDir).toURI().toURL());

@@ -16,15 +16,11 @@
 
 package com.networknt.config;
 
-import com.networknt.config.yml.DecryptConstructor;
-import com.networknt.config.yml.YmlConstants;
+import com.networknt.config.yml.YamlUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
-import org.yaml.snakeyaml.resolver.Resolver;
+import org.snakeyaml.engine.v2.api.Load;
 
 import java.io.IOException;
 import java.util.List;
@@ -90,11 +86,9 @@ public class ConfigDecryptTest {
 
     @Test
     public void testDecryptorClass() {
-        final Resolver resolver = new Resolver();
-        resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        Yaml yaml = new Yaml(DecryptConstructor.getInstance("com.networknt.config.TestDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+        Load yaml = YamlUtils.newLoad("com.networknt.config.TestDecryptor");
 
-        Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
+        Map<String, Object> secret = (Map<String, Object>) yaml.loadFromInputStream(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
 
         Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
@@ -102,11 +96,9 @@ public class ConfigDecryptTest {
     @Test
     public void testAutoDecryptorClass() throws IOException {
         if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
-        final Resolver resolver = new Resolver();
-        resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        Yaml yaml = new Yaml(DecryptConstructor.getInstance("com.networknt.config.TestAutoDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+        Load yaml = YamlUtils.newLoad("com.networknt.config.TestAutoDecryptor");
 
-        Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
+        Map<String, Object> secret = (Map<String, Object>) yaml.loadFromInputStream(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
 
         Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
