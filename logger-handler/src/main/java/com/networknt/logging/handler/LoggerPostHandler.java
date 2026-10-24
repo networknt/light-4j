@@ -17,7 +17,7 @@
 package com.networknt.logging.handler;
 
 import ch.qos.logback.classic.Level;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;

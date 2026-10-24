@@ -1,7 +1,7 @@
 package com.networknt.handler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import io.undertow.server.HttpServerExchange;
@@ -91,7 +91,7 @@ public interface Interceptor extends MiddlewareHandler {
         try {
             ex.putAttachment(key, Config.getInstance().getMapper().readValue(str, new TypeReference<Map<String, Object>>() {}));
             return true;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             setExchangeStatus(ex, CONTENT_TYPE_MISMATCH, ContentType.APPLICATION_JSON.value());
             return false;
         }
@@ -109,7 +109,7 @@ public interface Interceptor extends MiddlewareHandler {
         try {
             ex.putAttachment(key, Config.getInstance().getMapper().readValue(str, new TypeReference<List<Object>>() {}));
             return true;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             setExchangeStatus(ex, CONTENT_TYPE_MISMATCH, ContentType.APPLICATION_JSON.value());
             return false;
         }

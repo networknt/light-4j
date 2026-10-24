@@ -1,6 +1,6 @@
 package com.networknt.security;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.*;
@@ -8,7 +8,6 @@ import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -506,7 +505,7 @@ public class SecurityConfig {
                     // json map
                     try {
                         passThroughClaims = Config.getInstance().getMapper().readValue(s, Map.class);
-                    } catch (IOException e) {
+                    } catch (tools.jackson.core.JacksonException e) {
                         logger.error("IOException:", e);
                     }
                 } else {

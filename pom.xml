@@ -96,7 +96,7 @@
     <version.central-publishing-maven>0.11.0</version.central-publishing-maven>
         <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.22.3</version.jackson>
+        <version.jackson>3.2.3</version.jackson>
         <version.slf4j>2.0.20</version.slf4j>
         <version.jose4j>0.9.7</version.jose4j>
         <version.commons-codec>1.22.1</version.commons-codec>
@@ -718,7 +718,7 @@
             </dependency>
 
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
+                <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${version.jackson}</version>
                 <type>pom</type>

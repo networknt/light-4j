@@ -9,7 +9,7 @@ import com.networknt.config.schema.StringField;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.ConfigException;
 import java.util.ArrayList;
 import java.util.Map;

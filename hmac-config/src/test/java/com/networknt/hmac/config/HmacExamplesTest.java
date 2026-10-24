@@ -16,7 +16,7 @@
 
 package com.networknt.hmac.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.networknt.config.Config;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.generator.YamlGenerator;
@@ -56,9 +56,9 @@ class HmacExamplesTest {
                     assertTrue(content.contains("#     defaultEnvNames: []"));
                     assertTrue(content.contains("#     bySelector: {}"));
                     var profileFields = profiles.path("additionalProperties").path("properties");
-                    profileFields.fields().forEachRemaining(entry -> {
+                    profileFields.properties().iterator().forEachRemaining(entry -> {
                         if (entry.getKey().equals("secrets") || entry.getKey().equals("replay")) {
-                            entry.getValue().path("properties").fields().forEachRemaining(child ->
+                            entry.getValue().path("properties").properties().iterator().forEachRemaining(child ->
                                     assertTrue(content.contains("# " + entry.getKey() + "." + child.getKey()
                                             + ": " + child.getValue().path("description").asText())));
                         } else assertTrue(content.contains("# " + entry.getKey() + ": "
@@ -79,9 +79,9 @@ class HmacExamplesTest {
             StringBuilder table = new StringBuilder("<!-- profile-fields:start -->\n")
                     .append("| Profile field | Requirement, default and behavior |\n")
                     .append("| --- | --- |\n");
-            profiles.path("additionalProperties").path("properties").fields().forEachRemaining(entry -> {
+            profiles.path("additionalProperties").path("properties").properties().iterator().forEachRemaining(entry -> {
                 if (entry.getKey().equals("secrets") || entry.getKey().equals("replay")) {
-                    entry.getValue().path("properties").fields().forEachRemaining(child ->
+                    entry.getValue().path("properties").properties().iterator().forEachRemaining(child ->
                             appendField(table, entry.getKey() + "." + child.getKey(), child.getValue()));
                 } else appendField(table, entry.getKey(), entry.getValue());
             });

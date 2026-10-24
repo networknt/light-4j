@@ -3,7 +3,7 @@ module com.networknt.rule-loader {
 
     requires com.networknt.config;
 
-    requires com.fasterxml.jackson.core;
+    requires tools.jackson.core;
     requires org.jose4j;
     requires org.slf4j;
     requires java.logging;

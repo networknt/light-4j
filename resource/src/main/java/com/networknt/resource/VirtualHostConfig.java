@@ -106,7 +106,7 @@ public class VirtualHostConfig {
         // If we want to keep manual parsing:
         if (mappedConfig.containsKey("hosts")) {
              try {
-                 hosts = com.networknt.config.Config.getInstance().getMapper().convertValue(mappedConfig.get("hosts"), new com.fasterxml.jackson.core.type.TypeReference<List<VirtualHost>>(){});
+                 hosts = com.networknt.config.Config.getInstance().getMapper().convertValue(mappedConfig.get("hosts"), new tools.jackson.core.type.TypeReference<List<VirtualHost>>(){});
              } catch (Exception e) {
                  e.printStackTrace();
              }

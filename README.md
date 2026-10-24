@@ -156,3 +156,54 @@ from [ej-technologies](http://www.ej-technologies.com/).
 
 Light-4j and all light-*-4j frameworks are available under the Apache 2.0 license. See the [LICENSE](https://www.apache.org/licenses/LICENSE-2.0)
 file for more info.
+
+
+### Jackson 3 development migration
+
+This development line uses Jackson 3.2.3 with `tools.jackson` package names and
+Maven coordinates. Jackson annotations remain under
+`com.fasterxml.jackson.annotation`. Public APIs exposing Jackson types are
+source and binary incompatible with the `2.x` maintenance branch. Versions are
+unchanged during implementation; a next-major version and coordinated release
+are required before artifact publication.
+
+Install the migrated upstream snapshots and lower light-4j modules in an
+isolated Maven repository, then install migrated http-client, then build the
+whole light-4j reactor with the same repository. The rule-loader uses the
+migrated yaml-rule mapper and Jackson 3 TypeReference. JSONPath startup hooks
+use Jackson3JsonProvider and Jackson3MappingProvider.
+
+Framework JSON mapper policies and the accepted ClientConfig binding difference
+are documented in [config/README.md](config/README.md). The http-client helper
+has a separate timestamp date policy and accepted built-in Optional support;
+see its migration README. Jackson 3 mappers are immutable: derive a private
+mapper from a builder rather than modifying the shared mapper.
+
+Jackson parse failures are unchecked. Handled request/configuration failures
+retain their existing error paths, including HTTP 400 for malformed JSON in
+BodyHandler. The header and certificate deserializers retain legacy string and
+structured input forms through Jackson 3 deserialization contexts.
+
+Config YAML continues through the existing Engine loader. The approved
+Jackson YAML resolver changes in yaml-rule/json-overlay are separate from the
+JSON compatibility profile. Classic SnakeYAML pins remain until the plan's
+final dependency audit; this migration does not remove third-party YAML needs.
+
+
+To verify the coupled light-4j/http-client migration without cached networknt
+artifacts, use the source bootstrap script:
+
+```sh
+JACKSON3_MAVEN_REPO=/path/to/dedicated-maven-repository \
+JACKSON3_YAML_RULE=/path/to/migrated-yaml-rule \
+JACKSON3_HTTP_CLIENT=/path/to/migrated-http-client \
+./scripts/verify-jackson3-bootstrap.sh
+```
+
+The script refuses a repository containing `com/networknt`, builds yaml-rule,
+installs lower light-4j modules, tests and installs http-client, then tests the
+whole light-4j reactor and installs it. Cached third-party dependencies/plugins
+may be seeded first; set `JACKSON3_MAVEN_OFFLINE=1` to verify offline. All Maven
+writes use the selected repository. Merge the two migration PRs as a coordinated
+unit; publishing coordinated next-major artifacts and verifying their resolution
+from a separate cache remain release gates.

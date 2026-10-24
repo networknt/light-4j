@@ -16,7 +16,7 @@
 
 package com.networknt.proxy.tableau;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.common.DecryptUtil;
@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -165,7 +164,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
         return token;
     }
 
-    private String getRequestBody(String contentUrl, TableauConfig config) throws IOException {
+    private String getRequestBody(String contentUrl, TableauConfig config) {
         Map<String, Object> site = new HashMap<>();
         site.put("contentUrl", contentUrl);
         Map<String, Object> credentials = new HashMap<>();

@@ -1,6 +1,6 @@
 package com.networknt.client.rest;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import io.undertow.Undertow;
@@ -138,7 +138,7 @@ public class RestClientTemplateTest {
 
     @Disabled
     @Test
-    public void testPost() throws RestClientException, JsonProcessingException {
+    public void testPost() throws RestClientException, JacksonException {
         String requestBody = Config.getInstance().getMapper().writeValueAsString(pet);
         String str = restClientTemplate.post("https://localhost:9991", "post", requestBody);
         assertNotNull(str);

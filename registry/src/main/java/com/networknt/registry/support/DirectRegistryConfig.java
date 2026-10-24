@@ -11,7 +11,6 @@ import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -161,7 +160,7 @@ public class DirectRegistryConfig {
                     // json map
                     try {
                         map = Config.getInstance().getMapper().readValue(s, Map.class);
-                    } catch (IOException e) {
+                    } catch (tools.jackson.core.JacksonException e) {
                         logger.error("IOException:", e);
                     }
                 } else {

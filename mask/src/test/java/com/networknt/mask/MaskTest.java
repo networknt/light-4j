@@ -20,9 +20,9 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,8 +38,8 @@ public class MaskTest {
     public static void runOnceBeforeClass() {
         Configuration.setDefaults(new Configuration.Defaults() {
 
-            private final JsonProvider jsonProvider = new JacksonJsonProvider();
-            private final MappingProvider mappingProvider = new JacksonMappingProvider();
+            private final JsonProvider jsonProvider = new Jackson3JsonProvider(com.networknt.config.Jackson2Defaults.mapper());
+            private final MappingProvider mappingProvider = new Jackson3MappingProvider(com.networknt.config.Jackson2Defaults.mapper());
 
             @Override
             public JsonProvider jsonProvider() {

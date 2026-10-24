@@ -1,6 +1,6 @@
 package com.networknt.mcp;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +103,7 @@ public class McpMaskingUtils {
         // If this is an object schema, its properties are in the "properties" field
         if (node.has(PROPERTIES) && node.get(PROPERTIES).isObject()) {
             JsonNode properties = node.get(PROPERTIES);
-            Iterator<Map.Entry<String, JsonNode>> fields = properties.fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = properties.properties().iterator();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
                 traverseSchema(field.getValue(), currentPath + "." + field.getKey(), maskRules, tokenizeRules);

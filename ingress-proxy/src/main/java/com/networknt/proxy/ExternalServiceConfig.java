@@ -366,7 +366,7 @@ public class ExternalServiceConfig {
                 s = s.trim();
                 if (s.startsWith("[")) {
                     try {
-                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new tools.jackson.core.type.TypeReference<>() {});
                         pathPrefixes = populatePathPrefixes(values);
                     } catch (Exception e) {
                         throw new ConfigException("could not parse the pathPrefixes json with a list of string and object.");

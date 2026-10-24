@@ -1,7 +1,7 @@
 package com.networknt.mcp;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.access.AccessControlConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
@@ -200,7 +200,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private void processMessage(HttpServerExchange exch, String message) throws JsonProcessingException {
+    private void processMessage(HttpServerExchange exch, String message) throws JacksonException {
         if(logger.isDebugEnabled()) logger.debug("processMessage entered for path: {}", exch.getRequestPath());
         Map<String, Object> request = mapper.readValue(message, Map.class);
         String method = (String) request.get("method");
@@ -233,7 +233,7 @@ public class McpHandler implements MiddlewareHandler {
         String responseBody;
         try {
             responseBody = mapper.writeValueAsString(response);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.error("Failed to serialize JSON-RPC response", e);
             Map<String, Object> fallbackResponse = new HashMap<>();
             fallbackResponse.put("jsonrpc", JSONRpc_VERSION);
@@ -241,7 +241,7 @@ public class McpHandler implements MiddlewareHandler {
             fallbackResponse.put("id", id);
             try {
                 responseBody = mapper.writeValueAsString(fallbackResponse);
-            } catch (JsonProcessingException fallbackException) {
+            } catch (JacksonException fallbackException) {
                 logger.error("Failed to serialize fallback JSON-RPC error response", fallbackException);
                 responseBody = "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32603, \"message\": \"Internal error\"}, \"id\": null}";
             }
@@ -320,14 +320,14 @@ public class McpHandler implements MiddlewareHandler {
             if(tool.getInputSchema() != null) {
                 return mapper.readTree(tool.getInputSchema());
             }
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.warn("Invalid JSON schema for tool {}", tool.getName(), e);
         }
         return Map.of("type", "object");
     }
 
     @SuppressWarnings("unchecked")
-    private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws JsonProcessingException {
+    private boolean handleToolCall(HttpServerExchange exch, Map<String, Object> request, Map<String, Object> response) throws JacksonException {
         Map<String, Object> auditInfo = ensureAuditInfo(exch);
 
         Object paramsObj = request.get("params");
@@ -632,7 +632,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> maskToolArguments(String toolName, Map<String, Object> args, McpTool tool) throws JsonProcessingException {
+    private Map<String, Object> maskToolArguments(String toolName, Map<String, Object> args, McpTool tool) throws JacksonException {
         Map<String, String> requestRules = McpMaskingUtils.getMaskingRulesFromSchema(toolName, tool.getInputSchema());
         if (requestRules != null && !requestRules.isEmpty()) {
             String argsStr = mapper.writeValueAsString(args);
@@ -654,7 +654,7 @@ public class McpHandler implements MiddlewareHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> maskToolResult(String toolName, Map<String, Object> result) throws JsonProcessingException {
+    private Map<String, Object> maskToolResult(String toolName, Map<String, Object> result) throws JacksonException {
         String resultStr = mapper.writeValueAsString(result);
         String maskedResultStr = Mask.maskJson(resultStr, toolName);
         maskedResultStr = Mask.maskString(maskedResultStr, "mcp_global");
@@ -664,13 +664,13 @@ public class McpHandler implements MiddlewareHandler {
     private void putAuditJson(Map<String, Object> auditInfo, String key, Object value) {
         try {
             auditInfo.put(key, mapper.writeValueAsString(value));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             auditInfo.put(key, value);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> tokenizeArguments(Map<String, Object> args, Map<String, Integer> tokenizeRules) throws JsonProcessingException {
+    private Map<String, Object> tokenizeArguments(Map<String, Object> args, Map<String, Integer> tokenizeRules) throws JacksonException {
         com.jayway.jsonpath.DocumentContext ctx = com.jayway.jsonpath.JsonPath.parse(mapper.writeValueAsString(args));
         com.jayway.jsonpath.Configuration conf = com.jayway.jsonpath.Configuration.builder().options(com.jayway.jsonpath.Option.AS_PATH_LIST).build();
         com.jayway.jsonpath.DocumentContext pathCtx = com.jayway.jsonpath.JsonPath.using(conf).parse(ctx.jsonString());

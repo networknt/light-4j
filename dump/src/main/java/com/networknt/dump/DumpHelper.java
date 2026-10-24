@@ -16,8 +16,8 @@
 
 package com.networknt.dump;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,11 +82,11 @@ class DumpHelper {
      * @param loggerFunc Consuer<T> getLoggerFuncBasedOnLevel(config.getLogLevel())
      */
     private static void logResultUsingJson(Map<String, Object> result, Consumer<String> loggerFunc) {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = com.networknt.config.Jackson2Defaults.mapper();
         String resultJson = "";
         try {
             resultJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.error(e.toString());
         }
         if(StringUtils.isNotBlank(resultJson)){

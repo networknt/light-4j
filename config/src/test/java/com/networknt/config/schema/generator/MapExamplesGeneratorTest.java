@@ -87,7 +87,7 @@ class MapExamplesGeneratorTest {
                 .examples(new String[]{"{\"github\": {}}"})
                 .requiredProperties(new String[]{"signatureHeader"})
                 .itemsPattern("\\S").build();
-        var json = new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(node);
+        var json = new tools.jackson.databind.ObjectMapper().valueToTree(node);
         assertTrue(json.path("examples").get(0).has("github"));
         assertEquals("signatureHeader", json.path("requiredProperties").get(0).asText());
         assertEquals("\\S", json.path("itemsPattern").asText());

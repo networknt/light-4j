@@ -108,7 +108,7 @@ public class McpHandler {
                 default:
                     client.sendError(id, -32601, "Method not found: " + method);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | tools.jackson.core.JacksonException e) {
             client.sendError(id, -32602, e.getMessage());
         } catch (Exception e) {
             logger.error("Error handling MCP request", e);
@@ -531,10 +531,10 @@ public class McpHandler {
                 }
             } catch (ParseException ignored) {
                 // Ignore lines with timestamps that cannot be parsed; continue scanning the log file.
+            } catch (tools.jackson.core.JacksonException _) {
+                // Ignore lines that cannot be parsed as JSON; continue scanning the log file.
             } catch (RuntimeException ignored) {
                 // Ignore malformed lines because log files may contain non-JSON output.
-            } catch (IOException ignored) {
-                // Ignore lines that cannot be parsed as JSON; continue scanning the log file.
             }
         }
         return Map.of(TOTAL, index, LOGS, logs);

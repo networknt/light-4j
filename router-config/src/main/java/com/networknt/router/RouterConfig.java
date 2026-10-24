@@ -27,7 +27,6 @@ import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -753,7 +752,7 @@ public class RouterConfig {
                     // json map
                     try {
                         pathPrefixMaxRequestTime = Config.getInstance().getMapper().readValue(s, Map.class);
-                    } catch (IOException e) {
+                    } catch (tools.jackson.core.JacksonException e) {
                         logger.error("IOException:", e);
                     }
                 } else {

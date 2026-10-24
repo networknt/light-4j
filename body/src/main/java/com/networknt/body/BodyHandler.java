@@ -16,7 +16,7 @@
 
 package com.networknt.body;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
@@ -135,7 +135,7 @@ public class BodyHandler implements MiddlewareHandler {
                     InputStream inputStream = exchange.getInputStream();
                     exchange.putAttachment(AttachmentConstants.REQUEST_BODY, inputStream);
                 }
-            } catch (IOException e) {
+            } catch (IOException | tools.jackson.core.JacksonException e) {
                 logger.error("IOException: ", e);
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                 if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest ends with an error.");
@@ -171,10 +171,9 @@ public class BodyHandler implements MiddlewareHandler {
      *
      * @param exchange exchange to be attached
      * @param string   unparsed request body
-     * @throws IOException IO Exception
      * @return boolean true if successful, false otherwise
      */
-    private boolean attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
+    private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
         Object body;
         if (string != null) {
             string = string.trim();
