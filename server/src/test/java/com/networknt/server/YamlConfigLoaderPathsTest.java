@@ -119,7 +119,7 @@ class YamlConfigLoaderPathsTest {
         Path notDirectory = directory.resolve("file");
         Files.writeString(notDirectory, "retained");
         DefaultConfigLoader.targetConfigsDirectory = notDirectory.toString();
-        Map<String, Object> active = Map.of("sentinel", "retained");
+        Map<String, Object> active = new java.util.HashMap<>(Map.of("sentinel", "retained"));
         ConfigInjection.setDecryptedValueMap(active);
         assertEquals(false, invoke(loader, "loadConfigs", String.class, "?fixture=true"));
         assertSame(active, ConfigInjection.getDecryptedValueMap());
