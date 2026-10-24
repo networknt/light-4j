@@ -39,7 +39,8 @@ class Jackson3MapperCompatibilityTest {
         ObjectMapper config = Config.getInstance().getMapper();
         assertThrows(UnrecognizedPropertyException.class, () -> config.readValue("{\"extra\":true}", Bean.class));
         assertEquals(7, JsonMapper.objectMapper.readValue("{\"extra\":true}", Bean.class).number);
-        assertThrows(JacksonException.class, () -> config.writeValueAsString(new Empty()));
+        Empty empty = new Empty();
+        assertThrows(JacksonException.class, () -> config.writeValueAsString(empty));
         assertEquals("{}", JsonMapper.objectMapper.writeValueAsString(new Empty()));
     }
 

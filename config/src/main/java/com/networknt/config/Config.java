@@ -285,8 +285,8 @@ public abstract class Config {
                 try {
                     return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
                 } catch (IllegalArgumentException | tools.jackson.core.JacksonException e) {
-                    logger.error("Unable to bind configuration {} at {} as {}", name, path, type.getName(), e);
-                    throw new RuntimeException("Unable to load configuration '" + name + "' as object.", e);
+                    throw new RuntimeException("Unable to load configuration '" + name
+                            + "' at " + path + " as " + type.getName() + ".", e);
                 }
             }
             return defaults ? loadObjectConfig(name, type, path)
@@ -294,7 +294,7 @@ public abstract class Config {
         }
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
-        final static ObjectMapper mapper = Jackson2Defaults.builder()
+        static final ObjectMapper mapper = Jackson2Defaults.builder()
                 .disable(tools.jackson.databind.cfg.DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .build();
 

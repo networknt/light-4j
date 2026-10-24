@@ -188,3 +188,22 @@ Config YAML continues through the existing Engine loader. The approved
 Jackson YAML resolver changes in yaml-rule/json-overlay are separate from the
 JSON compatibility profile. Classic SnakeYAML pins remain until the plan's
 final dependency audit; this migration does not remove third-party YAML needs.
+
+
+To verify the coupled light-4j/http-client migration without cached networknt
+artifacts, use the source bootstrap script:
+
+```sh
+JACKSON3_MAVEN_REPO=/path/to/dedicated-maven-repository \
+JACKSON3_YAML_RULE=/path/to/migrated-yaml-rule \
+JACKSON3_HTTP_CLIENT=/path/to/migrated-http-client \
+./scripts/verify-jackson3-bootstrap.sh
+```
+
+The script refuses a repository containing `com/networknt`, builds yaml-rule,
+installs lower light-4j modules, tests and installs http-client, then tests the
+whole light-4j reactor and installs it. Cached third-party dependencies/plugins
+may be seeded first; set `JACKSON3_MAVEN_OFFLINE=1` to verify offline. All Maven
+writes use the selected repository. Merge the two migration PRs as a coordinated
+unit; publishing coordinated next-major artifacts and verifying their resolution
+from a separate cache remain release gates.

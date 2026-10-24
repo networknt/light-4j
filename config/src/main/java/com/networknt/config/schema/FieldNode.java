@@ -19,7 +19,7 @@ import java.util.UUID;
  * @author Kalev Gonvick
  */
 public class FieldNode {
-    private static final ObjectMapper EXAMPLE_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
+    private static final ObjectMapper EXAMPLE_MAPPER = com.networknt.config.Jackson2Defaults.mapper();
 
     /**
      * Randomly generated id.

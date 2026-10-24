@@ -249,7 +249,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if (cachedResponseEntity != null && cachedResponseEntity.getBody() != null) {
             // check if the response body is empty, if not, set the content type to application/json
             if (cachedResponseEntity.getBody().length() > 0) {
-                ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
+                ObjectMapper mapper = com.networknt.config.Jackson2Defaults.mapper();
                 long updatedExpireIn = 0L;
 
                 try {

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -118,7 +117,7 @@ public class PluggableConfigLoaderTest {
         }
     }
 
-    private static void writeConfigFile(Map<String, Object> configMap, String path) throws IOException {
+    private static void writeConfigFile(Map<String, Object> configMap, String path) {
         if (path.equals("")) {
             mapper.writeValue(new File(path), configMap);
         } else {

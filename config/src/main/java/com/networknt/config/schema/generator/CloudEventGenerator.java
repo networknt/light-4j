@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
  */
 public class CloudEventGenerator extends Generator {
 
-    private static final ObjectMapper OBJECT_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults()
+    private static final ObjectMapper OBJECT_MAPPER = com.networknt.config.Jackson2Defaults.builder()
             .enable(SerializationFeature.INDENT_OUTPUT).build();
 
     private static final String FAILED_PARSE_VALUE = "!FailedToParse";

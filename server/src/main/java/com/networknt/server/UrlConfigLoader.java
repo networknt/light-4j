@@ -119,7 +119,7 @@ public class UrlConfigLoader implements IConfigLoader {
 	static final String CONFIG_EXT_YAML = ".yaml";
 	static final String CONFIG_EXT_YML = ".yml";
 	static final String[] configExtensionsOrdered = { CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON };
-	final static ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
+	final static ObjectMapper mapper = com.networknt.config.Jackson2Defaults.mapper();
 	final static TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {
 	};
 	final static Pattern files = Pattern.compile(">([^>/]+)</a>");

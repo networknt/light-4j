@@ -16,7 +16,6 @@
 
 package com.networknt.proxy;
 
-import tools.jackson.databind.ObjectMapper;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
@@ -149,7 +148,7 @@ public class LightProxyHandler implements HttpHandler {
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = exchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
-            exchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build().writeValueAsString(jwtClaims.getClaimsMap()));
+            exchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), com.networknt.config.Jackson2Defaults.mapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(metricsHandler != null) {

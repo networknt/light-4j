@@ -7,7 +7,6 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;

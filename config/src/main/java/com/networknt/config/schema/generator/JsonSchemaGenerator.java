@@ -50,7 +50,7 @@ public class JsonSchemaGenerator extends Generator {
         DefaultIndenter lfIndenter = new DefaultIndenter().withLinefeed("\n");
         DEFAULT_PRETTY_PRINTER.withObjectIndenter(lfIndenter);
         DEFAULT_PRETTY_PRINTER.withArrayIndenter(lfIndenter);
-        OBJECT_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults()
+        OBJECT_MAPPER = com.networknt.config.Jackson2Defaults.builder()
                 .defaultPrettyPrinter(DEFAULT_PRETTY_PRINTER).build();
     }
 

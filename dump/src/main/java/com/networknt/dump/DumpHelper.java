@@ -82,7 +82,7 @@ class DumpHelper {
      * @param loggerFunc Consuer<T> getLoggerFuncBasedOnLevel(config.getLogLevel())
      */
     private static void logResultUsingJson(Map<String, Object> result, Consumer<String> loggerFunc) {
-        ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
+        ObjectMapper mapper = com.networknt.config.Jackson2Defaults.mapper();
         String resultJson = "";
         try {
             resultJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);

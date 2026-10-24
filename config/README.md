@@ -112,8 +112,7 @@ ObjectMapper mapper = new ObjectMapper();
 mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
 // After (Jackson 3, tools.jackson.databind imports)
-ObjectMapper mapper = tools.jackson.databind.json.JsonMapper
-        .builderWithJackson2Defaults()
+ObjectMapper mapper = Jackson2Defaults.builder()
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .build();
 ```
@@ -156,3 +155,17 @@ for the measured object fixtures: neither class exposes an object creator for
 Jackson. Jackson 3 reports `InvalidDefinitionException` where Jackson 2 reported
 `MismatchedInputException`. Both remain binding failures; the config map and
 supported manual loading paths are separate from this direct-binding probe.
+
+
+The public `Jackson2Defaults.builder()` supplies the common measured policy;
+`Jackson2Defaults.mapper()` reuses a shared immutable mapper when no overrides
+are needed. The config, HTTP, JSONPath and other framework consumers use this
+profile rather than duplicating Jackson's partial compatibility builder.
+
+Stream constraints are explicitly retained from Jackson 2.22.3: read and write
+nesting depth 1,000, string length 20,000,000, field-name length 50,000 and number
+length 1,000. Document length and token count remain unlimited. These constraints
+are tested separately from the 84 common feature flags, including actual nested
+JSON and oversized-string reads. JSONPath uses the same profile and retains
+permissive trailing-token handling. MCP configuration binding failures continue
+to return JSON-RPC invalid params (-32602).

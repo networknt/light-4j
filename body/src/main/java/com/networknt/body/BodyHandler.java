@@ -171,10 +171,9 @@ public class BodyHandler implements MiddlewareHandler {
      *
      * @param exchange exchange to be attached
      * @param string   unparsed request body
-     * @throws IOException IO Exception
      * @return boolean true if successful, false otherwise
      */
-    private boolean attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
+    private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
         Object body;
         if (string != null) {
             string = string.trim();

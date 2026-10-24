@@ -38,8 +38,8 @@ public class MaskTest {
     public static void runOnceBeforeClass() {
         Configuration.setDefaults(new Configuration.Defaults() {
 
-            private final JsonProvider jsonProvider = new Jackson3JsonProvider();
-            private final MappingProvider mappingProvider = new Jackson3MappingProvider();
+            private final JsonProvider jsonProvider = new Jackson3JsonProvider(com.networknt.config.Jackson2Defaults.mapper());
+            private final MappingProvider mappingProvider = new Jackson3MappingProvider(com.networknt.config.Jackson2Defaults.mapper());
 
             @Override
             public JsonProvider jsonProvider() {

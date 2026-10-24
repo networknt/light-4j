@@ -104,7 +104,7 @@ public class CentralizedManagement {
 
     // Method used to convert map to object based on the reference class provided
     static Object convertMapToObj(Map<String, Object> map, Class clazz) {
-        ObjectMapper mapper = Jackson2Defaults.builder().build();
+        ObjectMapper mapper = Jackson2Defaults.mapper();
         Object obj = mapper.convertValue(map, clazz);
         return obj;
     }

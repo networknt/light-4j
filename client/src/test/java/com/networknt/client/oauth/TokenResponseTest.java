@@ -20,29 +20,28 @@ import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.config.Config;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 
 public class TokenResponseTest {
     @Test
-    public void testExactFields() throws IOException {
+    public void testExactFields() {
         String s = "{\"access_token\":\"access_token\",\"token_type\":\"token_type\",\"expires_in\":3600,\"scope\":\"scope\",\"state\":\"state\",\"refresh_token\":\"refresh_token\",\"example_parameter\":\"example_parameter\"}";
         TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
     }
 
     @Test
-    public void testMissingFields() throws IOException {
+    public void testMissingFields() {
         String s = "{\"access_token\":\"access_token\",\"token_type\":\"token_type\",\"expires_in\":3600}";
         TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
     }
 
     @Test
-    public void testErrorStatus() throws IOException {
+    public void testErrorStatus() {
         String s = "{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\"}";
         TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
     }
 
     @Test
-    public void testExtraFields() throws IOException {
+    public void testExtraFields() {
         String s = "{\"access_token\":\"access_token\",\"token_type\":\"token_type\",\"expires_in\":3600,\"scope\":\"scope\",\"state\":\"state\",\"refresh_token\":\"refresh_token\",\"example_parameter\":\"example_parameter\",\"extra\":\"extra\"}";
         TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
     }

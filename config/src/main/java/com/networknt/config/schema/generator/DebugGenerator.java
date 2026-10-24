@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
  */
 public class DebugGenerator extends Generator {
 
-    private final ObjectMapper objectWriter = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
+    private final ObjectMapper objectWriter = com.networknt.config.Jackson2Defaults.mapper();
 
     public DebugGenerator(final String configKey, final String configName) {
         super(configKey, configName);

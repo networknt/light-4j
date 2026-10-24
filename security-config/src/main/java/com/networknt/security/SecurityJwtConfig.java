@@ -6,7 +6,6 @@ import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.node.ObjectNode;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.StringField;
