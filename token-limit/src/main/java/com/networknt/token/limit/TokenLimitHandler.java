@@ -1,9 +1,9 @@
 package com.networknt.token.limit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import com.networknt.cache.CacheManager;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
@@ -249,7 +249,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if (cachedResponseEntity != null && cachedResponseEntity.getBody() != null) {
             // check if the response body is empty, if not, set the content type to application/json
             if (cachedResponseEntity.getBody().length() > 0) {
-                ObjectMapper mapper = new ObjectMapper();
+                ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
                 long updatedExpireIn = 0L;
 
                 try {
@@ -259,7 +259,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
                     if(logger.isTraceEnabled()) logger.trace("Original expire field value = {} updated to value = {}", jwtNode.get(expireKey), updatedExpireIn);
                     ((ObjectNode)jwtNode).put(expireKey, updatedExpireIn);
                     return new CachedResponseEntity<String>(jwtNode.toString(), cachedResponseEntity.getHeaders(), cachedResponseEntity.getStatusCode(), cachedResponseEntity.getTimestamp());
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     logger.error("Error parsing response body and updating " + expireKey + " field. Will proceed with cached response.", e);
                 }
             }

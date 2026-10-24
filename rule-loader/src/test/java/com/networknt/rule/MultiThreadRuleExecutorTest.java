@@ -139,7 +139,7 @@ public class MultiThreadRuleExecutorTest {
 
             RuntimeException exception = Assertions.assertThrows(
                     RuntimeException.class, MultiThreadRuleExecutor::new);
-            Assertions.assertTrue(hasCause(exception, com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException.class));
+            Assertions.assertTrue(hasCause(exception, tools.jackson.databind.exc.UnrecognizedPropertyException.class));
         } finally {
             restoreRuleConfig(config, originalRuleConfig);
         }

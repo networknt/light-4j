@@ -89,3 +89,70 @@ dependency, whose Jackson YAML implementation requires it. This migration does
 not replace that external parser. Rule bodies are bound directly through its
 configured mapper, without a JSON/YAML text round trip. Strings, Unicode line
 separators, and long map keys therefore retain their original data.
+
+
+## Jackson 3 migration
+
+The development line uses `tools.jackson.core:jackson-databind:3.2.3` under the
+`tools.jackson:jackson-bom`. Jackson annotations retain their
+`com.fasterxml.jackson.annotation` package. Jackson 3 requires Java 17 or later;
+this repository retains its existing Java 25 build target.
+
+`Config.getMapper()` and `JsonMapper.objectMapper` now expose Jackson 3 types.
+This is a source and binary incompatible API change. Coordinate downstream
+migration and a next-major release before publishing; project versions are not
+changed by this implementation. The pre-migration `2.x` maintenance branch
+preserves the old API.
+
+Mappers are immutable. Configure a builder before building a private mapper:
+
+```java
+// Before (Jackson 2)
+ObjectMapper mapper = new ObjectMapper();
+mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+// After (Jackson 3, tools.jackson.databind imports)
+ObjectMapper mapper = tools.jackson.databind.json.JsonMapper
+        .builderWithJackson2Defaults()
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build();
+```
+
+The framework mappers supplement Jackson's documented partial compatibility
+profile with measured shared-feature settings. `Config.getMapper()` continues
+to reject unknown properties and empty beans and include null properties.
+`JsonMapper.objectMapper` continues to ignore unknown properties, permit empty
+beans, omit null properties and null map entries, and write plain BigDecimals. Both retain legacy
+property ordering, primitive-null coercion, trailing-token handling,
+getter-backed collection binding, ISO date/time output and numeric durations.
+Java time and JDK8 support are built into Jackson 3; separate modules are removed.
+The frozen feature tests cover common named flags, not removed/renamed settings
+or all possible application types.
+
+Jackson failures are now unchecked `JacksonException` instances. JSON helper
+methods retain RuntimeException wrapping, and config binding retains the
+configuration-name error context and original cause. Stream I/O catches remain.
+Malformed JSON now reports StreamReadException instead of JsonParseException.
+
+Config YAML continues through the existing SnakeYAML Engine loader; this phase
+does not change that loader's scalar policy. The Jackson YAML resolver used by
+json-overlay and yaml-rule has its own documented scalar changes. Classic
+SnakeYAML pins remain until the plan's final dependency cleanup phase.
+
+### Accepted ClientConfig binding difference
+
+Jackson 2.22.3 rejects direct typed ClientConfig binding because `getOAuth()`
+and `getOauthConfig()` conflict on the `oauth` property. Jackson 3 resolves that
+getter conflict. Four measured client.yml fixtures now bind successfully; a
+fifth reaches an unknown-property rejection instead of failing introspection.
+This difference was explicitly accepted during the migration. The raw config
+map output is unchanged. The fixtures are in light-4j modules `client`,
+`deref-token`, `portal-registry`, `security` (successful bindings) and `rule-loader`
+(unknown-property rejection).
+
+
+Direct object binding of `JwtConfig` and `SanitizerConfig` remains unsupported
+for the measured object fixtures: neither class exposes an object creator for
+Jackson. Jackson 3 reports `InvalidDefinitionException` where Jackson 2 reported
+`MismatchedInputException`. Both remain binding failures; the config map and
+supported manual loading paths are separate from this direct-binding probe.

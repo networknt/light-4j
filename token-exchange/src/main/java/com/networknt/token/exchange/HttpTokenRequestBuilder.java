@@ -1,6 +1,6 @@
 package com.networknt.token.exchange;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ public class HttpTokenRequestBuilder {
             LOG.trace("Formatting body as JSON.");
             try {
                 requestBody = Config.getInstance().getMapper().writeValueAsString(body);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new IllegalArgumentException("Failed to serialize body parameters to JSON: " + e.getMessage(), e);
             }
         } else {

@@ -1,8 +1,8 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.util.DefaultIndenter;
+import tools.jackson.core.util.DefaultPrettyPrinter;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.*;
 
 import javax.tools.FileObject;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaGenerator extends Generator {
 
     private static final String JSON_DRAFT = "http://json-schema.org/draft-07/schema#";
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER;
     private static final DefaultPrettyPrinter DEFAULT_PRETTY_PRINTER = new DefaultPrettyPrinter();
 
     /* Subset of OpenAPI specification fields used in the generator. */
@@ -50,7 +50,8 @@ public class JsonSchemaGenerator extends Generator {
         DefaultIndenter lfIndenter = new DefaultIndenter().withLinefeed("\n");
         DEFAULT_PRETTY_PRINTER.withObjectIndenter(lfIndenter);
         DEFAULT_PRETTY_PRINTER.withArrayIndenter(lfIndenter);
-        OBJECT_MAPPER.setDefaultPrettyPrinter(DEFAULT_PRETTY_PRINTER);
+        OBJECT_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults()
+                .defaultPrettyPrinter(DEFAULT_PRETTY_PRINTER).build();
     }
 
     public JsonSchemaGenerator(final String configKey, final String configName) {

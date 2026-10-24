@@ -1,6 +1,6 @@
 package com.networknt.client.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import io.undertow.client.ClientResponse;

@@ -16,7 +16,7 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -104,7 +104,7 @@ public class CentralizedManagement {
 
     // Method used to convert map to object based on the reference class provided
     static Object convertMapToObj(Map<String, Object> map, Class clazz) {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = Jackson2Defaults.builder().build();
         Object obj = mapper.convertValue(map, clazz);
         return obj;
     }

@@ -1,6 +1,6 @@
 package com.networknt.metrics;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.MiddlewareHandler;
@@ -132,7 +132,7 @@ public class APMAgentReporterTest {
             epAgentMetricRequest.setMetrics(epAgentMetricList);
             try {
                 return Config.getInstance().getMapper().writeValueAsString(epAgentMetricRequest);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new ClientException(e);
             }
         }

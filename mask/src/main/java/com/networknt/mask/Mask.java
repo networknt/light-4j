@@ -16,7 +16,7 @@
 
 package com.networknt.mask;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.jayway.jsonpath.*;
 import com.networknt.config.Config;
 import com.networknt.server.ModuleRegistry;
@@ -187,7 +187,7 @@ public class Mask {
             Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
             if (patternMap != null) {
                 JsonNode configNode = Config.getInstance().getMapper().valueToTree(patternMap);
-                Iterator<Map.Entry<String, JsonNode>> iterator = configNode.fields();
+                Iterator<Map.Entry<String, JsonNode>> iterator = configNode.properties().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<String, JsonNode> entry = iterator.next();
                     applyMask(entry, ctx);

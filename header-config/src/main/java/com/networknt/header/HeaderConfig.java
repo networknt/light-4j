@@ -1,18 +1,17 @@
 package com.networknt.header;
 
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;
 
-import java.io.IOException;
 import java.util.*;
 
 @ConfigSchema(configKey = "header", configName = "header", outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML, OutputFormat.CLOUD})
@@ -151,18 +150,18 @@ public class HeaderConfig {
     /**
      * This is used to resolve the type field for remove headers. Either in list or string format.
      */
-    protected static class HeaderRemoveDeserializer extends JsonDeserializer<List<String>> {
+    protected static class HeaderRemoveDeserializer extends ValueDeserializer<List<String>> {
 
         @Override
-        public List<String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
-            final var mapper = (ObjectMapper) jsonParser.getCodec();
-            final JsonNode root = mapper.readTree(jsonParser);
+        public List<String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws JacksonException {
+            final JsonNode root = deserializationContext.readTree(jsonParser);
 
             if (root.isArray()) {
-                return mapper.convertValue(root, new TypeReference<>() {});
+                return deserializationContext.readTreeAsValue(root, deserializationContext.getTypeFactory()
+                        .constructCollectionType(List.class, String.class));
 
-            } else if (root.isTextual()) {
-                final var s = mapper.convertValue(root, String.class);
+            } else if (root.isString()) {
+                final var s = root.asString();
                 final List<String> list = new ArrayList<>();
                 for (String header : s.split(",")) {
                     list.add(header.trim());
@@ -176,16 +175,16 @@ public class HeaderConfig {
     /**
      * This is used to resolve the type of field for update headers. Either in map or string format.
      */
-    protected static class HeaderUpdateDeserializer extends JsonDeserializer<Map<String, String>> {
+    protected static class HeaderUpdateDeserializer extends ValueDeserializer<Map<String, String>> {
 
         @Override
-        public Map<String, String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
-            final var mapper = (ObjectMapper) jsonParser.getCodec();
-            final JsonNode root = mapper.readTree(jsonParser);
+        public Map<String, String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws JacksonException {
+            final JsonNode root = deserializationContext.readTree(jsonParser);
             if (root.isObject())
-                return mapper.convertValue(root, new TypeReference<>(){});
-            else if (root.isTextual()) {
-                String s = mapper.convertValue(root, String.class);
+                return deserializationContext.readTreeAsValue(root, deserializationContext.getTypeFactory()
+                        .constructMapType(Map.class, String.class, String.class));
+            else if (root.isString()) {
+                String s = root.asString();
                 Map<String, String> map = new LinkedHashMap<>();
                 for(String keyValue : s.split(",")) {
                     String[] pairs = keyValue.split(":", 2);

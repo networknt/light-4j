@@ -13,5 +13,5 @@ module com.networknt.logger.config {
     requires xnio.api;
     requires org.slf4j;
     requires ch.qos.logback.classic;
-    requires com.fasterxml.jackson.core;
+    requires tools.jackson.core;
 }

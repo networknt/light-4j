@@ -1,7 +1,7 @@
 package com.networknt.token.limit;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
@@ -371,7 +371,7 @@ public class TokenLimitHandlerTest {
         List<Future<String>> futures = executorService.invokeAll(tasks);
         List<String> resultListToken = new ArrayList<>(futures.size());
         List<String> resultListExpire = new ArrayList<>(futures.size());
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
         // Check for exceptions
         for (Future<String> future : futures) {
             // Throws an exception if an exception was thrown by the task.

@@ -531,10 +531,10 @@ public class McpHandler {
                 }
             } catch (ParseException ignored) {
                 // Ignore lines with timestamps that cannot be parsed; continue scanning the log file.
+            } catch (tools.jackson.core.JacksonException ignored) {
+                // Ignore lines that cannot be parsed as JSON; continue scanning the log file.
             } catch (RuntimeException ignored) {
                 // Ignore malformed lines because log files may contain non-JSON output.
-            } catch (IOException ignored) {
-                // Ignore lines that cannot be parsed as JSON; continue scanning the log file.
             }
         }
         return Map.of(TOTAL, index, LOGS, logs);

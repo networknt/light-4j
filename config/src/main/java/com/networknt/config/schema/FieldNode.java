@@ -2,10 +2,9 @@ package com.networknt.config.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -20,7 +19,7 @@ import java.util.UUID;
  * @author Kalev Gonvick
  */
 public class FieldNode {
-    private static final ObjectMapper EXAMPLE_MAPPER = new ObjectMapper();
+    private static final ObjectMapper EXAMPLE_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
 
     /**
      * Randomly generated id.
@@ -340,7 +339,7 @@ public class FieldNode {
                     if (example == null)
                         throw new IllegalArgumentException("Map example must be a JSON object");
                     parsed.add(example);
-                } catch (IOException e) {
+                } catch (tools.jackson.core.JacksonException e) {
                     throw new IllegalArgumentException("Invalid map example: " + node.configFieldName, e);
                 }
             }

@@ -1,7 +1,7 @@
 package com.networknt.token.exchange;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
 import com.networknt.server.ModuleRegistry;

@@ -161,7 +161,7 @@ public class DirectRegistryConfig {
                     // json map
                     try {
                         map = Config.getInstance().getMapper().readValue(s, Map.class);
-                    } catch (IOException e) {
+                    } catch (tools.jackson.core.JacksonException e) {
                         logger.error("IOException:", e);
                     }
                 } else {

@@ -1,6 +1,6 @@
 package com.networknt.config.reload.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
 import com.networknt.config.reload.model.ConfigReloadConfig;

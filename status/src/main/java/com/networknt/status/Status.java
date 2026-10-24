@@ -16,7 +16,7 @@
 
 package com.networknt.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.server.ModuleRegistry;
@@ -370,7 +370,7 @@ public class Status {
         if (showMetadata && getMetadata() != null) {
             try {
                 sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 logger.error("cannot parse metadata for status:" + getStatusCode(), e);
             }
             sb.append(",\"severity\":\"" + getSeverity());

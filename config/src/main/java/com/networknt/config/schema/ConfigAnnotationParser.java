@@ -98,7 +98,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 try (var writer = Files.newBufferedWriter(projectFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
-                } catch (IOException e) {
+                } catch (IOException | tools.jackson.core.JacksonException e) {
                     this.logError("Error generating config file: %s", e.getMessage());
                     return false;
                 }
@@ -117,7 +117,7 @@ public class ConfigAnnotationParser extends AbstractProcessor {
                 try (var writer = Files.newBufferedWriter(targetFile)) {
                     Generator.getGenerator(output, configClassMetadata.configKey(), configClassMetadata.configName())
                             .writeSchemaToFile(writer, configMetadata);
-                } catch (IOException e) {
+                } catch (IOException | tools.jackson.core.JacksonException e) {
                     this.logError("Error generating config file: %s", e.getMessage());
                     return false;
                 }

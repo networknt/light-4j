@@ -1,6 +1,6 @@
 package com.networknt.rule;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.rule.exception.RuleEngineException;
@@ -147,7 +147,7 @@ public class ResponseColumnFilterAction implements IAction {
     private static List<String> convertStringToList(String inputString){
         try {
             return Config.getInstance().getMapper().readValue(inputString, new TypeReference<List<String>>(){});
-        } catch (IOException e) {
+        } catch (tools.jackson.core.JacksonException e) {
             logger.error("IOException:", e);
             return null;
         }

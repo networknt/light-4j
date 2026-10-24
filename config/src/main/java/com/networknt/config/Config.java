@@ -16,10 +16,7 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.yml.ConfigLoaderConstructor;
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YamlUtils;
@@ -287,7 +284,7 @@ public abstract class Config {
                 Map<String, Object> map = cachedMap(entry, name, path, defaults);
                 try {
                     return map == null ? null : CentralizedManagement.convertMapToObj(map, type);
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException | tools.jackson.core.JacksonException e) {
                     logger.error("Unable to bind configuration {} at {} as {}", name, path, type.getName(), e);
                     throw new RuntimeException("Unable to load configuration '" + name + "' as object.", e);
                 }
@@ -297,13 +294,9 @@ public abstract class Config {
         }
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
-        final static ObjectMapper mapper = new ObjectMapper();
-
-        static {
-            mapper.registerModule(new JavaTimeModule());
-            mapper.registerModule(new Jdk8Module());
-            mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        }
+        final static ObjectMapper mapper = Jackson2Defaults.builder()
+                .disable(tools.jackson.databind.cfg.DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
 
         public AbstractConfigImpl() {
             configLoaderClass = getConfigLoaderClass();

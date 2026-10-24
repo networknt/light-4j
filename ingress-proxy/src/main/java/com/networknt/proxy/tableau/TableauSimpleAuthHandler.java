@@ -16,7 +16,7 @@
 
 package com.networknt.proxy.tableau;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.common.DecryptUtil;

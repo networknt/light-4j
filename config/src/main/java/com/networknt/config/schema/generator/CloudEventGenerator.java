@@ -1,7 +1,7 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
 import com.networknt.config.schema.FieldNode;
 
 import javax.tools.FileObject;
@@ -21,10 +21,8 @@ import java.util.LinkedHashMap;
  */
 public class CloudEventGenerator extends Generator {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    static {
-        OBJECT_MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
-    }
+    private static final ObjectMapper OBJECT_MAPPER = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults()
+            .enable(SerializationFeature.INDENT_OUTPUT).build();
 
     private static final String FAILED_PARSE_VALUE = "!FailedToParse";
     private static final String DEFAULT_SOURCE = "https://github.com/networknt/light4j";

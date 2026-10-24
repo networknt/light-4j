@@ -16,7 +16,7 @@
 
 package com.networknt.hmac;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.LightHttpHandler;

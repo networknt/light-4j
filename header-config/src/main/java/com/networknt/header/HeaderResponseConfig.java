@@ -1,6 +1,6 @@
 package com.networknt.header;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.MapField;
 

@@ -122,7 +122,7 @@ public class PathServiceConfig {
                     // json map
                     try {
                         mapping = Config.getInstance().getMapper().readValue(s, Map.class);
-                    } catch (IOException e) {
+                    } catch (tools.jackson.core.JacksonException e) {
                         logger.error("IOException:", e);
                     }
                 } else {

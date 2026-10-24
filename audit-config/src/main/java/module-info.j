@@ -6,7 +6,7 @@ module com.networknt.audit {
     requires com.networknt.utility;
     requires com.networknt.mask;
 
-    requires com.fasterxml.jackson.core;
+    requires tools.jackson.core;
     requires org.slf4j;
     requires java.logging;
 }

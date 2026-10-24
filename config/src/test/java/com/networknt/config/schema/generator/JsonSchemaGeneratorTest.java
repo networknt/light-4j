@@ -1,7 +1,7 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
 import com.networknt.config.schema.Format;
@@ -259,7 +259,7 @@ public class JsonSchemaGeneratorTest {
     }
 
     @Test
-    public void testMultiClassJsonSchema() throws JsonProcessingException {
+    public void testMultiClassJsonSchema() throws JacksonException {
         final var testOutput = "{\n" +
                 "  \"type\" : \"object\",\n" +
                 "  \"properties\" : {\n" +

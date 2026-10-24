@@ -16,9 +16,9 @@
 
 package com.networknt.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -90,7 +90,7 @@ public class StatusDefaultTest {
     }
 
     @Test
-    public void testToStringWithMetadata() throws JsonProcessingException {
+    public void testToStringWithMetadata() throws JacksonException {
 
         Status status = new Status("ERR11000", Map.of("metaKey", Map.of("nestedKey", "nestedValue")), "parameter name", "original url");
         System.out.println(status);
@@ -110,7 +110,7 @@ public class StatusDefaultTest {
     }
 
     @Test
-    public void testToStringWithEverything() throws JsonProcessingException {
+    public void testToStringWithEverything() throws JacksonException {
 
         Status status = new Status("ERR11000", Map.of("metaKey", Map.of("nestedKey", "nestedValue")), "parameter name", "original url");
         System.out.println(status);
@@ -197,7 +197,7 @@ public class StatusDefaultTest {
     */
 
     @Test
-    public void testJacksonPerf() throws JsonProcessingException {
+    public void testJacksonPerf() throws JacksonException {
         ObjectMapper mapper = Config.getInstance().getMapper();
         long start = System.currentTimeMillis();
         Status status = new Status("ERR10001");

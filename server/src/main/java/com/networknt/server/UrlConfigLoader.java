@@ -1,7 +1,7 @@
 package com.networknt.server;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
@@ -119,7 +119,7 @@ public class UrlConfigLoader implements IConfigLoader {
 	static final String CONFIG_EXT_YAML = ".yaml";
 	static final String CONFIG_EXT_YML = ".yml";
 	static final String[] configExtensionsOrdered = { CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON };
-	final static ObjectMapper mapper = new ObjectMapper();
+	final static ObjectMapper mapper = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
 	final static TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {
 	};
 	final static Pattern files = Pattern.compile(">([^>/]+)</a>");

@@ -1,6 +1,6 @@
 package com.networknt.cache;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.networknt.config.ConfigException;
 import com.networknt.config.schema.ArrayField;
 import com.networknt.config.schema.ConfigSchema;

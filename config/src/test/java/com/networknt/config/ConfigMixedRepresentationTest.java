@@ -270,7 +270,7 @@ class ConfigMixedRepresentationTest {
         RuntimeException failure = assertThrows(RuntimeException.class,
                 () -> config.getJsonObjectConfig("bad-binding", TestConfig.class));
         assertTrue(failure.getMessage().contains("bad-binding"));
-        assertInstanceOf(IllegalArgumentException.class, failure.getCause());
+        assertInstanceOf(tools.jackson.core.JacksonException.class, failure.getCause());
     }
 
     @Test

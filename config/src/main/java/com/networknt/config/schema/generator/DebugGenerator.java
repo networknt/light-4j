@@ -1,6 +1,6 @@
 package com.networknt.config.schema.generator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.FieldNode;
 
 import javax.tools.FileObject;
@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
  */
 public class DebugGenerator extends Generator {
 
-    private final ObjectMapper objectWriter = new ObjectMapper();
+    private final ObjectMapper objectWriter = tools.jackson.databind.json.JsonMapper.builderWithJackson2Defaults().build();
 
     public DebugGenerator(final String configKey, final String configName) {
         super(configKey, configName);
