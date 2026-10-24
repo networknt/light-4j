@@ -50,8 +50,8 @@ public class ConfigInjection {
 
     // Define the injection order
     private static final String INJECTION_ORDER = "injection_order";
-    private static final String INJECTION_ORDER_CODE = (!System.getProperty(INJECTION_ORDER, "").equals("")) ?
-            System.getProperty(INJECTION_ORDER, "") : "2";
+    private static final String INJECTION_ORDER_CODE = System.getProperty(INJECTION_ORDER, "").equals("") ?
+            "2" : System.getProperty(INJECTION_ORDER, "");
 
     // Define one of the injection value source "values.yaml" and list of exclusion config files
     /** Constant for centralized management: values */
