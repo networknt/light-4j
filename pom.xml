@@ -111,6 +111,7 @@
         <version.hdrhistogram>2.2.2</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.yaml-rule>3.0.1</version.yaml-rule>
+        <version.snakeyaml-engine>3.0.1</version.snakeyaml-engine>
         <version.snakeyaml>2.7</version.snakeyaml>
         <version.caffeine>3.3.1</version.caffeine>
         <version.redisson>4.8.0</version.redisson>
@@ -779,9 +780,15 @@
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
+                <!-- yaml-rule still uses Jackson YAML, which requires classic SnakeYAML. -->
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${version.snakeyaml}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.snakeyaml</groupId>
+                <artifactId>snakeyaml-engine</artifactId>
+                <version>${version.snakeyaml-engine}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>

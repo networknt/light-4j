@@ -3,8 +3,7 @@ package com.networknt.rule;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.JsonMapper;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -40,9 +39,8 @@ public class MultiThreadRuleExecutor implements RuleExecutor {
         Map<String, Rule> localRules = null;
         Map<String, Object> ruleBodies = ruleConfig.getRuleBodies();
         if (ruleBodies != null && !ruleBodies.isEmpty()) {
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            String ruleString = new Yaml(options).dump(ruleBodies);
+            // JSON is a YAML subset: preserve scalar types across yaml-rule's YAML 1.1 parser.
+            String ruleString = JsonMapper.toJson(ruleBodies);
             localRules = RuleMapper.string2RuleMap(ruleString);
             if (logger.isInfoEnabled()) logger.info("Load YAML rules from RuleConfig with size = {}", localRules.size());
         }

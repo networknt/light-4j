@@ -2,18 +2,21 @@ package com.networknt.config.schema.generator;
 
 import com.networknt.config.schema.FieldNode;
 import com.networknt.config.schema.FieldType;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.comments.CommentLine;
-import org.yaml.snakeyaml.comments.CommentType;
-import org.yaml.snakeyaml.error.Mark;
-import org.yaml.snakeyaml.events.CommentEvent;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.representer.Representer;
+import org.snakeyaml.engine.v2.api.Dump;
+import org.snakeyaml.engine.v2.api.DumpSettings;
+import org.snakeyaml.engine.v2.comments.CommentLine;
+import org.snakeyaml.engine.v2.comments.CommentType;
+import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.exceptions.Mark;
+import org.snakeyaml.engine.v2.events.CommentEvent;
+import org.snakeyaml.engine.v2.nodes.Node;
+import org.snakeyaml.engine.v2.representer.StandardRepresenter;
+import org.snakeyaml.engine.v2.schema.CoreSchema;
 
 import javax.tools.FileObject;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,15 +32,14 @@ public class YamlGenerator extends Generator {
     private static final String EXTERNAL_CONFIG_SUFFIX = "}";
     public static final String EXAMPLE_HEADER = "Example value (replace the field placeholder; no outer wrapper):";
     public static final String FIELD_REFERENCE_HEADER = "Value fields (required/optional, defaults and constraints):";
-    protected static final DumperOptions YAML_OPTIONS = new DumperOptions();
-
-    static {
-        YAML_OPTIONS.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        YAML_OPTIONS.setIndent(2);
-        YAML_OPTIONS.setPrettyFlow(true);
-        YAML_OPTIONS.setProcessComments(true);
-        YAML_OPTIONS.setSplitLines(false);
-    }
+    protected static final DumpSettings YAML_OPTIONS = DumpSettings.builder()
+            .setSchema(new CoreSchema())
+            .setDefaultFlowStyle(FlowStyle.BLOCK)
+            .setIndent(2)
+            .setMultiLineFlow(true)
+            .setDumpComments(true)
+            .setSplitLines(false)
+            .build();
 
     public YamlGenerator(final String configKey, final String configName) {
         super(configKey, configName);
@@ -62,16 +64,20 @@ public class YamlGenerator extends Generator {
     @Override
     public void writeSchemaToFile(final OutputStream os, final FieldNode annotatedField) throws IOException {
         final var json = this.convertConfigRoot(annotatedField);
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, annotatedField), YAML_OPTIONS);
-        final var fileContent = yaml.dump(json);
-        os.write(fileContent.getBytes());
+        final var yaml = new Dump(YAML_OPTIONS, new YamlCommentRepresenter(YAML_OPTIONS, annotatedField));
+        final var fileContent = yaml.dumpToString(json);
+        os.write(fileContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @Override
     public void writeSchemaToFile(final Writer writer, final FieldNode annotatedField) {
         final var json = this.convertConfigRoot(annotatedField);
-        final var yaml = new Yaml(new YamlCommentRepresenter(YAML_OPTIONS, annotatedField), YAML_OPTIONS);
-        yaml.dump(json, writer);
+        final var yaml = new Dump(YAML_OPTIONS, new YamlCommentRepresenter(YAML_OPTIONS, annotatedField));
+        try {
+            writer.write(yaml.dumpToString(json));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
@@ -205,10 +211,10 @@ public class YamlGenerator extends Generator {
     /**
      * Custom representer to add comments to the yaml schema.
      */
-    public static class YamlCommentRepresenter extends Representer {
+    public static class YamlCommentRepresenter extends StandardRepresenter {
         private static final char LINE_SEPARATOR = '\n';
         public static final String REPRESENTER_SEPARATOR = "___";
-        private final Yaml exampleYaml;
+        private final Dump exampleYaml;
 
         private final AtomicBoolean firstNodeProcessed = new AtomicBoolean(false);
 
@@ -223,13 +229,11 @@ public class YamlGenerator extends Generator {
             }));
         }
 
-        public YamlCommentRepresenter(final DumperOptions options, final FieldNode rootAnnotatedField) {
+        public YamlCommentRepresenter(final DumpSettings options, final FieldNode rootAnnotatedField) {
             super(options);
-            var exampleOptions = new DumperOptions();
-            exampleOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            exampleOptions.setPrettyFlow(false);
-            exampleOptions.setIndent(2);
-            exampleYaml = new Yaml(exampleOptions);
+            var exampleOptions = DumpSettings.builder().setSchema(new CoreSchema())
+                    .setDefaultFlowStyle(FlowStyle.BLOCK).setIndent(2).build();
+            exampleYaml = new Dump(exampleOptions);
             this.representers.put(String.class, new CommentedStringRepresenter(rootAnnotatedField));
         }
 
@@ -279,7 +283,7 @@ public class YamlGenerator extends Generator {
              * @param description - The description to add as a comment.
              * @param node - The node to add the comments to.
              */
-            private void addCommentsToNode(final Mark start, final Mark end, final String description, final Node node) {
+            private void addCommentsToNode(final Optional<Mark> start, final Optional<Mark> end, final String description, final Node node) {
                 final var commentLines = new ArrayList<CommentLine>();
 
                 // Split the description by newline and add comments to the node.
@@ -322,7 +326,7 @@ public class YamlGenerator extends Generator {
                 StringBuilder text = new StringBuilder(field.getDescription().orElse(""));
                 for (var example : field.getExamples()) {
                     text.append('\n').append(EXAMPLE_HEADER).append('\n')
-                            .append(exampleYaml.dump(example));
+                            .append(exampleYaml.dumpToString(example));
                 }
                 StringBuilder reference = new StringBuilder();
                 appendFieldReference(reference, field.getRef().orElse(field), "");

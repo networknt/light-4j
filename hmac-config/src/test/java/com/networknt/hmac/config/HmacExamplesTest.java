@@ -21,7 +21,7 @@ import com.networknt.config.Config;
 import com.networknt.config.schema.MapField;
 import com.networknt.config.schema.generator.YamlGenerator;
 import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.Yaml;
+import com.networknt.config.yml.YamlUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -73,7 +73,7 @@ class HmacExamplesTest {
                         if (!line.startsWith("#") || line.equals("# " + YamlGenerator.FIELD_REFERENCE_HEADER)) break;
                         example.append(line.replaceFirst("^# ?", "")).append('\n');
                     }
-                    assertEquals(expected, mapper.valueToTree(new Yaml().load(example.toString())));
+                    assertEquals(expected, mapper.valueToTree(YamlUtils.newLoad().loadFromString(example.toString())));
                 }
             }
             StringBuilder table = new StringBuilder("<!-- profile-fields:start -->\n")

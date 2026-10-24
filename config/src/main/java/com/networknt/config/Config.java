@@ -22,14 +22,11 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.networknt.config.yml.ConfigLoaderConstructor;
 import com.networknt.config.yml.DecryptConstructor;
-import com.networknt.config.yml.YmlConstants;
+import com.networknt.config.yml.YamlUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
-import org.yaml.snakeyaml.resolver.Resolver;
+import org.snakeyaml.engine.v2.api.Load;
 
 import java.io.*;
 import java.util.*;
@@ -109,7 +106,13 @@ public abstract class Config {
 
     public abstract ObjectMapper getMapper();
 
-    public abstract Yaml getYaml();
+    /**
+     * Gets the YAML 1.2 Core reader. Synchronize on the reader when sharing it between threads.
+     * Use loadFromString/loadFromInputStream to parse data and the mapper to bind config beans.
+     * YAML writing is separate; see {@link YamlUtils#newDump()}.
+     * @return the SnakeYAML Engine reader
+     */
+    public abstract Load getYaml();
 
     public abstract boolean isDecrypt();
 
@@ -575,13 +578,13 @@ public abstract class Config {
                     // The config file specified in the config.yml shouldn't be injected
                     if (ConfigInjection.isExclusionConfigFile(configName)) {
                         synchronized (getYaml()) {
-                            config = getYaml().loadAs(inStream, clazz);
+                            config = getMapper().convertValue(getYaml().loadFromInputStream(inStream), clazz);
                         }
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap;
                         synchronized (getYaml()) {
-                            configMap = getYaml().load(inStream);
+                            configMap = (Map<String, Object>) getYaml().loadFromInputStream(inStream);
                         }
                         config = CentralizedManagement.mergeObject(isDecrypt(), configMap, clazz);
                     }
@@ -615,7 +618,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename, path)) {
                 if (inStream != null && inStream.available() > 0) {
                     synchronized (getYaml()) {
-                        config = getYaml().load(inStream);
+                        config = (Map<String, Object>) getYaml().loadFromInputStream(inStream);
                     }
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         CentralizedManagement.mergeMap(isDecrypt(), config); // mutates the config map in place.
@@ -739,14 +742,14 @@ public abstract class Config {
         }
 
         private Map<String, Object> loadModuleConfigNoCache() {
-            Yaml yml = new Yaml();  // The caller is synced, so it is thread safe here.
+            Load yml = YamlUtils.newLoad();  // The caller is synced, so it is thread safe here.
 
             Map<String, Object> config = null;
             for (String extension : configExtensionsOrdered) {
                 String ymlFilename = CONFIG_NAME + extension;
                 try (InputStream inStream = getConfigStream(ymlFilename, "")) {
                     if (inStream != null) {
-                        config = yml.load(inStream);
+                        config = (Map<String, Object>) yml.loadFromInputStream(inStream);
                     }
                 } catch (IOException ioe) {
                     logger.error("IOException", ioe);
@@ -812,11 +815,11 @@ public abstract class Config {
      */
     private static final class NoneDecryptedConfigImpl extends AbstractConfigImpl {
         private static final Config NONE_DECRYPTED = initialize();
-        final Yaml yaml;
+        final Load yaml;
         NoneDecryptedConfigImpl() {
             super();
             synchronized (NoneDecryptedConfigImpl.class) {
-                yaml = new Yaml();
+                yaml = YamlUtils.newLoad();
             }
         }
 
@@ -827,7 +830,7 @@ public abstract class Config {
         }
 
         @Override
-        public Yaml getYaml() {
+        public Load getYaml() {
             return yaml;
         }
 
@@ -841,19 +844,13 @@ public abstract class Config {
         private static final Config DEFAULT = initialize();
 
 
-        final Yaml yaml;
+        final Load yaml;
 
         FileConfigImpl(){
         	super();
       	    String decryptorClass = getDecryptorClass();
             synchronized (FileConfigImpl.class) {
-                if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
-                    yaml = new Yaml();
-                } else {
-                    final Resolver resolver = new Resolver();
-                    resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-                    yaml = new Yaml(DecryptConstructor.getInstance(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
-                }
+                yaml = YamlUtils.newLoad(decryptorClass);
             }
         }
 
@@ -864,7 +861,7 @@ public abstract class Config {
         }
 
         @Override
-        public Yaml getYaml() {
+        public Load getYaml() {
             return yaml;
         }
 

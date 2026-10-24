@@ -36,7 +36,6 @@ import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.tokens.Token;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

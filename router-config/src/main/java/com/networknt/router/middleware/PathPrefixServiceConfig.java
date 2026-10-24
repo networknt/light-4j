@@ -10,7 +10,6 @@ import com.networknt.config.schema.OutputFormat;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.nodes.MappingNode;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;

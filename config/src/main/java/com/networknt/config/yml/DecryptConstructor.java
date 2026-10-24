@@ -4,11 +4,10 @@ import com.networknt.decrypt.AutoAESSaltDecryptor;
 import com.networknt.decrypt.Decryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.constructor.AbstractConstruct;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.ScalarNode;
+import org.snakeyaml.engine.v2.api.ConstructNode;
+import org.snakeyaml.engine.v2.constructor.StandardConstructor;
+import org.snakeyaml.engine.v2.nodes.Node;
+import org.snakeyaml.engine.v2.nodes.ScalarNode;
 
 /**
  * Decrypts values in configuration yml files.
@@ -16,7 +15,7 @@ import org.yaml.snakeyaml.nodes.ScalarNode;
  * @author Daniel Zhao
  *
  */
-public class DecryptConstructor extends Constructor {
+public class DecryptConstructor extends StandardConstructor {
 	private static final Logger logger = LoggerFactory.getLogger(DecryptConstructor.class);
 
 	private final Decryptor decryptor;
@@ -31,11 +30,11 @@ public class DecryptConstructor extends Constructor {
 	}
 
 	private DecryptConstructor(String decryptorClass) {
-		super(new LoaderOptions());
+		super(YamlUtils.loadSettings(true));
 
 		decryptor= createDecryptor(decryptorClass);
 
-		this.yamlConstructors.put(YmlConstants.CRYPT_TAG, new ConstructYamlDecryptedStr());
+		this.tagConstructors.put(YmlConstants.CRYPT_TAG, new ConstructYamlDecryptedStr());
 	}
 
     /**
@@ -95,7 +94,7 @@ public class DecryptConstructor extends Constructor {
     /**
      * Inner class for constructing decrypted strings from YAML nodes.
      */
-    public class ConstructYamlDecryptedStr extends AbstractConstruct {
+    public class ConstructYamlDecryptedStr implements ConstructNode {
         @Override
         public Object construct(Node node) {
             return constructDecryptedScalar((ScalarNode) node);
