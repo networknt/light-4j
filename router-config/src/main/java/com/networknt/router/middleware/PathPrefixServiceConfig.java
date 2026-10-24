@@ -36,7 +36,7 @@ public class PathPrefixServiceConfig {
     private static final String MAPPING = "mapping";
 
     // variables
-    private  Map<String, Object> mappedConfig;
+    private final Map<String, Object> mappedConfig;
 
     @BooleanField(
             configFieldName = ENABLED,
@@ -59,7 +59,7 @@ public class PathPrefixServiceConfig {
     private Map<String, String> mapping;
 
     // the config object
-    private Config config;
+    private final Config config;
     private static volatile PathPrefixServiceConfig instance;
 
     private PathPrefixServiceConfig() {

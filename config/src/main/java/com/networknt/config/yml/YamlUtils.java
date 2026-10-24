@@ -17,11 +17,16 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+import java.util.Collections;
+import java.util.WeakHashMap;
 
 /** Shared YAML 1.2 Core settings for configuration readers and writers. */
 public final class YamlUtils {
     /** Set false to reject duplicates; true preserves classic SnakeYAML's last-value-wins policy. */
     public static final String ALLOW_DUPLICATE_KEYS = "light-4j-yaml-allow-duplicate-keys";
+
+    // Own the monitors; weak keys do not keep short-lived Engine readers alive.
+    private static final Map<Load, Object> READER_MONITORS = Collections.synchronizedMap(new WeakHashMap<>());
 
     private YamlUtils() {
     }
@@ -51,36 +56,40 @@ public final class YamlUtils {
         if (decryptorClass == null || decryptorClass.isBlank()) {
             return newLoad();
         }
-        return new Load(loadSettings(true), DecryptConstructor.getInstance(decryptorClass));
+        return new Load(loadSettings(true), DecryptConstructor.create(decryptorClass));
     }
 
     /** Creates a block-style writer with the same scalar schema as the readers. */
     public static Dump newDump() {
         DumpSettings settings = DumpSettings.builder().setSchema(new CoreSchema())
                 .setDefaultFlowStyle(FlowStyle.BLOCK).build();
-        StandardRepresenter representer = new StandardRepresenter(settings) {
-            {
-                parentClassRepresenters.put(Date.class, value ->
-                        representScalar(Tag.STR, Instant.ofEpochMilli(((Date) value).getTime()).toString()));
-                parentClassRepresenters.put(Calendar.class, value ->
-                        representScalar(Tag.STR, ((Calendar) value).toInstant().toString()));
-                parentClassRepresenters.put(TemporalAccessor.class, value -> representScalar(Tag.STR, value.toString()));
-                parentClassRepresenters.put(Enum.class, value -> representScalar(Tag.STR, ((Enum<?>) value).name()));
-            }
-        };
-        return new Dump(settings, representer);
+        return new Dump(settings, new ConfigRepresenter(settings));
+    }
+
+    private static final class ConfigRepresenter extends StandardRepresenter {
+        private ConfigRepresenter(DumpSettings settings) {
+            super(settings);
+            parentClassRepresenters.put(Date.class, value ->
+                    representScalar(Tag.STR, Instant.ofEpochMilli(((Date) value).getTime()).toString()));
+            parentClassRepresenters.put(Calendar.class, value ->
+                    representScalar(Tag.STR, ((Calendar) value).toInstant().toString()));
+            parentClassRepresenters.put(TemporalAccessor.class, value -> representScalar(Tag.STR, value.toString()));
+            parentClassRepresenters.put(Enum.class, value -> representScalar(Tag.STR, ((Enum<?>) value).name()));
+        }
     }
 
     /** Parse with exclusive access to a shared Engine reader. */
     public static Object load(Load reader, InputStream input) {
-        synchronized (reader) {
+        Object monitor = READER_MONITORS.computeIfAbsent(reader, key -> new Object());
+        synchronized (monitor) {
             return reader.loadFromInputStream(input);
         }
     }
 
     /** Parse with exclusive access to a shared Engine reader. */
     public static Object load(Load reader, String input) {
-        synchronized (reader) {
+        Object monitor = READER_MONITORS.computeIfAbsent(reader, key -> new Object());
+        synchronized (monitor) {
             return reader.loadFromString(input);
         }
     }

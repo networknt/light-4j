@@ -144,7 +144,8 @@ class YamlEngineTest {
     @Test
     void retainsCollectionAliasLimit() {
         String source = "anchor: &anchor [one]\nreferences: [" + "*anchor,".repeat(51) + "]\n";
-        assertThrows(YamlEngineException.class, () -> YamlUtils.newLoad().loadFromString(source));
+        var reader = YamlUtils.newLoad();
+        assertThrows(YamlEngineException.class, () -> reader.loadFromString(source));
     }
 
     @Test

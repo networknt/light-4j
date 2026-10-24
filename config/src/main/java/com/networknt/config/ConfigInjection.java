@@ -68,7 +68,7 @@ public class ConfigInjection {
 
     private static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
-    private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
+    private static final Decryptor decryptor = DecryptConstructor.create().getDecryptor();
 
     private static volatile Map<String, Object> decryptedValueMap;
     private static volatile Map<String, Object> undecryptedValueMap;

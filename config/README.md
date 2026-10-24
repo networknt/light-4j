@@ -18,10 +18,7 @@ separates parsing from writing and does not construct Java beans from YAML tags:
 ```java
 var config = Config.getInstance();
 var reader = config.getYaml();
-Object parsed;
-synchronized (reader) {
-    parsed = reader.loadFromString(yamlText); // or loadFromInputStream(stream)
-}
+Object parsed = YamlUtils.load(reader, yamlText); // or YamlUtils.load(reader, stream)
 MyConfig bean = config.getMapper().convertValue(parsed, MyConfig.class);
 String text = YamlUtils.newDump().dumpToString(configMap);
 ```
@@ -30,6 +27,8 @@ Import `com.networknt.config.yml.YamlUtils` for fresh readers and block-style
 writers. Replace `Yaml.load`, `loadAs`, and `dump` with the corresponding Engine
 operations above. Custom `Config` providers must return an Engine `Load` from
 `getYaml()`. `DecryptConstructor` now extends Engine's `StandardConstructor`;
+its `create()`/`create(String)` factories replace `getInstance` and return fresh
+constructors, which must not be shared between readers.
 `ConfigLoaderConstructor` is a plain factory/holder with no YAML superclass.
 `YmlConstants.CRYPT_TAG` is an Engine tag.
 `YamlGenerator.YamlCommentRepresenter` accepts Engine `DumpSettings`.
@@ -74,8 +73,10 @@ Engine treats `%YAML 1.1` directives using its YAML 1.2 schema too; a directive
 does not restore classic resolution.
 
 Use `YamlUtils.load` and `loadMap` to share readers safely; they serialize
-access and centralize the mapping cast. Raw Engine `Load` instances still
-require synchronization when used directly. Writers support `Date`, `Calendar`
+access with privately owned per-reader monitors and centralize the mapping cast.
+Use these helpers consistently for shared readers; do not mix direct Engine
+calls with helper calls. Raw Engine `Load` instances are not thread safe.
+Writers support `Date`, `Calendar`
 and Java temporal values as ISO strings. Unsupported object types fail the
 fallback-file write without invalidating the active config cache.
 

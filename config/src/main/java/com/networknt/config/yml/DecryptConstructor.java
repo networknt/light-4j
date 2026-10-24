@@ -38,21 +38,21 @@ public class DecryptConstructor extends StandardConstructor {
 	}
 
     /**
-     * Gets an instance of DecryptConstructor using the default decryptor class.
+     * Creates a fresh DecryptConstructor using the default decryptor class.
      *
      * @return DecryptConstructor instance
      */
-    public static DecryptConstructor getInstance() {
+    public static DecryptConstructor create() {
         return new DecryptConstructor();
     }
 
     /**
-     * Gets an instance of DecryptConstructor using a specific decryptor class.
+     * Creates a fresh DecryptConstructor using a specific decryptor class.
      *
      * @param decryptorClass The decryptor class to use
      * @return DecryptConstructor instance
      */
-    public static DecryptConstructor getInstance(String decryptorClass) {
+    public static DecryptConstructor create(String decryptorClass) {
         return new DecryptConstructor(decryptorClass);
     }
 
