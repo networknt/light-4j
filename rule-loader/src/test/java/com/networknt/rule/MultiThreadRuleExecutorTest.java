@@ -29,7 +29,8 @@ public class MultiThreadRuleExecutorTest {
         Config config = Config.getInstance();
         Map<String, Object> originalRuleConfig = config.getJsonMapConfig(RuleConfig.CONFIG_NAME);
         try {
-            for (String value : List.of("yes", "no", "on", "off", "012", "2026-10-24")) {
+            for (String value : List.of("yes", "no", "on", "off", "012", "2026-10-24",
+                    "first\u0085second", "first\u2028second", "first\u2029second", "first\nsecond")) {
                 Map<String, Object> ruleConfig = legacyConfig("scalar-rule", "/v1/scalar@get");
                 Map<String, Object> bodies = (Map<String, Object>) ruleConfig.get(RuleConfig.RULE_BODIES);
                 Map<String, Object> rule = (Map<String, Object>) bodies.get("scalar-rule");
@@ -41,6 +42,12 @@ public class MultiThreadRuleExecutorTest {
                 Assertions.assertEquals(value, parsed.getRuleName());
                 Assertions.assertEquals(value, parsed.getRuleDesc());
             }
+            String longId = "rule-" + "x".repeat(2048);
+            config.putInConfigCache(RuleConfig.CONFIG_NAME, legacyConfig(longId, "/v1/long-key@get"));
+            setRuleConfigInstance(null);
+            Rule parsed = new MultiThreadRuleExecutor().getRules().get(longId);
+            Assertions.assertNotNull(parsed);
+            Assertions.assertEquals(longId, parsed.getRuleId());
         } finally {
             restoreRuleConfig(config, originalRuleConfig);
         }

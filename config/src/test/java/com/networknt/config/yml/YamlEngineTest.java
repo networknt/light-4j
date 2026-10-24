@@ -10,10 +10,33 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class YamlEngineTest {
+    @Test
+    void sharedReaderHelpersKeepConcurrentDocumentsIsolated() throws Exception {
+        var reader = YamlUtils.newLoad();
+        var tasks = new ArrayList<Callable<Map<String, Object>>>();
+        for (int index = 0; index < 80; index++) {
+            int id = index;
+            tasks.add(() -> {
+                String yaml = "id: " + id + "\nnested: [yes, true]\n";
+                return id % 2 == 0 ? YamlUtils.loadMap(reader, yaml)
+                        : YamlUtils.loadMap(reader, new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)));
+            });
+        }
+        try (var executor = Executors.newFixedThreadPool(8)) {
+            var results = executor.invokeAll(tasks);
+            for (int index = 0; index < results.size(); index++) {
+                assertEquals(Map.of("id", index, "nested", List.of("yes", true)), results.get(index).get());
+            }
+        }
+    }
+
     @Test
     void publicReaderUsesYaml12CoreScalars() {
         var yaml = Config.getNoneDecryptedInstance().getYaml();
@@ -70,11 +93,52 @@ class YamlEngineTest {
     }
 
     @Test
-    void rejectsDuplicateKeysAndArbitraryJavaTags() {
+    void rejectsArbitraryJavaTags() {
         for (var yaml : List.of(YamlUtils.newLoad(), YamlUtils.newLoad(FixtureDecryptor.class.getName()))) {
-            assertThrows(YamlEngineException.class, () -> yaml.loadFromString("key: one\nkey: two\n"));
             assertThrows(YamlEngineException.class, () -> yaml.loadFromString("!!java.net.URL 'https://example.com'"));
         }
+    }
+
+    @Test
+    void duplicateKeysKeepLastValueWithStrictOptIn() {
+        String previous = System.getProperty(YamlUtils.ALLOW_DUPLICATE_KEYS);
+        try {
+            System.clearProperty(YamlUtils.ALLOW_DUPLICATE_KEYS);
+            for (var yaml : List.of(YamlUtils.newLoad(), YamlUtils.newLoad(FixtureDecryptor.class.getName()))) {
+                assertEquals(Map.of("key", "two"), yaml.loadFromString("key: one\nkey: two\n"));
+            }
+            System.setProperty(YamlUtils.ALLOW_DUPLICATE_KEYS, "false");
+            for (var yaml : List.of(YamlUtils.newLoad(), YamlUtils.newLoad(FixtureDecryptor.class.getName()))) {
+                assertThrows(YamlEngineException.class, () -> yaml.loadFromString("key: one\nkey: two\n"));
+            }
+        } finally {
+            if (previous == null) System.clearProperty(YamlUtils.ALLOW_DUPLICATE_KEYS);
+            else System.setProperty(YamlUtils.ALLOW_DUPLICATE_KEYS, previous);
+        }
+    }
+
+    @Test
+    void numericYaml12ChangesAreExplicit() {
+        Map<?, ?> values = (Map<?, ?>) YamlUtils.newLoad().loadFromString("""
+                octalBefore: 0755
+                octalNow: 0o755
+                binaryBefore: 0b11
+                separatorBefore: 1_000
+                sexagesimalBefore: 1:30
+                sexagesimalFloatBefore: 1:30.5
+                floatSeparatorBefore: 1_0.5
+                exponentNow: 1e3
+                hexadecimal: 0xFF
+                """);
+        assertEquals(755, values.get("octalBefore"));
+        assertEquals(493, values.get("octalNow"));
+        assertEquals("0b11", values.get("binaryBefore"));
+        assertEquals("1_000", values.get("separatorBefore"));
+        assertEquals("1:30", values.get("sexagesimalBefore"));
+        assertEquals("1:30.5", values.get("sexagesimalFloatBefore"));
+        assertEquals("1_0.5", values.get("floatSeparatorBefore"));
+        assertEquals(1000.0, values.get("exponentNow"));
+        assertEquals(255, values.get("hexadecimal"));
     }
 
     @Test

@@ -107,8 +107,10 @@ public abstract class Config {
     public abstract ObjectMapper getMapper();
 
     /**
-     * Gets the YAML 1.2 Core reader. Synchronize on the reader when sharing it between threads.
-     * Use loadFromString/loadFromInputStream to parse data and the mapper to bind config beans.
+     * Gets the YAML 1.2 Core reader. Use {@link YamlUtils#load(Load, InputStream)} or
+     * {@link YamlUtils#loadMap(Load, String)}
+     * for synchronized parsing; raw Engine readers are not thread safe.
+     * Use the mapper to bind parsed data to config beans.
      * YAML writing is separate; see {@link YamlUtils#newDump()}.
      * @return the SnakeYAML Engine reader
      */
@@ -577,15 +579,10 @@ public abstract class Config {
                 if (inStream != null) {
                     // The config file specified in the config.yml shouldn't be injected
                     if (ConfigInjection.isExclusionConfigFile(configName)) {
-                        synchronized (getYaml()) {
-                            config = getMapper().convertValue(getYaml().loadFromInputStream(inStream), clazz);
-                        }
+                        config = getMapper().convertValue(YamlUtils.load(getYaml(), inStream), clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
-                        Map<String, Object> configMap;
-                        synchronized (getYaml()) {
-                            configMap = (Map<String, Object>) getYaml().loadFromInputStream(inStream);
-                        }
+                        Map<String, Object> configMap = YamlUtils.loadMap(getYaml(), inStream);
                         config = CentralizedManagement.mergeObject(isDecrypt(), configMap, clazz);
                     }
                 }
@@ -617,9 +614,7 @@ public abstract class Config {
             String ymlFilename = configName + fileExtension;
             try (InputStream inStream = getConfigStream(ymlFilename, path)) {
                 if (inStream != null && inStream.available() > 0) {
-                    synchronized (getYaml()) {
-                        config = (Map<String, Object>) getYaml().loadFromInputStream(inStream);
-                    }
+                    config = YamlUtils.loadMap(getYaml(), inStream);
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         CentralizedManagement.mergeMap(isDecrypt(), config); // mutates the config map in place.
                     }
@@ -749,7 +744,7 @@ public abstract class Config {
                 String ymlFilename = CONFIG_NAME + extension;
                 try (InputStream inStream = getConfigStream(ymlFilename, "")) {
                     if (inStream != null) {
-                        config = (Map<String, Object>) yml.loadFromInputStream(inStream);
+                        config = YamlUtils.loadMap(yml, inStream);
                     }
                 } catch (IOException ioe) {
                     logger.error("IOException", ioe);

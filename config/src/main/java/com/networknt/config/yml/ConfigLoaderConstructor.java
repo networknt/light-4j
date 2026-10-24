@@ -3,14 +3,13 @@ package com.networknt.config.yml;
 import com.networknt.config.ConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.snakeyaml.engine.v2.constructor.StandardConstructor;
 
 /**
  * This class is used to construct the config loader according to given config loader class name.
  *
  * @author Jiachen Sun
  */
-public class ConfigLoaderConstructor extends StandardConstructor {
+public class ConfigLoaderConstructor {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoaderConstructor.class);
     /** Constant for config loader class configuration entry */
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
@@ -28,7 +27,6 @@ public class ConfigLoaderConstructor extends StandardConstructor {
     }
 
     private ConfigLoaderConstructor(String configLoaderClass) {
-        super(YamlUtils.loadSettings(false));
         configLoader = createConfigLoader(configLoaderClass);
     }
 

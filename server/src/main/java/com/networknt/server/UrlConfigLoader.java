@@ -188,10 +188,7 @@ public class UrlConfigLoader implements IConfigLoader {
 
 		// pass serviceConfigs through Config.yaml's load method so that it can decrypt
 		// any encrypted values
-		var yaml = Config.getInstance().getYaml();
-		synchronized (yaml) {
-			serviceConfigs = (Map<String, Object>) yaml.loadFromString(YamlUtils.newDump().dumpToString(serviceConfigs));
-		}
+		serviceConfigs = YamlUtils.loadMap(Config.getInstance().getYaml(), YamlUtils.newDump().dumpToString(serviceConfigs));
 
 		// clear config cache: this is required just in case other classes have already
 		// loaded something in cache
@@ -257,10 +254,7 @@ public class UrlConfigLoader implements IConfigLoader {
 		if (StringUtils.isNotBlank(respBody)) {
 			try {
 				if (!CONFIG_EXT_JSON.equals(fileExtension)) {
-					var yaml = Config.getInstance().getYaml();
-					synchronized (yaml) {
-						respBody = JSONValue.toJSONString(yaml.loadFromString(respBody));
-					}
+					respBody = JSONValue.toJSONString(YamlUtils.loadMap(Config.getInstance().getYaml(), respBody));
 				}
 				return mapper.readValue(respBody, mapType);
 			} catch (Exception e) {
