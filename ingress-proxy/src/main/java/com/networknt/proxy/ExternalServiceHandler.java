@@ -131,6 +131,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         }
 
         if(matchedPathPrefix != null) {
+            // An asynchronous body-read continuation can re-enter on an I/O thread.
+            if (exchange.isInIoThread()) {
+                exchange.dispatch(this);
+                return;
+            }
             String endpoint = matchedPathPrefix + "@" + exchange.getRequestMethod().toString().toLowerCase();
             if(logger.isTraceEnabled()) logger.trace("endpoint = {}", endpoint);
             // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.

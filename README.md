@@ -246,9 +246,13 @@ after an asynchronous body read, so initial dispatch is not a universal safeguar
 Worker-thread execution is required at the actual external-service entry. The
 single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
 handler and asserts worker execution for synchronous entry; it does not cover
-the asynchronous continuation. ExternalServiceHandler has no local dispatch
-guard. BodyHandler alone is also insufficient: its dispatch depends on a
-Content-Type header. This source audit does not qualify deployed handler chains.
+the asynchronous continuation. Matched external requests now check their actual
+thread and dispatch to workers before rewriting or forwarding. The streaming
+ExternalServiceWorkerDispatchTest forces read-listener continuation and verifies
+that an unrelated request progresses while the upstream is blocked; it also
+checks body preservation, one rewrite, direct GETs, and unchanged unmatched routing.
+BodyHandler alone is insufficient: its dispatch depends on a Content-Type header.
+These source tests do not qualify deployed handler chains.
 
 Prerequisites are resolved to full commit SHAs before checkout. To replay a
 failed dependency combination, manually dispatch the source-build workflow with
