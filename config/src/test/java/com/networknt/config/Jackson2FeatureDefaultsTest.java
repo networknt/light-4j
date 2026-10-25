@@ -40,6 +40,9 @@ class Jackson2FeatureDefaultsTest {
 
     @Test
     void retainsMeasuredJackson2FeatureDefaults() throws Exception {
+        assertSnapshot(com.networknt.jackson.Jackson2Defaults.mapper(), "/jackson-2.22.3-config-features.properties");
+        assertSame(com.networknt.jackson.Jackson2Defaults.mapper(), Jackson2Defaults.mapper());
+        assertSnapshot(Jackson2Defaults.builder().build(), "/jackson-2.22.3-config-features.properties");
         assertSnapshot(Config.getInstance().getMapper(), "/jackson-2.22.3-config-features.properties");
         assertSnapshot(JsonMapper.objectMapper, "/jackson-2.22.3-jsonmapper-features.properties");
     }
