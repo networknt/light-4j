@@ -537,7 +537,7 @@ public class Http2ClientTest extends Http2ClientBase {
     }
 
     @Test
-    public void testRequestCallbackRunsOnOwningIoThread() throws Exception {
+    public void testFixtureRequestCallbackRunsOnOwningIoThread() throws Exception {
         final Http2Client client = createClient();
         final SimpleConnectionState.ConnectionToken token =
                 client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);

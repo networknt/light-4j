@@ -13,6 +13,7 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
+import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.*;
@@ -44,9 +45,13 @@ public class ExternalServiceHandlerTest {
             externalServiceHandler.setNext(handler);
             handler = externalServiceHandler;
             server = Undertow.builder()
+                    // A single I/O thread makes an accidental blocking loopback
+                    // deadlock reproducible rather than dependent on assignment.
+                    .setIoThreads(1)
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .addHttpListener(7080, "localhost")
-                    .setHandler(handler)
+                    // ExternalServiceHandler uses blocking java.net.http sends.
+                    .setHandler(new BlockingHandler(handler))
                     .build();
             server.start();
         }
@@ -179,7 +184,7 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.getIoThread().execute(() ->
                     connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -221,7 +226,7 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.getIoThread().execute(() ->
                     connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -276,7 +281,7 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.getIoThread().execute(() ->
                     connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);

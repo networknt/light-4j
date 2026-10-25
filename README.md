@@ -229,10 +229,19 @@ their planned migration.
 HTTP fixtures dispatch sends to their connection's owning I/O thread, as required
 by Undertow's non-thread-safe `ClientConnection` contract. The contract is present
 in both inspected Undertow 2.3.22.Final and 2.4.1.Final sources.
-`Http2ClientTest.testRequestCallbackRunsOnOwningIoThread` verifies dispatch,
+`Http2ClientTest.testFixtureRequestCallbackRunsOnOwningIoThread` verifies dispatch,
 callback ownership, and response delivery. This does not establish why earlier
 off-thread fixtures began failing, or qualify production callers:
 [issue #2817](https://github.com/networknt/light-4j/issues/2817) tracks the direct
 production sends, including the asynchronous `callService` paths.
 [Issue #2816](https://github.com/networknt/light-4j/issues/2816) separately tracks
 the named rate-limit configuration resetting the limiter on each request.
+
+Prerequisites are resolved to full commit SHAs before checkout. To replay a
+failed dependency combination, manually dispatch the source-build workflow with
+its uploaded `source-refs.json` contents as the `source_refs` input. Omitted
+repositories resolve their current source head; supplied values must be full
+commit SHAs. Each green result qualifies only the recorded combination.
+
+GitHub manual dispatch requires this workflow to exist on the default branch.
+Before merge, use the recorded commits to reproduce with local source checkouts.

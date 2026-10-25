@@ -2,6 +2,11 @@ name: Jackson 3 source build
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      source_refs:
+        description: JSON map of prerequisite repository names to full commit SHAs
+        type: string
+        default: '{}'
   push:
     branches: [master]
 permissions:
@@ -18,14 +23,29 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-      - name: Resolve prerequisite pull requests or merged branches
+      - name: Resolve prerequisite commits
         id: prerequisites
         env:
           GH_TOKEN: ${{ github.token }}
+          SOURCE_REFS: ${{ inputs.source_refs || '{}' }}
         shell: bash
         run: |
-          ref=$(gh api repos/networknt/yaml-rule/pulls/36 --jq 'if .merged then .base.ref elif .state == "open" then .head.sha else error("Prerequisite PR was closed without merging") end')
-          echo "yaml_rule=$ref" >> "$GITHUB_OUTPUT"
+          jq -e 'type == "object" and all(to_entries[]; (.key | IN("yaml-rule", "http-client")) and (.value | type == "string" and test("^[0-9a-f]{40}$")))' <<< "$SOURCE_REFS"
+          resolve() {
+            local repo=$1 pr=${2:-} ref
+            ref=$(jq -r --arg repo "$repo" '.[$repo] // empty' <<< "$SOURCE_REFS")
+            if [[ -z "$ref" ]]; then
+              if [[ -n "$pr" ]]; then
+                ref=$(gh api "repos/networknt/$repo/pulls/$pr" --jq 'if .merged then .base.ref elif .state == "open" then .head.sha else error("Prerequisite PR was closed without merging") end')
+              else
+                ref=master
+              fi
+            fi
+            ref=$(gh api "repos/networknt/$repo/commits/$ref" --jq .sha)
+            echo "${repo//-/_}=$ref" >> "$GITHUB_OUTPUT"
+          }
+          resolve yaml-rule 36
+          resolve http-client
       - uses: actions/checkout@v4
         with:
           repository: networknt/yaml-rule
@@ -34,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: networknt/http-client
-          ref: master
+          ref: ${{ steps.prerequisites.outputs.http_client }}
           path: sources/http-client
       - name: Record prerequisite commits
         shell: bash
@@ -42,6 +62,9 @@ jobs:
           for source in sources/*; do
             echo "$source $(git -C "$source" rev-parse HEAD)"
           done | tee source-commits.txt
+          for source in sources/*; do
+            printf '{"key":"%s","value":"%s"}\n' "${source##*/}" "$(git -C "$source" rev-parse HEAD)"
+          done | jq -s from_entries | tee source-refs.json
       - name: Build prerequisites from source and run full tests
         shell: bash
         env:
@@ -56,4 +79,5 @@ jobs:
           path: |
             source-build.log
             source-commits.txt
+            source-refs.json
             **/target/surefire-reports/**
