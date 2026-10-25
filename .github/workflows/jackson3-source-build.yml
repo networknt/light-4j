@@ -1,0 +1,43 @@
+name: Jackson 3 source build
+on:
+  pull_request:
+  push:
+    branches: [master, migrate-jackson-3, fix-jackson3-build-coordinates]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: consumer
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/yaml-rule
+          ref: 86aba6f60befdbeea2548fc950acffb717b7c919
+          path: sources/yaml-rule
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/http-client
+          ref: 4ae8ccfe6858dce7b34f692872ba55a7edb8a16e
+          path: sources/http-client
+      - name: Build prerequisites from source and run full tests
+        shell: bash
+        env:
+          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2
+          JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
+          JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
+        run: bash consumer/scripts/verify-jackson3-bootstrap.sh 2>&1 | tee source-build.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-build-reports
+          path: |
+            source-build.log
+            **/target/surefire-reports/**

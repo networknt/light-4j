@@ -27,3 +27,13 @@ fi
 (cd -- "$script_root" && mvn "${maven_args[@]}" clean test)
 # Tests have passed; package/install without repeating the suite.
 (cd -- "$script_root" && mvn "${maven_args[@]}" install -DskipTests)
+
+# Optional downstream sources let consumer CI reproduce the unpublished stack.
+if [[ -n ${JACKSON3_CONSUMER:-} ]]; then
+    : "${JACKSON3_JSON_OVERLAY:?Set the migrated json-overlay source directory}"
+    : "${JACKSON3_OPENAPI_PARSER:?Set the migrated openapi-parser source directory}"
+    for source in "$JACKSON3_JSON_OVERLAY" "$JACKSON3_OPENAPI_PARSER"; do
+        (cd -- "$source" && mvn "${maven_args[@]}" clean install)
+    done
+    (cd -- "$JACKSON3_CONSUMER" && mvn "${maven_args[@]}" clean test)
+fi

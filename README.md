@@ -207,3 +207,11 @@ may be seeded first; set `JACKSON3_MAVEN_OFFLINE=1` to verify offline. All Maven
 writes use the selected repository. Merge the two migration PRs as a coordinated
 unit; publishing coordinated next-major artifacts and verifying their resolution
 from a separate cache remain release gates.
+
+The Jackson 3 yaml-rule dependency is `4.0.0-SNAPSHOT`; published `3.0.1` uses
+Jackson 2. The source-build workflow pins prerequisite commits and uses a fresh
+Maven repository on every run. For downstream consumers, also set
+`JACKSON3_JSON_OVERLAY`, `JACKSON3_OPENAPI_PARSER`, and `JACKSON3_CONSUMER` to
+source directories. The script tests and installs both parser prerequisites,
+then runs the complete consumer test reactor. This verifies source builds;
+published-artifact resolution remains a release gate.
