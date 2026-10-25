@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RateLimiterTest {
@@ -24,9 +25,9 @@ public class RateLimiterTest {
     private static LimitConfig limitConfig;
 
     @BeforeEach
-    public void setUp() throws Exception{
-        LimitConfig.load();
-        limitConfig = LimitConfig.load();
+    public void setUp() {
+        // Isolate quotas from other fixtures; each burst is bounded below the rolling window.
+        limitConfig = LimitConfig.load("rate-limiter-test");
         rateLimiter = new RateLimiter(limitConfig);
         limitConfig.setKey(LimitKey.ADDRESS);
         rateLimiterAddress = new RateLimiter(limitConfig);
@@ -46,20 +47,16 @@ public class RateLimiterTest {
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
 
         //change the thread number here to test multi-threads
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
-        }
-//        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-//           for (int i=0; i<12; i++) {
-//            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
-//        }
+        try (ExecutorService executorService = Executors.newFixedThreadPool(1)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
 
-       // Assertions.assertEquals(responseList.size(), 12);
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
+        }
     }
 
     public RateLimitResponse callByServerAsync() throws Exception {
@@ -78,20 +75,16 @@ public class RateLimiterTest {
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
 
         //change the thread number here to test multi-threads
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
-        }
-//        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-//           for (int i=0; i<12; i++) {
-//            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
-//        }
+        try (ExecutorService executorService = Executors.newFixedThreadPool(1)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
 
-        // Assertions.assertEquals(responseList.size(), 12);
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
+        }
     }
 
     public RateLimitResponse callByServerAsyncWithLongPath() throws Exception {
@@ -104,14 +97,15 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByClientAsync;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
+        try (ExecutorService executorService = Executors.newFixedThreadPool(2)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
         }
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
 
     }
 
@@ -127,14 +121,15 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByAddressAsync;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
+        try (ExecutorService executorService = Executors.newFixedThreadPool(2)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
         }
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
 
     }
 
@@ -150,16 +145,16 @@ public class RateLimiterTest {
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
 
         //change the thread number here to test multi-threads
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
-        }
+        try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
 
-        // Assertions.assertEquals(responseList.size(), 12);
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
+        }
     }
 
     // Method to generate a random string of a given length
@@ -188,14 +183,15 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByAddressAsyncRandom;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
+        try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
         }
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
 
     }
 
@@ -210,14 +206,15 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByClientAsyncRandom;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
+        try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
         }
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
 
     }
 
@@ -232,14 +229,15 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByUserAsyncRandom;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
-        for (Future<RateLimitResponse> future : futures) {
-            responseList.add(future.get());
+        try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
+            List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            for (Future<RateLimitResponse> future : futures) {
+                Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
+                responseList.add(future.get());
+            }
+            List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+            Assertions.assertEquals(2, rejects.size());
         }
-        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
-        Assertions.assertEquals(rejects.size(), 2);
-        executorService.shutdown();
 
     }
 

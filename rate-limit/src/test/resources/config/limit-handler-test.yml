@@ -1,0 +1,6 @@
+enabled: true
+concurrentRequest: 1
+queueSize: 1
+errorCode: 429
+key: server
+rateLimit: 10/m

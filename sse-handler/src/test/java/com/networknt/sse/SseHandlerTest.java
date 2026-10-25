@@ -82,7 +82,8 @@ public class SseHandlerTest {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/sse");
             request.getRequestHeaders().put(io.undertow.util.Headers.ACCEPT, "text/event-stream");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             // NOTE: Typical HTTP2Client usage waits for the entire response. SSE is an open stream.
@@ -127,7 +128,8 @@ public class SseHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             String traceId = "test-id-123";
             request.getRequestHeaders().put(io.undertow.util.HttpString.tryFromString("X-Traceability-Id"), traceId);
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
 
             Thread.sleep(500); // Give time for connection to register
 
@@ -167,7 +169,8 @@ public class SseHandlerTest {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/sse/test");
             request.getRequestHeaders().put(io.undertow.util.Headers.ACCEPT, "text/event-stream");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             // Check status code

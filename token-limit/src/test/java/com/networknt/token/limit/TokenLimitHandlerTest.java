@@ -75,7 +75,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             Thread.sleep(1000); // to give time for expire_in to substract 1 second unit
-            connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -103,7 +104,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "Basic Y2xpZW50SURBQkM6bXlwYXNzd29yZA==");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBodyWithAuthHeader));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBodyWithAuthHeader)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -131,7 +133,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, nonLegacyRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, nonLegacyRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -160,7 +163,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "serverX");
             request.getRequestHeaders().put(Headers.X_FORWARDED_FOR, "108.107.10.8");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -189,7 +193,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "serverX");
             request.getRequestHeaders().put(Headers.X_FORWARDED_FOR, "108.107.10.9"); // distinct IP address
-            connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, xForwardedRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -216,7 +221,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, nonLegacyRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, nonLegacyRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -248,7 +254,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, emptyScopeRequestBody));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, emptyScopeRequestBody)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -280,7 +287,8 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, ""));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, "")));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);

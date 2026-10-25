@@ -124,8 +124,9 @@ public class CorrelationHandlerTest {
             ClientRequest request = new ClientRequest().setPath("/with").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, "cid");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -162,8 +163,9 @@ public class CorrelationHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/without").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -206,8 +208,9 @@ public class CorrelationHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/withoutNoAutogen").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -260,8 +263,9 @@ public class CorrelationHandlerTest {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, "12345");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -306,8 +310,9 @@ public class CorrelationHandlerTest {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             //request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);

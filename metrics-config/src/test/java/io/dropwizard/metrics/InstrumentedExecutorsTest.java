@@ -26,6 +26,8 @@ import io.dropwizard.metrics.InstrumentedThreadFactory;
 import io.dropwizard.metrics.MetricRegistry;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -119,49 +121,70 @@ public class InstrumentedExecutorsTest {
     @Test
     public void testNewCachedThreadPool() throws Exception {
         final ExecutorService executorService = InstrumentedExecutors.newCachedThreadPool(registry, "xs");
-        executorService.submit(new NoopRunnable());
-        executorService.submit(new NoopRunnable());
+        CountDownLatch release = new CountDownLatch(1);
+        Callable<Void> blocked = () -> { release.await(); return null; };
+        try {
+            executorService.submit(blocked);
+            executorService.submit(blocked);
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
+            assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
 
-        final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
-        delegateField.setAccessible(true);
-        final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
-        assertThat(delegate.getCorePoolSize()).isEqualTo(0);
-        assertThat(delegate.getPoolSize()).isEqualTo(2);
-        executorService.shutdown();
+            final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
+            delegateField.setAccessible(true);
+            final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
+            assertThat(delegate.getCorePoolSize()).isEqualTo(0);
+            assertThat(delegate.getPoolSize()).isEqualTo(2);
+        } finally {
+            release.countDown();
+            executorService.shutdown();
+            assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
     }
 
     @Test
     public void testNewCachedThreadPoolWithThreadFactory() throws Exception {
         final ExecutorService executorService = InstrumentedExecutors.newCachedThreadPool(defaultThreadFactory, registry);
-        executorService.submit(new NoopRunnable());
-        executorService.submit(new NoopRunnable());
+        CountDownLatch release = new CountDownLatch(1);
+        Callable<Void> blocked = () -> { release.await(); return null; };
+        try {
+            executorService.submit(blocked);
+            executorService.submit(blocked);
 
-        final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
-        delegateField.setAccessible(true);
-        final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
-        assertThat(delegate.getCorePoolSize()).isEqualTo(0);
-        assertThat(delegate.getPoolSize()).isEqualTo(2);
-        assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
-        executorService.shutdown();
+            final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
+            delegateField.setAccessible(true);
+            final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
+            assertThat(delegate.getCorePoolSize()).isEqualTo(0);
+            assertThat(delegate.getPoolSize()).isEqualTo(2);
+            assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        } finally {
+            release.countDown();
+            executorService.shutdown();
+            assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
     }
 
     @Test
     public void testNewCachedThreadPoolWithThreadFactoryAndName() throws Exception {
         final ExecutorService executorService = InstrumentedExecutors.newCachedThreadPool(defaultThreadFactory, registry, "xs");
-        executorService.submit(new NoopRunnable());
-        executorService.submit(new NoopRunnable());
+        CountDownLatch release = new CountDownLatch(1);
+        Callable<Void> blocked = () -> { release.await(); return null; };
+        try {
+            executorService.submit(blocked);
+            executorService.submit(blocked);
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
+            assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
 
-        final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
-        delegateField.setAccessible(true);
-        final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
-        assertThat(delegate.getCorePoolSize()).isEqualTo(0);
-        assertThat(delegate.getPoolSize()).isEqualTo(2);
-        assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
-        executorService.shutdown();
+            final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
+            delegateField.setAccessible(true);
+            final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
+            assertThat(delegate.getCorePoolSize()).isEqualTo(0);
+            assertThat(delegate.getPoolSize()).isEqualTo(2);
+            assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        } finally {
+            release.countDown();
+            executorService.shutdown();
+            assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
     }
 
     @Test

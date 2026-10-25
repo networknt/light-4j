@@ -207,3 +207,54 @@ may be seeded first; set `JACKSON3_MAVEN_OFFLINE=1` to verify offline. All Maven
 writes use the selected repository. Merge the two migration PRs as a coordinated
 unit; publishing coordinated next-major artifacts and verifying their resolution
 from a separate cache remain release gates.
+
+The Jackson 3 yaml-rule dependency is `4.0.0-SNAPSHOT`; published `3.0.1` uses
+Jackson 2. The source-build workflow resolves an open prerequisite PR to its
+latest head and follows its base branch once merged. Already merged prerequisites
+use master. Each run logs the exact checked-out commits and uses a fresh Maven
+repository. Rerun downstream source checks after prerequisite changes and before
+merging; a prior green run qualifies only the logged commits. The workflows also
+support manual dispatch. For downstream consumers, also set
+`JACKSON3_JSON_OVERLAY`, `JACKSON3_OPENAPI_PARSER`, and `JACKSON3_CONSUMER` to
+source directories. The script tests and installs both parser prerequisites,
+then runs the complete consumer test reactor. This verifies source builds;
+published-artifact resolution remains a release gate.
+
+The Phase 7 consumers `light-gateway`, `http-sidecar`, and `yaml-rule-plugin`
+still require the yaml-rule coordinate update and their Jackson 3 build gates.
+Their old yaml-rule versions resolve Jackson 2. They are not yet qualified
+against this development line; do not release them with these snapshots before
+their planned migration.
+
+HTTP fixtures dispatch sends to their connection's owning I/O thread, as required
+by Undertow's non-thread-safe `ClientConnection` contract. The contract is present
+in both inspected Undertow 2.3.22.Final and 2.4.1.Final sources.
+`Http2ClientTest.testFixtureRequestCallbackRunsOnOwningIoThread` verifies dispatch,
+callback ownership, and response delivery. This does not establish why earlier
+off-thread fixtures began failing, or qualify production callers:
+[issue #2817](https://github.com/networknt/light-4j/issues/2817) tracks the direct
+production sends, including the asynchronous `callService` paths.
+[Issue #2816](https://github.com/networknt/light-4j/issues/2816) separately tracks
+the named rate-limit configuration resetting the limiter on each request.
+
+ExternalServiceHandler uses blocking Java HTTP calls and must run on a worker
+thread. The checked-in light-gateway `config/external-gateway` and
+`product/external-access-point` chains place ExceptionHandler first; its
+`isInIoThread()/dispatch(this)` guard moves initial chain execution to workers.
+RequestInterceptorInjectionHandler can later resume the chain on an I/O thread
+after an asynchronous body read, so initial dispatch is not a universal safeguard.
+Worker-thread execution is required at the actual external-service entry. The
+single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
+handler and asserts worker execution for synchronous entry; it does not cover
+the asynchronous continuation. ExternalServiceHandler has no local dispatch
+guard. BodyHandler alone is also insufficient: its dispatch depends on a
+Content-Type header. This source audit does not qualify deployed handler chains.
+
+Prerequisites are resolved to full commit SHAs before checkout. To replay a
+failed dependency combination, manually dispatch the source-build workflow with
+its uploaded `source-refs.json` contents as the `source_refs` input. Omitted
+repositories resolve their current source head; supplied values must be full
+commit SHAs. Each green result qualifies only the recorded combination.
+
+GitHub manual dispatch requires this workflow to exist on the default branch.
+Before merge, use the recorded commits to reproduce with local source checkouts.

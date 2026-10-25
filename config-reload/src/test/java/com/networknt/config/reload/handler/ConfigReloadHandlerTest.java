@@ -33,6 +33,7 @@ import org.xnio.OptionMap;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -67,8 +68,9 @@ public class ConfigReloadHandlerTest extends  BaseTest{
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, JSON_MEDIA_TYPE);
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, req));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, req)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -112,8 +114,9 @@ public class ConfigReloadHandlerTest extends  BaseTest{
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, JSON_MEDIA_TYPE);
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, req));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, req)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);

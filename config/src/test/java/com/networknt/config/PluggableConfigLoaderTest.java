@@ -16,22 +16,30 @@ import java.util.Map;
 
 public class PluggableConfigLoaderTest {
 
-    private final String homeDir = System.getProperty("user.home");
+    @org.junit.jupiter.api.io.TempDir
+    java.nio.file.Path directory;
+    private String previousConfigDirectory;
+    private Class<? extends Config> configType;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
     public void setUp() throws Exception {
 
-        System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
+        // Initialize the shared singleton before installing a deliberately invalid fixture.
+        configType = Config.getInstance().getClass();
+        previousConfigDirectory = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
+        System.setProperty(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
     }
 
     @AfterEach
     public void tearDown() throws Exception {
 
-        // Remove the config.yml from home directory
-        File test = new File(homeDir + "/config.yml");
-        test.delete();
+        if (previousConfigDirectory == null) {
+            System.clearProperty(Config.LIGHT_4J_CONFIG_DIR);
+        } else {
+            System.setProperty(Config.LIGHT_4J_CONFIG_DIR, previousConfigDirectory);
+        }
     }
 
     @Test
@@ -42,10 +50,10 @@ public class PluggableConfigLoaderTest {
         map.put("configLoaderClass", null);
         map.put("exclusionConfigFileList", excludedList);
 
-        writeConfigFile(map, homeDir);
+        writeConfigFile(map, directory.toString());
 
         // Construct config instance
-        Class<? extends Config> c = Config.getInstance().getClass();
+        Class<? extends Config> c = configType;
         Constructor<? extends Config> ctr = c.getDeclaredConstructor();
         ctr.setAccessible(true);
         Config config = (Config) ctr.newInstance();
@@ -62,10 +70,10 @@ public class PluggableConfigLoaderTest {
         map.put("configLoaderClass", "com.networknt.config.TestConfigLoader");
         map.put("exclusionConfigFileList", excludedList);
 
-        writeConfigFile(map, homeDir);
+        writeConfigFile(map, directory.toString());
 
         // Construct config instance
-        Class<? extends Config> c = Config.getInstance().getClass();
+        Class<? extends Config> c = configType;
         Constructor<? extends Config> ctr = c.getDeclaredConstructor();
         ctr.setAccessible(true);
         Config config = (Config) ctr.newInstance();
@@ -82,10 +90,10 @@ public class PluggableConfigLoaderTest {
         map.put("configLoaderClass", "com.networknt.config.TestConfigLoader");
         map.put("exclusionConfigFileList", excludedList);
 
-        writeConfigFile(map, homeDir);
+        writeConfigFile(map, directory.toString());
 
         // Construct config instance
-        Class<? extends Config> c = Config.getInstance().getClass();
+        Class<? extends Config> c = configType;
         Constructor<? extends Config> ctr = c.getDeclaredConstructor();
         ctr.setAccessible(true);
         Config config = (Config) ctr.newInstance();
@@ -102,19 +110,17 @@ public class PluggableConfigLoaderTest {
         map.put("configLoaderClass", "com.networknt.config.InvalidConfigLoader");
         map.put("exclusionConfigFileList", excludedList);
 
-        writeConfigFile(map, homeDir);
+        writeConfigFile(map, directory.toString());
 
         // Construct config instance
-        Class<? extends Config> c = Config.getInstance().getClass();
+        Class<? extends Config> c = configType;
         Constructor<? extends Config> ctr = c.getDeclaredConstructor();
         ctr.setAccessible(true);
         Config config = (Config) ctr.newInstance();
 
-        try {
-            Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
-            Assertions.fail();
-        } catch (Exception e) {
-        }
+        RuntimeException failure = Assertions.assertThrows(RuntimeException.class,
+                () -> config.getJsonMapConfig("consul"));
+        Assertions.assertInstanceOf(ClassNotFoundException.class, failure.getCause());
     }
 
     private static void writeConfigFile(Map<String, Object> configMap, String path) {

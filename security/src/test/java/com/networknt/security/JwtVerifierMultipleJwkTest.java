@@ -28,6 +28,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
@@ -292,8 +293,9 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
             ClientRequest request = new ClientRequest().setPath(API_PETSTORE).setMethod(Methods.GET);
             // this will force the client to get a scope token from the auth server 1 and put into the X-Scope-Token header.
             client.populateHeader(request, "Bearer token", "cid", "tid");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals("{\"message\":\"Petstore OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {
@@ -319,8 +321,9 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
             ClientRequest request = new ClientRequest().setPath(API_MARKET).setMethod(Methods.GET);
             // this will force the client to get a scope token from the auth server 1 and put into the X-Scope-Token header.
             client.populateHeader(request, "Bearer token", "cid", "tid");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
         } finally {

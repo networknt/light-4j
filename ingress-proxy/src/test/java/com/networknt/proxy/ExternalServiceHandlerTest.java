@@ -3,6 +3,7 @@ package com.networknt.proxy;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
+import com.networknt.exception.ExceptionHandler;
 import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
 import io.undertow.Handlers;
@@ -42,11 +43,20 @@ public class ExternalServiceHandlerTest {
             HttpHandler handler = getTestHandler();
             ExternalServiceHandler externalServiceHandler = new ExternalServiceHandler();
             externalServiceHandler.setNext(handler);
-            handler = externalServiceHandler;
+            handler = exchange -> {
+                Assertions.assertFalse(exchange.isInIoThread(),
+                        "The framework chain must dispatch before ExternalServiceHandler");
+                externalServiceHandler.handleRequest(exchange);
+            };
             server = Undertow.builder()
+                    // A single I/O thread makes an accidental blocking loopback
+                    // deadlock reproducible rather than dependent on assignment.
+                    .setIoThreads(1)
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .addHttpListener(7080, "localhost")
-                    .setHandler(handler)
+                    // Match supported production chains: ExceptionHandler moves
+                    // the blocking proxy call off the connection's I/O thread.
+                    .setHandler(new ExceptionHandler().setNext(handler))
                     .build();
             server.start();
         }
@@ -133,8 +143,9 @@ public class ExternalServiceHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -176,8 +187,9 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -217,8 +229,9 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -243,8 +256,9 @@ public class ExternalServiceHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/timeout-test").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -270,8 +284,9 @@ public class ExternalServiceHandlerTest {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -295,7 +310,8 @@ public class ExternalServiceHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/timeout-test/slow").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
             // Wait for response with a timeout longer than the configured pathPrefix timeout (1000ms)
             // to ensure we detect if the timeout mechanism fails
             boolean completed = latch.await(3000, TimeUnit.MILLISECONDS);

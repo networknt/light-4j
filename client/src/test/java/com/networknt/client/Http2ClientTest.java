@@ -522,8 +522,9 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
             Assertions.assertEquals(false, connection.isOpen());
@@ -533,6 +534,44 @@ public class Http2ClientTest extends Http2ClientBase {
 
         }
 
+    }
+
+    @Test
+    public void testFixtureRequestCallbackRunsOnOwningIoThread() throws Exception {
+        final Http2Client client = createClient();
+        final SimpleConnectionState.ConnectionToken token =
+                client.borrow(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+        final ClientConnection connection = (ClientConnection) token.getRawConnection();
+        try {
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<ClientResponse> response = new AtomicReference<>();
+            final AtomicReference<Thread> callbackThread = new AtomicReference<>();
+            final ClientCallback<ClientExchange> delegate = client.createClientCallback(response, latch);
+            ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            // Undertow ClientConnection is not thread-safe. Dispatch both the send
+            // and its request callback on the connection's owner, even from JUnit.
+            Assertions.assertNotSame(Thread.currentThread(), connection.getIoThread());
+            connection.getIoThread().execute(() -> connection.sendRequest(request,
+                    new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange exchange) {
+                            callbackThread.set(Thread.currentThread());
+                            delegate.completed(exchange);
+                        }
+
+                        @Override
+                        public void failed(IOException exception) {
+                            delegate.failed(exception);
+                        }
+                    }));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
+            Assertions.assertSame(connection.getIoThread(), callbackThread.get());
+            Assertions.assertNotNull(response.get(), "HTTP fixture returned no response");
+            Assertions.assertEquals(message, response.get().getAttachment(Http2Client.RESPONSE_BODY));
+        } finally {
+            client.restore(token);
+        }
     }
 
     @Test
@@ -559,8 +598,9 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             final AtomicReference<AsyncResult<AsyncResponse>> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createFullCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createFullCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
                 Assertions.assertEquals(message, ar.result().getResponseBody());
@@ -616,8 +656,9 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             client.populateHeader(request, "Bearer token", "cid", "tid");
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assertions.assertEquals(false, connection.isOpen());

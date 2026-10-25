@@ -25,6 +25,7 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LimitConfigReloadTest {
@@ -39,7 +40,7 @@ public class LimitConfigReloadTest {
         if (server == null) {
             logger.info("starting server");
             // Backup config
-            java.nio.file.Path path = java.nio.file.Paths.get("target/test-classes/config/limit.yaml");
+            java.nio.file.Path path = java.nio.file.Paths.get("target/test-classes/config/limit.yml");
             if(java.nio.file.Files.exists(path)) {
                 backup = java.nio.file.Files.readAllBytes(path);
             }
@@ -82,7 +83,7 @@ public class LimitConfigReloadTest {
         }
         // Restore config
         if(backup != null) {
-            java.nio.file.Files.write(java.nio.file.Paths.get("target/test-classes/config/limit.yaml"), backup);
+            java.nio.file.Files.write(java.nio.file.Paths.get("target/test-classes/config/limit.yml"), backup);
         }
         Config.getInstance().clear();
     }
@@ -96,6 +97,8 @@ public class LimitConfigReloadTest {
 
     @Test
     public void testLimitReload() throws Exception {
+        Assertions.assertEquals("1/s", Config.getInstance().getJsonMapConfig(CONFIG_NAME).get("rateLimit"),
+                "The fixture must override the preferred limit.yml resource");
         // 1. Send first request - should success
         Assertions.assertEquals(200, sendRequest());
 
@@ -124,7 +127,7 @@ public class LimitConfigReloadTest {
 
         // 3. Update config to allow more requests (100/s)
         Config.getInstance().getMapper().writeValue(
-                java.nio.file.Paths.get("target/test-classes/config/limit.yaml").toFile(),
+                java.nio.file.Paths.get("target/test-classes/config/limit.yml").toFile(),
                 java.util.Map.of(
                         "enabled", true,
                         "concurrentRequest", 100,
@@ -169,8 +172,9 @@ public class LimitConfigReloadTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(10, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
