@@ -52,11 +52,17 @@ import java.util.stream.Collectors;
  */
 public class LimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LimitHandlerTest.class);
-    static final LimitConfig config = LimitConfig.load();
+    static final String CONFIG_NAME = "limit-handler-test";
+    static LimitConfig config;
+    private java.util.Map<String, Object> previousConfig;
     static Undertow server = null;
 
-    @BeforeAll
-    public static void setUp() throws Exception{
+    @BeforeEach
+    public void setUp() throws Exception{
+        previousConfig = Config.getInstance().getJsonMapConfig(LimitConfig.CONFIG_NAME);
+        Config.getInstance().putInConfigCache(LimitConfig.CONFIG_NAME,
+                Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        config = LimitConfig.load();
         if(server == null) {
             logger.info("starting serverconfig");
             HttpHandler handler = getTestHandler();
@@ -72,8 +78,8 @@ public class LimitHandlerTest {
         }
     }
 
-    @AfterAll
-    public static void tearDown() throws Exception {
+    @AfterEach
+    public void tearDown() throws Exception {
         if(server != null) {
             try {
                 Thread.sleep(100);
@@ -81,7 +87,12 @@ public class LimitHandlerTest {
 
             }
             server.stop();
+            server = null;
             logger.info("The server is stopped.");
+        }
+        Config.getInstance().clearConfigCache(LimitConfig.CONFIG_NAME);
+        if (previousConfig != null) {
+            Config.getInstance().putInConfigCache(LimitConfig.CONFIG_NAME, previousConfig);
         }
     }
 
@@ -167,26 +178,19 @@ public class LimitHandlerTest {
     }
 
     @Test
-    // For some reason, travis become really slow or not allow multi-thread anymore and this test fails always.
-    // You can run it within the IDE or remove the @Disabled and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
-        Callable<String> task = this::callApi;
-        List<Callable<String>> tasks = Collections.nCopies(12, task);
-        long start = System.currentTimeMillis();
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        List<Future<String>> futures = executorService.invokeAll(tasks);
-        List<String> resultList = new ArrayList<>(futures.size());
-        // Check for exceptions
-        for (Future<String> future : futures) {
-            // Throws an exception if an exception was thrown by the task.
-            String s = future.get();
-            logger.info("future = " + s);
-            resultList.add(s);
+        // Even across a minute boundary, 24 requests exceed two windows of 10.
+        // Bound the burst so scheduler speed cannot change that precondition.
+        List<Callable<String>> tasks = Collections.nCopies(24, this::callApi);
+        try (ExecutorService executorService = Executors.newFixedThreadPool(2)) {
+            List<Future<String>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
+            List<String> resultList = new ArrayList<>(futures.size());
+            for (Future<String> future : futures) {
+                resultList.add(future.get());
+            }
+            List<String> errorList = resultList.stream()
+                    .filter(r -> r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
+            Assertions.assertFalse(errorList.isEmpty(), "The burst must exceed the configured quota");
         }
-        long last = (System.currentTimeMillis() - start);
-        // make sure that there are at least one element in resultList is :503 or :429
-        List<String> errorList = resultList.stream().filter(r->r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
-        logger.info("errorList size = " + errorList.size());
-        Assertions.assertTrue(errorList.size()>0);
     }
 }
