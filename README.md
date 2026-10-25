@@ -258,7 +258,8 @@ its structured error response (ERR10011 / HTTP 400 for an uncaught IOException)
 after the original exception-handler frame has returned. Regressions compare
 worker-entry and streamed-continuation failures, cover 405 rejection and metrics
 injection, and check that concurrent initialization shares one HTTP client.
-Client initialization is synchronized; the network send runs outside that lock.
+Client initialization uses a volatile reference and a double-checked guard;
+established clients and network sends do not acquire the initialization lock.
 BodyHandler alone is insufficient: its dispatch depends on a Content-Type header.
 Dispatch protects I/O threads; blocking upstream calls still consume the bounded
 worker pool. These tests do not establish worker-pool saturation capacity, add

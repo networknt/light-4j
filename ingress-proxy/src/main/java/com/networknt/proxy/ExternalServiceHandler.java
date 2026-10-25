@@ -51,7 +51,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final AtomicBoolean connectionCloseHeaderFallbackLogged = new AtomicBoolean(false);
     private volatile HttpHandler next;
     private String configName = ExternalServiceConfig.CONFIG_NAME;
-    private HttpClient client;
+    private volatile HttpClient client;
 
     /**
      * Construct ExternalServiceHandler with default config name
@@ -151,12 +151,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private void forwardMatchedRequest(HttpServerExchange exchange, ForwardingContext context)
             throws IOException, InterruptedException, URISyntaxException {
         String endpoint = context.pathPrefix() + "@" + exchange.getRequestMethod().toString().toLowerCase();
+        if (logger.isTraceEnabled()) logger.trace("endpoint = {}", endpoint);
         String requestPath = rewriteRequestPath(context.config(), exchange.getRequestPath());
         AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+        if (logger.isTraceEnabled()) {
+            logger.trace("External Service Request Info: host = '{}', method = '{}', requestPath = '{}', queryString = '{}'",
+                    context.host(), exchange.getRequestMethod(), requestPath, exchange.getQueryString());
+        }
         HttpRequest request = buildForwardRequest(exchange, context, requestPath);
         if (request == null) {
             logger.error("wrong http method {} for request path {}", exchange.getRequestMethod(), requestPath);
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, exchange.getRequestMethod().toString(), requestPath);
+            if (logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
             injectMetrics(exchange, context, endpoint);
             exchange.endExchange();
             return;
@@ -172,13 +178,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         }
         writeResponse(exchange, response);
         injectMetrics(exchange, context, endpoint);
+        if (logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
     }
 
     private String rewriteRequestPath(ExternalServiceConfig config, String requestPath) {
         if (config.getUrlRewriteRules() != null) {
             for (UrlRewriteRule rule : config.getUrlRewriteRules()) {
                 Matcher matcher = rule.getPattern().matcher(requestPath);
-                if (matcher.matches()) return matcher.replaceAll(rule.getReplace());
+                if (matcher.matches()) {
+                    String rewrittenPath = matcher.replaceAll(rule.getReplace());
+                    if (logger.isTraceEnabled()) logger.trace("rewritten requestPath = {}", rewrittenPath);
+                    return rewrittenPath;
+                }
             }
         }
         return requestPath;
@@ -198,10 +209,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         };
     }
 
-    private synchronized HttpClient getOrCreateClient(ExternalServiceConfig config, int connectTimeout)
-            throws IOException {
-        if (client == null) client = createJavaHttpClient(config, connectTimeout);
-        return client;
+    private HttpClient getOrCreateClient(ExternalServiceConfig config, int connectTimeout) throws IOException {
+        HttpClient current = client;
+        if (current == null) {
+            synchronized (this) {
+                current = client;
+                if (current == null) {
+                    current = createJavaHttpClient(config, connectTimeout);
+                    client = current;
+                }
+            }
+        }
+        return current;
     }
 
     private HttpResponse<byte[]> sendWithRetries(HttpClient forwardingClient, HttpRequest request, int maxRetries)
@@ -236,6 +255,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             String name = header.getKey();
             if (name == null || name.startsWith(":") || header.getValue().get(0) == null) continue;
             for (String value : header.getValue()) {
+                if (logger.isTraceEnabled()) logger.trace("Add response header key = {} value = {}", name, value);
                 exchange.getResponseHeaders().add(new HttpString(name), value);
             }
         }
