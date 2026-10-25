@@ -40,9 +40,11 @@ class ProxyHandlerSseTest {
 
     @Test
     void shouldProxySseResponseAndOverwritePresetContentType() throws Exception {
-        Undertow backend = startServer(sseHandler(0, 250, true));
+        // Headers must arrive before the ordinary deadline; the second event must arrive after it.
+        // Leave room for cold connection setup on CI while preserving that ordering.
+        Undertow backend = startServer(sseHandler(0, 1500, true));
         ProxyHandler proxy = buildProxy(backendUri(backend), builder -> builder
-                .setMaxRequestTime(100)
+                .setMaxRequestTime(1000)
                 .setStreamRequestAcceptTypes(Collections.emptyList()));
         Undertow frontend = startServer(exchange -> {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
@@ -168,7 +170,7 @@ class ProxyHandlerSseTest {
     private HttpURLConnection open(URI uri, String accept) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
         connection.setConnectTimeout(1000);
-        connection.setReadTimeout(2000);
+        connection.setReadTimeout(5000);
         connection.setRequestProperty(Headers.ACCEPT_STRING, accept);
         return connection;
     }
