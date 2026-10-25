@@ -2,7 +2,7 @@ name: Jackson 3 source build
 on:
   pull_request:
   push:
-    branches: [master, migrate-jackson-3, fix-jackson3-build-coordinates]
+    branches: [master]
 permissions:
   contents: read
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: networknt/yaml-rule
-          ref: 86aba6f60befdbeea2548fc950acffb717b7c919
+          ref: 2a4f51a20b3672801633993cbbcd3aad6e148a1a
           path: sources/yaml-rule
       - uses: actions/checkout@v4
         with:
