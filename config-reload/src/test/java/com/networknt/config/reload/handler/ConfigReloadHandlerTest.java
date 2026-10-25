@@ -67,7 +67,8 @@ public class ConfigReloadHandlerTest extends  BaseTest{
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, JSON_MEDIA_TYPE);
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, req));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, req)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -112,7 +113,8 @@ public class ConfigReloadHandlerTest extends  BaseTest{
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, JSON_MEDIA_TYPE);
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, req));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, req)));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);

@@ -106,7 +106,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(5000, TimeUnit.MILLISECONDS);
             int statusCode = reference.get().getResponseCode();
             Assertions.assertEquals(200, statusCode);
@@ -162,7 +163,8 @@ public class McpHandlerTest {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath("/mcp");
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.ACCEPT, "text/event-stream");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -205,7 +207,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -264,7 +267,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -327,8 +331,9 @@ public class McpHandlerTest {
             listRequest.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             listRequest.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             listRequest.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(listRequest, client.createClientCallback(listReference, listLatch,
-                    "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"params\": {}, \"id\": 8}"));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(listRequest, client.createClientCallback(listReference, listLatch,
+                            "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"params\": {}, \"id\": 8}")));
             listLatch.await(1000, TimeUnit.MILLISECONDS);
             String listBody = listReference.get().getAttachment(Http2Client.RESPONSE_BODY);
             Assertions.assertFalse(listBody.contains("blockedDelete"));
@@ -339,8 +344,9 @@ public class McpHandlerTest {
             callRequest.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             callRequest.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             callRequest.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(callRequest, client.createClientCallback(callReference, callLatch,
-                    "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"blockedDelete\", \"arguments\": {}}, \"id\": 9}"));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(callRequest, client.createClientCallback(callReference, callLatch,
+                            "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"params\": {\"name\": \"blockedDelete\", \"arguments\": {}}, \"id\": 9}")));
             callLatch.await(1000, TimeUnit.MILLISECONDS);
             String callBody = callReference.get().getAttachment(Http2Client.RESPONSE_BODY);
             Assertions.assertTrue(callBody.contains("-32004"));
@@ -378,7 +384,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -448,7 +455,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -499,7 +507,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.HOST, "localhost");
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             latch.await(1000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();
@@ -550,7 +559,8 @@ public class McpHandlerTest {
             request.getRequestHeaders().put(io.undertow.util.Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(io.undertow.util.Headers.TRANSFER_ENCODING, "chunked");
 
-            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, json)));
             boolean completed = latch.await(1000, TimeUnit.MILLISECONDS);
             Assertions.assertTrue(completed, "Timed out waiting for MCP response");
 

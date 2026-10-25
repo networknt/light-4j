@@ -41,6 +41,7 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -125,8 +126,9 @@ public class ContentHandlerTest {
       final ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.GET);
       request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
-      connection.sendRequest(request, client.createClientCallback(reference, latch));
-      latch.await();
+      connection.getIoThread().execute(() ->
+              connection.sendRequest(request, client.createClientCallback(reference, latch)));
+      Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
     } catch (Exception e) {
       logger.error("Exception: ", e);
       throw new ClientException(e);
@@ -171,8 +173,9 @@ public class ContentHandlerTest {
       final ClientRequest request = new ClientRequest().setPath("/xml").setMethod(Methods.GET);
       request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
-      connection.sendRequest(request, client.createClientCallback(reference, latch));
-      latch.await();
+      connection.getIoThread().execute(() ->
+              connection.sendRequest(request, client.createClientCallback(reference, latch)));
+      Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
     } catch (Exception e) {
       logger.error("Exception: ", e);
       throw new ClientException(e);
@@ -217,8 +220,9 @@ public class ContentHandlerTest {
       final ClientRequest request = new ClientRequest().setPath("/json").setMethod(Methods.GET);
       request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
-      connection.sendRequest(request, client.createClientCallback(reference, latch));
-      latch.await();
+      connection.getIoThread().execute(() ->
+              connection.sendRequest(request, client.createClientCallback(reference, latch)));
+      Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
     } catch (Exception e) {
       logger.error("Exception: ", e);
       throw new ClientException(e);
@@ -260,8 +264,9 @@ public class ContentHandlerTest {
     try {
       final ClientRequest request = new ClientRequest().setPath("/json").setMethod(Methods.GET);
       request.getRequestHeaders().put(Headers.HOST, "localhost");
-      connection.sendRequest(request, client.createClientCallback(reference, latch));
-      latch.await();
+      connection.getIoThread().execute(() ->
+              connection.sendRequest(request, client.createClientCallback(reference, latch)));
+      Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
     } catch (Exception e) {
       logger.error("Exception: ", e);
       throw new ClientException(e);

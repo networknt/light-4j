@@ -522,8 +522,9 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
             Assertions.assertEquals(false, connection.isOpen());
@@ -559,7 +560,8 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             final AtomicReference<AsyncResult<AsyncResponse>> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createFullCallback(reference, latch));
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createFullCallback(reference, latch)));
             latch.await();
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
@@ -616,8 +618,9 @@ public class Http2ClientTest extends Http2ClientBase {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             client.populateHeader(request, "Bearer token", "cid", "tid");
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            connection.getIoThread().execute(() ->
+                    connection.sendRequest(request, client.createClientCallback(reference, latch)));
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final ClientResponse response = reference.get();
             Assertions.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assertions.assertEquals(false, connection.isOpen());
