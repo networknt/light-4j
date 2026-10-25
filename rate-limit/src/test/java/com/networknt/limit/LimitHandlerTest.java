@@ -185,6 +185,8 @@ public class LimitHandlerTest {
             List<Future<String>> futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
             List<String> resultList = new ArrayList<>(futures.size());
             for (Future<String> future : futures) {
+                Assertions.assertFalse(future.isCancelled(),
+                        "HTTP burst did not finish within 10 seconds; a request timed out");
                 resultList.add(future.get());
             }
             List<String> errorList = resultList.stream()

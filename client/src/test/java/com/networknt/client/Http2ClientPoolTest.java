@@ -322,7 +322,7 @@ public class Http2ClientPoolTest {
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
             connection.getIoThread().execute(() ->
                     connection.sendRequest(request, client.createFullCallback(reference, latch)));
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
                 Assertions.assertEquals(message, ar.result().getResponseBody());

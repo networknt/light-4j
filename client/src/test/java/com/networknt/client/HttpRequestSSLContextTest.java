@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Disabled
@@ -60,7 +61,7 @@ public class HttpRequestSSLContextTest {
             request.getRequestHeaders().put(new HttpString("host"), "www.google.com");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
 
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
@@ -96,7 +97,7 @@ public class HttpRequestSSLContextTest {
             request.getRequestHeaders().put(new HttpString("host"), "www.google.com");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
 
-            latch.await();
+            Assertions.assertTrue(latch.await(30, TimeUnit.SECONDS), "HTTP fixture response timed out");
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);

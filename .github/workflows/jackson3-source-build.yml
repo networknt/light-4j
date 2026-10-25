@@ -1,6 +1,7 @@
 name: Jackson 3 source build
 on:
   pull_request:
+  workflow_dispatch:
   push:
     branches: [master]
 permissions:
@@ -17,16 +18,30 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
+      - name: Resolve prerequisite pull requests or merged branches
+        id: prerequisites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          ref=$(gh api repos/networknt/yaml-rule/pulls/36 --jq 'if .merged then .base.ref elif .state == "open" then .head.sha else error("Prerequisite PR was closed without merging") end')
+          echo "yaml_rule=$ref" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: networknt/yaml-rule
-          ref: 2a4f51a20b3672801633993cbbcd3aad6e148a1a
+          ref: ${{ steps.prerequisites.outputs.yaml_rule }}
           path: sources/yaml-rule
       - uses: actions/checkout@v4
         with:
           repository: networknt/http-client
-          ref: 4ae8ccfe6858dce7b34f692872ba55a7edb8a16e
+          ref: master
           path: sources/http-client
+      - name: Record prerequisite commits
+        shell: bash
+        run: |
+          for source in sources/*; do
+            echo "$source $(git -C "$source" rev-parse HEAD)"
+          done | tee source-commits.txt
       - name: Build prerequisites from source and run full tests
         shell: bash
         env:
@@ -40,4 +55,5 @@ jobs:
           name: source-build-reports
           path: |
             source-build.log
+            source-commits.txt
             **/target/surefire-reports/**
