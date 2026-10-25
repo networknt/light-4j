@@ -221,7 +221,7 @@ class ExternalServiceWorkerDispatchTest {
     void concurrentInitializationSharesOneHttpClient() throws Exception {
         try (ProxyFixture fixture = new ProxyFixture(handler -> handler);
              var executor = Executors.newFixedThreadPool(8)) {
-            ExternalServiceHandler handler = new ExternalServiceHandler(EXTERNAL_CONFIG);
+            ExternalServiceHandler handler = fixture.external;
             var getter = ExternalServiceHandler.class.getDeclaredMethod("getOrCreateClient",
                     ExternalServiceConfig.class, int.class);
             getter.setAccessible(true);
@@ -258,8 +258,12 @@ class ExternalServiceWorkerDispatchTest {
             injected.countDown();
         }
 
-        @Override protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) { }
-        @Override public void handleRequest(HttpServerExchange exchange) { }
+        @Override protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) {
+            // Record injection only; the fixture must not start a metrics reporter.
+        }
+        @Override public void handleRequest(HttpServerExchange exchange) {
+            // Registered for lookup only; this fixture does not join the request chain.
+        }
         @Override public HttpHandler getNext() { return null; }
         @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
     }
@@ -280,6 +284,7 @@ class ExternalServiceWorkerDispatchTest {
         final CountDownLatch releaseUpstream = new CountDownLatch(1);
         final AtomicReference<String> body = new AtomicReference<>();
         final AtomicReference<String> path = new AtomicReference<>();
+        private final ExternalServiceHandler external;
         private final Undertow upstream;
         private final Undertow front;
 
@@ -306,7 +311,7 @@ class ExternalServiceWorkerDispatchTest {
                     "metricsName", "external-worker-metrics",
                     "pathHostMappings", List.of("/proxy http://localhost:" + port(upstream)),
                     "urlRewriteRules", List.of("/proxy(.*) /backend$1")));
-            ExternalServiceHandler external = new ExternalServiceHandler(EXTERNAL_CONFIG) {
+            external = new ExternalServiceHandler(EXTERNAL_CONFIG) {
                 @Override
                 public void handleRequest(HttpServerExchange exchange) throws Exception {
                     handlerEntries.incrementAndGet();
