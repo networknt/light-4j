@@ -44,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 
 /**
@@ -58,7 +57,7 @@ public class LimitHandlerTest {
     static Undertow server = null;
 
     @BeforeEach
-    public void setUp() throws Exception{
+    public void setUp() {
         previousConfig = Config.getInstance().getJsonMapConfig(LimitConfig.CONFIG_NAME);
         Config.getInstance().putInConfigCache(LimitConfig.CONFIG_NAME,
                 Config.getInstance().getJsonMapConfig(CONFIG_NAME));
@@ -189,7 +188,7 @@ public class LimitHandlerTest {
                 resultList.add(future.get());
             }
             List<String> errorList = resultList.stream()
-                    .filter(r -> r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
+                    .filter(r -> r.contains(":" + config.getErrorCode())).toList();
             Assertions.assertFalse(errorList.isEmpty(), "The burst must exceed the configured quota");
         }
     }
