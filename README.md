@@ -240,13 +240,15 @@ the named rate-limit configuration resetting the limiter on each request.
 ExternalServiceHandler uses blocking Java HTTP calls and must run on a worker
 thread. The checked-in light-gateway `config/external-gateway` and
 `product/external-access-point` chains place ExceptionHandler first; its
-`isInIoThread()/dispatch(this)` guard moves the chain to workers. The
+`isInIoThread()/dispatch(this)` guard moves initial chain execution to workers.
+RequestInterceptorInjectionHandler can later resume the chain on an I/O thread
+after an asynchronous body read, so initial dispatch is not a universal safeguard.
+Worker-thread execution is required at the actual external-service entry. The
 single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
-handler and asserts worker-thread execution before entering ExternalServiceHandler.
-Custom chains must retain an enabled ExceptionHandler or provide equivalent
-worker dispatch. BodyHandler alone is insufficient: its dispatch depends on a
-Content-Type header. This source/configuration audit does not verify deployed
-handler chains.
+handler and asserts worker execution for synchronous entry; it does not cover
+the asynchronous continuation. ExternalServiceHandler has no local dispatch
+guard. BodyHandler alone is also insufficient: its dispatch depends on a
+Content-Type header. This source audit does not qualify deployed handler chains.
 
 Prerequisites are resolved to full commit SHAs before checkout. To replay a
 failed dependency combination, manually dispatch the source-build workflow with
