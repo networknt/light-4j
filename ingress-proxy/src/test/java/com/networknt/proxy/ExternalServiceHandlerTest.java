@@ -3,6 +3,7 @@ package com.networknt.proxy;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
+import com.networknt.exception.ExceptionHandler;
 import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
 import io.undertow.Handlers;
@@ -13,7 +14,6 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
-import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.*;
@@ -43,15 +43,20 @@ public class ExternalServiceHandlerTest {
             HttpHandler handler = getTestHandler();
             ExternalServiceHandler externalServiceHandler = new ExternalServiceHandler();
             externalServiceHandler.setNext(handler);
-            handler = externalServiceHandler;
+            handler = exchange -> {
+                Assertions.assertFalse(exchange.isInIoThread(),
+                        "The framework chain must dispatch before ExternalServiceHandler");
+                externalServiceHandler.handleRequest(exchange);
+            };
             server = Undertow.builder()
                     // A single I/O thread makes an accidental blocking loopback
                     // deadlock reproducible rather than dependent on assignment.
                     .setIoThreads(1)
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .addHttpListener(7080, "localhost")
-                    // ExternalServiceHandler uses blocking java.net.http sends.
-                    .setHandler(new BlockingHandler(handler))
+                    // Match supported production chains: ExceptionHandler moves
+                    // the blocking proxy call off the connection's I/O thread.
+                    .setHandler(new ExceptionHandler().setNext(handler))
                     .build();
             server.start();
         }

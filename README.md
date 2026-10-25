@@ -237,6 +237,17 @@ production sends, including the asynchronous `callService` paths.
 [Issue #2816](https://github.com/networknt/light-4j/issues/2816) separately tracks
 the named rate-limit configuration resetting the limiter on each request.
 
+ExternalServiceHandler uses blocking Java HTTP calls and must run on a worker
+thread. The checked-in light-gateway `config/external-gateway` and
+`product/external-access-point` chains place ExceptionHandler first; its
+`isInIoThread()/dispatch(this)` guard moves the chain to workers. The
+single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
+handler and asserts worker-thread execution before entering ExternalServiceHandler.
+Custom chains must retain an enabled ExceptionHandler or provide equivalent
+worker dispatch. BodyHandler alone is insufficient: its dispatch depends on a
+Content-Type header. This source/configuration audit does not verify deployed
+handler chains.
+
 Prerequisites are resolved to full commit SHAs before checkout. To replay a
 failed dependency combination, manually dispatch the source-build workflow with
 its uploaded `source-refs.json` contents as the `source_refs` input. Omitted

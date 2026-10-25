@@ -53,12 +53,7 @@ public class RateLimiterTest {
                 Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
                 responseList.add(future.get());
             }
-    //        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-    //           for (int i=0; i<12; i++) {
-    //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
-    //        }
 
-           // Assertions.assertEquals(responseList.size(), 12);
             List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
             Assertions.assertEquals(2, rejects.size());
         }
@@ -86,12 +81,7 @@ public class RateLimiterTest {
                 Assertions.assertFalse(future.isCancelled(), "Rate-limit burst exceeded its 10-second deadline");
                 responseList.add(future.get());
             }
-    //        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-    //           for (int i=0; i<12; i++) {
-    //            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
-    //        }
 
-            // Assertions.assertEquals(responseList.size(), 12);
             List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
             Assertions.assertEquals(2, rejects.size());
         }
@@ -162,7 +152,6 @@ public class RateLimiterTest {
                 responseList.add(future.get());
             }
 
-            // Assertions.assertEquals(responseList.size(), 12);
             List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
             Assertions.assertEquals(2, rejects.size());
         }
