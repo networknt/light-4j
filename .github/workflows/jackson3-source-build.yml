@@ -65,6 +65,8 @@ jobs:
           for source in sources/*; do
             printf '{"key":"%s","value":"%s"}\n' "${source##*/}" "$(git -C "$source" rev-parse HEAD)"
           done | jq -s from_entries | tee source-refs.json
+      - name: Test artifact audit tooling
+        run: python3 -m unittest discover -s consumer/scripts/tests -p 'test_jackson3*.py'
       - name: Build prerequisites from source and run full tests
         shell: bash
         env:

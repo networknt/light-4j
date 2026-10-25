@@ -23,8 +23,8 @@ import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Shared Jackson 2.22.3 feature profile for the framework JSON mappers. */
-public final class Jackson2Defaults {
-    private Jackson2Defaults() { }
+public final class JacksonDefaults {
+    private JacksonDefaults() { }
 
     // Measured on Jackson 2.22.3. Enum feature snapshots do not capture these.
     private static final tools.jackson.core.StreamReadConstraints READ_CONSTRAINTS =

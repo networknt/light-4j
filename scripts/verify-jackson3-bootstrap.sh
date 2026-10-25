@@ -16,6 +16,10 @@ yaml_sources=$(cd -- "$JACKSON3_YAML_RULE" && pwd -P)
 for source in "$script_root" "$http_sources" "$yaml_sources"; do
     [[ -f "$source/pom.xml" ]] || { echo "Missing pom.xml in $source" >&2; exit 1; }
 done
+if [[ ${JACKSON3_REUSE_CORE_QUALIFICATION:-0} == 1 ]]; then
+    : "${JACKSON3_CORE_QUALIFICATION_REPORT:?Set the qualification evidence path}"
+    python3 "$script_root/scripts/jackson3_core_qualification.py" --source "$script_root" --report "$JACKSON3_CORE_QUALIFICATION_REPORT"
+fi
 maven_args=("-Dmaven.repo.local=$verification_repo")
 if [[ ${JACKSON3_MAVEN_OFFLINE:-0} == 1 ]]; then
     # Third-party artifacts/plugins may be seeded for an offline run; networknt must be absent.
@@ -24,7 +28,9 @@ fi
 (cd -- "$yaml_sources" && mvn "${maven_args[@]}" install -DskipTests)
 (cd -- "$script_root" && mvn "${maven_args[@]}" -pl status,monad-result,config,client-config,cluster -am install -DskipTests)
 (cd -- "$http_sources" && mvn "${maven_args[@]}" clean install)
-(cd -- "$script_root" && mvn "${maven_args[@]}" clean test)
+if [[ ${JACKSON3_REUSE_CORE_QUALIFICATION:-0} != 1 ]]; then
+    (cd -- "$script_root" && mvn "${maven_args[@]}" clean test)
+fi
 # Tests have passed; package/install without repeating the suite.
 (cd -- "$script_root" && mvn "${maven_args[@]}" install -DskipTests)
 

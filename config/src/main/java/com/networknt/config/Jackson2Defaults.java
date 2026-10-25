@@ -23,10 +23,10 @@ public final class Jackson2Defaults {
     private Jackson2Defaults() { }
 
     public static JsonMapper mapper() {
-        return com.networknt.jackson.Jackson2Defaults.mapper();
+        return com.networknt.jackson.JacksonDefaults.mapper();
     }
 
     public static JsonMapper.Builder builder() {
-        return com.networknt.jackson.Jackson2Defaults.builder();
+        return com.networknt.jackson.JacksonDefaults.builder();
     }
 }
