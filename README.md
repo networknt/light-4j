@@ -246,9 +246,36 @@ after an asynchronous body read, so initial dispatch is not a universal safeguar
 Worker-thread execution is required at the actual external-service entry. The
 single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
 handler and asserts worker execution for synchronous entry; it does not cover
-the asynchronous continuation. ExternalServiceHandler has no local dispatch
-guard. BodyHandler alone is also insufficient: its dispatch depends on a
-Content-Type header. This source audit does not qualify deployed handler chains.
+the asynchronous continuation. Matched external requests now check their actual
+thread and dispatch only forwarding to workers before rewriting. Configuration,
+routing, and request timeouts are resolved once and passed to forwarding; dispatch
+does not re-enter routing or write shared timeout fields. The streaming
+ExternalServiceWorkerDispatchTest forces read-listener continuation and verifies
+that an unrelated request progresses while the upstream is blocked; it also
+checks body preservation, one rewrite, direct GETs, and unchanged unmatched routing.
+The worker continuation currently constructs a new default ExceptionHandler per
+dispatched request. It returns the default structured error response (ERR10011 /
+HTTP 400 for an uncaught IOException) after the original exception-handler frame
+has returned. This does not reuse the chain's configured handler or its enabled
+flag: the dispatched path applies default exception handling even when the chain
+intentionally disables it. Other worker-entry paths still use their surrounding
+chain policy. This is an accepted limitation of this fix, tracked in
+[issue #2820](https://github.com/networknt/light-4j/issues/2820) for separate
+exception-module continuation support and review. The current implementation
+retains ingress-proxy's compile dependency on the exception module.
+Regressions compare
+worker-entry and streamed-continuation failures, cover 405 rejection and metrics
+injection, and check that concurrent initialization shares one HTTP client.
+Client initialization uses a volatile reference and a double-checked guard;
+established clients and network sends do not acquire the initialization lock.
+BodyHandler alone is insufficient: its dispatch depends on a Content-Type header.
+Dispatch protects I/O threads; blocking upstream calls still consume the bounded
+worker pool. These tests do not establish worker-pool saturation capacity, add
+backpressure, or provide an overload policy. Size worker capacity and upstream
+timeouts for the deployment. SalesforceHandler and MrasHandler also use blocking
+HTTP sends and need separate execution-chain qualification; this guard covers
+ExternalServiceHandler only. These source tests do not qualify deployed handler
+chains.
 
 Prerequisites are resolved to full commit SHAs before checkout. To replay a
 failed dependency combination, manually dispatch the source-build workflow with
