@@ -253,6 +253,12 @@ does not re-enter routing or write shared timeout fields. The streaming
 ExternalServiceWorkerDispatchTest forces read-listener continuation and verifies
 that an unrelated request progresses while the upstream is blocked; it also
 checks body preservation, one rewrite, direct GETs, and unchanged unmatched routing.
+The worker continuation is wrapped in the framework ExceptionHandler, preserving
+its structured error response (ERR10011 / HTTP 400 for an uncaught IOException)
+after the original exception-handler frame has returned. Regressions compare
+worker-entry and streamed-continuation failures, cover 405 rejection and metrics
+injection, and check that concurrent initialization shares one HTTP client.
+Client initialization is synchronized; the network send runs outside that lock.
 BodyHandler alone is insufficient: its dispatch depends on a Content-Type header.
 Dispatch protects I/O threads; blocking upstream calls still consume the bounded
 worker pool. These tests do not establish worker-pool saturation capacity, add

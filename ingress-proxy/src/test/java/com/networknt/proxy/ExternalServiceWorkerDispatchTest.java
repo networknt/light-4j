@@ -3,6 +3,10 @@ package com.networknt.proxy;
 import com.networknt.config.Config;
 import com.networknt.exception.ExceptionHandler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.Handler;
+import com.networknt.metrics.AbstractMetricsHandler;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.TimeSeriesDbSender;
 import com.networknt.handler.RequestInterceptor;
 import com.networknt.handler.RequestInterceptorInjectionHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -16,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
@@ -28,6 +34,10 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.HashSet;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -44,24 +54,29 @@ class ExternalServiceWorkerDispatchTest {
     private static final String TLS_PROPERTY = "jdk.internal.httpclient.disableHostnameVerification";
     private RequestInterceptor[] previousInterceptors;
     private String previousTlsProperty;
+    private HttpHandler previousMetrics;
 
     @BeforeEach
     void rememberSharedState() {
         previousInterceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
         previousTlsProperty = System.getProperty(TLS_PROPERTY);
+        previousMetrics = Handler.getHandlers().get(MetricsConfig.CONFIG_NAME);
     }
 
     @AfterEach
     void restoreSharedState() {
         SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), previousInterceptors);
+        if (previousMetrics == null) Handler.getHandlers().remove(MetricsConfig.CONFIG_NAME);
+        else Handler.getHandlers().put(MetricsConfig.CONFIG_NAME, previousMetrics);
         Config.getInstance().clearConfigCache(EXTERNAL_CONFIG);
         Config.getInstance().clearConfigCache(INJECTION_CONFIG);
         if (previousTlsProperty == null) System.clearProperty(TLS_PROPERTY);
         else System.setProperty(TLS_PROPERTY, previousTlsProperty);
     }
 
-    @Test
-    void streamedBodyContinuationCannotBlockTheFrontEndIoThread() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void streamedBodyContinuationCannotBlockTheFrontEndIoThread(boolean upstreamFailure) throws Exception {
         BodyCaptureInterceptor interceptor = new BodyCaptureInterceptor();
         SingletonServiceFactory.setBean(RequestInterceptor.class.getName(),
                 new RequestInterceptor[]{interceptor});
@@ -79,6 +94,7 @@ class ExternalServiceWorkerDispatchTest {
                 initialReadReturned.countDown();
             });
         }); Socket socket = new Socket("localhost", fixture.port())) {
+            fixture.failUpstream.set(upstreamFailure);
             socket.setSoTimeout(5000);
             String body = "{\"message\":\"streamed body\"}";
             String first = body.substring(0, 5);
@@ -99,8 +115,14 @@ class ExternalServiceWorkerDispatchTest {
             fixture.assertProbeCompletesBeforeUpstreamRelease();
             fixture.releaseUpstream.countDown();
             String response = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            assertTrue(response.startsWith("HTTP/1.1 200"), response);
-            assertTrue(response.endsWith("accepted"), response);
+            if (upstreamFailure) {
+                assertTrue(response.startsWith("HTTP/1.1 400"), response);
+                assertTrue(response.contains("application/json"), response);
+                assertTrue(response.contains("ERR10011"), "Use framework structured errors: " + response);
+            } else {
+                assertTrue(response.startsWith("HTTP/1.1 200"), response);
+                assertTrue(response.endsWith("accepted"), response);
+            }
             assertEquals(1, fixture.handlerEntries.get(), "Resolve configuration and routing only once");
             assertEquals(body, fixture.body.get());
             assertEquals("/backend/resource", fixture.path.get(), "Rewrite the path exactly once");
@@ -149,6 +171,99 @@ class ExternalServiceWorkerDispatchTest {
         }
     }
 
+    @Test
+    void workerThreadFailureUsesTheSameFrameworkError() throws Exception {
+        try (ProxyFixture fixture = new ProxyFixture(handler -> new ExceptionHandler().setNext(handler));
+             HttpClient client = HttpClient.newHttpClient()) {
+            fixture.failUpstream.set(true);
+            fixture.releaseUpstream.countDown();
+            HttpResponse<String> response = client.send(
+                    HttpRequest.newBuilder(fixture.uri("/proxy/failure"))
+                            .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(400, response.statusCode(), "Preserve the framework ERR10011 status");
+            assertTrue(response.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+            assertTrue(response.body().contains("ERR10011"), response.body());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"GET", "OPTIONS"})
+    void forwardingAndMethodRejectionInjectMetrics(String method) throws Exception {
+        RecordingMetrics metrics = new RecordingMetrics();
+        Handler.getHandlers().put(MetricsConfig.CONFIG_NAME, metrics);
+        try (ProxyFixture fixture = new ProxyFixture(handler -> handler, true);
+             HttpClient client = HttpClient.newHttpClient()) {
+            fixture.releaseUpstream.countDown();
+            HttpResponse<String> response = client.send(
+                    HttpRequest.newBuilder(fixture.uri("/proxy/metrics"))
+                            .timeout(Duration.ofSeconds(5))
+                            .method(method, HttpRequest.BodyPublishers.noBody()).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            int expectedStatus = method.equals("GET") ? 200 : 405;
+            assertEquals(expectedStatus, response.statusCode(), response.body());
+            assertTrue(metrics.injected.await(5, TimeUnit.SECONDS), "Metrics callback must complete");
+            assertEquals(1, metrics.calls.get());
+            assertEquals(expectedStatus, metrics.status.get());
+            assertEquals("/proxy@" + method.toLowerCase(), metrics.endpoint.get());
+            assertEquals("external-worker-metrics", metrics.name.get());
+            assertFalse(metrics.onIoThread.get(), "Inject metrics on the forwarding worker");
+            if (method.equals("GET")) {
+                assertEquals("/backend/metrics", fixture.path.get());
+                assertEquals("accepted", response.body());
+            } else {
+                assertTrue(response.body().contains("ERR10008"), response.body());
+                assertEquals(1, fixture.upstreamEntered.getCount(), "Reject before sending upstream");
+            }
+        }
+    }
+
+    @Test
+    void concurrentInitializationSharesOneHttpClient() throws Exception {
+        try (ProxyFixture fixture = new ProxyFixture(handler -> handler);
+             var executor = Executors.newFixedThreadPool(8)) {
+            ExternalServiceHandler handler = new ExternalServiceHandler(EXTERNAL_CONFIG);
+            var getter = ExternalServiceHandler.class.getDeclaredMethod("getOrCreateClient",
+                    ExternalServiceConfig.class, int.class);
+            getter.setAccessible(true);
+            CyclicBarrier start = new CyclicBarrier(8);
+            var futures = IntStream.range(0, 8).mapToObj(i -> executor.submit(() -> {
+                start.await(5, TimeUnit.SECONDS);
+                return (HttpClient) getter.invoke(handler, ExternalServiceConfig.load(EXTERNAL_CONFIG), 5000);
+            })).toList();
+            var clients = new HashSet<HttpClient>();
+            try {
+                for (var future : futures) clients.add(future.get(10, TimeUnit.SECONDS));
+                assertEquals(1, clients.size(), "Concurrent first requests must share one safely published client");
+            } finally {
+                clients.forEach(HttpClient::close);
+            }
+        }
+    }
+
+    private static final class RecordingMetrics extends AbstractMetricsHandler {
+        final CountDownLatch injected = new CountDownLatch(1);
+        final AtomicInteger calls = new AtomicInteger();
+        final AtomicInteger status = new AtomicInteger();
+        final AtomicReference<String> endpoint = new AtomicReference<>();
+        final AtomicReference<String> name = new AtomicReference<>();
+        final AtomicBoolean onIoThread = new AtomicBoolean();
+
+        @Override
+        public void injectMetrics(HttpServerExchange exchange, long startTime, String metricsName, String endpoint) {
+            calls.incrementAndGet();
+            status.set(exchange.getStatusCode());
+            this.endpoint.set(endpoint);
+            name.set(metricsName);
+            onIoThread.set(exchange.isInIoThread());
+            injected.countDown();
+        }
+
+        @Override protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) { }
+        @Override public void handleRequest(HttpServerExchange exchange) { }
+        @Override public HttpHandler getNext() { return null; }
+        @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
+    }
+
     private static void write(Socket socket, String text) throws Exception {
         socket.getOutputStream().write(text.getBytes(StandardCharsets.UTF_8));
         socket.getOutputStream().flush();
@@ -159,6 +274,7 @@ class ExternalServiceWorkerDispatchTest {
     }
 
     private static final class ProxyFixture implements AutoCloseable {
+        final AtomicBoolean failUpstream = new AtomicBoolean();
         final AtomicInteger handlerEntries = new AtomicInteger();
         final CountDownLatch upstreamEntered = new CountDownLatch(1);
         final CountDownLatch releaseUpstream = new CountDownLatch(1);
@@ -168,6 +284,10 @@ class ExternalServiceWorkerDispatchTest {
         private final Undertow front;
 
         ProxyFixture(Chain chain) {
+            this(chain, false);
+        }
+
+        ProxyFixture(Chain chain, boolean metricsInjection) {
             upstream = Undertow.builder().addHttpListener(0, "localhost").setIoThreads(1)
                     .setHandler(new BlockingHandler(exchange -> {
                         path.set(exchange.getRequestPath());
@@ -176,12 +296,14 @@ class ExternalServiceWorkerDispatchTest {
                         upstreamEntered.countDown();
                         assertTrue(releaseUpstream.await(15, TimeUnit.SECONDS),
                                 "The test must release the blocked upstream");
-                        exchange.getResponseSender().send("accepted");
+                        if (failUpstream.get()) exchange.getConnection().close();
+                        else exchange.getResponseSender().send("accepted");
                     })).build();
             upstream.start();
             Config.getInstance().putInConfigCache(EXTERNAL_CONFIG, Map.of(
                     "enabled", true, "timeout", 20000, "connectTimeout", 5000,
-                    "maxConnectionRetries", 1, "metricsInjection", false,
+                    "maxConnectionRetries", 1, "metricsInjection", metricsInjection,
+                    "metricsName", "external-worker-metrics",
                     "pathHostMappings", List.of("/proxy http://localhost:" + port(upstream)),
                     "urlRewriteRules", List.of("/proxy(.*) /backend$1")));
             ExternalServiceHandler external = new ExternalServiceHandler(EXTERNAL_CONFIG) {
