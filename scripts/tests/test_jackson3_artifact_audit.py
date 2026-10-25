@@ -46,6 +46,13 @@ class ArtifactAuditTest(unittest.TestCase):
             artifact.path(self.root).write_bytes(b"changed")
             self.assertIn("SHA-256 mismatch", audit.audit(self.root, artifact.coordinates)["failures"][0])
 
+    def test_source_built_validator_is_reported_as_source_not_published_exception(self):
+        artifact = self.artifact("3.0.8", local=True, name="json-schema-validator")
+        result = audit.audit(self.root, artifact.coordinates)
+        self.assertFalse(result["failures"])
+        self.assertEqual(result["source_installed"], [artifact.coordinates])
+        self.assertEqual(result["approved_releases"], [])
+
     def test_classifier_and_all_reactor_modules_are_checked(self):
         one = self.artifact("4.0.0-SNAPSHOT", local=True)
         two = self.artifact("4.0.0-SNAPSHOT", name="other", classifier="tests")

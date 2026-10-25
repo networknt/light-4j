@@ -10,7 +10,8 @@ import re
 
 # This published Jackson 3 validator is an approved external prerequisite, not a migration snapshot.
 APPROVED_RELEASES = {
-    "com.networknt:json-schema-validator:jar:3.0.8": "f853380d630b9434e51602bbecf89cb268513e9c764937c0475f4d79b9b6b6ca",
+    # https://repo.maven.apache.org/maven2/com/networknt/json-schema-validator/3.0.8/json-schema-validator-3.0.8.jar.sha256
+    "com.networknt:json-schema-validator:jar:3.0.8": "d3f4c61ba35c3543bdf1ab42462bf89721542f4adea5b092ee7b430dfd467181",
 }
 KNOWN_JACKSON2_RELEASES = {
     ("com.networknt", "yaml-rule", "3.0.1"),
@@ -62,6 +63,7 @@ def artifacts(tree):
 def audit(repository, tree):
     dependencies = artifacts(tree)
     checked = []
+    source_installed = []
     approved = []
     failures = []
     jackson2 = []
@@ -76,6 +78,10 @@ def audit(repository, tree):
         if (artifact.group, artifact.name, artifact.version) in KNOWN_JACKSON2_RELEASES:
             failures.append(f"{artifact.coordinates}: known Jackson 2 release cannot qualify this migration")
             continue
+        tracking = path.parent / "_remote.repositories"
+        if path.is_file() and tracking.is_file() and artifact.filename + ">=" in tracking.read_text().splitlines():
+            source_installed.append(artifact.coordinates)
+            continue
         expected_digest = APPROVED_RELEASES.get(artifact.coordinates)
         if expected_digest:
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected_digest:
@@ -83,12 +89,10 @@ def audit(repository, tree):
             else:
                 approved.append({"coordinates": artifact.coordinates, "sha256": expected_digest})
             continue
-        tracking = path.parent / "_remote.repositories"
-        if not path.is_file() or not tracking.is_file() or artifact.filename + ">=" not in tracking.read_text().splitlines():
-            failures.append(f"{artifact.coordinates}: not installed from recorded source checkouts")
+        failures.append(f"{artifact.coordinates}: not installed from recorded source checkouts")
     if not checked:
         failures.append("No resolved NetworkNT artifacts found")
-    return {"checked": checked, "approved_releases": approved,
+    return {"checked": checked, "source_installed": source_installed, "approved_releases": approved,
             "jackson2_dependencies": jackson2, "failures": failures}
 
 
