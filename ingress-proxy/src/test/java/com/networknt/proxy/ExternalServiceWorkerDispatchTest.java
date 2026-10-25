@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -100,6 +101,7 @@ class ExternalServiceWorkerDispatchTest {
             String response = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             assertTrue(response.startsWith("HTTP/1.1 200"), response);
             assertTrue(response.endsWith("accepted"), response);
+            assertEquals(1, fixture.handlerEntries.get(), "Resolve configuration and routing only once");
             assertEquals(body, fixture.body.get());
             assertEquals("/backend/resource", fixture.path.get(), "Rewrite the path exactly once");
         }
@@ -120,6 +122,7 @@ class ExternalServiceWorkerDispatchTest {
                 assertEquals(200, completed.statusCode());
                 assertEquals("accepted", completed.body());
                 assertEquals("/backend/get", fixture.path.get());
+                assertEquals(1, fixture.handlerEntries.get(), "Dispatch forwarding without re-entering routing");
             } finally {
                 fixture.releaseUpstream.countDown();
             }
@@ -156,6 +159,7 @@ class ExternalServiceWorkerDispatchTest {
     }
 
     private static final class ProxyFixture implements AutoCloseable {
+        final AtomicInteger handlerEntries = new AtomicInteger();
         final CountDownLatch upstreamEntered = new CountDownLatch(1);
         final CountDownLatch releaseUpstream = new CountDownLatch(1);
         final AtomicReference<String> body = new AtomicReference<>();
@@ -180,7 +184,13 @@ class ExternalServiceWorkerDispatchTest {
                     "maxConnectionRetries", 1, "metricsInjection", false,
                     "pathHostMappings", List.of("/proxy http://localhost:" + port(upstream)),
                     "urlRewriteRules", List.of("/proxy(.*) /backend$1")));
-            ExternalServiceHandler external = new ExternalServiceHandler(EXTERNAL_CONFIG);
+            ExternalServiceHandler external = new ExternalServiceHandler(EXTERNAL_CONFIG) {
+                @Override
+                public void handleRequest(HttpServerExchange exchange) throws Exception {
+                    handlerEntries.incrementAndGet();
+                    super.handleRequest(exchange);
+                }
+            };
             external.setNext(exchange -> exchange.setStatusCode(404).endExchange());
             HttpHandler proxyChain = chain.wrap(external);
             front = Undertow.builder().addHttpListener(0, "localhost").setIoThreads(1)

@@ -247,12 +247,20 @@ Worker-thread execution is required at the actual external-service entry. The
 single-I/O-thread ExternalServiceHandlerTest fixture uses that actual framework
 handler and asserts worker execution for synchronous entry; it does not cover
 the asynchronous continuation. Matched external requests now check their actual
-thread and dispatch to workers before rewriting or forwarding. The streaming
+thread and dispatch only forwarding to workers before rewriting. Configuration,
+routing, and request timeouts are resolved once and passed to forwarding; dispatch
+does not re-enter routing or write shared timeout fields. The streaming
 ExternalServiceWorkerDispatchTest forces read-listener continuation and verifies
 that an unrelated request progresses while the upstream is blocked; it also
 checks body preservation, one rewrite, direct GETs, and unchanged unmatched routing.
 BodyHandler alone is insufficient: its dispatch depends on a Content-Type header.
-These source tests do not qualify deployed handler chains.
+Dispatch protects I/O threads; blocking upstream calls still consume the bounded
+worker pool. These tests do not establish worker-pool saturation capacity, add
+backpressure, or provide an overload policy. Size worker capacity and upstream
+timeouts for the deployment. SalesforceHandler and MrasHandler also use blocking
+HTTP sends and need separate execution-chain qualification; this guard covers
+ExternalServiceHandler only. These source tests do not qualify deployed handler
+chains.
 
 Prerequisites are resolved to full commit SHAs before checkout. To replay a
 failed dependency combination, manually dispatch the source-build workflow with

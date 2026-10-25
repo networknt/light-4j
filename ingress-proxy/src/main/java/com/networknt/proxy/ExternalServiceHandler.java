@@ -47,11 +47,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
     private static volatile Boolean connectionCloseHeaderSupported = null;
     private static final AtomicBoolean connectionCloseHeaderFallbackLogged = new AtomicBoolean(false);
-    private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
     private String configName = ExternalServiceConfig.CONFIG_NAME;
-    private int connectTimeout;
-    private int timeout;
     private HttpClient client;
 
     /**
@@ -94,10 +91,9 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         ExternalServiceConfig config = ExternalServiceConfig.load(configName);
-        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
-        connectTimeout = config.getConnectTimeout();
+        int connectTimeout = config.getConnectTimeout();
         if(connectTimeout == 0) connectTimeout = ClientConfig.get().getRequest().getConnectTimeout(); // fallback to client.yml if not set in mras.yml
-        timeout = config.getTimeout();
+        int timeout = config.getTimeout();
         if(timeout == 0) timeout = ClientConfig.get().getRequest().getTimeout(); // fallback to client.yml if not set in mras.yml
 
         long startTime = System.nanoTime();
@@ -130,158 +126,93 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             }
         }
 
-        if(matchedPathPrefix != null) {
-            // An asynchronous body-read continuation can re-enter on an I/O thread.
+        if (matchedPathPrefix != null) {
+            ForwardingContext context = new ForwardingContext(config, matchedPathPrefix,
+                    requestHost, currentTimeout, connectTimeout, startTime);
+            // Capture the match once: asynchronous body reads can resume on an I/O thread.
             if (exchange.isInIoThread()) {
-                exchange.dispatch(this);
-                return;
-            }
-            String endpoint = matchedPathPrefix + "@" + exchange.getRequestMethod().toString().toLowerCase();
-            if(logger.isTraceEnabled()) logger.trace("endpoint = {}", endpoint);
-            // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
-            if(config.getUrlRewriteRules() != null && !config.getUrlRewriteRules().isEmpty()) {
-                boolean matched = false;
-                for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
-                    Matcher matcher = rule.getPattern().matcher(requestPath);
-                    if(matcher.matches()) {
-                        matched = true;
-                        requestPath = matcher.replaceAll(rule.getReplace());
-                        if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = {}", requestPath);
-                        break;
-                    }
-                }
-                // if no matched rule in the list, use the original requestPath.
-                if(!matched) requestPath = exchange.getRequestPath();
+                exchange.dispatch(workerExchange -> forwardMatchedRequest(workerExchange, context));
             } else {
-                // there is no url rewrite rules, so use the original requestPath
-                requestPath = exchange.getRequestPath();
+                forwardMatchedRequest(exchange, context);
             }
+            return;
+        }
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
+        Handler.next(exchange, next);
+    }
 
-            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
-            String method = exchange.getRequestMethod().toString();
-            String queryString = exchange.getQueryString();
+    private record ForwardingContext(ExternalServiceConfig config, String pathPrefix,
+                                     String host, int timeout, int connectTimeout, long startTime) { }
 
-            if(logger.isTraceEnabled()) logger.trace("External Service Request Info: host = '{}', method = '{}', requestPath = '{}', queryString = '{}'", requestHost, method, requestPath, queryString);
-
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .timeout((Duration.ofMillis(currentTimeout)));
-            HttpRequest request = null;
-
-            this.handleHttpClientUrl(exchange, requestBuilder, requestPath, requestHost);
-
-            // copy the headers
-            copyHeaders(exchange.getRequestHeaders(), requestBuilder);
-
-            /* handle GET request. */
-            if(method.equalsIgnoreCase("GET")) {
-                request = requestBuilder.GET().build();
-
-                /* handle DELETE request. */
-            } else if(method.equalsIgnoreCase("DELETE")) {
-                request = requestBuilder.DELETE().build();
-
-                /* handle POST request that potentially has body data */
-            } else if(method.equalsIgnoreCase("POST")) {
-                request = this.handleBufferedRequestBody(exchange, requestBuilder, "POST");
-
-                /* handle PUT request that potentially has body data */
-            } else if(method.equalsIgnoreCase("PUT")) {
-                request = this.handleBufferedRequestBody(exchange, requestBuilder, "PUT");
-
-                /* handle PATCH request that potentially has body data */
-            } else if(method.equalsIgnoreCase("PATCH")) {
-                request = this.handleBufferedRequestBody(exchange, requestBuilder, "PATCH");
-
-            } else {
-                logger.error("wrong http method {} for request path {}", method, requestPath);
-                setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
-                logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
-                if(config.isMetricsInjection()) {
-                    if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
-                    if(metricsHandler != null) {
-                        if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
-                        metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
-                    }
-                }
-                exchange.endExchange();
-                return;
-            }
-
-            if (client == null) {
-                client = this.createJavaHttpClient(config);
-                if(client == null) {
-                    setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
-                    exchange.endExchange();
-                    return;
+    private void forwardMatchedRequest(HttpServerExchange exchange, ForwardingContext context) throws Exception {
+        ExternalServiceConfig config = context.config();
+        String matchedPathPrefix = context.pathPrefix();
+        String requestHost = context.host();
+        int currentTimeout = context.timeout();
+        long startTime = context.startTime();
+        String requestPath = exchange.getRequestPath();
+        AbstractMetricsHandler metricsHandler = config.isMetricsInjection()
+                ? AbstractMetricsHandler.lookupMetricsHandler() : null;
+        String endpoint = matchedPathPrefix + "@" + exchange.getRequestMethod().toString().toLowerCase();
+        if(logger.isTraceEnabled()) logger.trace("endpoint = {}", endpoint);
+        // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
+        if(config.getUrlRewriteRules() != null && !config.getUrlRewriteRules().isEmpty()) {
+            boolean matched = false;
+            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                Matcher matcher = rule.getPattern().matcher(requestPath);
+                if(matcher.matches()) {
+                    matched = true;
+                    requestPath = matcher.replaceAll(rule.getReplace());
+                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = {}", requestPath);
+                    break;
                 }
             }
+            // if no matched rule in the list, use the original requestPath.
+            if(!matched) requestPath = exchange.getRequestPath();
+        } else {
+            // there is no url rewrite rules, so use the original requestPath
+            requestPath = exchange.getRequestPath();
+        }
 
-            /*
-             * 1st Attempt (Normal): Use the default persistent connection. This is fast and efficient.
-             *
-             * 2nd/3rd Attempts (Best-Effort Fresh Connection Retry): Try to use the
-             * Connection: close header to force a fresh connection so the load balancer
-             * can re-evaluate the target node if the first one was dead or hanging.
-             * If the JVM rejects restricted headers, retries gracefully fall back to
-             * normal requests without Connection: close.
-             */
-            int maxRetries = config.getMaxConnectionRetries();
-            HttpResponse<byte[]> response = null;
+        AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+        String method = exchange.getRequestMethod().toString();
+        String queryString = exchange.getQueryString();
 
-            for (int attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    HttpRequest finalRequest;
+        if(logger.isTraceEnabled()) logger.trace("External Service Request Info: host = '{}', method = '{}', requestPath = '{}', queryString = '{}'", requestHost, method, requestPath, queryString);
 
-                    if (attempt == 0) {
-                        // First attempt: Use original request (Keep-Alive enabled by default)
-                        finalRequest = request;
-                    } else {
-                        finalRequest = buildRetryRequest(request, attempt);
-                    }
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                .timeout((Duration.ofMillis(currentTimeout)));
+        HttpRequest request = null;
 
-                    // Always use the same shared, long-lived client
-                    response = this.client.send(finalRequest, HttpResponse.BodyHandlers.ofByteArray());
-                    break; // Success! Exit the loop.
+        this.handleHttpClientUrl(exchange, requestBuilder, requestPath, requestHost);
 
-                } catch (IOException | InterruptedException e) {
-                    if (attempt >= maxRetries - 1) {
-                        throw e; // Rethrow on final attempt
-                    }
-                    logger.warn("Attempt {} failed ({}). Retrying...", attempt + 1, e.getMessage());
+        // copy the headers
+        copyHeaders(exchange.getRequestHeaders(), requestBuilder);
 
-                    // Optional: Add a small sleep/backoff here to allow LB health checks to update
-                }
-            }
+        /* handle GET request. */
+        if(method.equalsIgnoreCase("GET")) {
+            request = requestBuilder.GET().build();
 
-            // If loop finished without response, the request failed maxRetries times.
-            if (response == null) {
-                logger.error("Failed after retrying {} times.", maxRetries);
-                setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
-                exchange.endExchange();
-                return;
-            }
+            /* handle DELETE request. */
+        } else if(method.equalsIgnoreCase("DELETE")) {
+            request = requestBuilder.DELETE().build();
 
-            var responseHeaders = response.headers();
-            byte[] responseBody = response.body();
-            if(response.statusCode() >= 400) {
-                // want to log the response body for 4xx and 5xx errors.
-                if(logger.isDebugEnabled() && responseBody != null && responseBody.length > 0)
-                    logger.debug("External Service Response Error: status = '{}', body = '{}'", response.statusCode(), new String(responseBody));
-            }
-            exchange.setStatusCode(response.statusCode());
-            for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
-                // remove empty key in the response header start with a colon.
-                if (header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
-                    for(String s : header.getValue()) {
-                        if(logger.isTraceEnabled()) logger.trace("Add response header key = {} value = {}", header.getKey(), s);
-                        exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
-                    }
-                }
-            }
+            /* handle POST request that potentially has body data */
+        } else if(method.equalsIgnoreCase("POST")) {
+            request = this.handleBufferedRequestBody(exchange, requestBuilder, "POST");
 
-            /* send response and close exchange */
-            exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-            if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
+            /* handle PUT request that potentially has body data */
+        } else if(method.equalsIgnoreCase("PUT")) {
+            request = this.handleBufferedRequestBody(exchange, requestBuilder, "PUT");
+
+            /* handle PATCH request that potentially has body data */
+        } else if(method.equalsIgnoreCase("PATCH")) {
+            request = this.handleBufferedRequestBody(exchange, requestBuilder, "PATCH");
+
+        } else {
+            logger.error("wrong http method {} for request path {}", method, requestPath);
+            setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
+            logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
             if(config.isMetricsInjection()) {
                 if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
                 if(metricsHandler != null) {
@@ -289,10 +220,92 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
                 }
             }
+            exchange.endExchange();
             return;
         }
+
+        if (client == null) {
+            client = this.createJavaHttpClient(config, context.connectTimeout());
+            if(client == null) {
+                setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
+                exchange.endExchange();
+                return;
+            }
+        }
+
+        /*
+         * 1st Attempt (Normal): Use the default persistent connection. This is fast and efficient.
+         *
+         * 2nd/3rd Attempts (Best-Effort Fresh Connection Retry): Try to use the
+         * Connection: close header to force a fresh connection so the load balancer
+         * can re-evaluate the target node if the first one was dead or hanging.
+         * If the JVM rejects restricted headers, retries gracefully fall back to
+         * normal requests without Connection: close.
+         */
+        int maxRetries = config.getMaxConnectionRetries();
+        HttpResponse<byte[]> response = null;
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                HttpRequest finalRequest;
+
+                if (attempt == 0) {
+                    // First attempt: Use original request (Keep-Alive enabled by default)
+                    finalRequest = request;
+                } else {
+                    finalRequest = buildRetryRequest(request, attempt);
+                }
+
+                // Always use the same shared, long-lived client
+                response = this.client.send(finalRequest, HttpResponse.BodyHandlers.ofByteArray());
+                break; // Success! Exit the loop.
+
+            } catch (IOException | InterruptedException e) {
+                if (attempt >= maxRetries - 1) {
+                    throw e; // Rethrow on final attempt
+                }
+                logger.warn("Attempt {} failed ({}). Retrying...", attempt + 1, e.getMessage());
+
+                // Optional: Add a small sleep/backoff here to allow LB health checks to update
+            }
+        }
+
+        // If loop finished without response, the request failed maxRetries times.
+        if (response == null) {
+            logger.error("Failed after retrying {} times.", maxRetries);
+            setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
+            exchange.endExchange();
+            return;
+        }
+
+        var responseHeaders = response.headers();
+        byte[] responseBody = response.body();
+        if(response.statusCode() >= 400) {
+            // want to log the response body for 4xx and 5xx errors.
+            if(logger.isDebugEnabled() && responseBody != null && responseBody.length > 0)
+                logger.debug("External Service Response Error: status = '{}', body = '{}'", response.statusCode(), new String(responseBody));
+        }
+        exchange.setStatusCode(response.statusCode());
+        for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
+            // remove empty key in the response header start with a colon.
+            if (header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
+                for(String s : header.getValue()) {
+                    if(logger.isTraceEnabled()) logger.trace("Add response header key = {} value = {}", header.getKey(), s);
+                    exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
+                }
+            }
+        }
+
+        /* send response and close exchange */
+        exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-        Handler.next(exchange, next);
+        if(config.isMetricsInjection()) {
+            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+            if(metricsHandler != null) {
+                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+            }
+        }
     }
 
     private void copyHeaders(HeaderMap headerMap, HttpRequest.Builder builder) {
@@ -327,7 +340,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
      */
 
     @SuppressWarnings("unchecked")
-    private HttpClient createJavaHttpClient(ExternalServiceConfig config) throws IOException {
+    private HttpClient createJavaHttpClient(ExternalServiceConfig config, int connectTimeout) throws IOException {
         // this a workaround to bypass the hostname verification in jdk11 and jdk21 http client.
         var tlsMap = (Map<String, Object>) ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
         final var props = System.getProperties();
