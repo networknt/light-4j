@@ -1,6 +1,6 @@
 # Reusable core qualification
 
-## Registration safeguards and pending acceptance
+## Registration safeguards and acceptance
 
 These gates are enforced by the tooling: the coordinator and preparer verify live
 effective protection and the underlying active, exact-ref, no-bypass ruleset.
@@ -66,7 +66,9 @@ promotion, verify the remote consumer heads no longer reference that policy,
 check no registry entry uses the obsolete ref, and delete only that obsolete
 branch. Do not move or delete the registered policy branch.
 
-Post-merge workflow-token acceptance is **pending**, not established by this PR.
+Workflow-token results for the current tuple are recorded in
+[its acceptance record](jackson3-acceptance/f0d2100f972eec765b2b276e7ace38922394f0a6-97b2359b92ed3e1d05cac04f2da8760aa954e49d.md).
+Consumer adoption still requires that record to be reviewed and merged.
 Before consumer adoption, retain the forced coordinator run ID, its dispatched
 producer run ID, the verified tuple and proof artifact digest, and the subsequent
 ordinary coordinator run ID showing fresh-proof reuse with no producer dispatch.
@@ -384,7 +386,7 @@ Keep the core/policy pins unchanged throughout this registration verification.
 
 ### Manual coordinator smoke before promotion
 
-The empty registry is intentional; it should not be populated with an unapproved
+Before registering a new tuple, do not populate the registry with an unapproved
 branch just to test dispatch. Instead, an operator can run the **same coordinator**
 against a separate one-tuple JSON file using `--smoke-tuple`:
 
@@ -425,15 +427,16 @@ consumer adoption. Normal scheduled execution has no smoke flag and keeps all
 master/canonical-ref/age checks. The actual registered-master lifecycle must still
 be verified after review and registration.
 
-The registration proposal records the reviewed master policy
+The merged registration records the reviewed master policy
 `f0d2100f972eec765b2b276e7ace38922394f0a6` and runtime candidate
 `97b2359b92ed3e1d05cac04f2da8760aa954e49d`, with the prerequisite commits
 selected by their policy-pinned qualification. The policy ref remains immutable;
 registration and renewal do not change either policy or runtime identity.
 
-The seven consumer PRs still carry their earlier policy until the registration
-follow-up is reviewed/merged and the registered-master workflow-token verification
-passes. Their earlier green checks are not evidence of this promotion. After that
-verification, apply the prepared patches with these literal policy/core pins.
+The seven consumer PRs still carry their earlier policy until the accepted
+workflow-token record and enforcement follow-up are reviewed and merged. The
+forced renewal and fresh-proof reuse passed as linked above; their earlier
+consumer checks are not evidence of this promotion. After acceptance merges,
+generate adoption patches with the enforced preparer and these literal policy/core pins.
 No new open-branch pin is substituted, and registration by itself does not adopt
-anything in a consumer. The actual registered lifecycle remains a post-merge gate.
+anything in a consumer. Future registrations must repeat the workflow-token gate.
