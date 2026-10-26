@@ -154,14 +154,14 @@ def registered_qualification(registry, policy_sha, core_sha, evidence):
     return {"schema": 1, "qualifications": entries + [entry]}
 
 
-def consumer_patches(stage, checkout, worktrees, entry, registered, ruleset_id):
+def consumer_patches(stage, checkout, worktrees, entry, registered):
     if stage == "registration":
         return {}
     if stage != "adoption":
         raise ValueError("Unknown promotion stage")
     if entry not in registered["qualifications"]:
         raise ValueError("Merge registration before consumer adoption")
-    require_accepted_record(checkout, entry, ruleset_id)
+    require_accepted_record(checkout, entry)
     patches = {}
     for repo in REPOSITORIES:
         before = (worktrees / repo / WORKFLOW).read_text()
@@ -190,7 +190,7 @@ def main():
         subprocess.run(["git", "-C", str(args.master_checkout), "cat-file", "-e", args.policy_sha + ":" + required], check=True)
     patches = {}
     protection = {"policy_sha": args.policy_sha, "policy_ref": policy_ref(args.policy_sha)}
-    ruleset_id = require_protected_ref(protection, api)
+    require_protected_ref(protection, api)
     # Execute the verifier from a clean local clone of the selected policy,
     # even when this newer promotion tool runs from a follow-up master commit.
     with tempfile.TemporaryDirectory() as directory:
@@ -213,7 +213,7 @@ def main():
     entry = next(item for item in registry["qualifications"]
                  if (item["policy_sha"], item["core_sha"]) == (args.policy_sha, args.core_sha))
     patches.update(consumer_patches(args.stage, args.master_checkout, args.worktrees, entry,
-                                   json.loads(before_registry), ruleset_id))
+                                   json.loads(before_registry)))
     after_registry = json.dumps(registry, indent=2) + "\n"
     patches["light-4j-refresh"] = "".join(difflib.unified_diff(before_registry.splitlines(True), after_registry.splitlines(True),
                                                             fromfile="a/" + registry_path, tofile="b/" + registry_path))

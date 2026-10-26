@@ -6,13 +6,19 @@ These gates are enforced by the tooling: the coordinator and preparer verify liv
 effective protection and the underlying active, exact-ref ruleset. The preparer
 also requires visible proof of an empty bypass list; run it with an operator
 credential permitted to inspect that field. GitHub omits bypass actors from
-read-only ruleset responses, so the coordinator and `policy-protection` CI use
+read-only ruleset responses, so the coordinator and protection advisory CI use
 explicit read-only mode: effective rule types and exact scope must still match,
 and any visible nonempty bypass list is rejected, but an omitted bypass list is
 reported as unavailable. They cannot detect a later administrator-added bypass
 that the API hides. Strict no-bypass verification remains a promotion gate;
 repository administration remains the trust boundary. No new privileged token
 or write permission is added for this check.
+The advisory lives in `jackson3-policy-protection.yml`, runs only for relevant
+file changes or manual dispatch, and is separate from the full-core workflow.
+It executes the PR's own code for diagnostics; it is not trusted proof or a
+required merge check. Repository settings do not make it a required status check.
+Actual promotion enforcement happens in the reviewed preparer and master
+coordinator, not in the advisory result. Unrelated PRs do not run this diagnostic.
 Only explicit smoke mode bypasses protection, as well as the master-ancestry gate;
 it cannot register or adopt a consumer tuple.
 
@@ -21,9 +27,15 @@ The preparer defaults to `--stage registration`, which emits no consumer patches
 master and its accepted record to exist on fetched master, not just locally or on
 a PR branch. Each Markdown acceptance record includes one JSON metadata block
 using [the documented format](jackson3-acceptance/README.md). The tool checks its
-decision, tuple, ruleset ID, registration ancestry, successful distinct coordinator
-run IDs, proof artifact/digest and zero dispatches in the reuse run. This is a gate
-on reviewed data, not independent authentication of the record or its review.
+decision and tuple, verifies that the registration commit actually contains the
+tuple, and re-fetches the recorded exact run attempts, proof artifact identity and
+digest from GitHub. Coordinator source commits must be on master and contain the
+tuple; their exact-attempt job logs must show forced verification and zero-dispatch
+reuse. Missing logs or expired original acceptance artifacts require a fresh
+acceptance record before adoption. The historical ruleset ID is audit data: current
+protection is checked semantically, so equivalent replacement or stricter rules
+do not require a new acceptance record. These checks authenticate facts against
+GitHub, not independent review or an external attestation.
 Normal qualification verification still verifies the retained proof separately.
 
 For **every** promotion, the promotion operator must protect the new fixed policy

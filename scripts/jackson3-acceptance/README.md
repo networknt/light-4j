@@ -20,7 +20,9 @@ values; this example is not an accepted tuple):
   "ruleset_id": 123,
   "forced_renewal": {
     "coordinator_run_id": 100,
+    "coordinator_attempt": 1,
     "producer_run_id": 101,
+    "producer_attempt": 1,
     "conclusion": "success",
     "artifact_id": 102,
     "artifact_sha256": "<64-hex-characters>",
@@ -28,14 +30,22 @@ values; this example is not an accepted tuple):
   },
   "fresh_proof_reuse": {
     "coordinator_run_id": 103,
+    "coordinator_attempt": 1,
     "conclusion": "success",
     "dispatched": 0
   }
 }
 ```
 
-The preparer reads the file from `origin/master`, checks tuple/decision, live
-ruleset identity and registration ancestry, and validates the successful run IDs,
-artifact digest and reuse count. It does not infer independent approval from a
+The preparer reads the file from `origin/master`, checks tuple/decision and live
+protection semantics (the recorded ruleset ID is historical), and verifies that
+the registration commit contains the tuple. It re-fetches the recorded successful
+run attempts and artifact identity/digest from GitHub, checks coordinator source
+commits on master contain the tuple, and reads the exact-attempt coordinator job
+logs for forced verification and zero-dispatch reuse. Missing/expired artifacts
+or unavailable logs block adoption; renew the acceptance record after rerunning
+the checks if needed. This does not affect renewal of already adopted consumers.
+The pinned verifier separately checks current retained qualification evidence.
+The preparer does not infer independent approval from a
 Git commit: ordinary required PR review remains the approval boundary. Failed
 verification belongs in a `blocked` record, which cannot authorize adoption.

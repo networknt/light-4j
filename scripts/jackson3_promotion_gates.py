@@ -53,7 +53,8 @@ def validate_acceptance(text, entry):
     if not isinstance(forced, dict) or not isinstance(reuse, dict):
         raise ValueError("Acceptance needs forced-renewal and fresh-proof-reuse objects")
     for value in (data.get("ruleset_id"), forced.get("coordinator_run_id"), forced.get("producer_run_id"),
-                  forced.get("artifact_id"), reuse.get("coordinator_run_id")):
+                  forced.get("artifact_id"), reuse.get("coordinator_run_id"),
+                  forced.get("coordinator_attempt"), forced.get("producer_attempt"), reuse.get("coordinator_attempt")):
         if type(value) is not int or value <= 0:
             raise ValueError("Acceptance needs positive ruleset, run and artifact IDs")
     if (forced.get("conclusion") != "success" or reuse.get("conclusion") != "success"
@@ -64,7 +65,79 @@ def validate_acceptance(text, entry):
     return data
 
 
-def require_accepted_record(checkout, entry, ruleset_id):
+def require_registry_at(checkout, revision, entry):
+    result = subprocess.run(["git", "-C", str(checkout), "show",
+                             revision + ":scripts/jackson3-promoted-qualifications.json"],
+                            capture_output=True, text=True)
+    if result.returncode or entry not in json.loads(result.stdout).get("qualifications", []):
+        raise ValueError("Acceptance registration commit does not contain the tuple: " + revision)
+
+
+def require_master_ancestor(checkout, revision):
+    result = subprocess.run(["git", "-C", str(checkout), "merge-base", "--is-ancestor",
+                             revision, "origin/master"], capture_output=True)
+    if result.returncode:
+        raise ValueError("Accepted commit is not on fetched master: " + revision)
+
+
+def job_log(job_id):
+    return subprocess.check_output(["gh", "api", "--allow-escape-sequences",
+        "repos/networknt/light-4j/actions/jobs/" + str(job_id) + "/logs"], text=True, timeout=30)
+
+
+def verify_acceptance_facts(checkout, entry, data, github, read_log):
+    forced, reuse = data["forced_renewal"], data["fresh_proof_reuse"]
+
+    def has_message(log, message):
+        # Job logs may prefix timestamps; match the complete message suffix so
+        # run 11 cannot accidentally match run 110.
+        return any(line.rstrip().endswith(message) for line in log.splitlines())
+
+    def run(run_id, attempt, workflow):
+        value = github("actions/runs/" + str(run_id) + "/attempts/" + str(attempt))
+        if (value.get("id") != run_id or value.get("run_attempt") != attempt
+                or value.get("status") != "completed" or value.get("conclusion") != "success"
+                or value.get("event") != "workflow_dispatch"
+                or value.get("path", "").split("@")[0] != ".github/workflows/" + workflow):
+            raise ValueError("Acceptance run metadata does not match: " + str(run_id))
+        return value
+
+    def coordinator(run_id, attempt):
+        value = run(run_id, attempt, "jackson3-qualification-refresh.yml")
+        if value.get("head_branch") != "master":
+            raise ValueError("Acceptance coordinator did not run on master")
+        require_master_ancestor(checkout, value["head_sha"])
+        require_registry_at(checkout, value["head_sha"], entry)
+        jobs = github("actions/runs/" + str(run_id) + "/attempts/" + str(attempt) + "/jobs?per_page=100")["jobs"]
+        refresh = [job for job in jobs if job.get("name") == "refresh" and job.get("conclusion") == "success"]
+        if len(refresh) != 1:
+            raise ValueError("Acceptance needs one successful refresh job")
+        return read_log(refresh[0]["id"])
+
+    producer = run(forced["producer_run_id"], forced["producer_attempt"], "jackson3-source-build.yml")
+    if (producer.get("head_sha") != entry["policy_sha"]
+            or producer.get("actor", {}).get("login") != "github-actions[bot]"):
+        raise ValueError("Acceptance producer is not the bot-dispatched pinned policy")
+    artifact = github("actions/artifacts/" + str(forced["artifact_id"]))
+    if (artifact.get("id") != forced["artifact_id"] or artifact.get("expired") is not False
+            or artifact.get("workflow_run", {}).get("id") != forced["producer_run_id"]
+            or artifact.get("name") != "core-source-qualification-attempt-" + str(forced["producer_attempt"])
+            or artifact.get("digest") != "sha256:" + forced["artifact_sha256"]):
+        raise ValueError("Acceptance artifact identity, digest or retention does not match GitHub")
+    forced_log = coordinator(forced["coordinator_run_id"], forced["coordinator_attempt"])
+    expected = "Verified renewed proof: " + entry["core_sha"] + " run " + str(forced["producer_run_id"])
+    if (not has_message(forced_log, expected)
+            or not re.search(r"(?m)Verified forced registered renewal of [1-9][0-9]* qualifications\s*$", forced_log)
+            or not has_message(forced_log, "Dispatched qualification run: " + str(forced["producer_run_id"]))):
+        raise ValueError("Acceptance forced-renewal log does not verify the recorded producer")
+    reuse_log = coordinator(reuse["coordinator_run_id"], reuse["coordinator_attempt"])
+    if (not has_message(reuse_log, "Healthy retained proof; no reactor dispatched: " + entry["core_sha"])
+            or not has_message(reuse_log, "Verified renewal of 0 qualifications; healthy proofs did not trigger builds")
+            or "Dispatched qualification run:" in reuse_log):
+        raise ValueError("Acceptance reuse log does not prove zero dispatches")
+
+
+def require_accepted_record(checkout, entry, github=None, read_log=None):
     """Read fetched master, never accept an uncommitted or PR-only local record."""
     path = acceptance_path(entry)
     result = subprocess.run(["git", "-C", str(checkout), "show", "origin/master:" + path],
@@ -72,12 +145,12 @@ def require_accepted_record(checkout, entry, ruleset_id):
     if result.returncode:
         raise ValueError("Merge reviewed acceptance record before consumer adoption: " + path)
     data = validate_acceptance(result.stdout, entry)
-    if data["ruleset_id"] != ruleset_id:
-        raise ValueError("Accepted ruleset differs from live policy protection; review acceptance again")
-    result = subprocess.run(["git", "-C", str(checkout), "merge-base", "--is-ancestor",
-                             data["registration_sha"], "origin/master"], capture_output=True)
-    if result.returncode:
-        raise ValueError("Accepted registration SHA is not on fetched master")
+    require_master_ancestor(checkout, data["registration_sha"])
+    require_registry_at(checkout, data["registration_sha"], entry)
+    if github is None:
+        from refresh_jackson3_qualifications import api
+        github = api
+    verify_acceptance_facts(checkout, entry, data, github, read_log or job_log)
     return data
 
 

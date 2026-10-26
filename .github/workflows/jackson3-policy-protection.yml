@@ -1,0 +1,32 @@
+name: Jackson 3 policy protection advisory
+on:
+  pull_request:
+    paths:
+      - scripts/jackson3_promotion_gates.py
+      - scripts/prepare_jackson3_consumer_promotion.py
+      - scripts/refresh_jackson3_qualifications.py
+      - scripts/jackson3-promoted-qualifications.json
+      - .github/workflows/jackson3-policy-protection.yml
+  push:
+    branches: [master]
+    paths:
+      - scripts/jackson3_promotion_gates.py
+      - scripts/prepare_jackson3_consumer_promotion.py
+      - scripts/refresh_jackson3_qualifications.py
+      - scripts/jackson3-promoted-qualifications.json
+      - .github/workflows/jackson3-policy-protection.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy-protection-advisory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Diagnose registered policy protection with read-only workflow token
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/jackson3_promotion_gates.py --read-only
