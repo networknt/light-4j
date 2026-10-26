@@ -2,6 +2,7 @@ package com.networknt.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.ObjectField;
@@ -130,6 +131,13 @@ public class OAuthSignConfig {
 
     public Integer getTimeout() {
         return timeout;
+    }
+
+    // Box the input to avoid GraalVM 25 primitive-field MethodHandle adaptation.
+    // Explicit null retains Jackson's primitive-boolean default of false.
+    @JsonSetter(ClientConfig.ENABLE_HTTP_2)
+    public void setEnableHttp2(Boolean value) {
+        this.enableHttp2 = Boolean.TRUE.equals(value);
     }
 
     public boolean isEnableHttp2() {
