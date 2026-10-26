@@ -117,7 +117,9 @@ class ProofHealth:
 
 def refresh(registry, github=None, submit=None, health=None,
             now=lambda: datetime.now(timezone.utc), clock=time.monotonic, sleep=time.sleep,
-            wait_seconds=WAIT_SECONDS, smoke=False):
+            wait_seconds=WAIT_SECONDS, smoke=False, force_renewal=False):
+    if smoke and force_renewal:
+        raise ValueError("Forced registered renewal cannot use smoke mode")
     # Includes validation, initial proof checks, dispatch/runner queueing, API work
     # and final verification, rather than granting an extra 80 minutes afterward.
     deadline = clock() + wait_seconds
@@ -151,7 +153,7 @@ def refresh(registry, github=None, submit=None, health=None,
     pending = []
     for entry in eligible:
         try:
-            if not smoke:
+            if not (smoke or force_renewal):
                 try:
                     expiry = health(entry, timeout=min(180, remaining()))
                     remaining()
@@ -213,19 +215,27 @@ def main():
     mode.add_argument("--registry", type=Path)
     mode.add_argument("--smoke-tuple", type=Path,
                       help="Manually dispatch/monitor one throwaway tuple; never read/write the promotion registry")
+    parser.add_argument("--force-renewal", action="store_true",
+                        help="Manually verify registered dispatch even with fresh proof; retain every master/ref gate")
     args = parser.parse_args()
     smoke = args.smoke_tuple is not None
+    if smoke and args.force_renewal:
+        parser.error("--force-renewal cannot be combined with --smoke-tuple")
     path = args.smoke_tuple or args.registry or Path(__file__).with_name("jackson3-promoted-qualifications.json")
     if smoke:
         if path.resolve() == Path(__file__).with_name("jackson3-promoted-qualifications.json").resolve():
             parser.error("Smoke input must be separate from the promotion registry")
         print("SMOKE ONLY: dispatch/poll/verify; no master approval, registration or consumer promotion", flush=True)
     with tempfile.TemporaryDirectory(prefix="jackson3-refresh-") as directory:
-        queued = refresh(json.loads(path.read_text()), health=ProofHealth(directory), smoke=smoke)
+        queued = refresh(json.loads(path.read_text()), health=ProofHealth(directory), smoke=smoke,
+                         force_renewal=args.force_renewal)
     if smoke:
         print("SMOKE PASSED: verified", queued, "throwaway qualification; registry unchanged")
         return
-    print("Verified renewal of", queued, "qualifications; healthy proofs did not trigger builds")
+    if args.force_renewal:
+        print("Verified forced registered renewal of", queued, "qualifications")
+    else:
+        print("Verified renewal of", queued, "qualifications; healthy proofs did not trigger builds")
 
 
 if __name__ == "__main__":

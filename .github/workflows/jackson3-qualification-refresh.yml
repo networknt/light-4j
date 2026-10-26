@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '23 6 * * 1'
   workflow_dispatch:
+    inputs:
+      force_renewal:
+        description: Verify registered dispatch with GITHUB_TOKEN even when proof is fresh
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: write
@@ -20,4 +25,13 @@ jobs:
       - name: Requalify registered master commits at their fixed policy refs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/refresh_jackson3_qualifications.py
+          REFRESH_EVENT: ${{ github.event_name }}
+          FORCE_RENEWAL: ${{ inputs.force_renewal || false }}
+        run: |
+          case "$REFRESH_EVENT:$FORCE_RENEWAL" in
+            schedule:*|workflow_dispatch:false)
+              python3 scripts/refresh_jackson3_qualifications.py ;;
+            workflow_dispatch:true)
+              python3 scripts/refresh_jackson3_qualifications.py --force-renewal ;;
+            *) echo "Unsupported refresh event/input" >&2; exit 1 ;;
+          esac

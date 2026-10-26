@@ -1,4 +1,14 @@
 {
   "schema": 1,
-  "qualifications": []
+  "qualifications": [
+    {
+      "policy_sha": "f0d2100f972eec765b2b276e7ace38922394f0a6",
+      "core_sha": "97b2359b92ed3e1d05cac04f2da8760aa954e49d",
+      "policy_ref": "jackson3-qualification-policy-f0d2100f972eec765b2b276e7ace38922394f0a6",
+      "source_refs": {
+        "yaml-rule": "c237cc3a25720f43e57bf571e25d5fa06687aa3b",
+        "http-client": "5ecee29dbb08d813512f5379c2e1b902d553c5d4"
+      }
+    }
+  ]
 }

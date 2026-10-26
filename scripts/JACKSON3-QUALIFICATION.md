@@ -1,5 +1,76 @@
 # Reusable core qualification
 
+## Registration safeguards and pending acceptance
+
+For **every** promotion, the promotion operator must protect the new fixed policy
+branch immediately after creating it and **before qualification or registration**.
+Create an active branch ruleset scoped to that exact ref, prohibiting `update`,
+`deletion` and `non_fast_forward`, with an empty `bypass_actors` list. Do not move
+an existing policy ref or replace its protection to reuse it. Verify the ref's
+SHA and effective rules through `GET /repos/networknt/light-4j/rules/branches/{branch}`;
+retain the ruleset ID and API verification in the acceptance record below.
+If permissions or repository policy prevent protection, stop promotion until a
+repository administrator supplies it. Creating a new branch alone is insufficient.
+Ruleset 25899868 protects only the current policy; it does not protect future refs.
+
+The promotion PR author owns preparation of the post-merge acceptance record;
+a maintainer other than its author reviews it through the ordinary PR process.
+Use one follow-up acceptance PR for this record, rather than a separate
+PR per run. Store one Markdown record per tuple at
+`scripts/jackson3-acceptance/<full-policy-sha>-<full-core-sha>.md`.
+Use these headings and required fields consistently:
+
+- `Tuple`: full policy/core SHAs, literal policy ref, and each prerequisite repo/SHA.
+- `Registration`: registration PR URL and merged master SHA.
+- `Ref protection`: ruleset ID, verification UTC time, actual ref SHA, the three
+  effective rule types, and confirmation that the active ruleset has no bypass actors.
+- `Forced renewal`: coordinator run URL/ID, dispatched producer run URL/ID,
+  conclusions, verified tuple, proof artifact ID, SHA-256 and expiry UTC.
+- `Fresh-proof reuse`: subsequent ordinary coordinator run URL/ID, conclusion,
+  and log evidence that no producer was dispatched and the fresh proof was reused.
+- `Decision`: operator account, verification UTC time, `accepted` or `blocked`,
+  remaining limits (including unobserved cron execution), and any rollback PR URL.
+
+An accepted record requires both successful runs and the verified proof; do not
+fill pending fields with assumed results. Failed attempts may be recorded as
+blocked with links to their preserved logs. The reviewed record must be merged
+before consumer adoption. This record documents workflow-token acceptance, not
+an independent attestation or deployment qualification.
+
+The registered `jackson3-qualification-policy-f0d2100f972eec765b2b276e7ace38922394f0a6`
+branch is protected by active repository ruleset **25899868**, which prohibits
+updates, deletion and non-fast-forward updates with no bypass actors. Effective
+branch rules were checked through GitHub's API. Administrators can still change
+repository rules; the trust boundary includes that administration. SHA checks
+remain required before dispatch and when accepting evidence.
+
+The obsolete `jackson3-qualification-policy-27aed6a44` branch must remain until
+the seven consumer workflows stop referencing the earlier policy. After their
+promotion, verify the remote consumer heads no longer reference that policy,
+check no registry entry uses the obsolete ref, and delete only that obsolete
+branch. Do not move or delete the registered policy branch.
+
+Post-merge workflow-token acceptance is **pending**, not established by this PR.
+Before consumer adoption, retain the forced coordinator run ID, its dispatched
+producer run ID, the verified tuple and proof artifact digest, and the subsequent
+ordinary coordinator run ID showing fresh-proof reuse with no producer dispatch.
+Commit these results in a reviewed follow-up acceptance record linked to the
+registration PR; consumer promotion remains blocked until both checks pass and
+that record exists. Manual runs exercise the workflow token and event router;
+they do not demonstrate that GitHub's cron scheduler has fired.
+
+If either post-merge check fails, keep the consumers on their existing pins.
+Preserve failed run IDs and logs. Prepare a reviewed rollback PR removing only
+this tuple from `scripts/jackson3-promoted-qualifications.json` (leaving the policy
+ref, protection and prior proof intact), then rerun the ordinary coordinator to
+confirm the removed tuple is not dispatched. Alternatively, repair the cause in
+a reviewed PR and repeat both acceptance runs before adoption. A failed
+registration must not be reported as successful renewal.
+
+The refresh workflow uses one unconditional coordinator step with explicit
+schedule/manual routing. Its shell is executed by unit tests for scheduled input
+absence, scheduled false input, both manual boolean values and invalid events.
+
 Consumers must pin an independently reviewed light-4j **policy commit**, separately
 from the candidate core commit. Do not obtain that pin from candidate files,
 branch heads, an artifact, or a repository variable that moves automatically.
@@ -264,6 +335,30 @@ runs, and re-enable scheduling if GitHub disables it for repository inactivity.
 This is automated renewal with a retention grace period, not permanent proof
 storage or a guarantee against an indefinitely disabled/failing CI service.
 
+### Verify registered dispatch with the workflow token
+
+After the registration follow-up is reviewed and merged on master, dispatch the
+coordinator explicitly with its manual `force_renewal` input:
+
+```sh
+gh workflow run jackson3-qualification-refresh.yml --repo networknt/light-4j \
+  --ref master -f force_renewal=true
+```
+
+This uses the workflow's `GITHUB_TOKEN` with `actions: write`, rather than the
+operator's credentials inside the job. The production CLI `--force-renewal`
+bypasses only the proof-age shortcut. It still requires canonical registered
+policy refs, exact SHAs and master ancestry; it cannot be combined with smoke
+mode. It dispatches the registered tuples even when their proof is fresh, then
+requires successful run status and a verified exact-run replacement proof.
+The input defaults to false and is not enabled by the weekly schedule.
+
+Wait for both the producer qualification and coordinator job to pass before
+consumer adoption. Then run the coordinator normally to verify that fresh proof
+is reused without dispatching another reactor. This checks the registered-master
+workflow token path, which the pre-merge operator-credential smoke cannot prove.
+Keep the core/policy pins unchanged throughout this registration verification.
+
 ### Manual coordinator smoke before promotion
 
 The empty registry is intentional; it should not be populated with an unapproved
@@ -307,8 +402,15 @@ consumer adoption. Normal scheduled execution has no smoke flag and keeps all
 master/canonical-ref/age checks. The actual registered-master lifecycle must still
 be verified after review and registration.
 
-The registry is deliberately empty before promotion. Current green checks in the
-seven consumer PRs still use their earlier policy and do **not** qualify this
-head's tolerance, parser or rejection rules. Until actual reviewed master commits
-exist and the promotion/registration follow-up is applied, both adoption and its
-scheduled lifecycle remain pending. No other open-branch pin is substituted.
+The registration proposal records the reviewed master policy
+`f0d2100f972eec765b2b276e7ace38922394f0a6` and runtime candidate
+`97b2359b92ed3e1d05cac04f2da8760aa954e49d`, with the prerequisite commits
+selected by their policy-pinned qualification. The policy ref remains immutable;
+registration and renewal do not change either policy or runtime identity.
+
+The seven consumer PRs still carry their earlier policy until the registration
+follow-up is reviewed/merged and the registered-master workflow-token verification
+passes. Their earlier green checks are not evidence of this promotion. After that
+verification, apply the prepared patches with these literal policy/core pins.
+No new open-branch pin is substituted, and registration by itself does not adopt
+anything in a consumer. The actual registered lifecycle remains a post-merge gate.
