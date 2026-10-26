@@ -3,8 +3,16 @@
 ## Registration safeguards and acceptance
 
 These gates are enforced by the tooling: the coordinator and preparer verify live
-effective protection and the underlying active, exact-ref, no-bypass ruleset.
-Read-only `policy-protection` CI exercises these API calls with `GITHUB_TOKEN`.
+effective protection and the underlying active, exact-ref ruleset. The preparer
+also requires visible proof of an empty bypass list; run it with an operator
+credential permitted to inspect that field. GitHub omits bypass actors from
+read-only ruleset responses, so the coordinator and `policy-protection` CI use
+explicit read-only mode: effective rule types and exact scope must still match,
+and any visible nonempty bypass list is rejected, but an omitted bypass list is
+reported as unavailable. They cannot detect a later administrator-added bypass
+that the API hides. Strict no-bypass verification remains a promotion gate;
+repository administration remains the trust boundary. No new privileged token
+or write permission is added for this check.
 Only explicit smoke mode bypasses protection, as well as the master-ancestry gate;
 it cannot register or adopt a consumer tuple.
 

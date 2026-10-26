@@ -147,7 +147,7 @@ def refresh(registry, github=None, submit=None, health=None,
             if get("commits/" + entry["policy_ref"])["sha"] != entry["policy_sha"]:
                 raise ValueError("Pinned policy ref moved; restore it instead of changing consumer pins")
             if not smoke:
-                require_protected_ref(entry, get)
+                require_protected_ref(entry, get, require_bypass_visibility=False)
             eligible.append(entry)
         except errors as error:
             failures.append(entry["core_sha"] + ": " + str(error))

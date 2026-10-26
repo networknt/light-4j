@@ -1,5 +1,6 @@
 """Registration protection and merged acceptance gates; no mutations."""
 import json
+import argparse
 from pathlib import Path
 import re
 import subprocess
@@ -8,7 +9,7 @@ import subprocess
 REQUIRED_RULES = {"update", "deletion", "non_fast_forward"}
 
 
-def require_protected_ref(entry, github):
+def require_protected_ref(entry, github, require_bypass_visibility=True):
     branch = entry["policy_ref"]
     if github("commits/" + branch).get("sha") != entry["policy_sha"]:
         raise ValueError("Pinned policy ref moved")
@@ -22,10 +23,14 @@ def require_protected_ref(entry, github):
         refs = ruleset.get("conditions", {}).get("ref_name", {})
         types = {rule.get("type") for rule in ruleset.get("rules", [])}
         effective_types = {rule.get("type") for rule in effective if rule.get("ruleset_id") == ruleset_id}
+        bypass_known = "bypass_actors" in ruleset
+        bypass_ok = ruleset.get("bypass_actors") == [] or (not bypass_known and not require_bypass_visibility)
         if (ruleset.get("target") == "branch" and ruleset.get("enforcement") == "active"
-                and ruleset.get("bypass_actors") == []
+                and bypass_ok
                 and refs.get("include") == ["refs/heads/" + branch] and refs.get("exclude") == []
                 and REQUIRED_RULES <= types and REQUIRED_RULES <= effective_types):
+            if not bypass_known:
+                print("Verified effective protection; bypass list unavailable to read-only token:", branch, flush=True)
             return ruleset_id
     raise ValueError("Policy ref needs an active exact-ref ruleset with update/deletion/non_fast_forward and no bypass actors")
 
@@ -78,7 +83,11 @@ def require_accepted_record(checkout, entry, ruleset_id):
 
 if __name__ == "__main__":
     from refresh_jackson3_qualifications import api, validate_registry
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--read-only", action="store_true",
+                        help="Check visible effective protection; GitHub hides bypass actors from read-only tokens")
+    args = parser.parse_args()
     registry = json.loads(Path(__file__).with_name("jackson3-promoted-qualifications.json").read_text())
     for entry in validate_registry(registry):
-        ruleset_id = require_protected_ref(entry, api)
+        ruleset_id = require_protected_ref(entry, api, require_bypass_visibility=not args.read_only)
         print("Verified protected policy:", entry["policy_sha"], "ruleset", ruleset_id)

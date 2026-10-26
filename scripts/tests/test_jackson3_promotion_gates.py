@@ -35,12 +35,25 @@ def markdown(data):
 
 
 class ProtectionTest(unittest.TestCase):
-    def check(self, config=None, effective=None, sha=None):
+    def check(self, config=None, effective=None, sha=None, **options):
         effective = effective if effective is not None else [
             {"type": name, "ruleset_id": 123} for name in gates.REQUIRED_RULES]
         responses = {"commits/" + ENTRY["policy_ref"]: {"sha": sha or ENTRY["policy_sha"]},
                      "rules/branches/" + ENTRY["policy_ref"]: effective, "rulesets/123": config or ruleset()}
-        return gates.require_protected_ref(ENTRY, responses.__getitem__)
+        return gates.require_protected_ref(ENTRY, responses.__getitem__, **options)
+
+    def test_read_only_token_must_still_prove_effective_rules_but_cannot_read_bypass_list(self):
+        config = ruleset()
+        del config["bypass_actors"]
+        with self.assertRaisesRegex(ValueError, "active exact-ref"):
+            self.check(config=config)
+        self.assertEqual(123, self.check(config=config, require_bypass_visibility=False))
+        config["bypass_actors"] = [{"actor_id": 1}]
+        with self.assertRaises(ValueError):
+            self.check(config=config, require_bypass_visibility=False)
+        del config["bypass_actors"]
+        with self.assertRaises(ValueError):
+            self.check(config=config, effective=[], require_bypass_visibility=False)
 
     def test_requires_live_rules_and_active_exact_ref_ruleset(self):
         self.assertEqual(123, self.check())
