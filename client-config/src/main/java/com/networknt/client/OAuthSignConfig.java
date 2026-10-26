@@ -133,11 +133,11 @@ public class OAuthSignConfig {
         return timeout;
     }
 
-    // Box the input to avoid GraalVM 25 primitive-field MethodHandle adaptation.
-    // Explicit null retains Jackson's primitive-boolean default of false.
+    // Use a method handle rather than GraalVM 25's failing primitive field setter.
+    // Keep the primitive parameter so mapper coercion and strict-null policy apply.
     @JsonSetter(ClientConfig.ENABLE_HTTP_2)
-    public void setEnableHttp2(Boolean value) {
-        this.enableHttp2 = Boolean.TRUE.equals(value);
+    private void setEnableHttp2(boolean value) {
+        this.enableHttp2 = value;
     }
 
     public boolean isEnableHttp2() {

@@ -1,0 +1,16 @@
+[
+  {
+    "name": "com.networknt.client.OAuthSignConfig",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "setEnableHttp2",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  }
+]
