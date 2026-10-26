@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - scripts/jackson3_promotion_gates.py
+      - scripts/jackson3_refresh_protocol.py
       - scripts/prepare_jackson3_consumer_promotion.py
       - scripts/refresh_jackson3_qualifications.py
       - scripts/jackson3-promoted-qualifications.json
@@ -11,6 +12,7 @@ on:
     branches: [master]
     paths:
       - scripts/jackson3_promotion_gates.py
+      - scripts/jackson3_refresh_protocol.py
       - scripts/prepare_jackson3_consumer_promotion.py
       - scripts/refresh_jackson3_qualifications.py
       - scripts/jackson3-promoted-qualifications.json

@@ -5,6 +5,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from jackson3_refresh_protocol import message, protocol, has_forced_success
+
 
 REQUIRED_RULES = {"update", "deletion", "non_fast_forward"}
 
@@ -47,16 +49,17 @@ def validate_acceptance(text, entry):
     if (not isinstance(data, dict) or type(data.get("schema")) is not int or data["schema"] != 1
             or data.get("decision") != "accepted" or data.get("tuple") != entry):
         raise ValueError("Acceptance decision/tuple does not match registered promotion")
+    protocol(data.get("refresh_protocol", 1))
     if not re.fullmatch("[0-9a-f]{40}", str(data.get("registration_sha", ""))):
         raise ValueError("Acceptance needs the merged registration SHA")
     forced, reuse = data.get("forced_renewal", {}), data.get("fresh_proof_reuse", {})
     if not isinstance(forced, dict) or not isinstance(reuse, dict):
         raise ValueError("Acceptance needs forced-renewal and fresh-proof-reuse objects")
-    for value in (data.get("ruleset_id"), forced.get("coordinator_run_id"), forced.get("producer_run_id"),
+    for value in (forced.get("coordinator_run_id"), forced.get("producer_run_id"),
                   forced.get("artifact_id"), reuse.get("coordinator_run_id"),
                   forced.get("coordinator_attempt"), forced.get("producer_attempt"), reuse.get("coordinator_attempt")):
         if type(value) is not int or value <= 0:
-            raise ValueError("Acceptance needs positive ruleset, run and artifact IDs")
+            raise ValueError("Acceptance needs positive run, attempt and artifact IDs")
     if (forced.get("conclusion") != "success" or reuse.get("conclusion") != "success"
             or type(reuse.get("dispatched")) is not int or reuse["dispatched"] != 0
             or reuse["coordinator_run_id"] == forced["coordinator_run_id"]
@@ -87,6 +90,7 @@ def job_log(job_id):
 
 def verify_acceptance_facts(checkout, entry, data, github, read_log):
     forced, reuse = data["forced_renewal"], data["fresh_proof_reuse"]
+    version = data.get("refresh_protocol", 1)
 
     def has_message(log, message):
         # Job logs may prefix timestamps; match the complete message suffix so
@@ -125,15 +129,15 @@ def verify_acceptance_facts(checkout, entry, data, github, read_log):
             or artifact.get("digest") != "sha256:" + forced["artifact_sha256"]):
         raise ValueError("Acceptance artifact identity, digest or retention does not match GitHub")
     forced_log = coordinator(forced["coordinator_run_id"], forced["coordinator_attempt"])
-    expected = "Verified renewed proof: " + entry["core_sha"] + " run " + str(forced["producer_run_id"])
+    expected = message("renewed", version, core_sha=entry["core_sha"], run_id=forced["producer_run_id"])
     if (not has_message(forced_log, expected)
-            or not re.search(r"(?m)Verified forced registered renewal of [1-9][0-9]* qualifications\s*$", forced_log)
-            or not has_message(forced_log, "Dispatched qualification run: " + str(forced["producer_run_id"]))):
+            or not has_forced_success(forced_log, version)
+            or not has_message(forced_log, message("dispatched", version, run_id=forced["producer_run_id"]))):
         raise ValueError("Acceptance forced-renewal log does not verify the recorded producer")
     reuse_log = coordinator(reuse["coordinator_run_id"], reuse["coordinator_attempt"])
-    if (not has_message(reuse_log, "Healthy retained proof; no reactor dispatched: " + entry["core_sha"])
-            or not has_message(reuse_log, "Verified renewal of 0 qualifications; healthy proofs did not trigger builds")
-            or "Dispatched qualification run:" in reuse_log):
+    if (not has_message(reuse_log, message("healthy", version, core_sha=entry["core_sha"]))
+            or not has_message(reuse_log, message("normal", version, count=0))
+            or protocol(version)["dispatched"].split("{run_id}")[0] in reuse_log):
         raise ValueError("Acceptance reuse log does not prove zero dispatches")
 
 

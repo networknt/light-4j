@@ -25,7 +25,7 @@ def ruleset():
 
 def record():
     return {"schema": 1, "decision": "accepted", "tuple": copy.deepcopy(ENTRY),
-            "registration_sha": "e" * 40, "ruleset_id": 123,
+            "registration_sha": "e" * 40, "observed_ruleset_id": 123, "refresh_protocol": 1,
             "forced_renewal": {"coordinator_run_id": 10, "coordinator_attempt": 1,
                                "producer_run_id": 11, "producer_attempt": 1,
                                "conclusion": "success", "artifact_id": 12, "artifact_sha256": "f" * 64},
@@ -106,7 +106,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertEqual(record(), gates.validate_acceptance(markdown(record()), ENTRY))
         cases = []
         for key, value in (("decision", "blocked"), ("tuple", dict(ENTRY, core_sha="9" * 40)),
-                           ("registration_sha", "master"), ("ruleset_id", True), ("schema", True),
+                           ("registration_sha", "master"), ("refresh_protocol", 2), ("schema", True),
                            ("forced_renewal", None)):
             cases.append(dict(record(), **{key: value}))
         for key, value in (("conclusion", "failure"), ("artifact_sha256", "missing"), ("producer_run_id", 0)):
@@ -123,6 +123,13 @@ class AcceptanceTest(unittest.TestCase):
         for text in ("accepted", markdown(record()) * 2):
             with self.assertRaises(ValueError):
                 gates.validate_acceptance(text, ENTRY)
+
+    def test_ruleset_observation_is_optional_and_not_an_authorization_field(self):
+        data = record()
+        del data["observed_ruleset_id"]
+        self.assertEqual(data, gates.validate_acceptance(markdown(data), ENTRY))
+        data["observed_ruleset_id"] = "historical observation only"
+        self.assertEqual(data, gates.validate_acceptance(markdown(data), ENTRY))
 
     def test_only_a_committed_fetched_master_record_is_accepted(self):
         with tempfile.TemporaryDirectory() as directory:

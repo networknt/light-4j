@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timezone, timedelta
 
 from jackson3_promotion_gates import require_protected_ref
+from jackson3_refresh_protocol import message
 
 
 PREFIX = "repos/networknt/light-4j/"
@@ -162,7 +163,7 @@ def refresh(registry, github=None, submit=None, health=None,
                     expiry = health(entry, timeout=min(180, remaining()))
                     remaining()
                     if expiry > now() + RENEWAL_MARGIN:
-                        print("Healthy retained proof; no reactor dispatched:", entry["core_sha"], flush=True)
+                        print(message("healthy", core_sha=entry["core_sha"]), flush=True)
                         continue
                 except ValueError as error:
                     print("Proof needs renewal:", entry["core_sha"], str(error), flush=True)
@@ -174,7 +175,7 @@ def refresh(registry, github=None, submit=None, health=None,
                 raise ValueError("Dispatch returned no run ID; inspect Actions before retrying")
             queued += 1
             pending.append((entry, run_id))
-            print("Dispatched qualification run:", run_id, flush=True)
+            print(message("dispatched", run_id=run_id), flush=True)
         except errors as error:
             failures.append(entry["core_sha"] + ": dispatch/proof check failed: " + str(error))
     # One cheap status lookup per pending run per minute. Never repeatedly scan
@@ -198,7 +199,7 @@ def refresh(registry, github=None, submit=None, health=None,
                     raise ValueError("Replacement proof still has 30 days or less remaining")
                 remaining()
                 pending.remove((entry, run_id))
-                print("Verified renewed proof:", entry["core_sha"], "run", run_id, flush=True)
+                print(message("renewed", core_sha=entry["core_sha"], run_id=run_id), flush=True)
             except errors as error:
                 pending.remove((entry, run_id))
                 failures.append(entry["core_sha"] + ": run " + str(run_id) + ": " + str(error))
@@ -237,9 +238,9 @@ def main():
         print("SMOKE PASSED: verified", queued, "throwaway qualification; registry unchanged")
         return
     if args.force_renewal:
-        print("Verified forced registered renewal of", queued, "qualifications")
+        print(message("forced", count=queued))
     else:
-        print("Verified renewal of", queued, "qualifications; healthy proofs did not trigger builds")
+        print(message("normal", count=queued))
 
 
 if __name__ == "__main__":

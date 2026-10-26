@@ -17,7 +17,8 @@ values; this example is not an accepted tuple):
     "source_refs": {"yaml-rule": "<full-sha>", "http-client": "<full-sha>"}
   },
   "registration_sha": "<merged-registration-sha>",
-  "ruleset_id": 123,
+  "observed_ruleset_id": 123,
+  "refresh_protocol": 1,
   "forced_renewal": {
     "coordinator_run_id": 100,
     "coordinator_attempt": 1,
@@ -49,3 +50,16 @@ The pinned verifier separately checks current retained qualification evidence.
 The preparer does not infer independent approval from a
 Git commit: ordinary required PR review remains the approval boundary. Failed
 verification belongs in a `blocked` record, which cannot authorize adoption.
+
+`observed_ruleset_id` is optional, informational history. It is not validated or
+used to authorize promotion; live protection semantics are checked independently.
+`refresh_protocol` selects the frozen log protocol in
+`../jackson3_refresh_protocol.py`; historical records without it use v1. Wording
+changes require a new protocol version while retaining old parsers. Human-facing
+diagnostics outside these protocol messages may change freely.
+
+Acceptance is intentionally time-bounded by the original artifact and job-log
+retention. Before that deadline (or when the API cannot return the originals),
+repeat forced renewal and normal reuse and merge an updated record at the same
+tuple path. This is required even for regenerating patches or adding a consumer
+to an unchanged tuple. No fallback treats an unavailable API fact as verified.

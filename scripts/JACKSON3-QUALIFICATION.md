@@ -38,6 +38,22 @@ do not require a new acceptance record. These checks authenticate facts against
 GitHub, not independent review or an external attestation.
 Normal qualification verification still verifies the retained proof separately.
 
+Acceptance is not evergreen: adding a consumer or regenerating patches for an
+unchanged tuple still requires the original acceptance artifact and coordinator
+logs to be available. The current record's artifact expires at
+**2027-01-24T17:47:35Z**, and deleted/shorter-retained logs can make it unavailable
+earlier. Before later adoption, repeat forced renewal and normal reuse, then
+review/merge refreshed run and artifact references at the same record path.
+Scheduled qualification renewal does not extend this acceptance deadline.
+Already adopted consumer builds do not read these historical acceptance facts.
+
+Coordinator messages used as evidence are a frozen versioned protocol shared
+by the emitter and verifier in `jackson3_refresh_protocol.py`, with historical
+v1 compatibility tests. Cosmetic diagnostics may change; evidence-message wording
+requires a new protocol version and preservation of existing parsers. The optional
+`observed_ruleset_id` field records history only and is not shape-validated or
+used for authorization.
+
 For **every** promotion, the promotion operator must protect the new fixed policy
 branch immediately after creating it and **before qualification or registration**.
 Create an active branch ruleset scoped to that exact ref, prohibiting `update`,
