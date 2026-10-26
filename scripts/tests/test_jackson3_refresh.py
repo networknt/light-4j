@@ -58,6 +58,12 @@ class RefreshTest(unittest.TestCase):
             return {"sha": POLICY}
         if endpoint.startswith("actions/runs/"):
             return self.status(int(endpoint.rsplit("/", 1)[1]))
+        if endpoint.startswith("rules/branches/"):
+            return [{"type": name, "ruleset_id": 123} for name in ("update", "deletion", "non_fast_forward")]
+        if endpoint == "rulesets/123":
+            return {"target": "branch", "enforcement": "active", "bypass_actors": [],
+                    "conditions": {"ref_name": {"include": ["refs/heads/" + entry()["policy_ref"]], "exclude": []}},
+                    "rules": [{"type": name} for name in ("update", "deletion", "non_fast_forward")]}
         self.fail("Unexpected API call: " + endpoint)
 
     def refresh(self, entries=None, **kwargs):
@@ -76,6 +82,15 @@ class RefreshTest(unittest.TestCase):
         self.submit.assert_not_called()
         self.status.assert_not_called()
         self.assertEqual(1, self.health.call_count)
+
+    def test_unprotected_ref_blocks_even_forced_renewal(self):
+        original = self.github
+        def unprotected(endpoint, timeout):
+            return [] if endpoint.startswith("rules/branches/") else original(endpoint, timeout)
+        with patch.object(self, "github", side_effect=unprotected):
+            with self.assertRaisesRegex(ValueError, "active exact-ref ruleset"):
+                self.refresh(force_renewal=True)
+        self.submit.assert_not_called()
 
     def test_forced_registered_renewal_retains_master_and_ref_gates(self):
         self.health = Mock(return_value=HEALTHY)

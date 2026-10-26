@@ -1,6 +1,58 @@
 # Reusable core qualification
 
-## Registration safeguards and pending acceptance
+## Registration safeguards and acceptance
+
+These gates are enforced by the tooling: the coordinator and preparer verify live
+effective protection and the underlying active, exact-ref ruleset. The preparer
+also requires visible proof of an empty bypass list; run it with an operator
+credential permitted to inspect that field. GitHub omits bypass actors from
+read-only ruleset responses, so the coordinator and protection advisory CI use
+explicit read-only mode: effective rule types and exact scope must still match,
+and any visible nonempty bypass list is rejected, but an omitted bypass list is
+reported as unavailable. They cannot detect a later administrator-added bypass
+that the API hides. Strict no-bypass verification remains a promotion gate;
+repository administration remains the trust boundary. No new privileged token
+or write permission is added for this check.
+The advisory lives in `jackson3-policy-protection.yml`, runs only for relevant
+file changes or manual dispatch, and is separate from the full-core workflow.
+It executes the PR's own code for diagnostics; it is not trusted proof or a
+required merge check. Repository settings do not make it a required status check.
+Actual promotion enforcement happens in the reviewed preparer and master
+coordinator, not in the advisory result. Unrelated PRs do not run this diagnostic.
+Only explicit smoke mode bypasses protection, as well as the master-ancestry gate;
+it cannot register or adopt a consumer tuple.
+
+The preparer defaults to `--stage registration`, which emits no consumer patches.
+`--stage adoption` additionally requires the exact tuple to be registered on fetched
+master and its accepted record to exist on fetched master, not just locally or on
+a PR branch. Each Markdown acceptance record includes one JSON metadata block
+using [the documented format](jackson3-acceptance/README.md). The tool checks its
+decision and tuple, verifies that the registration commit actually contains the
+tuple, and re-fetches the recorded exact run attempts, proof artifact identity and
+digest from GitHub. Coordinator source commits must be on master and contain the
+tuple; their exact-attempt job logs must show forced verification and zero-dispatch
+reuse. Missing logs or expired original acceptance artifacts require a fresh
+acceptance record before adoption. The historical ruleset ID is audit data: current
+protection is checked semantically, so equivalent replacement or stricter rules
+do not require a new acceptance record. These checks authenticate facts against
+GitHub, not independent review or an external attestation.
+Normal qualification verification still verifies the retained proof separately.
+
+Acceptance is not evergreen: adding a consumer or regenerating patches for an
+unchanged tuple still requires the original acceptance artifact and coordinator
+logs to be available. The current record's artifact expires at
+**2027-01-24T17:47:35Z**, and deleted/shorter-retained logs can make it unavailable
+earlier. Before later adoption, repeat forced renewal and normal reuse, then
+review/merge refreshed run and artifact references at the same record path.
+Scheduled qualification renewal does not extend this acceptance deadline.
+Already adopted consumer builds do not read these historical acceptance facts.
+
+Coordinator messages used as evidence are a frozen versioned protocol shared
+by the emitter and verifier in `jackson3_refresh_protocol.py`, with historical
+v1 compatibility tests. Cosmetic diagnostics may change; evidence-message wording
+requires a new protocol version and preservation of existing parsers. The optional
+`observed_ruleset_id` field records history only and is not shape-validated or
+used for authorization.
 
 For **every** promotion, the promotion operator must protect the new fixed policy
 branch immediately after creating it and **before qualification or registration**.
@@ -50,7 +102,9 @@ promotion, verify the remote consumer heads no longer reference that policy,
 check no registry entry uses the obsolete ref, and delete only that obsolete
 branch. Do not move or delete the registered policy branch.
 
-Post-merge workflow-token acceptance is **pending**, not established by this PR.
+Workflow-token results for the current tuple are recorded in
+[its acceptance record](jackson3-acceptance/f0d2100f972eec765b2b276e7ace38922394f0a6-97b2359b92ed3e1d05cac04f2da8760aa954e49d.md).
+Consumer adoption still requires that record to be reviewed and merged.
 Before consumer adoption, retain the forced coordinator run ID, its dispatched
 producer run ID, the verified tuple and proof artifact digest, and the subsequent
 ordinary coordinator run ID showing fresh-proof reuse with no producer dispatch.
@@ -261,15 +315,22 @@ candidate at that fixed ref. A dispatch from a later moving master head does not
 an older policy pin. Check the run and download its proof before applying the
 consumer follow-up.
 
-From a clean checkout of the selected policy commit, prepare the seven workflow
-patches plus refresh registration with:
+From the reviewed master tooling checkout, prepare refresh registration first:
 
 ```sh
 python3 scripts/prepare_jackson3_consumer_promotion.py \
+  --stage registration \
   --policy-sha REVIEWED_POLICY_MASTER_SHA --core-sha QUALIFIED_CORE_MASTER_SHA \
   --master-checkout /path/to/fetched/light-4j \
   --worktrees /path/to/migration/worktrees --output /path/to/new/patch-directory
 ```
+
+This stage creates only the registry patch, proof report and instructions. After
+registration merges, run forced renewal and then normal refresh, review and merge
+the acceptance record, and fetch master. Repeat the command with `--stage adoption`
+and a new output directory to generate the seven consumer patches. The tool checks
+live protection again and runs the proof verifier from a clean local clone of the
+selected policy commit, even when the promotion tooling is newer than that policy.
 
 The preparer refuses SHAs not on the fetched origin/master, policies missing the
 shared resolver/refresh workflow, or unverifiable qualification evidence. It writes
@@ -361,7 +422,7 @@ Keep the core/policy pins unchanged throughout this registration verification.
 
 ### Manual coordinator smoke before promotion
 
-The empty registry is intentional; it should not be populated with an unapproved
+Before registering a new tuple, do not populate the registry with an unapproved
 branch just to test dispatch. Instead, an operator can run the **same coordinator**
 against a separate one-tuple JSON file using `--smoke-tuple`:
 
@@ -402,15 +463,16 @@ consumer adoption. Normal scheduled execution has no smoke flag and keeps all
 master/canonical-ref/age checks. The actual registered-master lifecycle must still
 be verified after review and registration.
 
-The registration proposal records the reviewed master policy
+The merged registration records the reviewed master policy
 `f0d2100f972eec765b2b276e7ace38922394f0a6` and runtime candidate
 `97b2359b92ed3e1d05cac04f2da8760aa954e49d`, with the prerequisite commits
 selected by their policy-pinned qualification. The policy ref remains immutable;
 registration and renewal do not change either policy or runtime identity.
 
-The seven consumer PRs still carry their earlier policy until the registration
-follow-up is reviewed/merged and the registered-master workflow-token verification
-passes. Their earlier green checks are not evidence of this promotion. After that
-verification, apply the prepared patches with these literal policy/core pins.
+The seven consumer PRs still carry their earlier policy until the accepted
+workflow-token record and enforcement follow-up are reviewed and merged. The
+forced renewal and fresh-proof reuse passed as linked above; their earlier
+consumer checks are not evidence of this promotion. After acceptance merges,
+generate adoption patches with the enforced preparer and these literal policy/core pins.
 No new open-branch pin is substituted, and registration by itself does not adopt
-anything in a consumer. The actual registered lifecycle remains a post-merge gate.
+anything in a consumer. Future registrations must repeat the workflow-token gate.

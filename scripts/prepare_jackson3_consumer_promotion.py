@@ -11,8 +11,8 @@ import textwrap
 import sys
 import tempfile
 
-from refresh_jackson3_qualifications import policy_ref, validate_registry
-from jackson3_test_inventory import load_inventory, require_current_baselines
+from refresh_jackson3_qualifications import api, policy_ref, validate_registry
+from jackson3_promotion_gates import require_protected_ref, require_accepted_record
 
 REPOSITORIES = ("light-aws-lambda", "light-lambda-native", "yaml-rule-plugin", "light-codegen",
                 "http-sidecar", "light-gateway", "light-spa-4j")
@@ -154,38 +154,66 @@ def registered_qualification(registry, policy_sha, core_sha, evidence):
     return {"schema": 1, "qualifications": entries + [entry]}
 
 
+def consumer_patches(stage, checkout, worktrees, entry, registered):
+    if stage == "registration":
+        return {}
+    if stage != "adoption":
+        raise ValueError("Unknown promotion stage")
+    if entry not in registered["qualifications"]:
+        raise ValueError("Merge registration before consumer adoption")
+    require_accepted_record(checkout, entry)
+    patches = {}
+    for repo in REPOSITORIES:
+        before = (worktrees / repo / WORKFLOW).read_text()
+        after = promoted_workflow(before, entry["policy_sha"], entry["core_sha"])
+        patches[repo] = "".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True),
+                                                  fromfile="a/" + WORKFLOW, tofile="b/" + WORKFLOW))
+    return patches
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--policy-sha", required=True)
     parser.add_argument("--core-sha", required=True)
     parser.add_argument("--master-checkout", type=Path, required=True)
-    parser.add_argument("--worktrees", type=Path, required=True)
+    parser.add_argument("--worktrees", type=Path)
+    parser.add_argument("--stage", choices=("registration", "adoption"), default="registration",
+                        help="Registration emits no consumer patches; adoption requires merged acceptance")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.stage == "adoption" and args.worktrees is None:
+        parser.error("--stage adoption requires --worktrees")
     require_on_master(args.master_checkout, args.policy_sha)
     require_on_master(args.master_checkout, args.core_sha)
     for required in ("scripts/resolve_jackson3_consumer_sources.py", "scripts/refresh_jackson3_qualifications.py",
                      "scripts/jackson3-promoted-qualifications.json", ".github/workflows/jackson3-qualification-refresh.yml"):
         subprocess.run(["git", "-C", str(args.master_checkout), "cat-file", "-e", args.policy_sha + ":" + required], check=True)
     patches = {}
-    for repo in REPOSITORIES:
-        before = (args.worktrees / repo / WORKFLOW).read_text()
-        after = promoted_workflow(before, args.policy_sha, args.core_sha)
-        patches[repo] = "".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True),
-                                                  fromfile="a/" + WORKFLOW, tofile="b/" + WORKFLOW))
-    # Run from the clean selected policy checkout, not a newer moving master checkout.
+    protection = {"policy_sha": args.policy_sha, "policy_ref": policy_ref(args.policy_sha)}
+    require_protected_ref(protection, api)
+    # Execute the verifier from a clean local clone of the selected policy,
+    # even when this newer promotion tool runs from a follow-up master commit.
     with tempfile.TemporaryDirectory() as directory:
         report = Path(directory) / "qualification.json"
-        subprocess.run([sys.executable, str(Path(__file__).with_name("jackson3_core_qualification.py")),
+        policy = Path(directory) / "policy"
+        subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout",
+                        str(args.master_checkout), str(policy)], check=True)
+        subprocess.run(["git", "-C", str(policy), "checkout", "--quiet", "--detach", args.policy_sha], check=True)
+        subprocess.run([sys.executable, str(policy / "scripts/jackson3_core_qualification.py"),
                         "--source-sha", args.core_sha, "--trusted-revision", args.policy_sha,
                         "--report", str(report)], check=True)
         qualification = json.loads(report.read_text())
         evidence = qualification["qualification"]["evidence"]
-    require_current_baselines(evidence["modules"], load_inventory())
+    # The pinned verifier checked coverage and growth against its own inventory.
+    # Do not impose a newer tooling checkout's inventory on an older policy.
     registry_path = "scripts/jackson3-promoted-qualifications.json"
     before_registry = subprocess.check_output(["git", "-C", str(args.master_checkout), "show",
                                               "origin/master:" + registry_path], text=True)
     registry = registered_qualification(json.loads(before_registry), args.policy_sha, args.core_sha, evidence)
+    entry = next(item for item in registry["qualifications"]
+                 if (item["policy_sha"], item["core_sha"]) == (args.policy_sha, args.core_sha))
+    patches.update(consumer_patches(args.stage, args.master_checkout, args.worktrees, entry,
+                                   json.loads(before_registry)))
     after_registry = json.dumps(registry, indent=2) + "\n"
     patches["light-4j-refresh"] = "".join(difflib.unified_diff(before_registry.splitlines(True), after_registry.splitlines(True),
                                                             fromfile="a/" + registry_path, tofile="b/" + registry_path))
@@ -197,8 +225,9 @@ def main():
         "Create/verify the fixed policy ref first: " + policy_ref(args.policy_sha) + " -> " + args.policy_sha + "\n\n"
         "Land light-4j-refresh.patch on master before consumer adoption. It registers the immutable core/policy/prerequisite tuple.\n"
         "Run jackson3-qualification-refresh.yml from master and check the resulting qualify/record run, not just dispatch success.\n"
-        "Then review/apply the seven consumer patches. The registry commit does not move either consumer pin.\n")
-    print("Prepared seven consumer patches and the refresh-registration patch; no worktrees were edited")
+        "After merging the accepted record, rerun with --stage adoption to generate consumer patches.\n"
+        "The registry commit does not move either consumer pin.\n")
+    print("Prepared " + args.stage + " patches; no worktrees were edited")
 
 
 if __name__ == "__main__":
