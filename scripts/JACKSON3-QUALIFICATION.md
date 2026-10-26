@@ -39,13 +39,23 @@ The inventory stores a reviewed executed-test baseline for 83 modules: 1,283 tot
 for the native-fix corpus. The original 1,276-test corpus was measured at
 `27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in
 [40266655138](https://github.com/networknt/light-4j/actions/runs/40266655138).
-The native-fix stack at `741048ac839351a3f4edcf24c0bc977a2aac31d9` ran
-1,372 tests with 89 skips and no failures/errors in
-[40259691559](https://github.com/networknt/light-4j/actions/runs/40259691559).
-Its Java/POM corpus matches merged runtime candidate
-`97b2359b92ed3e1d05cac04f2da8760aa954e49d`; use that candidate's fresh
-[ordinary CI reports](https://github.com/networknt/light-4j/actions/runs/40356825612)
-for final promotion verification. The reviewed changes are:
+The merged runtime candidate `97b2359b92ed3e1d05cac04f2da8760aa954e49d` ran
+1,372 tests with 89 skips and no failures/errors in the successful ordinary push
+[40356825612](https://github.com/networknt/light-4j/actions/runs/40356825612).
+The committed [report snapshot](jackson3-test-baseline-evidence.json) retains every
+module's observed counters, baseline/floor comparison, prerequisite SHAs and run
+and artifact provenance after the remote report artifact expires. Its ZIP SHA-256
+matches GitHub's artifact digest, and every parsed XML report was byte-compared
+with that archive. The regression test compares policy baselines to these observed
+counters; it does not duplicate aggregate totals or module-count magic numbers.
+
+This snapshot is a reviewed ordinary-CI measurement, not reusable qualification
+evidence or an independent attestation of test honesty. The read-only preview does
+not authenticate arbitrary supplied reports; the recorded GitHub metadata/digest
+establish which reviewed artifact supplied these counters. Fresh policy-pinned
+qualification and its normal validation remain required before registration.
+The reviewed changes are:
+
 
 | Module | Previous baseline | Native-fix baseline | Executed floor |
 | --- | ---: | ---: | ---: |
@@ -113,14 +123,14 @@ separate limit on trust in candidate-generated report contents.
 
 ## Promote after review and merge
 
-Do not repin consumers to another open #2821 head. The current inventory is
-**not yet suitable for the common stacked candidate**. Its client-config baseline
-is 4 and jackson-defaults is 3. Retained qualification for the OAuth stack at
-`601ecb6fa79778ba09032a609f9a3ed0076537b6`
-([run 40266655201](https://github.com/networknt/light-4j/actions/runs/40266655201))
-measured 6 executed tests in each of those two modules. Those historical counts
-explain the expected growth rejection; they are not proposed counts for the final
-OAuth/token candidate. Token fixes may increase other modules too.
+The inventory now covers the merged native-fix candidate
+`97b2359b92ed3e1d05cac04f2da8760aa954e49d`: client-config 6, jackson-defaults 6,
+and token-exchange 62 executed tests. The earlier 4/3 growth-guard obstruction has
+been addressed by this reviewed baseline proposal. After this policy change is
+reviewed and merged, use its actual master SHA as P; do not repin consumers to the
+open policy branch. The following order applies to this first promotion and to
+future candidate updates (the stack and ordinary-CI measurement steps are already
+complete for this candidate).
 
 Promotion has this required order:
 
