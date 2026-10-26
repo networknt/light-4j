@@ -184,3 +184,4 @@ jobs:
           name: core-source-qualification-attempt-${{ github.run_attempt }}
           path: core-source-qualification.json
           if-no-files-found: error
+          retention-days: 90

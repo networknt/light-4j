@@ -8,6 +8,16 @@ MAX_REPORT_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 256 * 1024 * 1024
 MAX_REPORTS = 10000
 MAX_XML_DEPTH = 64
+EXECUTED_TOLERANCE_PERCENT = 5
+
+
+def minimum_executed(baseline):
+    if type(baseline) is not int or baseline < 0:
+        raise ValueError("Invalid executed-test baseline")
+    if baseline == 0:
+        return 0
+    allowance = max(1, (baseline * EXECUTED_TOLERANCE_PERCENT + 99) // 100)
+    return max(1, baseline - allowance)
 
 
 class InventoryMismatch(ValueError):
@@ -110,4 +120,8 @@ def collect_reports(root, inventory):
 
 
 def load_inventory():
-    return json.loads(Path(__file__).with_name("jackson3-test-modules.json").read_text())
+    inventory = json.loads(Path(__file__).with_name("jackson3-test-modules.json").read_text())
+    for module, entry in inventory.items():
+        if entry["minimum_executed"] != minimum_executed(entry["baseline_executed"]):
+            raise ValueError("Inventory floor differs from reviewed tolerance: " + module)
+    return inventory

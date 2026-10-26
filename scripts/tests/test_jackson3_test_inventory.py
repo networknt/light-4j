@@ -88,6 +88,22 @@ class ReportCoverageTest(unittest.TestCase):
 
     def test_floors_retain_the_verified_executed_baseline(self):
         policy = inventory.load_inventory()
-        self.assertEqual(1276, sum(entry["minimum_executed"] for entry in policy.values()))
+        self.assertEqual(1276, sum(entry["baseline_executed"] for entry in policy.values()))
+        self.assertEqual(1171, sum(entry["minimum_executed"] for entry in policy.values()))
         self.assertEqual(0, policy["request-transformer"]["minimum_executed"])
-        self.assertEqual(67, sum(entry["minimum_executed"] > 1 for entry in policy.values()))
+        self.assertEqual(67, sum(entry["baseline_executed"] > 1 for entry in policy.values()))
+
+    def test_reviewed_tolerance_boundaries(self):
+        for baseline, expected in ((1, 1), (2, 1), (3, 2), (20, 19), (100, 95), (101, 95)):
+            with self.subTest(baseline=baseline):
+                self.assertEqual(expected, inventory.minimum_executed(baseline))
+        for value in (-1, True, 1.5):
+            with self.assertRaises(ValueError):
+                inventory.minimum_executed(value)
+
+    def test_small_corpus_change_passes_but_beyond_tolerance_and_zero_fail(self):
+        rule = {"large": {"minimum_executed": inventory.minimum_executed(100)}}
+        inventory.validate_modules({"large": dict(tests=95, skipped=0, failures=0, errors=0)}, rule)
+        for executed in (94, 1, 0):
+            with self.subTest(executed=executed), self.assertRaises(inventory.TestFloorError):
+                inventory.validate_modules({"large": dict(tests=executed, skipped=0, failures=0, errors=0)}, rule)

@@ -74,15 +74,61 @@ jobs:
     steps:
       - name: Resolve prerequisite commits
         run: |
-          resolve() { :; }
+          resolve() {
+            :
+          }
           resolve light-4j fix-jackson3-mapper-policy
           resolve json-overlay
           resolve light-aws-lambda migrate-jackson-3
       - uses: actions/checkout@v4
+        with:
+          repository: networknt/light-4j
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/yaml-rule
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/http-client
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/json-overlay
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/light-aws-lambda
 '''
 
 
 class ConsumerPromotionTest(unittest.TestCase):
+    def test_nested_legacy_error_group_is_not_mistaken_for_the_function_end(self):
+        nested = LEGACY.replace("            :\n", "            false || {\n              :\n            }\n")
+        text = promotion.promoted_workflow(nested, POLICY, CORE)
+        self.assertIn('"json-overlay":null', text)
+
+    def test_call_indentation_tabs_quotes_and_comments_preserve_every_prerequisite(self):
+        for call in ("            resolve json-overlay", "          resolve\tjson-overlay",
+                     "          'resolve' \"json-overlay\" # formatting change"):
+            with self.subTest(call=call):
+                text = promotion.promoted_workflow(LEGACY.replace("          resolve json-overlay", call), POLICY, CORE)
+                self.assertIn('"json-overlay":null', text)
+                self.assertIn('"light-aws-lambda":"migrate-jackson-3"', text)
+
+    def test_unsupported_command_forms_fail_instead_of_silently_dropping_a_repository(self):
+        for call in ("command resolve json-overlay", "resolve json-overlay; resolve extra",
+                     'resolve "$NEXT_REPOSITORY"', "if true; then resolve json-overlay; fi",
+                     "resolve " + chr(92) + "\n            json-overlay"):
+            with self.subTest(call=call), self.assertRaises(ValueError):
+                promotion.promoted_workflow(LEGACY.replace("resolve json-overlay", call), POLICY, CORE)
+
+    def test_missing_call_but_retained_checkout_is_rejected_independently(self):
+        with self.assertRaisesRegex(ValueError, "Resolver/checkouts differ"):
+            promotion.promoted_workflow(LEGACY.replace("          resolve json-overlay\n", ""), POLICY, CORE)
+
+    def test_duplicate_calls_and_dynamic_checkout_inventory_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            promotion.promoted_workflow(LEGACY.replace("resolve json-overlay", "resolve json-overlay\n          resolve json-overlay"), POLICY, CORE)
+        with self.assertRaisesRegex(ValueError, "literal checkout"):
+            promotion.promoted_workflow(LEGACY.replace("networknt/json-overlay", "${{ matrix.repository }}"), POLICY, CORE)
+
     def test_prepared_followup_has_literal_pins_and_no_copied_shell_resolver(self):
         text = promotion.promoted_workflow(LEGACY, POLICY, CORE)
         self.assertIn("JACKSON3_QUALIFIER_REVISION: " + POLICY, text)

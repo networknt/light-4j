@@ -35,11 +35,23 @@ SHA, policy SHA, required module coverage, and summed test counters. A later
 failed or pending attempt does not revoke earlier successful retained evidence.
 Missing/expired evidence reports the candidate and policy requiring a new run.
 
-The policy inventory covers 83 test modules. Per-module executed-test floors retain the verified baseline (1,276 executed tests total; 67 modules have floors greater than one). Baseline source: `27aed6a44a91d40a4a590be563b3d6e2fbc3415b`, qualification [40266655138](https://github.com/networknt/light-4j/actions/runs/40266655138), retained schema-2 module counters. Each must report its baseline executed count or more,
-except the explicitly listed, already-disabled request-transformer suite. Its
-skips are recorded and never counted as executed tests. Reports are discovered
-recursively, and missing or unexpected modules fail qualification; adding a
-module requires a reviewed inventory update. Intentional corpus reductions require a reviewed floor change; new modules require a reviewed inventory change. The retained baseline is a count floor, not a claim about assertion quality.
+The inventory stores a verified executed-test baseline for 83 modules: 1,276 total,
+measured at `27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in qualification
+[40266655138](https://github.com/networknt/light-4j/actions/runs/40266655138).
+The proposed tolerance allows a loss of `max(1, ceil(5% * baseline))` per module,
+with a floor of one executed test in each required module. Examples: 100 -> 95,
+3 -> 2, 1 -> 1. The resulting floors total 1,171, not 1,276. Both the baseline
+and effective floor are stored, and tooling validates the formula. The existing
+disabled request-transformer suite remains the explicit zero-execution exception.
+This tolerance is proposed for review, not silently adopted by the seven consumers.
+
+Small consolidations or environment-dependent skips within the allowance need no
+policy change. Adopting a different candidate still requires its own qualification;
+that is separate from changing the policy pin. Drops below the allowance or
+intentional module changes require review. Missing reports, empty modules and a
+large suite reduced to one test remain failures. Reports are discovered recursively;
+missing or unexpected modules cannot be hidden by a positive reactor total. This
+is a count/coverage signal, not a claim about assertion quality.
 
 This is trusted CI orchestration, not a proof that arbitrary candidate test code
 is honest. Writers who can alter an approved policy pin or its consumer workflow
@@ -80,12 +92,14 @@ SHAs on master (they may be the same commit). The common candidate for all seven
 consumers must also include the reviewed OAuth/token native fixes needed by the
 gateway; finish the relevant stack merges before choosing that common candidate.
 
-Then dispatch qualification once for that candidate at a ref pointing to the exact
-reviewed policy SHA. A dispatch from a later moving master head does not qualify
+Create a stable policy ref `jackson3-qualification-policy-POLICY_FULL_SHA` pointing
+to the exact reviewed policy SHA. Then dispatch qualification once for that
+candidate at that fixed ref. A dispatch from a later moving master head does not qualify
 an older policy pin. Check the run and download its proof before applying the
 consumer follow-up.
 
-Prepare the seven reviewable workflow patches with:
+From a clean checkout of the selected policy commit, prepare the seven workflow
+patches plus refresh registration with:
 
 ```sh
 python3 scripts/prepare_jackson3_consumer_promotion.py \
@@ -94,8 +108,13 @@ python3 scripts/prepare_jackson3_consumer_promotion.py \
   --worktrees /path/to/migration/worktrees --output /path/to/new/patch-directory
 ```
 
-The preparer refuses SHAs not on the fetched origin/master and policies missing
-the shared resolver. It writes patches only; it never edits consumer checkouts.
+The preparer refuses SHAs not on the fetched origin/master, policies missing the
+shared resolver/refresh workflow, or unverifiable qualification evidence. It writes
+patches and a retained qualification report only; it never edits consumer checkouts.
+Its shell recognizer accepts flat literal calls with differing whitespace/quotes,
+rejects unsupported dynamic/compound forms, and compares the complete plan against
+the literal checkout repository inventory. It cannot silently discard an unknown
+call or omit a checked-out prerequisite.
 Review/apply those patches as the follow-up in the seven consumer PRs. Each patch
 sets literal `JACKSON3_QUALIFIER_REVISION` and `JACKSON3_CORE_REVISION` values and
 replaces the copied shell resolver with `resolve_jackson3_consumer_sources.py`
@@ -105,3 +124,36 @@ prerequisite migration branches, where still needed, use the one shared tested
 resolver. Subsequent pushes to the open core branch, branch deletion or a squash
 cannot move these literal pins. A squash is handled by selecting its actual
 reviewed master commit during promotion, not by guessing its SHA in advance.
+
+
+## Retention and scheduled renewal
+
+Qualification proof artifacts explicitly retain for 90 days. The proposed weekly
+`jackson3-qualification-refresh.yml` coordinator reads only registered immutable
+tuples from `scripts/jackson3-promoted-qualifications.json` on master. It verifies
+that both policy and candidate are master ancestors and that the fixed policy ref
+still points to the registered SHA, then dispatches the existing qualification
+workflow with the same core, policy and yaml-rule/http-client SHAs. It does not
+resolve moving heads or change pins. One broken registered ref does not prevent
+other valid pairs from being queued; errors still fail the coordinator visibly.
+Dispatch success is not qualification success: inspect the resulting qualify and
+record jobs. Earlier successful retained proofs remain usable after a failed
+refresh, giving the 90-day retention window as recovery time.
+
+The promotion preparer emits `light-4j-refresh.patch` in addition to the seven
+consumer patches, preserving existing registry entries. It derives the new tuple
+from verified qualification evidence and refuses to overwrite a pair with different
+prerequisites. Land that registration patch on master and run the coordinator from
+master; verify its resulting qualification before adopting the consumer patches.
+The registry commit does not alter either literal consumer pin and therefore does
+not require a new policy/candidate adoption cycle. Retire an entry only after no
+consumer relies on it. Keep Actions and the schedule enabled, check failed refresh
+runs, and re-enable scheduling if GitHub disables it for repository inactivity.
+This is automated renewal with a retention grace period, not permanent proof
+storage or a guarantee against an indefinitely disabled/failing CI service.
+
+The registry is deliberately empty before promotion. Current green checks in the
+seven consumer PRs still use their earlier policy and do **not** qualify this
+head's tolerance, parser or rejection rules. Until actual reviewed master commits
+exist and the promotion/registration follow-up is applied, both adoption and its
+scheduled lifecycle remain pending. No other open-branch pin is substituted.
