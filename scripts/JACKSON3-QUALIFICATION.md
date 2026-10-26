@@ -98,11 +98,69 @@ separate limit on trust in candidate-generated report contents.
 
 ## Promote after review and merge
 
-Do not repin consumers to another open #2821 head. Review/merge the policy content
-first. Fetch the resulting master commits and choose explicit policy and candidate
-SHAs on master (they may be the same commit). The common candidate for all seven
-consumers must also include the reviewed OAuth/token native fixes needed by the
-gateway; finish the relevant stack merges before choosing that common candidate.
+Do not repin consumers to another open #2821 head. The current inventory is
+**not yet suitable for the common stacked candidate**. Its client-config baseline
+is 4 and jackson-defaults is 3. Retained qualification for the OAuth stack at
+`601ecb6fa79778ba09032a609f9a3ed0076537b6`
+([run 40266655201](https://github.com/networknt/light-4j/actions/runs/40266655201))
+measured 6 executed tests in each of those two modules. Those historical counts
+explain the expected growth rejection; they are not proposed counts for the final
+OAuth/token candidate. Token fixes may increase other modules too.
+
+Promotion has this required order:
+
+1. Review/merge the policy content and the OAuth/token stack (#2822/#2823).
+   Fetch master and select an immutable common candidate **C** containing all
+   required runtime fixes. Do not choose C before the stack is assembled.
+2. Run ordinary full-core CI for C and retain its `source-build-reports` artifact,
+   exact candidate/run identity, recorded prerequisite SHAs and successful result.
+   Ordinary CI remains available even when reusable evidence recording would fail
+   the growth guard. Inspect only C's reports under the extracted `consumer/`
+   directory; do not mix prerequisite-module reports into the inventory.
+3. Measure all modules from those reports, review representative executed counts
+   and their tests/skips, and prepare an inventory-only baseline update for every
+   material increase. Review/merge that update on master as policy **P**. Recompute
+   each changed `minimum_executed` with `minimum_executed(baseline_executed)`;
+   do not lower other baselines automatically or bypass the growth guard. Check
+   the reviewed inventory against C's complete reports. Select P only after this
+   baseline review, rather than treating the pre-stack #2821 inventory as final.
+4. Create the fixed policy ref at the actual reviewed master SHA P. Qualify C at P
+   with the same recorded prerequisite SHAs. Require both qualify and record to
+   pass, then verify/download the retained proof. An expected growth rejection
+   before step 3 is a missing baseline review, not a reason to rerun unchanged P.
+5. Prepare/review the registration and seven consumer patches using P and C.
+   Land registration first, run the coordinator from master and require a verified
+   healthy-proof result, then adopt the consumer patches. No open-branch repin.
+
+P and C are separate commits: the inventory-only policy update may follow the
+runtime candidate without changing which runtime source is qualified. A later
+push, branch deletion or squash cannot silently select either SHA.
+
+For a read-only baseline-growth preview from the retained ordinary CI reports:
+
+```sh
+python3 - /path/to/extracted/source-build-reports/consumer <<'PYTHON'
+import sys
+from pathlib import Path
+from scripts.jackson3_test_inventory import collect_reports, load_inventory, minimum_executed
+inventory = load_inventory()
+modules, totals = collect_reports(Path(sys.argv[1]), inventory)
+for module, counts in sorted(modules.items()):
+    observed = counts['tests'] - counts['skipped']
+    baseline = inventory[module]['baseline_executed']
+    if minimum_executed(observed) > baseline:
+        print(module, 'review baseline', baseline, '->', observed,
+              'proposed floor', minimum_executed(observed))
+print('Complete reactor counters:', totals)
+PYTHON
+```
+
+This command only proposes counts for review; it neither edits the inventory nor
+claims that supplied reports have been authenticated. Confirm the run/candidate
+and representative behavior before accepting any proposal. Because it checks
+module coverage and existing lower floors but does not publish reusable evidence,
+it avoids the circular requirement to obtain accepted evidence before updating
+baselines. The reviewed policy must still produce fresh reusable proof afterward.
 
 Create a stable policy ref `jackson3-qualification-policy-POLICY_FULL_SHA` pointing
 to the exact reviewed policy SHA. Then dispatch qualification once for that
@@ -151,8 +209,20 @@ policy**, including its inventory, rather than imposing the current master's
 inventory on old pins. A proof with more than 30 days remaining needs no build.
 Missing/rejected proof or 30 days or less remaining triggers qualification of the
 same core, policy and prerequisite SHAs. All due tuples are queued before waiting.
-The coordinator polls until each has verified proof with more than 30 days left;
-it fails after an 80-minute bounded wait, or on dispatch/ref errors. A successful
+Dispatch requests `return_run_details` and must return the created run ID. While
+that run is queued or executing, the coordinator performs only one status lookup
+per minute. It checks the run's policy/event/workflow identity and reports failed,
+cancelled or timed-out runs immediately. API/rate-limit errors are failures, not
+silent retries. Only a successful completed run triggers one final full check with
+the tuple's pinned verifier; its proof must belong to that dispatched run and have
+more than 30 days left.
+
+The 80-minute absolute budget starts before registry/ref checks and initial proof
+inspection, so it includes setup, dispatch, runner queueing, polling and final
+verification. API/dispatch subprocesses are capped at 30 seconds; full verification
+is capped at 180 seconds, each reduced to the remaining overall budget. A final
+check finishing after the deadline cannot turn the coordinator green. The job's
+95-minute timeout leaves outer-runner/checkout and reporting margin. A successful
 dispatch alone never makes it green. Producer failures therefore leave a failed
 coordinator check even when the bot-triggered producer sends no notification.
 Repository maintainers must monitor failed coordinator checks; this does not
