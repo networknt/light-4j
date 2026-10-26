@@ -18,6 +18,13 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>jackson-defaults</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
         </dependency>
         <dependency>
@@ -65,4 +72,19 @@
         </dependency>
     </dependencies>
 
+    <!-- Native fixture toolchain only; ordinary consumers retain their dependency policy. -->
+    <profiles>
+        <profile>
+            <id>native-config-binding</id>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.wildfly.common</groupId>
+                        <artifactId>wildfly-common</artifactId>
+                        <version>2.0.1</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+    </profiles>
 </project>

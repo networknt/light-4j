@@ -1,6 +1,7 @@
 package com.networknt.token.exchange;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import tools.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.schema.*;
@@ -311,5 +312,17 @@ public class TokenExchangeConfig {
         }
 
         return null;
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(ENABLED_FIELD)
+    private void setEnabled(boolean value) {
+        this.enabled = value;
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(ENABLE_HTTP2)
+    private void setEnableHttp2(boolean value) {
+        this.enableHttp2 = value;
     }
 }

@@ -37,6 +37,9 @@ fixture_classpath="$jar:$(cat "$out/runtime.classpath"):$shared_cases"
 javac -cp "$fixture_classpath" -d "$out/classes" "$module/src/test/native/$main_class.java"
 java -cp "$out/classes:$fixture_classpath" "$main_class"
 native_args=(--no-fallback)
+if [[ ${JACKSON3_NATIVE_ALL_CHARSETS:-0} == 1 ]]; then
+    native_args+=(-H:+AddAllCharsets)
+fi
 if [[ -n "${JACKSON3_NATIVE_EXTRA_REFLECTION:-}" ]]; then
     native_args+=("-H:ReflectionConfigurationFiles=$JACKSON3_NATIVE_EXTRA_REFLECTION")
 fi

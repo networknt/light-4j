@@ -74,6 +74,7 @@ jobs:
       - name: Build native fixtures from source without qualifying core
         env:
           JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2-native
+          JACKSON3_NATIVE_MODULES: client-config,token-exchange
           JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
           JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
         run: bash consumer/scripts/build-native-config-fixtures.sh 2>&1 | tee native-source-build.log
@@ -95,6 +96,22 @@ jobs:
             org.apache.maven.plugins:maven-help-plugin:3.5.1:effective-pom \
             -Doutput=target/native-effective-pom.xml
           bash consumer/scripts/verify-native-config-binding.sh 2>&1 | tee native-client-config.log
+      - name: Verify token-exchange native primitive binding
+        env:
+          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2-native
+          GRAALVM_PULL: never
+          JACKSON3_NATIVE_MAVEN_PROFILE: native-config-binding
+          JACKSON3_NATIVE_ALL_CHARSETS: '1'
+        run: |
+          mvn -B -Pnative-config-binding -Dmaven.repo.local="$JACKSON3_MAVEN_REPO" \
+            -f consumer/token-exchange/pom.xml \
+            org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+            -DincludeScope=runtime -Dmdep.outputFile=target/native-runtime.classpath
+          mvn -B -Pnative-config-binding -Dmaven.repo.local="$JACKSON3_MAVEN_REPO" \
+            -f consumer/token-exchange/pom.xml \
+            org.apache.maven.plugins:maven-help-plugin:3.5.1:effective-pom \
+            -Doutput=target/native-effective-pom.xml
+          bash consumer/scripts/verify-native-config-binding.sh token-exchange NativeTokenExchangeBindingTest 2>&1 | tee native-token-exchange.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -102,5 +119,6 @@ jobs:
           path: |
             native-source-build.log
             native-client-config.log
+            native-token-exchange.log
             source-commits.txt
             source-refs.json

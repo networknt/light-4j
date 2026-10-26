@@ -1,0 +1,62 @@
+[
+  {
+    "name": "com.networknt.token.exchange.TokenExchangeConfig",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "setEnabled",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setEnableHttp2",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.networknt.token.exchange.schema.RequestSchema",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "setCacheHttpClient",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setCacheSSLContext",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setEnableHttp2",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.networknt.token.exchange.schema.UpdateSchema",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "methods": [
+      {
+        "name": "setUpdateExpirationFromTtl",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  }
+]
