@@ -23,12 +23,15 @@ jobs:
         with:
           fetch-depth: 0
       - name: Requalify registered master commits at their fixed policy refs
-        if: ${{ !inputs.force_renewal }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/refresh_jackson3_qualifications.py
-      - name: Verify registered dispatch and proof with workflow token
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.force_renewal }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/refresh_jackson3_qualifications.py --force-renewal
+          REFRESH_EVENT: ${{ github.event_name }}
+          FORCE_RENEWAL: ${{ inputs.force_renewal || false }}
+        run: |
+          case "$REFRESH_EVENT:$FORCE_RENEWAL" in
+            schedule:*|workflow_dispatch:false)
+              python3 scripts/refresh_jackson3_qualifications.py ;;
+            workflow_dispatch:true)
+              python3 scripts/refresh_jackson3_qualifications.py --force-renewal ;;
+            *) echo "Unsupported refresh event/input" >&2; exit 1 ;;
+          esac

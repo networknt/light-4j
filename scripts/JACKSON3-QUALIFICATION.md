@@ -1,5 +1,41 @@
 # Reusable core qualification
 
+## Registration safeguards and pending acceptance
+
+The registered `jackson3-qualification-policy-f0d2100f972eec765b2b276e7ace38922394f0a6`
+branch is protected by active repository ruleset **25899868**, which prohibits
+updates, deletion and non-fast-forward updates with no bypass actors. Effective
+branch rules were checked through GitHub's API. Administrators can still change
+repository rules; the trust boundary includes that administration. SHA checks
+remain required before dispatch and when accepting evidence.
+
+The obsolete `jackson3-qualification-policy-27aed6a44` branch must remain until
+the seven consumer workflows stop referencing the earlier policy. After their
+promotion, verify the remote consumer heads no longer reference that policy,
+check no registry entry uses the obsolete ref, and delete only that obsolete
+branch. Do not move or delete the registered policy branch.
+
+Post-merge workflow-token acceptance is **pending**, not established by this PR.
+Before consumer adoption, retain the forced coordinator run ID, its dispatched
+producer run ID, the verified tuple and proof artifact digest, and the subsequent
+ordinary coordinator run ID showing fresh-proof reuse with no producer dispatch.
+Commit these results in a reviewed follow-up acceptance record linked to the
+registration PR; consumer promotion remains blocked until both checks pass and
+that record exists. Manual runs exercise the workflow token and event router;
+they do not demonstrate that GitHub's cron scheduler has fired.
+
+If either post-merge check fails, keep the consumers on their existing pins.
+Preserve failed run IDs and logs. Prepare a reviewed rollback PR removing only
+this tuple from `scripts/jackson3-promoted-qualifications.json` (leaving the policy
+ref, protection and prior proof intact), then rerun the ordinary coordinator to
+confirm the removed tuple is not dispatched. Alternatively, repair the cause in
+a reviewed PR and repeat both acceptance runs before adoption. A failed
+registration must not be reported as successful renewal.
+
+The refresh workflow uses one unconditional coordinator step with explicit
+schedule/manual routing. Its shell is executed by unit tests for scheduled input
+absence, scheduled false input, both manual boolean values and invalid events.
+
 Consumers must pin an independently reviewed light-4j **policy commit**, separately
 from the candidate core commit. Do not obtain that pin from candidate files,
 branch heads, an artifact, or a repository variable that moves automatically.
