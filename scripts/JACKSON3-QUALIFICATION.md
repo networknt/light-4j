@@ -2,6 +2,41 @@
 
 ## Registration safeguards and pending acceptance
 
+For **every** promotion, the promotion operator must protect the new fixed policy
+branch immediately after creating it and **before qualification or registration**.
+Create an active branch ruleset scoped to that exact ref, prohibiting `update`,
+`deletion` and `non_fast_forward`, with an empty `bypass_actors` list. Do not move
+an existing policy ref or replace its protection to reuse it. Verify the ref's
+SHA and effective rules through `GET /repos/networknt/light-4j/rules/branches/{branch}`;
+retain the ruleset ID and API verification in the acceptance record below.
+If permissions or repository policy prevent protection, stop promotion until a
+repository administrator supplies it. Creating a new branch alone is insufficient.
+Ruleset 25899868 protects only the current policy; it does not protect future refs.
+
+The promotion PR author owns preparation of the post-merge acceptance record;
+a maintainer other than its author reviews it through the ordinary PR process.
+Use one follow-up acceptance PR for this record, rather than a separate
+PR per run. Store one Markdown record per tuple at
+`scripts/jackson3-acceptance/<full-policy-sha>-<full-core-sha>.md`.
+Use these headings and required fields consistently:
+
+- `Tuple`: full policy/core SHAs, literal policy ref, and each prerequisite repo/SHA.
+- `Registration`: registration PR URL and merged master SHA.
+- `Ref protection`: ruleset ID, verification UTC time, actual ref SHA, the three
+  effective rule types, and confirmation that the active ruleset has no bypass actors.
+- `Forced renewal`: coordinator run URL/ID, dispatched producer run URL/ID,
+  conclusions, verified tuple, proof artifact ID, SHA-256 and expiry UTC.
+- `Fresh-proof reuse`: subsequent ordinary coordinator run URL/ID, conclusion,
+  and log evidence that no producer was dispatched and the fresh proof was reused.
+- `Decision`: operator account, verification UTC time, `accepted` or `blocked`,
+  remaining limits (including unobserved cron execution), and any rollback PR URL.
+
+An accepted record requires both successful runs and the verified proof; do not
+fill pending fields with assumed results. Failed attempts may be recorded as
+blocked with links to their preserved logs. The reviewed record must be merged
+before consumer adoption. This record documents workflow-token acceptance, not
+an independent attestation or deployment qualification.
+
 The registered `jackson3-qualification-policy-f0d2100f972eec765b2b276e7ace38922394f0a6`
 branch is protected by active repository ruleset **25899868**, which prohibits
 updates, deletion and non-fast-forward updates with no bypass actors. Effective
