@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '23 6 * * 1'
   workflow_dispatch:
+    inputs:
+      force_renewal:
+        description: Verify registered dispatch with GITHUB_TOKEN even when proof is fresh
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: write
@@ -18,6 +23,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Requalify registered master commits at their fixed policy refs
+        if: ${{ !inputs.force_renewal }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/refresh_jackson3_qualifications.py
+      - name: Verify registered dispatch and proof with workflow token
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.force_renewal }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/refresh_jackson3_qualifications.py --force-renewal

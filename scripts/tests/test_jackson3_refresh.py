@@ -77,6 +77,28 @@ class RefreshTest(unittest.TestCase):
         self.status.assert_not_called()
         self.assertEqual(1, self.health.call_count)
 
+    def test_forced_registered_renewal_retains_master_and_ref_gates(self):
+        self.health = Mock(return_value=HEALTHY)
+        self.assertEqual(1, self.refresh(force_renewal=True))
+        self.assertEqual(2, sum(endpoint.startswith("compare/") for endpoint, _ in self.calls))
+        self.assertTrue(any(endpoint.startswith("commits/") for endpoint, _ in self.calls))
+        self.assertEqual(1, self.submit.call_count)
+        self.assertEqual(1, self.health.call_count)
+        self.assertEqual(1, self.health.call_args.kwargs["run_id"])
+
+    def test_forced_renewal_cannot_dispatch_an_unmerged_or_noncanonical_policy(self):
+        with patch.object(self, "github", return_value={"status": "behind"}):
+            with self.assertRaisesRegex(ValueError, "not on master"):
+                self.refresh(force_renewal=True)
+        with self.assertRaisesRegex(ValueError, "immutable registered policy"):
+            self.refresh([dict(entry(), policy_ref="unapproved-branch")], force_renewal=True)
+        self.submit.assert_not_called()
+
+    def test_forced_renewal_cannot_be_combined_with_smoke(self):
+        with self.assertRaisesRegex(ValueError, "cannot use smoke"):
+            self.refresh(smoke=True, force_renewal=True)
+        self.submit.assert_not_called()
+
     def test_explicit_smoke_forces_dispatch_but_uses_real_monitor_and_final_verifier(self):
         candidate = dict(entry(), policy_ref="fix-jackson3-mapper-policy")
         self.health = Mock(return_value=HEALTHY)

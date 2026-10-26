@@ -264,6 +264,30 @@ runs, and re-enable scheduling if GitHub disables it for repository inactivity.
 This is automated renewal with a retention grace period, not permanent proof
 storage or a guarantee against an indefinitely disabled/failing CI service.
 
+### Verify registered dispatch with the workflow token
+
+After the registration follow-up is reviewed and merged on master, dispatch the
+coordinator explicitly with its manual `force_renewal` input:
+
+```sh
+gh workflow run jackson3-qualification-refresh.yml --repo networknt/light-4j \
+  --ref master -f force_renewal=true
+```
+
+This uses the workflow's `GITHUB_TOKEN` with `actions: write`, rather than the
+operator's credentials inside the job. The production CLI `--force-renewal`
+bypasses only the proof-age shortcut. It still requires canonical registered
+policy refs, exact SHAs and master ancestry; it cannot be combined with smoke
+mode. It dispatches the registered tuples even when their proof is fresh, then
+requires successful run status and a verified exact-run replacement proof.
+The input defaults to false and is not enabled by the weekly schedule.
+
+Wait for both the producer qualification and coordinator job to pass before
+consumer adoption. Then run the coordinator normally to verify that fresh proof
+is reused without dispatching another reactor. This checks the registered-master
+workflow token path, which the pre-merge operator-credential smoke cannot prove.
+Keep the core/policy pins unchanged throughout this registration verification.
+
 ### Manual coordinator smoke before promotion
 
 The empty registry is intentional; it should not be populated with an unapproved
@@ -307,8 +331,15 @@ consumer adoption. Normal scheduled execution has no smoke flag and keeps all
 master/canonical-ref/age checks. The actual registered-master lifecycle must still
 be verified after review and registration.
 
-The registry is deliberately empty before promotion. Current green checks in the
-seven consumer PRs still use their earlier policy and do **not** qualify this
-head's tolerance, parser or rejection rules. Until actual reviewed master commits
-exist and the promotion/registration follow-up is applied, both adoption and its
-scheduled lifecycle remain pending. No other open-branch pin is substituted.
+The registration proposal records the reviewed master policy
+`f0d2100f972eec765b2b276e7ace38922394f0a6` and runtime candidate
+`97b2359b92ed3e1d05cac04f2da8760aa954e49d`, with the prerequisite commits
+selected by their policy-pinned qualification. The policy ref remains immutable;
+registration and renewal do not change either policy or runtime identity.
+
+The seven consumer PRs still carry their earlier policy until the registration
+follow-up is reviewed/merged and the registered-master workflow-token verification
+passes. Their earlier green checks are not evidence of this promotion. After that
+verification, apply the prepared patches with these literal policy/core pins.
+No new open-branch pin is substituted, and registration by itself does not adopt
+anything in a consumer. The actual registered lifecycle remains a post-merge gate.
