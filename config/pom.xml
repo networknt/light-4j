@@ -31,6 +31,10 @@
     <description>A module that handles externalized configuration files.</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>jackson-defaults</artifactId>
+        </dependency>
         <!-- Compatibility export: downstream applications still use the classic YAML API. -->
         <dependency>
             <groupId>org.yaml</groupId>

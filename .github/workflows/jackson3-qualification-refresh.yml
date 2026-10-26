@@ -1,0 +1,23 @@
+name: Refresh promoted Jackson 3 qualifications
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: jackson3-qualification-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Requalify registered master commits at their fixed policy refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/refresh_jackson3_qualifications.py

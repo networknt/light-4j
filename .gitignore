@@ -26,3 +26,6 @@ build.out
 .claude
 AGENTS.md
 CLAUDE.md
+
+# Python source-build audit tooling
+__pycache__/

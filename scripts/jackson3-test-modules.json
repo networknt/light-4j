@@ -1,0 +1,335 @@
+{
+  "access-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "api-key": {
+    "minimum_executed": 4,
+    "baseline_executed": 5
+  },
+  "apikey-config": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "audit": {
+    "minimum_executed": 19,
+    "baseline_executed": 20
+  },
+  "audit-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "balance": {
+    "minimum_executed": 4,
+    "baseline_executed": 5
+  },
+  "basic-auth": {
+    "minimum_executed": 19,
+    "baseline_executed": 21
+  },
+  "basic-config": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "body": {
+    "minimum_executed": 15,
+    "baseline_executed": 16
+  },
+  "body-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "cache-manager": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "caffeine-cache": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "client": {
+    "minimum_executed": 65,
+    "baseline_executed": 69
+  },
+  "client-config": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "cluster": {
+    "minimum_executed": 8,
+    "baseline_executed": 9
+  },
+  "common": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "config": {
+    "minimum_executed": 116,
+    "baseline_executed": 123
+  },
+  "config-reload": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "consul": {
+    "minimum_executed": 12,
+    "baseline_executed": 13
+  },
+  "content": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "correlation": {
+    "minimum_executed": 5,
+    "baseline_executed": 6
+  },
+  "cors": {
+    "minimum_executed": 8,
+    "baseline_executed": 9
+  },
+  "cors-config": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "data-source": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "db-provider": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "decryptor": {
+    "minimum_executed": 6,
+    "baseline_executed": 7
+  },
+  "deref-token": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "dump": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "egress-router": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "email-sender": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "encode-decode": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "exception": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "handler": {
+    "minimum_executed": 18,
+    "baseline_executed": 19
+  },
+  "handler-config": {
+    "minimum_executed": 7,
+    "baseline_executed": 8
+  },
+  "header": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "header-config": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "health": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "health-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "hmac": {
+    "minimum_executed": 25,
+    "baseline_executed": 27
+  },
+  "hmac-config": {
+    "minimum_executed": 7,
+    "baseline_executed": 8
+  },
+  "hmac-redis": {
+    "minimum_executed": 3,
+    "baseline_executed": 4
+  },
+  "http-url": {
+    "minimum_executed": 45,
+    "baseline_executed": 48
+  },
+  "info": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "info-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "ingress-proxy": {
+    "minimum_executed": 37,
+    "baseline_executed": 39
+  },
+  "ip-whitelist": {
+    "minimum_executed": 11,
+    "baseline_executed": 12
+  },
+  "jackson-defaults": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "ldap-util": {
+    "minimum_executed": 8,
+    "baseline_executed": 9
+  },
+  "limit-config": {
+    "minimum_executed": 8,
+    "baseline_executed": 9
+  },
+  "mask": {
+    "minimum_executed": 7,
+    "baseline_executed": 8
+  },
+  "mcp-router": {
+    "minimum_executed": 13,
+    "baseline_executed": 14
+  },
+  "metrics": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "metrics-config": {
+    "minimum_executed": 227,
+    "baseline_executed": 239
+  },
+  "monad-result": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "portal-registry": {
+    "minimum_executed": 44,
+    "baseline_executed": 47
+  },
+  "prometheus": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "proxy-handler": {
+    "minimum_executed": 4,
+    "baseline_executed": 5
+  },
+  "rate-limit": {
+    "minimum_executed": 15,
+    "baseline_executed": 16
+  },
+  "registry": {
+    "minimum_executed": 12,
+    "baseline_executed": 13
+  },
+  "reqtrans-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "request-transformer": {
+    "minimum_executed": 0,
+    "disabled_reason": "Existing request-transformer suite is disabled; retained as explicit skip-only coverage, not executed qualification.",
+    "baseline_executed": 0
+  },
+  "resource": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "response-transformer": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "restrans-config": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "router-config": {
+    "minimum_executed": 17,
+    "baseline_executed": 18
+  },
+  "rule-config": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "rule-loader": {
+    "minimum_executed": 33,
+    "baseline_executed": 35
+  },
+  "sanitizer": {
+    "minimum_executed": 10,
+    "baseline_executed": 11
+  },
+  "sanitizer-config": {
+    "minimum_executed": 13,
+    "baseline_executed": 14
+  },
+  "security": {
+    "minimum_executed": 65,
+    "baseline_executed": 69
+  },
+  "security-config": {
+    "minimum_executed": 5,
+    "baseline_executed": 6
+  },
+  "server": {
+    "minimum_executed": 27,
+    "baseline_executed": 29
+  },
+  "server-config": {
+    "minimum_executed": 6,
+    "baseline_executed": 7
+  },
+  "service": {
+    "minimum_executed": 24,
+    "baseline_executed": 26
+  },
+  "sse-handler": {
+    "minimum_executed": 2,
+    "baseline_executed": 3
+  },
+  "status": {
+    "minimum_executed": 19,
+    "baseline_executed": 21
+  },
+  "switcher": {
+    "minimum_executed": 1,
+    "baseline_executed": 1
+  },
+  "token-client": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "token-exchange": {
+    "minimum_executed": 57,
+    "baseline_executed": 60
+  },
+  "token-limit": {
+    "minimum_executed": 7,
+    "baseline_executed": 8
+  },
+  "unified-config": {
+    "minimum_executed": 4,
+    "baseline_executed": 5
+  },
+  "unified-security": {
+    "minimum_executed": 1,
+    "baseline_executed": 2
+  },
+  "utility": {
+    "minimum_executed": 45,
+    "baseline_executed": 48
+  }
+}
