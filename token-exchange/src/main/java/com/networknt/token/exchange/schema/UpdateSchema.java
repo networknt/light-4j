@@ -31,7 +31,6 @@ public class UpdateSchema {
 
     @BooleanField(configFieldName = UPDATE_EXPIRATION_FROM_TTL)
     @JsonProperty(UPDATE_EXPIRATION_FROM_TTL)
-    @JsonSetter(nulls = Nulls.SKIP)
     private boolean updateExpirationFromTtl = true;
 
     public Map<String, String> getHeaders() {
@@ -69,5 +68,11 @@ public class UpdateSchema {
             return new HashMap<>();
         }
         return VariableResolver.resolveMap(this.body, sharedVariableSchema.asMap(), requestContext);
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(value = UPDATE_EXPIRATION_FROM_TTL, nulls = Nulls.SKIP)
+    private void setUpdateExpirationFromTtl(boolean value) {
+        this.updateExpirationFromTtl = value;
     }
 }

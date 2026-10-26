@@ -2,6 +2,7 @@ package com.networknt.token.exchange.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.networknt.config.schema.*;
 import com.networknt.token.exchange.RequestContext;
 import com.networknt.token.exchange.VariableResolver;
@@ -192,5 +193,23 @@ public class RequestSchema {
             return new HashMap<>();
         }
         return VariableResolver.resolveMap(this.body, sharedVariableSchema.asMap(), requestContext);
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(CACHE_HTTP_CLIENT)
+    private void setCacheHttpClient(boolean value) {
+        this.cacheHttpClient = value;
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(CACHE_SSL_CONTEXT)
+    private void setCacheSSLContext(boolean value) {
+        this.cacheSSLContext = value;
+    }
+
+    // Avoid the native-image primitive field-handle path; retain primitive coercion.
+    @JsonSetter(ENABLE_HTTP2)
+    private void setEnableHttp2(boolean value) {
+        this.enableHttp2 = value;
     }
 }

@@ -65,4 +65,19 @@
         </dependency>
     </dependencies>
 
+    <!-- Native fixture toolchain only; ordinary consumers retain their dependency policy. -->
+    <profiles>
+        <profile>
+            <id>native-config-binding</id>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.wildfly.common</groupId>
+                        <artifactId>wildfly-common</artifactId>
+                        <version>2.0.1</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+    </profiles>
 </project>
