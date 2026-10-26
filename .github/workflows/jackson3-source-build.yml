@@ -129,6 +129,20 @@ jobs:
           JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
         shell: bash
         run: bash policy/scripts/verify-jackson3-bootstrap.sh 2>&1 | tee source-build.log
+      - name: Verify the actual tested source checkouts
+        env:
+          CANDIDATE_SHA: ${{ inputs.source_sha }}
+          YAML_RULE_SHA: ${{ steps.prerequisites.outputs.yaml_rule }}
+          HTTP_CLIENT_SHA: ${{ steps.prerequisites.outputs.http_client }}
+        run: |
+          verify_checkout() {
+            local source=$1 expected=$2
+            [[ "$(git -C "$source" rev-parse HEAD)" == "$expected" ]]
+            [[ -z "$(git -C "$source" status --porcelain)" ]]
+          }
+          verify_checkout candidate "$CANDIDATE_SHA"
+          verify_checkout sources/yaml-rule "$YAML_RULE_SHA"
+          verify_checkout sources/http-client "$HTTP_CLIENT_SHA"
       - uses: actions/upload-artifact@v4
         with:
           name: candidate-reports-attempt-${{ github.run_attempt }}
