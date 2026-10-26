@@ -77,6 +77,36 @@ class RefreshTest(unittest.TestCase):
         self.status.assert_not_called()
         self.assertEqual(1, self.health.call_count)
 
+    def test_explicit_smoke_forces_dispatch_but_uses_real_monitor_and_final_verifier(self):
+        candidate = dict(entry(), policy_ref="fix-jackson3-mapper-policy")
+        self.health = Mock(return_value=HEALTHY)
+        self.assertEqual(1, self.refresh([candidate], smoke=True))
+        self.assertFalse(any(endpoint.startswith("compare/") for endpoint, _ in self.calls))
+        self.assertEqual(1, self.submit.call_count)
+        self.assertEqual("fix-jackson3-mapper-policy", self.submit.call_args.args[0]["ref"])
+        self.assertEqual(1, self.health.call_count)
+        self.assertEqual(1, self.health.call_args.kwargs["run_id"])
+        self.assertEqual(1, self.status.call_count)
+        with self.assertRaisesRegex(ValueError, "immutable registered policy"):
+            self.refresh([candidate])
+
+    def test_smoke_requires_one_explicit_tuple_and_still_checks_policy_ref(self):
+        for entries in ([], [entry(), dict(entry(), core_sha="e" * 40)]):
+            with self.subTest(entries=entries), self.assertRaisesRegex(ValueError, "exactly one"):
+                self.refresh(entries, smoke=True)
+        with patch.object(self, "github", return_value={"sha": "e" * 40}):
+            with self.assertRaisesRegex(ValueError, "Pinned policy ref moved"):
+                self.refresh(smoke=True)
+        self.submit.assert_not_called()
+
+    def test_smoke_cli_refuses_the_real_registry_before_any_dispatch(self):
+        script = Path(__file__).parents[1] / "refresh_jackson3_qualifications.py"
+        registry = script.with_name("jackson3-promoted-qualifications.json")
+        result = subprocess.run([sys.executable, str(script), "--smoke-tuple", str(registry)],
+                                capture_output=True, text=True)
+        self.assertEqual(2, result.returncode)
+        self.assertIn("separate from the promotion registry", result.stderr)
+
     def test_only_status_is_polled_until_the_created_run_completes(self):
         self.status.side_effect = [run(status="queued"), run(status="in_progress"), run()]
         self.assertEqual(1, self.refresh())

@@ -121,7 +121,8 @@ def validate_modules(modules, inventory):
     return totals
 
 
-def collect_reports(root, inventory):
+def collect_report_counts(root):
+    """Read bounded report counters without deciding inventory/floor acceptance."""
     modules = {}
     consumed = 0
     for number, path in enumerate(root.rglob("target/surefire-reports/TEST-*.xml"), start=1):
@@ -136,6 +137,11 @@ def collect_reports(root, inventory):
         for current in suites:
             for key in COUNTERS:
                 counts[key] += current[key]
+    return modules
+
+
+def collect_reports(root, inventory):
+    modules = collect_report_counts(root)
     return modules, validate_modules(modules, inventory)
 
 

@@ -136,31 +136,28 @@ P and C are separate commits: the inventory-only policy update may follow the
 runtime candidate without changing which runtime source is qualified. A later
 push, branch deletion or squash cannot silently select either SHA.
 
-For a read-only baseline-growth preview from the retained ordinary CI reports:
+For a read-only baseline-growth preview from retained ordinary CI reports:
 
 ```sh
-python3 - /path/to/extracted/source-build-reports/consumer <<'PYTHON'
-import sys
-from pathlib import Path
-from scripts.jackson3_test_inventory import collect_reports, load_inventory, minimum_executed
-inventory = load_inventory()
-modules, totals = collect_reports(Path(sys.argv[1]), inventory)
-for module, counts in sorted(modules.items()):
-    observed = counts['tests'] - counts['skipped']
-    baseline = inventory[module]['baseline_executed']
-    if minimum_executed(observed) > baseline:
-        print(module, 'review baseline', baseline, '->', observed,
-              'proposed floor', minimum_executed(observed))
-print('Complete reactor counters:', totals)
-PYTHON
+python3 scripts/preview_jackson3_test_baselines.py \
+  --reports-root /path/to/extracted/source-build-reports/consumer \
+  --output /path/to/baseline-preview.json
 ```
 
-This command only proposes counts for review; it neither edits the inventory nor
-claims that supplied reports have been authenticated. Confirm the run/candidate
-and representative behavior before accepting any proposal. Because it checks
-module coverage and existing lower floors but does not publish reusable evidence,
-it avoids the circular requirement to obtain accepted evidence before updating
-baselines. The reviewed policy must still produce fresh reusable proof afterward.
+The tested script prints JSON when `--output` is omitted. It reports every observed
+module's tests, skips and executed count, current baseline/floor, and review issues.
+New modules, missing modules and below-floor counts are diagnostic fields rather
+than exceptions that hide the observed counts. Empty report directories likewise
+show missing coverage, never accepted evidence. Unsafe/malformed XML and invalid
+counters still fail through the same bounded parser used by qualification.
+
+The preview neither edits an inventory nor qualifies the candidate. Check the
+reported gaps, authenticate the run/candidate and review representative counts
+before changing the policy. The recorder and verifier still reject coverage/floor
+differences; this read-only measurement path does not waive those checks. It avoids
+the circular requirement to obtain accepted reusable evidence before measuring a
+candidate that needs an inventory update. The reviewed policy must still produce
+fresh reusable proof afterward.
 
 Create a stable policy ref `jackson3-qualification-policy-POLICY_FULL_SHA` pointing
 to the exact reviewed policy SHA. Then dispatch qualification once for that
@@ -241,6 +238,49 @@ registered supported tuples retain an occasional renewal cost. Keep Actions and 
 runs, and re-enable scheduling if GitHub disables it for repository inactivity.
 This is automated renewal with a retention grace period, not permanent proof
 storage or a guarantee against an indefinitely disabled/failing CI service.
+
+### Manual coordinator smoke before promotion
+
+The empty registry is intentional; it should not be populated with an unapproved
+branch just to test dispatch. Instead, an operator can run the **same coordinator**
+against a separate one-tuple JSON file using `--smoke-tuple`:
+
+```json
+{
+  "schema": 1,
+  "qualifications": [{
+    "policy_sha": "REPLACE_WITH_PROPOSED_POLICY_FULL_SHA",
+    "core_sha": "REPLACE_WITH_CANDIDATE_FULL_SHA",
+    "policy_ref": "fix-jackson3-mapper-policy",
+    "source_refs": {
+      "yaml-rule": "REPLACE_WITH_RECORDED_YAML_RULE_FULL_SHA",
+      "http-client": "REPLACE_WITH_RECORDED_HTTP_CLIENT_FULL_SHA"
+    }
+  }]
+}
+```
+
+```sh
+python3 scripts/refresh_jackson3_qualifications.py \
+  --smoke-tuple /path/to/throwaway-smoke-tuple.json > /path/to/smoke.log 2>&1
+```
+
+This explicitly labeled manual test accepts a proposed branch/tag after checking
+that it still resolves to the exact policy SHA. It skips the master-ancestry and
+proof-age prechecks so one dispatch really occurs, then uses the production
+dispatch, returned run ID, status/metadata polling, timeout handling and final
+pinned-policy proof verification. It permits exactly one tuple and cannot read the
+promotion registry via this flag. It never writes a registry or consumer pins.
+Check for the returned run ID, completed `Verified renewed proof` and `SMOKE PASSED`
+messages and a zero process exit status. Retain the log and run URL. If no run ID
+returns, inspect Actions before trying again; the first request may have created
+a run. The smoke is not scheduled, so an unsuccessful experiment does not create
+weekly duplicate dispatches.
+
+A passing smoke proves the real API path, not master approval, registration or
+consumer adoption. Normal scheduled execution has no smoke flag and keeps all
+master/canonical-ref/age checks. The actual registered-master lifecycle must still
+be verified after review and registration.
 
 The registry is deliberately empty before promotion. Current green checks in the
 seven consumer PRs still use their earlier policy and do **not** qualify this
