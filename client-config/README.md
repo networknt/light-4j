@@ -19,6 +19,21 @@ After source-installing prerequisites into an isolated Maven cache and building 
 JACKSON3_MAVEN_REPO=/absolute/isolated/m2 bash scripts/verify-native-config-binding.sh
 ```
 
-The script runs offline, builds a native executable from the module JAR plus its runtime dependencies, and supplies no application reflection config. It uses a pinned GraalVM image already present locally; CI pulls that digest explicitly. The executable checks 26 coercion/serialization cases under both null policies plus omitted defaults. CI runs it after the full core suite. An isolated no-setter mutation fails this test with the original error.
+The script runs offline, builds a native executable from the module JAR plus its runtime dependencies, and supplies no application reflection config. It uses a pinned GraalVM image already present locally; CI pulls that digest explicitly. The executable checks 26 coercion/serialization cases under both null policies plus omitted defaults. The independent Jackson 3 native binding workflow runs it as a separate PR check; the full JVM reactor alone gates reusable core evidence. An isolated no-setter mutation fails this test with the original error.
 
 The same field-only failure was reproduced in token-exchange RequestSchema and UpdateSchema; their qualification and any additional workaround belong to a separate token-exchange change. TokenExchangeConfig requires its own initialization-aware probe. No token-exchange production code is changed by this fix.
+
+
+### Removal gate and tracking
+
+Track this version-specific workaround in [#2822](https://github.com/networknt/light-4j/pull/2822) and its token-exchange companion [#2823](https://github.com/networknt/light-4j/pull/2823). No upstream compiler root cause or fixed version is asserted. The committed field-only control makes the failure reproducible without gateway metadata:
+
+```bash
+JACKSON3_MAVEN_REPO=/absolute/isolated/m2 \
+JACKSON3_NATIVE_EXTRA_REFLECTION="$PWD/client-config/src/test/native/field-control-reflect.json" \
+bash scripts/verify-native-config-binding.sh client-config NativePrimitiveFieldControl
+```
+
+It passes on the JVM and fails natively with the pinned Jackson 3.2.3/GraalVM 25.0.2 pair. To remove the workaround, first qualify an upgraded Jackson/GraalVM pair where this control passes unchanged. Then, in an isolated removal candidate, remove the setters and only their setter-specific native method entries from all four real classes, retaining the field/constructor/getter metadata required for normal binding. Replace the setter structural guard with a check of the qualified field-only contract; do not skip or weaken native regression coverage. All shared coercion, default, null-policy and serialization cases, both standalone native checks, the full core reactor and the real-handler gateway native smoke must pass on every supported native toolchain. Record the successful versions and immutable image digest in the tracking PR/issue before merging that removal. A JVM-only pass is not a removal signal.
+
+The corpus and JVM/native assertions share the pure jackson-defaults test-jar. Structural JVM checks scan every annotated private boolean, require exactly one private primitive setter and its explicit native method registration, and reject as-yet-unqualified primitive types. Integer fields are intentionally exempt from the boolean workaround because their native binding is covered and passes.

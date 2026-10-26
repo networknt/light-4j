@@ -1,0 +1,1 @@
+ghcr.io/graalvm/native-image-community@sha256:a7ccd8ed283a3c6b8395239a56d52b0760ac2c061e0f32ef70cff1b9aa875ae4

@@ -80,13 +80,6 @@ jobs:
           JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
           JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
         run: bash consumer/scripts/verify-jackson3-bootstrap.sh 2>&1 | tee source-build.log
-      - name: Verify client-config native binding with module metadata
-        env:
-          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2
-          GRAALVM_PULL: always
-        run: |
-          mvn -B -Dmaven.repo.local="$JACKSON3_MAVEN_REPO" -f consumer/client-config/pom.xml org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath -DincludeScope=runtime -Dmdep.outputFile=target/native-runtime.classpath
-          bash consumer/scripts/verify-native-config-binding.sh 2>&1 | tee native-client-config.log
       - name: Record actual full-core source qualification
         if: github.event_name != 'workflow_dispatch'
         env:
@@ -104,7 +97,6 @@ jobs:
           name: source-build-reports
           path: |
             source-build.log
-            native-client-config.log
             source-commits.txt
             source-refs.json
             **/target/surefire-reports/**
