@@ -1,58 +1,38 @@
 package com.networknt.token.exchange;
 
-import com.networknt.jackson.JacksonDefaults;
+import com.networknt.config.Config;
+import com.networknt.jackson.testing.NativeBooleanBindings;
+import com.networknt.jackson.testing.PrimitiveBooleanCases;
 import com.networknt.token.exchange.schema.RequestSchema;
 import com.networknt.token.exchange.schema.UpdateSchema;
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.exc.MismatchedInputException;
 
-import java.lang.reflect.Modifier;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.HashMap;
 
 class NativePrimitiveBindingTest {
     @Test
-    void primitiveSettersRemainPrivate() throws Exception {
+    void everyBooleanHasAPrivatePrimitiveSetterAndNativeRegistration() throws Exception {
         for (Class<?> type : new Class<?>[]{TokenExchangeConfig.class, RequestSchema.class, UpdateSchema.class}) {
-            for (var method : type.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonSetter.class)) {
-                    assertTrue(Modifier.isPrivate(method.getModifiers()), method.getName());
-                    assertArrayEquals(new Class<?>[]{boolean.class}, method.getParameterTypes());
-                }
-            }
+            NativeBooleanBindings.verify(type,
+                    "/META-INF/native-image/com.networknt/token-exchange/reflect-config.json");
         }
     }
 
     @Test
-    void preservesPrimitiveStrictNullAndUpdateSkipPolicy() {
-        for (boolean strict : new boolean[]{false, true}) {
-            var mapper = JacksonDefaults.builder()
-                    .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, strict).build();
-            assertTrue(mapper.readValue("{\"updateExpirationFromTtl\":null}", UpdateSchema.class).isUpdateExpirationFromTtl());
-            if (strict) {
-                assertThrows(MismatchedInputException.class,
-                        () -> mapper.readValue("{\"updateExpirationFromTtl\":\"\"}", UpdateSchema.class));
-            } else {
-                assertFalse(mapper.readValue("{\"updateExpirationFromTtl\":\"\"}", UpdateSchema.class).isUpdateExpirationFromTtl());
-            }
-            if (strict) {
-                assertThrows(MismatchedInputException.class,
-                        () -> mapper.readValue("{\"enableHttp2\":null}", RequestSchema.class));
-            } else {
-                assertFalse(mapper.readValue("{\"enableHttp2\":null}", RequestSchema.class).isEnableHttp2());
-            }
-            var request = mapper.readValue("{\"cacheHttpClient\":true,\"cacheSSLContext\":true,\"enableHttp2\":true,\"proxyPort\":8080}", RequestSchema.class);
-            assertTrue(request.isCacheHttpClient());
-            assertTrue(request.isCacheSSLContext());
-            assertTrue(request.isEnableHttp2());
-            assertEquals(8080, request.getProxyPort());
-            assertTrue(mapper.readTree(mapper.writer().without(SerializationFeature.FAIL_ON_EMPTY_BEANS).writeValueAsString(request)).get("enableHttp2").booleanValue());
+    void preservesSharedCoercionDefaultsAndSerialization() {
+        var config = Config.getInstance();
+        var previous = config.getJsonMapConfig("token-exchange");
+        config.putInConfigCache("token-exchange", new HashMap<String, Object>());
+        try {
+            PrimitiveBooleanCases.verify(TokenExchangeConfig.class, "enabled", TokenExchangeConfig::isEnabled, false, false, true);
+            PrimitiveBooleanCases.verify(TokenExchangeConfig.class, "enableHttp2", TokenExchangeConfig::isEnableHttp2, false, false, true);
+            PrimitiveBooleanCases.verify(RequestSchema.class, "cacheHttpClient", RequestSchema::isCacheHttpClient, false, false, true);
+            PrimitiveBooleanCases.verify(RequestSchema.class, "cacheSSLContext", RequestSchema::isCacheSSLContext, false, false, true);
+            PrimitiveBooleanCases.verify(RequestSchema.class, "enableHttp2", RequestSchema::isEnableHttp2, false, false, true);
+            PrimitiveBooleanCases.verify(UpdateSchema.class, "updateExpirationFromTtl", UpdateSchema::isUpdateExpirationFromTtl, true, true, true);
+        } finally {
+            if (previous == null) config.clearConfigCache("token-exchange");
+            else config.putInConfigCache("token-exchange", previous);
         }
     }
 }
