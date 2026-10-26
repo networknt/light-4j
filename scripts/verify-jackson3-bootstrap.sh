@@ -18,7 +18,8 @@ for source in "$script_root" "$http_sources" "$yaml_sources"; do
 done
 if [[ ${JACKSON3_REUSE_CORE_QUALIFICATION:-0} == 1 ]]; then
     : "${JACKSON3_CORE_QUALIFICATION_REPORT:?Set the qualification evidence path}"
-    python3 "$script_root/scripts/jackson3_core_qualification.py" --source "$script_root" --report "$JACKSON3_CORE_QUALIFICATION_REPORT"
+    python3 "$script_root/scripts/jackson3_core_qualification.py" --source "$script_root" \
+        --yaml-source "$yaml_sources" --http-source "$http_sources" --report "$JACKSON3_CORE_QUALIFICATION_REPORT"
 fi
 maven_args=("-Dmaven.repo.local=$verification_repo")
 if [[ ${JACKSON3_MAVEN_OFFLINE:-0} == 1 ]]; then
