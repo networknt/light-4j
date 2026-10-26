@@ -32,6 +32,26 @@ class UnsafeReportError(ValueError):
     pass
 
 
+class BaselineGrowthError(TestFloorError):
+    pass
+
+
+def require_current_baselines(modules, inventory):
+    """Promotion must review sustained growth; renewal never mutates policy."""
+    validate_modules(modules, inventory)
+    stale = []
+    for module, counts in modules.items():
+        executed = counts["tests"] - counts["skipped"]
+        if minimum_executed(executed) > inventory[module]["baseline_executed"]:
+            stale.append(module + ": baseline=" + str(inventory[module]["baseline_executed"])
+                         + ", observed=" + str(executed))
+    if stale:
+        raise BaselineGrowthError("Qualification/promotion requires a reviewed test-baseline update for corpus growth: "
+                             + "; ".join(stale)
+                             + ". Confirm representative counts, update the policy inventory, "
+                             "then qualify and promote that reviewed policy. No consumer patches were written.")
+
+
 def read_report(path, remaining_bytes):
     """Read counters only; reject DTD/entities before expansion, in any encoding."""
     parser = expat.ParserCreate()

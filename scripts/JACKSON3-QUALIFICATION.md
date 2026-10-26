@@ -53,6 +53,18 @@ large suite reduced to one test remain failures. Reports are discovered recursiv
 missing or unexpected modules cannot be hidden by a positive reactor total. This
 is a count/coverage signal, not a claim about assertion quality.
 
+Test additions also require protection. Both the recorder and verifier reject a
+candidate whose observed executed count, after the same tolerance, exceeds the
+reviewed baseline. Promotion repeats this guard before writing any patches.
+For example, growth from 100 to 200 requires reviewing representative counts and
+raising the baseline; a reviewed baseline of 200 then rejects a fall back to 100.
+Counts from 95 through 105 around a baseline of 100 do not force a policy update.
+This protects growth beyond the tolerance, not each individual added test.
+No run automatically ratchets a baseline, and renewal never changes an inventory.
+Review baseline changes alongside the new candidate, qualify the reviewed policy,
+and promote it deliberately. Existing immutable candidates keep their existing
+policy and do not need repinning merely because another candidate gained tests.
+
 This is trusted CI orchestration, not a proof that arbitrary candidate test code
 is honest. Writers who can alter an approved policy pin or its consumer workflow
 are inside the trust boundary. Candidate Maven code still executes in the build
@@ -128,26 +140,34 @@ reviewed master commit during promotion, not by guessing its SHA in advance.
 
 ## Retention and scheduled renewal
 
-Qualification proof artifacts explicitly retain for 90 days. The proposed weekly
-`jackson3-qualification-refresh.yml` coordinator reads only registered immutable
-tuples from `scripts/jackson3-promoted-qualifications.json` on master. It verifies
-that both policy and candidate are master ancestors and that the fixed policy ref
-still points to the registered SHA, then dispatches the existing qualification
-workflow with the same core, policy and yaml-rule/http-client SHAs. It does not
-resolve moving heads or change pins. One broken registered ref does not prevent
-other valid pairs from being queued; errors still fail the coordinator visibly.
-Dispatch success is not qualification success: inspect the resulting qualify and
-record jobs. Earlier successful retained proofs remain usable after a failed
-refresh, giving the 90-day retention window as recovery time.
+Qualification proof artifacts explicitly retain for 90 days. The weekly
+`jackson3-qualification-refresh.yml` coordinator is a health check, not a weekly
+reactor rebuild. It reads registered immutable tuples from
+`scripts/jackson3-promoted-qualifications.json` on master. Each tuple must remain
+on master and its fixed policy ref must still point to the registered SHA.
+
+The coordinator checks retained proof with a clean checkout of **that tuple's
+policy**, including its inventory, rather than imposing the current master's
+inventory on old pins. A proof with more than 30 days remaining needs no build.
+Missing/rejected proof or 30 days or less remaining triggers qualification of the
+same core, policy and prerequisite SHAs. All due tuples are queued before waiting.
+The coordinator polls until each has verified proof with more than 30 days left;
+it fails after an 80-minute bounded wait, or on dispatch/ref errors. A successful
+dispatch alone never makes it green. Producer failures therefore leave a failed
+coordinator check even when the bot-triggered producer sends no notification.
+Repository maintainers must monitor failed coordinator checks; this does not
+promise email delivery. Earlier successful proof remains usable during recovery.
+A healthy tuple normally rebuilds about every 60–67 days, rather than weekly.
 
 The promotion preparer emits `light-4j-refresh.patch` in addition to the seven
 consumer patches, preserving existing registry entries. It derives the new tuple
 from verified qualification evidence and refuses to overwrite a pair with different
 prerequisites. Land that registration patch on master and run the coordinator from
-master; verify its resulting qualification before adopting the consumer patches.
+master; require its verified healthy-proof result before adopting the consumer patches.
 The registry commit does not alter either literal consumer pin and therefore does
-not require a new policy/candidate adoption cycle. Retire an entry only after no
-consumer relies on it. Keep Actions and the schedule enabled, check failed refresh
+not require a new policy/candidate adoption cycle. Review the registry at every promotion and retire superseded entries only after
+checking that no consumer relies on them. Old pins are not silently retired;
+registered supported tuples retain an occasional renewal cost. Keep Actions and the schedule enabled, check failed refresh
 runs, and re-enable scheduling if GitHub disables it for repository inactivity.
 This is automated renewal with a retention grace period, not permanent proof
 storage or a guarantee against an indefinitely disabled/failing CI service.

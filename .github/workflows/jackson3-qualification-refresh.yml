@@ -12,9 +12,11 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 95
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Requalify registered master commits at their fixed policy refs
         env:
           GH_TOKEN: ${{ github.token }}

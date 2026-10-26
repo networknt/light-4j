@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
-from jackson3_test_inventory import collect_reports, load_inventory
+from jackson3_test_inventory import collect_reports, load_inventory, require_current_baselines
 
 
 def main():
@@ -23,6 +23,7 @@ def main():
     if subprocess.check_output(["git", "-C", str(args.source), "status", "--porcelain"], text=True).strip():
         raise SystemExit("Cannot qualify a modified candidate checkout")
     modules, totals = collect_reports(args.source.resolve(), load_inventory())
+    require_current_baselines(modules, load_inventory())
     evidence = {
         "schema": 2, "repository": os.environ["GITHUB_REPOSITORY"],
         "source_sha": subprocess.check_output(["git", "-C", str(args.source), "rev-parse", "HEAD"], text=True).strip(),

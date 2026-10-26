@@ -25,11 +25,11 @@ def run_record(**changes):
 
 
 def evidence_record(**changes):
-    modules = {name: dict(tests=max(1, entry["minimum_executed"]), failures=0, errors=0, skipped=0) for name, entry in qualification.load_inventory().items()}
+    modules = {name: dict(tests=max(1, entry["minimum_executed"]), failures=0, errors=0, skipped=int(entry["minimum_executed"] == 0)) for name, entry in qualification.load_inventory().items()}
     result = dict(schema=2, policy_sha=TRUST, modules=modules, repository="networknt/light-4j", source_sha=SHA, run_id=1,
                   run_attempt=1, event="workflow_dispatch", workflow=qualification.WORKFLOW,
                   suite="full-reactor", replay_input={}, source_refs={"yaml-rule": "b" * 40, "http-client": "c" * 40},
-                  tests=dict(tests=sum(m["tests"] for m in modules.values()), failures=0, errors=0, skipped=0))
+                  tests=dict(tests=sum(m["tests"] for m in modules.values()), failures=0, errors=0, skipped=sum(m["skipped"] for m in modules.values())))
     result.update(changes)
     return result
 
@@ -60,6 +60,16 @@ class CoreQualificationTest(unittest.TestCase):
 
     def test_exact_checkout_with_successful_attempt_evidence(self):
         self.assertEqual(SHA, qualification.qualify(self.client, SHA, REFS, TRUST)["evidence"]["source_sha"])
+
+    def test_evidence_cannot_bypass_review_of_a_larger_test_corpus(self):
+        module = next(name for name, entry in qualification.load_inventory().items()
+                      if entry["baseline_executed"] >= 10)
+        counts = self.client.proof["modules"][module]
+        added = qualification.load_inventory()[module]["baseline_executed"] * 2
+        self.client.proof["tests"]["tests"] += added - counts["tests"]
+        counts["tests"] = added
+        with self.assertRaisesRegex(ValueError, "Review the larger test corpus"):
+            qualification.qualify(self.client, SHA, REFS, TRUST)
 
     def test_merge_checkout_is_rejected_even_when_run_head_matches(self):
         self.client.proof["source_sha"] = "d" * 40

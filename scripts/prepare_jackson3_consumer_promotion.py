@@ -12,6 +12,7 @@ import sys
 import tempfile
 
 from refresh_jackson3_qualifications import policy_ref, validate_registry
+from jackson3_test_inventory import load_inventory, require_current_baselines
 
 REPOSITORIES = ("light-aws-lambda", "light-lambda-native", "yaml-rule-plugin", "light-codegen",
                 "http-sidecar", "light-gateway", "light-spa-4j")
@@ -180,6 +181,7 @@ def main():
                         "--report", str(report)], check=True)
         qualification = json.loads(report.read_text())
         evidence = qualification["qualification"]["evidence"]
+    require_current_baselines(evidence["modules"], load_inventory())
     registry_path = "scripts/jackson3-promoted-qualifications.json"
     before_registry = subprocess.check_output(["git", "-C", str(args.master_checkout), "show",
                                               "origin/master:" + registry_path], text=True)

@@ -9,7 +9,8 @@ import subprocess
 import zipfile
 import os
 
-from jackson3_test_inventory import InventoryMismatch, TestFloorError, load_inventory, validate_modules
+from jackson3_test_inventory import (InventoryMismatch, TestFloorError, BaselineGrowthError,
+                                    load_inventory, validate_modules, require_current_baselines)
 
 WORKFLOW = ".github/workflows/jackson3-source-build.yml"
 EVIDENCE = "core-source-qualification.json"
@@ -23,6 +24,9 @@ class PrerequisiteConflict(ValueError):
 
 
 def rejection_action(error):
+    if isinstance(error, BaselineGrowthError):
+        return ("Review the larger test corpus and representative counts, update the policy baseline, "
+                "then qualify and promote the reviewed policy. Rerunning unchanged policy cannot protect added tests.")
     if isinstance(error, InventoryMismatch):
         return ("Restore missing candidate reports/modules, or review intentional module changes and update the "
                 "policy inventory. Promote a reviewed master policy commit and update consumer pins; "
@@ -50,6 +54,7 @@ def validate_evidence(evidence, run, sha, source_refs, trusted_revision):
     if any(refs.get(name) != value for name, value in source_refs.items()):
         raise PrerequisiteConflict("Explicit prerequisite commits conflict with qualified evidence")
     totals = validate_modules(evidence.get("modules", {}), load_inventory())
+    require_current_baselines(evidence["modules"], load_inventory())
     if evidence.get("tests") != totals:
         raise ValueError("Reactor totals differ from required module reports")
     return evidence
