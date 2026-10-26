@@ -35,15 +35,40 @@ SHA, policy SHA, required module coverage, and summed test counters. A later
 failed or pending attempt does not revoke earlier successful retained evidence.
 Missing/expired evidence reports the candidate and policy requiring a new run.
 
-The inventory stores a verified executed-test baseline for 83 modules: 1,276 total,
-measured at `27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in qualification
+The inventory stores a reviewed executed-test baseline for 83 modules: 1,283 total
+for the native-fix corpus. The original 1,276-test corpus was measured at
+`27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in
 [40266655138](https://github.com/networknt/light-4j/actions/runs/40266655138).
-The proposed tolerance allows a loss of `max(1, ceil(5% * baseline))` per module,
+The merged runtime candidate `97b2359b92ed3e1d05cac04f2da8760aa954e49d` ran
+1,372 tests with 89 skips and no failures/errors in the successful ordinary push
+[40356825612](https://github.com/networknt/light-4j/actions/runs/40356825612).
+The committed [report snapshot](jackson3-test-baseline-evidence.json) retains every
+module's observed counters, baseline/floor comparison, prerequisite SHAs and run
+and artifact provenance after the remote report artifact expires. Its ZIP SHA-256
+matches GitHub's artifact digest, and every parsed XML report was byte-compared
+with that archive. The regression test compares policy baselines to these observed
+counters; it does not duplicate aggregate totals or module-count magic numbers.
+
+This snapshot is a reviewed ordinary-CI measurement, not reusable qualification
+evidence or an independent attestation of test honesty. The read-only preview does
+not authenticate arbitrary supplied reports; the recorded GitHub metadata/digest
+establish which reviewed artifact supplied these counters. Fresh policy-pinned
+qualification and its normal validation remain required before registration.
+The reviewed changes are:
+
+
+| Module | Previous baseline | Native-fix baseline | Executed floor |
+| --- | ---: | ---: | ---: |
+| client-config | 4 | 6 | 5 |
+| jackson-defaults | 3 | 6 | 5 |
+| token-exchange | 60 | 62 | 58 |
+
+The tolerance still allows a loss of `max(1, ceil(5% * baseline))` per module,
 with a floor of one executed test in each required module. Examples: 100 -> 95,
-3 -> 2, 1 -> 1. The resulting floors total 1,171, not 1,276. Both the baseline
-and effective floor are stored, and tooling validates the formula. The existing
-disabled request-transformer suite remains the explicit zero-execution exception.
-This tolerance is proposed for review, not silently adopted by the seven consumers.
+3 -> 2, 1 -> 1. Effective floors now total 1,177. Both baseline and effective floor
+are stored, and tooling validates the formula. The disabled request-transformer
+suite remains the explicit zero-execution exception. Raising these baselines is a
+reviewed policy change; it does not move any consumer pin automatically.
 
 Small consolidations or environment-dependent skips within the allowance need no
 policy change. Adopting a different candidate still requires its own qualification;
@@ -98,14 +123,14 @@ separate limit on trust in candidate-generated report contents.
 
 ## Promote after review and merge
 
-Do not repin consumers to another open #2821 head. The current inventory is
-**not yet suitable for the common stacked candidate**. Its client-config baseline
-is 4 and jackson-defaults is 3. Retained qualification for the OAuth stack at
-`601ecb6fa79778ba09032a609f9a3ed0076537b6`
-([run 40266655201](https://github.com/networknt/light-4j/actions/runs/40266655201))
-measured 6 executed tests in each of those two modules. Those historical counts
-explain the expected growth rejection; they are not proposed counts for the final
-OAuth/token candidate. Token fixes may increase other modules too.
+The inventory now covers the merged native-fix candidate
+`97b2359b92ed3e1d05cac04f2da8760aa954e49d`: client-config 6, jackson-defaults 6,
+and token-exchange 62 executed tests. The earlier 4/3 growth-guard obstruction has
+been addressed by this reviewed baseline proposal. After this policy change is
+reviewed and merged, use its actual master SHA as P; do not repin consumers to the
+open policy branch. The following order applies to this first promotion and to
+future candidate updates (the stack and ordinary-CI measurement steps are already
+complete for this candidate).
 
 Promotion has this required order:
 

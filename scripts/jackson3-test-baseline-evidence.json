@@ -1,0 +1,869 @@
+{
+  "purpose": "review-only counts; not qualification evidence",
+  "modules": {
+    "access-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "api-key": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 5,
+      "baseline_executed": 5,
+      "current_floor": 4,
+      "review_issues": []
+    },
+    "apikey-config": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "audit": {
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 20,
+      "baseline_executed": 20,
+      "current_floor": 19,
+      "review_issues": []
+    },
+    "audit-config": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "balance": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 5,
+      "baseline_executed": 5,
+      "current_floor": 4,
+      "review_issues": []
+    },
+    "basic-auth": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 21,
+      "baseline_executed": 21,
+      "current_floor": 19,
+      "review_issues": []
+    },
+    "basic-config": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "body": {
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 9,
+      "executed": 16,
+      "baseline_executed": 16,
+      "current_floor": 15,
+      "review_issues": []
+    },
+    "body-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "cache-manager": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "caffeine-cache": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "client": {
+      "tests": 84,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 15,
+      "executed": 69,
+      "baseline_executed": 69,
+      "current_floor": 65,
+      "review_issues": []
+    },
+    "client-config": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "executed": 6,
+      "baseline_executed": 6,
+      "current_floor": 5,
+      "review_issues": []
+    },
+    "cluster": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 9,
+      "baseline_executed": 9,
+      "current_floor": 8,
+      "review_issues": []
+    },
+    "common": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "config": {
+      "tests": 128,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "executed": 123,
+      "baseline_executed": 123,
+      "current_floor": 116,
+      "review_issues": []
+    },
+    "config-reload": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "consul": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 13,
+      "baseline_executed": 13,
+      "current_floor": 12,
+      "review_issues": []
+    },
+    "content": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "correlation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 6,
+      "baseline_executed": 6,
+      "current_floor": 5,
+      "review_issues": []
+    },
+    "cors": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 9,
+      "baseline_executed": 9,
+      "current_floor": 8,
+      "review_issues": []
+    },
+    "cors-config": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "data-source": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 8,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "db-provider": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "decryptor": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 7,
+      "baseline_executed": 7,
+      "current_floor": 6,
+      "review_issues": []
+    },
+    "deref-token": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "dump": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "egress-router": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "email-sender": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "encode-decode": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "exception": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "handler": {
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 19,
+      "baseline_executed": 19,
+      "current_floor": 18,
+      "review_issues": []
+    },
+    "handler-config": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 8,
+      "baseline_executed": 8,
+      "current_floor": 7,
+      "review_issues": []
+    },
+    "header": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "header-config": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "health": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "health-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "hmac": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 27,
+      "baseline_executed": 27,
+      "current_floor": 25,
+      "review_issues": []
+    },
+    "hmac-config": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 8,
+      "baseline_executed": 8,
+      "current_floor": 7,
+      "review_issues": []
+    },
+    "hmac-redis": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 4,
+      "baseline_executed": 4,
+      "current_floor": 3,
+      "review_issues": []
+    },
+    "http-url": {
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 48,
+      "baseline_executed": 48,
+      "current_floor": 45,
+      "review_issues": []
+    },
+    "info": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "info-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "ingress-proxy": {
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 8,
+      "executed": 39,
+      "baseline_executed": 39,
+      "current_floor": 37,
+      "review_issues": []
+    },
+    "ip-whitelist": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 12,
+      "baseline_executed": 12,
+      "current_floor": 11,
+      "review_issues": []
+    },
+    "jackson-defaults": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 6,
+      "baseline_executed": 6,
+      "current_floor": 5,
+      "review_issues": []
+    },
+    "ldap-util": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "executed": 9,
+      "baseline_executed": 9,
+      "current_floor": 8,
+      "review_issues": []
+    },
+    "limit-config": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 9,
+      "baseline_executed": 9,
+      "current_floor": 8,
+      "review_issues": []
+    },
+    "mask": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 8,
+      "baseline_executed": 8,
+      "current_floor": 7,
+      "review_issues": []
+    },
+    "mcp-router": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 14,
+      "baseline_executed": 14,
+      "current_floor": 13,
+      "review_issues": []
+    },
+    "metrics": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "metrics-config": {
+      "tests": 244,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "executed": 239,
+      "baseline_executed": 239,
+      "current_floor": 227,
+      "review_issues": []
+    },
+    "monad-result": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "portal-registry": {
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 47,
+      "baseline_executed": 47,
+      "current_floor": 44,
+      "review_issues": []
+    },
+    "prometheus": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "proxy-handler": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 5,
+      "baseline_executed": 5,
+      "current_floor": 4,
+      "review_issues": []
+    },
+    "rate-limit": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 16,
+      "baseline_executed": 16,
+      "current_floor": 15,
+      "review_issues": []
+    },
+    "registry": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 13,
+      "baseline_executed": 13,
+      "current_floor": 12,
+      "review_issues": []
+    },
+    "reqtrans-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "request-transformer": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 0,
+      "baseline_executed": 0,
+      "current_floor": 0,
+      "review_issues": []
+    },
+    "resource": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "response-transformer": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "restrans-config": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "router-config": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 18,
+      "baseline_executed": 18,
+      "current_floor": 17,
+      "review_issues": []
+    },
+    "rule-config": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "rule-loader": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 35,
+      "baseline_executed": 35,
+      "current_floor": 33,
+      "review_issues": []
+    },
+    "sanitizer": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 11,
+      "baseline_executed": 11,
+      "current_floor": 10,
+      "review_issues": []
+    },
+    "sanitizer-config": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 14,
+      "baseline_executed": 14,
+      "current_floor": 13,
+      "review_issues": []
+    },
+    "security": {
+      "tests": 72,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "executed": 69,
+      "baseline_executed": 69,
+      "current_floor": 65,
+      "review_issues": []
+    },
+    "security-config": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 6,
+      "baseline_executed": 6,
+      "current_floor": 5,
+      "review_issues": []
+    },
+    "server": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "executed": 29,
+      "baseline_executed": 29,
+      "current_floor": 27,
+      "review_issues": []
+    },
+    "server-config": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 7,
+      "baseline_executed": 7,
+      "current_floor": 6,
+      "review_issues": []
+    },
+    "service": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "executed": 26,
+      "baseline_executed": 26,
+      "current_floor": 24,
+      "review_issues": []
+    },
+    "sse-handler": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 3,
+      "baseline_executed": 3,
+      "current_floor": 2,
+      "review_issues": []
+    },
+    "status": {
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 21,
+      "baseline_executed": 21,
+      "current_floor": 19,
+      "review_issues": []
+    },
+    "switcher": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 1,
+      "baseline_executed": 1,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "token-client": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "token-exchange": {
+      "tests": 62,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 62,
+      "baseline_executed": 62,
+      "current_floor": 58,
+      "review_issues": []
+    },
+    "token-limit": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 8,
+      "baseline_executed": 8,
+      "current_floor": 7,
+      "review_issues": []
+    },
+    "unified-config": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 5,
+      "baseline_executed": 5,
+      "current_floor": 4,
+      "review_issues": []
+    },
+    "unified-security": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "executed": 2,
+      "baseline_executed": 2,
+      "current_floor": 1,
+      "review_issues": []
+    },
+    "utility": {
+      "tests": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "executed": 48,
+      "baseline_executed": 48,
+      "current_floor": 45,
+      "review_issues": []
+    }
+  },
+  "missing_modules": [],
+  "totals": {
+    "tests": 1372,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 89
+  },
+  "needs_review": false,
+  "provenance": {
+    "kind": "reviewed ordinary-CI report snapshot; not reusable qualification evidence",
+    "repository": "networknt/light-4j",
+    "source_sha": "97b2359b92ed3e1d05cac04f2da8760aa954e49d",
+    "workflow": ".github/workflows/jackson3-source-build.yml",
+    "event": "push",
+    "run_id": 40356825612,
+    "run_attempt": 1,
+    "conclusion": "success",
+    "run_url": "https://github.com/networknt/light-4j/actions/runs/40356825612",
+    "artifact": {
+      "id": 12666497299,
+      "name": "source-build-reports",
+      "sha256": "d10aad6b423aaacbb93a4df9aedb916b81135c5be654d55c72dc8832c7b0e64b",
+      "created_at": "2026-10-26T16:23:12Z",
+      "expires_at": "2027-01-24T16:12:17Z"
+    },
+    "report_root": "consumer",
+    "xml_reports": 284,
+    "source_refs": {
+      "http-client": "5ecee29dbb08d813512f5379c2e1b902d553c5d4",
+      "yaml-rule": "c237cc3a25720f43e57bf571e25d5fa06687aa3b"
+    },
+    "generator": "python3 scripts/preview_jackson3_test_baselines.py --reports-root <source-build-reports>/consumer",
+    "verification": "GitHub run head/event/status and artifact digest checked; ZIP SHA-256 and all parsed XML bytes match. Counts remain reviewed observations, not an independent attestation."
+  }
+}

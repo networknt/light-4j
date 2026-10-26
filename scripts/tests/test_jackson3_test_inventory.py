@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -86,12 +87,16 @@ class ReportCoverageTest(unittest.TestCase):
                 with patch.object(inventory, limit, 0), self.assertRaises(inventory.UnsafeReportError):
                     inventory.collect_reports(root, {"required": {"minimum_executed": 1}})
 
-    def test_floors_retain_the_verified_executed_baseline(self):
+    def test_inventory_matches_the_reviewed_report_snapshot(self):
         policy = inventory.load_inventory()
-        self.assertEqual(1276, sum(entry["baseline_executed"] for entry in policy.values()))
-        self.assertEqual(1171, sum(entry["minimum_executed"] for entry in policy.values()))
-        self.assertEqual(0, policy["request-transformer"]["minimum_executed"])
-        self.assertEqual(67, sum(entry["baseline_executed"] > 1 for entry in policy.values()))
+        snapshot = json.loads((Path(__file__).parents[1] / "jackson3-test-baseline-evidence.json").read_text())
+        modules = {module: {key: counts[key] for key in inventory.COUNTERS}
+                   for module, counts in snapshot["modules"].items()}
+        observed = {module: counts["tests"] - counts["skipped"]
+                    for module, counts in modules.items()}
+        self.assertEqual(observed, {module: entry["baseline_executed"] for module, entry in policy.items()})
+        totals = inventory.validate_modules(modules, policy)
+        self.assertEqual(snapshot["totals"], totals)
 
     def test_reviewed_tolerance_boundaries(self):
         for baseline, expected in ((1, 1), (2, 1), (3, 2), (20, 19), (100, 95), (101, 95)):
