@@ -10,6 +10,8 @@ import tempfile
 import time
 from datetime import datetime, timezone, timedelta
 
+from jackson3_promotion_gates import require_protected_ref
+
 
 PREFIX = "repos/networknt/light-4j/"
 WORKFLOW = "jackson3-source-build.yml"
@@ -144,6 +146,8 @@ def refresh(registry, github=None, submit=None, health=None,
                         raise ValueError("Registered qualification is not on master: " + sha)
             if get("commits/" + entry["policy_ref"])["sha"] != entry["policy_sha"]:
                 raise ValueError("Pinned policy ref moved; restore it instead of changing consumer pins")
+            if not smoke:
+                require_protected_ref(entry, get)
             eligible.append(entry)
         except errors as error:
             failures.append(entry["core_sha"] + ": " + str(error))

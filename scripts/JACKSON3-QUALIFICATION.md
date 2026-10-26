@@ -2,6 +2,22 @@
 
 ## Registration safeguards and pending acceptance
 
+These gates are enforced by the tooling: the coordinator and preparer verify live
+effective protection and the underlying active, exact-ref, no-bypass ruleset.
+Read-only `policy-protection` CI exercises these API calls with `GITHUB_TOKEN`.
+Only explicit smoke mode bypasses protection, as well as the master-ancestry gate;
+it cannot register or adopt a consumer tuple.
+
+The preparer defaults to `--stage registration`, which emits no consumer patches.
+`--stage adoption` additionally requires the exact tuple to be registered on fetched
+master and its accepted record to exist on fetched master, not just locally or on
+a PR branch. Each Markdown acceptance record includes one JSON metadata block
+using [the documented format](jackson3-acceptance/README.md). The tool checks its
+decision, tuple, ruleset ID, registration ancestry, successful distinct coordinator
+run IDs, proof artifact/digest and zero dispatches in the reuse run. This is a gate
+on reviewed data, not independent authentication of the record or its review.
+Normal qualification verification still verifies the retained proof separately.
+
 For **every** promotion, the promotion operator must protect the new fixed policy
 branch immediately after creating it and **before qualification or registration**.
 Create an active branch ruleset scoped to that exact ref, prohibiting `update`,
@@ -261,15 +277,22 @@ candidate at that fixed ref. A dispatch from a later moving master head does not
 an older policy pin. Check the run and download its proof before applying the
 consumer follow-up.
 
-From a clean checkout of the selected policy commit, prepare the seven workflow
-patches plus refresh registration with:
+From the reviewed master tooling checkout, prepare refresh registration first:
 
 ```sh
 python3 scripts/prepare_jackson3_consumer_promotion.py \
+  --stage registration \
   --policy-sha REVIEWED_POLICY_MASTER_SHA --core-sha QUALIFIED_CORE_MASTER_SHA \
   --master-checkout /path/to/fetched/light-4j \
   --worktrees /path/to/migration/worktrees --output /path/to/new/patch-directory
 ```
+
+This stage creates only the registry patch, proof report and instructions. After
+registration merges, run forced renewal and then normal refresh, review and merge
+the acceptance record, and fetch master. Repeat the command with `--stage adoption`
+and a new output directory to generate the seven consumer patches. The tool checks
+live protection again and runs the proof verifier from a clean local clone of the
+selected policy commit, even when the promotion tooling is newer than that policy.
 
 The preparer refuses SHAs not on the fetched origin/master, policies missing the
 shared resolver/refresh workflow, or unverifiable qualification evidence. It writes
