@@ -25,11 +25,11 @@ def run_record(**changes):
 
 
 def evidence_record(**changes):
-    modules = {name: dict(tests=1, failures=0, errors=0, skipped=0) for name in qualification.load_inventory()}
+    modules = {name: dict(tests=max(1, entry["minimum_executed"]), failures=0, errors=0, skipped=0) for name, entry in qualification.load_inventory().items()}
     result = dict(schema=2, policy_sha=TRUST, modules=modules, repository="networknt/light-4j", source_sha=SHA, run_id=1,
                   run_attempt=1, event="workflow_dispatch", workflow=qualification.WORKFLOW,
                   suite="full-reactor", replay_input={}, source_refs={"yaml-rule": "b" * 40, "http-client": "c" * 40},
-                  tests=dict(tests=len(modules), failures=0, errors=0, skipped=0))
+                  tests=dict(tests=sum(m["tests"] for m in modules.values()), failures=0, errors=0, skipped=0))
     result.update(changes)
     return result
 
@@ -174,3 +174,29 @@ class CoreQualificationTest(unittest.TestCase):
                     patch.object(qualification.subprocess, "check_output", return_value=SHA), \
                     self.assertRaisesRegex(SystemExit, "Verifier checkout"):
                 qualification.main()
+
+    def test_inventory_rejection_requires_review_instead_of_same_pin_rerun(self):
+        self.client.proof["modules"]["new-module"] = dict(tests=5, failures=0, errors=0, skipped=0)
+        with self.assertRaises(ValueError) as caught:
+            qualification.qualify(self.client, SHA, {}, TRUST)
+        message = str(caught.exception)
+        self.assertIn("unexpected=['new-module']", message)
+        self.assertIn("Promote a reviewed master policy", message)
+        self.assertNotIn("rerun jackson3-source-build.yml", message)
+
+    def test_large_module_cannot_drop_to_one_test(self):
+        name = max(qualification.load_inventory(), key=lambda name: qualification.load_inventory()[name]["minimum_executed"])
+        self.client.proof["modules"][name]["tests"] = 1
+        with self.assertRaises(ValueError) as caught:
+            qualification.qualify(self.client, SHA, {}, TRUST)
+        self.assertIn("required=", str(caught.exception))
+        self.assertIn("intentional test-corpus reduction", str(caught.exception))
+        self.assertNotIn("rerun jackson3-source-build.yml", str(caught.exception))
+
+    def test_wrong_candidate_evidence_does_not_suggest_policy_changes(self):
+        self.client.proof["source_sha"] = "d" * 40
+        self.client.proof["modules"] = {}
+        with self.assertRaises(ValueError) as caught:
+            qualification.qualify(self.client, SHA, {}, TRUST)
+        self.assertNotIn("Test module coverage differs", str(caught.exception))
+        self.assertIn("Only for an absent run or expired evidence", str(caught.exception))

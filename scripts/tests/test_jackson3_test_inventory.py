@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("inventory", Path(__file__).parents[1] / "jackson3_test_inventory.py")
 inventory = importlib.util.module_from_spec(spec)
@@ -42,3 +43,51 @@ class ReportCoverageTest(unittest.TestCase):
             inventory.validate_modules(modules, {"disabled": {"minimum_executed": 0}})
         with self.assertRaisesRegex(ValueError, "No executed"):
             inventory.validate_modules(modules, {"disabled": {"minimum_executed": 0, "disabled_reason": "existing skip"}})
+
+    def test_dtd_entity_expansion_and_external_entities_are_rejected_in_both_encodings(self):
+        documents = [
+            '<!DOCTYPE testsuite><testsuite tests="1"/>',
+            '<!DOCTYPE testsuite [<!ENTITY a "expanded"><!ENTITY b "&a;&a;">]><testsuite tests="1">&b;</testsuite>',
+            '<!DOCTYPE testsuite [<!ENTITY ext SYSTEM "file:///nonexistent">]><testsuite tests="1">&ext;</testsuite>',
+            '<!DOCTYPE testsuite SYSTEM "https://invalid.example/report.dtd"><testsuite tests="1"/>',
+            '<!DOCTYPE testsuite [<!ENTITY % p SYSTEM "https://invalid.example/entity">%p;]><testsuite tests="1"/>',
+        ]
+        for document in documents:
+            for encoding in ("utf-8", "utf-16"):
+                with self.subTest(document=document, encoding=encoding), tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory) / "report.xml"
+                    path.write_bytes(document.encode(encoding))
+                    with self.assertRaisesRegex(inventory.UnsafeReportError, "DTD and entity"):
+                        inventory.read_report(path, inventory.MAX_TOTAL_BYTES)
+
+    def test_normal_utf8_and_utf16_reports_work_and_limits_are_enforced(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "report.xml"
+            text = '<testsuites><testsuite tests="3" skipped="1" failures="0" errors="0"/></testsuites>'
+            for encoding in ("utf-8", "utf-16"):
+                path.write_bytes(text.encode(encoding))
+                counts, size = inventory.read_report(path, inventory.MAX_TOTAL_BYTES)
+                self.assertEqual(3, counts[0]["tests"])
+                self.assertEqual(path.stat().st_size, size)
+                with self.assertRaisesRegex(inventory.UnsafeReportError, "byte limit"):
+                    inventory.read_report(path, 1)
+            path.write_text('<testsuite tests="1">' + '<a>' * 65 + '</a>' * 65 + '</testsuite>')
+            with self.assertRaisesRegex(inventory.UnsafeReportError, "depth limit"):
+                inventory.read_report(path, inventory.MAX_TOTAL_BYTES)
+            path.write_text('<testsuite')
+            with self.assertRaisesRegex(inventory.UnsafeReportError, "Malformed"):
+                inventory.read_report(path, inventory.MAX_TOTAL_BYTES)
+
+    def test_total_report_bytes_and_file_count_are_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.report(root, "required")
+            for limit in ("MAX_TOTAL_BYTES", "MAX_REPORTS"):
+                with patch.object(inventory, limit, 0), self.assertRaises(inventory.UnsafeReportError):
+                    inventory.collect_reports(root, {"required": {"minimum_executed": 1}})
+
+    def test_floors_retain_the_verified_executed_baseline(self):
+        policy = inventory.load_inventory()
+        self.assertEqual(1276, sum(entry["minimum_executed"] for entry in policy.values()))
+        self.assertEqual(0, policy["request-transformer"]["minimum_executed"])
+        self.assertEqual(67, sum(entry["minimum_executed"] > 1 for entry in policy.values()))

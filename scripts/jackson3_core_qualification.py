@@ -9,13 +9,31 @@ import subprocess
 import zipfile
 import os
 
-from jackson3_test_inventory import load_inventory, validate_modules
+from jackson3_test_inventory import InventoryMismatch, TestFloorError, load_inventory, validate_modules
 
 WORKFLOW = ".github/workflows/jackson3-source-build.yml"
 EVIDENCE = "core-source-qualification.json"
 ARTIFACT_PREFIX = "core-source-qualification-attempt-"
 REPOSITORY = "networknt/light-4j"
 SHA = re.compile("[0-9a-f]{40}")
+
+
+class PrerequisiteConflict(ValueError):
+    pass
+
+
+def rejection_action(error):
+    if isinstance(error, InventoryMismatch):
+        return ("Restore missing candidate reports/modules, or review intentional module changes and update the "
+                "policy inventory. Promote a reviewed master policy commit and update consumer pins; "
+                "rerunning the unchanged policy does not repair inventory differences.")
+    if isinstance(error, TestFloorError):
+        return ("Restore the expected executed tests in the candidate. An intentional test-corpus reduction "
+                "requires a reviewed floor update, policy promotion and consumer pin updates; "
+                "rerunning the unchanged candidate/policy does not repair the test floor.")
+    if isinstance(error, PrerequisiteConflict):
+        return "Qualify this candidate with the explicitly requested prerequisite SHAs, or remove the conflicting override."
+    return "Inspect and repair the rejected evidence or its producer; a rerun alone is not an evidence repair."
 
 
 def validate_evidence(evidence, run, sha, source_refs, trusted_revision):
@@ -30,7 +48,7 @@ def validate_evidence(evidence, run, sha, source_refs, trusted_revision):
             isinstance(value, str) and SHA.fullmatch(value) for value in refs.values()):
         raise ValueError("Missing recorded prerequisite source commits")
     if any(refs.get(name) != value for name, value in source_refs.items()):
-        raise ValueError("Explicit prerequisite commits conflict with qualified evidence; qualify core with those overrides")
+        raise PrerequisiteConflict("Explicit prerequisite commits conflict with qualified evidence")
     totals = validate_modules(evidence.get("modules", {}), load_inventory())
     if evidence.get("tests") != totals:
         raise ValueError("Reactor totals differ from required module reports")
@@ -85,15 +103,21 @@ def qualify(client, sha, source_refs, trusted_revision):
                         or attempt.get("head_sha") != trusted_revision or attempt.get("event") != run["event"]
                         or attempt.get("id") != run["id"] or attempt.get("run_attempt") != number):
                     continue
-                evidence = validate_evidence(client.evidence(artifact), attempt, sha, source_refs, trusted_revision)
+                raw = client.evidence(artifact)
+                if raw.get("source_sha") != sha:
+                    continue
+                evidence = validate_evidence(raw, attempt, sha, source_refs, trusted_revision)
                 return {"run_id": run["id"], "run_attempt": number, "head_sha": sha,
                         "html_url": attempt["html_url"], "artifact_id": artifact["id"], "evidence": evidence}
             except (ValueError, KeyError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
-                rejected.append(str(error))
+                rejected.append(str(error) + ". " + rejection_action(error))
+    if rejected:
+        raise ValueError("Retained qualification evidence rejected for " + sha + ": " + "; ".join(rejected))
     raise ValueError("No retained successful trusted qualification for " + sha
-                     + (": " + "; ".join(rejected) if rejected else ": evidence is missing, expired, or has no successful attempt")
-                     + "; rerun jackson3-source-build.yml at approved policy " + trusted_revision
-                     + " with source_sha=" + sha)
+                     + ": evidence is missing, expired, or has no successful attempt. Inspect failed runs first: "
+                     "candidate/report failures need repair; inventory or floor changes need reviewed policy/pin updates. "
+                     "Only for an absent run or expired evidence, rerun jackson3-source-build.yml at approved policy "
+                     + trusted_revision + " with source_sha=" + sha)
 
 
 def main():
