@@ -2,6 +2,7 @@ package com.networknt.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.networknt.config.schema.BooleanField;
 import com.networknt.config.schema.IntegerField;
 import com.networknt.config.schema.ObjectField;
@@ -130,6 +131,13 @@ public class OAuthSignConfig {
 
     public Integer getTimeout() {
         return timeout;
+    }
+
+    // Use a method handle rather than GraalVM 25's failing primitive field setter.
+    // Keep the primitive parameter so mapper coercion and strict-null policy apply.
+    @JsonSetter(ClientConfig.ENABLE_HTTP_2)
+    private void setEnableHttp2(boolean value) {
+        this.enableHttp2 = value;
     }
 
     public boolean isEnableHttp2() {

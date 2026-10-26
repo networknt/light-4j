@@ -20,4 +20,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <executions>
+                    <execution>
+                        <id>binding-test-support</id>
+                        <phase>process-test-classes</phase>
+                        <goals><goal>test-jar</goal></goals>
+                        <configuration>
+                            <includes><include>com/networknt/jackson/testing/**</include></includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -1,0 +1,106 @@
+name: Jackson 3 native binding
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      source_refs:
+        description: JSON map of prerequisite repository names to full commit SHAs
+        type: string
+        default: '{}'
+  push:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  native-binding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: consumer
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Resolve prerequisite commits
+        id: prerequisites
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REFS: ${{ inputs.source_refs || '{}' }}
+        shell: bash
+        run: |
+          jq -e 'type == "object" and all(to_entries[]; (.key | IN("yaml-rule", "http-client")) and (.value | type == "string" and test("^[0-9a-f]{40}$")))' <<< "$SOURCE_REFS"
+          resolve() {
+            local repo=$1 branch=${2:-} ref pulls
+            ref=$(jq -r --arg repo "$repo" '.[$repo] // empty' <<< "$SOURCE_REFS")
+            if [[ -z "$ref" && -n "$branch" ]]; then
+              pulls=$(gh api --paginate --slurp "repos/networknt/$repo/pulls?head=networknt:$branch&state=all&per_page=100")
+              ref=$(jq -r '[.[][] | select(.state == "open")] | if length == 1 then .[0].head.sha elif length > 1 then error("Ambiguous source branch") else empty end' <<< "$pulls")
+              if [[ -z "$ref" ]]; then
+                jq -e '[.[][]] | length == 0 or any(.[]; .merged_at != null)' <<< "$pulls" >/dev/null || {
+                  echo "Prerequisite branch $repo:$branch was closed without merging" >&2; exit 1;
+                }
+              fi
+            fi
+            if [[ -z "$ref" ]]; then
+              ref=$(gh api "repos/networknt/$repo" --jq .default_branch)
+            fi
+            ref=$(gh api "repos/networknt/$repo/commits/$ref" --jq .sha)
+            echo "${repo//-/_}=$ref" >> "$GITHUB_OUTPUT"
+          }
+          resolve yaml-rule
+          resolve http-client
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/yaml-rule
+          ref: ${{ steps.prerequisites.outputs.yaml_rule }}
+          path: sources/yaml-rule
+      - uses: actions/checkout@v4
+        with:
+          repository: networknt/http-client
+          ref: ${{ steps.prerequisites.outputs.http_client }}
+          path: sources/http-client
+      - name: Record prerequisite commits
+        shell: bash
+        run: |
+          for source in sources/*; do
+            echo "$source $(git -C "$source" rev-parse HEAD)"
+          done | tee source-commits.txt
+          for source in sources/*; do
+            printf '{"key":"%s","value":"%s"}\n' "${source##*/}" "$(git -C "$source" rev-parse HEAD)"
+          done | jq -s from_entries | tee source-refs.json
+      - name: Build native fixtures from source without qualifying core
+        env:
+          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2-native
+          JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
+          JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
+        run: bash consumer/scripts/build-native-config-fixtures.sh 2>&1 | tee native-source-build.log
+      - name: Prepare the pinned GraalVM image once
+        shell: bash
+        run: |
+          image=$(cat consumer/scripts/graalvm-native-image.txt)
+          docker pull "$image"
+          echo "GRAALVM_IMAGE=$image" >> "$GITHUB_ENV"
+      - name: Verify client-config native binding with module metadata
+        env:
+          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2-native
+          GRAALVM_PULL: never
+        run: |
+          mvn -B -Dmaven.repo.local="$JACKSON3_MAVEN_REPO" -f consumer/client-config/pom.xml \
+            org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+            -DincludeScope=runtime -Dmdep.outputFile=target/native-runtime.classpath
+          mvn -B -Dmaven.repo.local="$JACKSON3_MAVEN_REPO" -f consumer/client-config/pom.xml \
+            org.apache.maven.plugins:maven-help-plugin:3.5.1:effective-pom \
+            -Doutput=target/native-effective-pom.xml
+          bash consumer/scripts/verify-native-config-binding.sh 2>&1 | tee native-client-config.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-binding-reports
+          path: |
+            native-source-build.log
+            native-client-config.log
+            source-commits.txt
+            source-refs.json
