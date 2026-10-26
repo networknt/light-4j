@@ -1,0 +1,252 @@
+{
+  "access-config": {
+    "minimum_executed": 1
+  },
+  "api-key": {
+    "minimum_executed": 1
+  },
+  "apikey-config": {
+    "minimum_executed": 1
+  },
+  "audit": {
+    "minimum_executed": 1
+  },
+  "audit-config": {
+    "minimum_executed": 1
+  },
+  "balance": {
+    "minimum_executed": 1
+  },
+  "basic-auth": {
+    "minimum_executed": 1
+  },
+  "basic-config": {
+    "minimum_executed": 1
+  },
+  "body": {
+    "minimum_executed": 1
+  },
+  "body-config": {
+    "minimum_executed": 1
+  },
+  "cache-manager": {
+    "minimum_executed": 1
+  },
+  "caffeine-cache": {
+    "minimum_executed": 1
+  },
+  "client": {
+    "minimum_executed": 1
+  },
+  "client-config": {
+    "minimum_executed": 1
+  },
+  "cluster": {
+    "minimum_executed": 1
+  },
+  "common": {
+    "minimum_executed": 1
+  },
+  "config": {
+    "minimum_executed": 1
+  },
+  "config-reload": {
+    "minimum_executed": 1
+  },
+  "consul": {
+    "minimum_executed": 1
+  },
+  "content": {
+    "minimum_executed": 1
+  },
+  "correlation": {
+    "minimum_executed": 1
+  },
+  "cors": {
+    "minimum_executed": 1
+  },
+  "cors-config": {
+    "minimum_executed": 1
+  },
+  "data-source": {
+    "minimum_executed": 1
+  },
+  "db-provider": {
+    "minimum_executed": 1
+  },
+  "decryptor": {
+    "minimum_executed": 1
+  },
+  "deref-token": {
+    "minimum_executed": 1
+  },
+  "dump": {
+    "minimum_executed": 1
+  },
+  "egress-router": {
+    "minimum_executed": 1
+  },
+  "email-sender": {
+    "minimum_executed": 1
+  },
+  "encode-decode": {
+    "minimum_executed": 1
+  },
+  "exception": {
+    "minimum_executed": 1
+  },
+  "handler": {
+    "minimum_executed": 1
+  },
+  "handler-config": {
+    "minimum_executed": 1
+  },
+  "header": {
+    "minimum_executed": 1
+  },
+  "header-config": {
+    "minimum_executed": 1
+  },
+  "health": {
+    "minimum_executed": 1
+  },
+  "health-config": {
+    "minimum_executed": 1
+  },
+  "hmac": {
+    "minimum_executed": 1
+  },
+  "hmac-config": {
+    "minimum_executed": 1
+  },
+  "hmac-redis": {
+    "minimum_executed": 1
+  },
+  "http-url": {
+    "minimum_executed": 1
+  },
+  "info": {
+    "minimum_executed": 1
+  },
+  "info-config": {
+    "minimum_executed": 1
+  },
+  "ingress-proxy": {
+    "minimum_executed": 1
+  },
+  "ip-whitelist": {
+    "minimum_executed": 1
+  },
+  "jackson-defaults": {
+    "minimum_executed": 1
+  },
+  "ldap-util": {
+    "minimum_executed": 1
+  },
+  "limit-config": {
+    "minimum_executed": 1
+  },
+  "mask": {
+    "minimum_executed": 1
+  },
+  "mcp-router": {
+    "minimum_executed": 1
+  },
+  "metrics": {
+    "minimum_executed": 1
+  },
+  "metrics-config": {
+    "minimum_executed": 1
+  },
+  "monad-result": {
+    "minimum_executed": 1
+  },
+  "portal-registry": {
+    "minimum_executed": 1
+  },
+  "prometheus": {
+    "minimum_executed": 1
+  },
+  "proxy-handler": {
+    "minimum_executed": 1
+  },
+  "rate-limit": {
+    "minimum_executed": 1
+  },
+  "registry": {
+    "minimum_executed": 1
+  },
+  "reqtrans-config": {
+    "minimum_executed": 1
+  },
+  "request-transformer": {
+    "minimum_executed": 0,
+    "disabled_reason": "Existing request-transformer suite is disabled; retained as explicit skip-only coverage, not executed qualification."
+  },
+  "resource": {
+    "minimum_executed": 1
+  },
+  "response-transformer": {
+    "minimum_executed": 1
+  },
+  "restrans-config": {
+    "minimum_executed": 1
+  },
+  "router-config": {
+    "minimum_executed": 1
+  },
+  "rule-config": {
+    "minimum_executed": 1
+  },
+  "rule-loader": {
+    "minimum_executed": 1
+  },
+  "sanitizer": {
+    "minimum_executed": 1
+  },
+  "sanitizer-config": {
+    "minimum_executed": 1
+  },
+  "security": {
+    "minimum_executed": 1
+  },
+  "security-config": {
+    "minimum_executed": 1
+  },
+  "server": {
+    "minimum_executed": 1
+  },
+  "server-config": {
+    "minimum_executed": 1
+  },
+  "service": {
+    "minimum_executed": 1
+  },
+  "sse-handler": {
+    "minimum_executed": 1
+  },
+  "status": {
+    "minimum_executed": 1
+  },
+  "switcher": {
+    "minimum_executed": 1
+  },
+  "token-client": {
+    "minimum_executed": 1
+  },
+  "token-exchange": {
+    "minimum_executed": 1
+  },
+  "token-limit": {
+    "minimum_executed": 1
+  },
+  "unified-config": {
+    "minimum_executed": 1
+  },
+  "unified-security": {
+    "minimum_executed": 1
+  },
+  "utility": {
+    "minimum_executed": 1
+  }
+}

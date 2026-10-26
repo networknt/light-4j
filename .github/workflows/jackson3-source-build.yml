@@ -3,6 +3,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      source_sha:
+        description: Full candidate SHA for independent qualification; empty runs ordinary CI
+        type: string
+        default: ''
       source_refs:
         description: JSON map of prerequisite repository names to full commit SHAs
         type: string
@@ -13,6 +17,7 @@ permissions:
   contents: read
 jobs:
   test:
+    if: github.event_name != 'workflow_dispatch' || inputs.source_sha == ''
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -31,27 +36,11 @@ jobs:
           SOURCE_REFS: ${{ inputs.source_refs || '{}' }}
         shell: bash
         run: |
-          jq -e 'type == "object" and all(to_entries[]; (.key | IN("yaml-rule", "http-client")) and (.value | type == "string" and test("^[0-9a-f]{40}$")))' <<< "$SOURCE_REFS"
-          resolve() {
-            local repo=$1 branch=${2:-} ref pulls
-            ref=$(jq -r --arg repo "$repo" '.[$repo] // empty' <<< "$SOURCE_REFS")
-            if [[ -z "$ref" && -n "$branch" ]]; then
-              pulls=$(gh api --paginate --slurp "repos/networknt/$repo/pulls?head=networknt:$branch&state=all&per_page=100")
-              ref=$(jq -r '[.[][] | select(.state == "open")] | if length == 1 then .[0].head.sha elif length > 1 then error("Ambiguous source branch") else empty end' <<< "$pulls")
-              if [[ -z "$ref" ]]; then
-                jq -e '[.[][]] | length == 0 or any(.[]; .merged_at != null)' <<< "$pulls" >/dev/null || {
-                  echo "Prerequisite branch $repo:$branch was closed without merging" >&2; exit 1;
-                }
-              fi
-            fi
-            if [[ -z "$ref" ]]; then
-              ref=$(gh api "repos/networknt/$repo" --jq .default_branch)
-            fi
-            ref=$(gh api "repos/networknt/$repo/commits/$ref" --jq .sha)
+          python3 consumer/scripts/resolve_jackson3_prerequisites.py --output source-refs.json
+          for repo in yaml-rule http-client; do
+            ref=$(jq -r --arg repo "$repo" '.[$repo]' source-refs.json)
             echo "${repo//-/_}=$ref" >> "$GITHUB_OUTPUT"
-          }
-          resolve yaml-rule
-          resolve http-client
+          done
       - uses: actions/checkout@v4
         with:
           repository: networknt/yaml-rule
@@ -80,17 +69,6 @@ jobs:
           JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
           JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
         run: bash consumer/scripts/verify-jackson3-bootstrap.sh 2>&1 | tee source-build.log
-      - name: Record actual full-core source qualification
-        if: github.event_name != 'workflow_dispatch'
-        env:
-          SOURCE_REFS: ${{ inputs.source_refs || '{}' }}
-        run: python3 consumer/scripts/record_jackson3_core_evidence.py
-      - uses: actions/upload-artifact@v4
-        if: success() && github.event_name != 'workflow_dispatch'
-        with:
-          name: core-source-qualification-attempt-${{ github.run_attempt }}
-          path: core-source-qualification.json
-          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -100,3 +78,95 @@ jobs:
             source-commits.txt
             source-refs.json
             **/target/surefire-reports/**
+  qualify:
+    if: github.event_name == 'workflow_dispatch' && inputs.source_sha != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      yaml_rule: ${{ steps.prerequisites.outputs.yaml_rule }}
+      http_client: ${{ steps.prerequisites.outputs.http_client }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: policy
+      - name: Validate candidate input
+        env:
+          CANDIDATE_SHA: ${{ inputs.source_sha }}
+        run: '[[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: candidate
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Resolve prerequisite commits using trusted policy
+        id: prerequisites
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REFS: ${{ inputs.source_refs }}
+        run: |
+          python3 policy/scripts/resolve_jackson3_prerequisites.py --output source-refs.json
+          echo "yaml_rule=$(jq -r '.["yaml-rule"]' source-refs.json)" >> "$GITHUB_OUTPUT"
+          echo "http_client=$(jq -r '.["http-client"]' source-refs.json)" >> "$GITHUB_OUTPUT"
+      - name: Check out prerequisites at recorded SHAs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for repo in yaml-rule http-client; do
+            gh repo clone "networknt/$repo" "sources/$repo" -- --no-checkout
+            git -C "sources/$repo" checkout --detach "$(jq -r --arg repo "$repo" '.[$repo]' source-refs.json)"
+          done
+      - name: Test trusted qualification tooling
+        run: python3 -m unittest discover -s policy/scripts/tests -p 'test_jackson3*.py'
+      - name: Build prerequisites and test the full candidate reactor
+        env:
+          JACKSON3_MAVEN_REPO: ${{ runner.temp }}/m2
+          JACKSON3_CORE_SOURCE: ${{ github.workspace }}/candidate
+          JACKSON3_YAML_RULE: ${{ github.workspace }}/sources/yaml-rule
+          JACKSON3_HTTP_CLIENT: ${{ github.workspace }}/sources/http-client
+        shell: bash
+        run: bash policy/scripts/verify-jackson3-bootstrap.sh 2>&1 | tee source-build.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-reports-attempt-${{ github.run_attempt }}
+          path: candidate/**/target/surefire-reports/TEST-*.xml
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qualification-log-attempt-${{ github.run_attempt }}
+          path: source-build.log
+  record:
+    needs: qualify
+    runs-on: ubuntu-latest
+    steps:
+      # Fresh runner: candidate Maven plugins/tests cannot modify this recorder.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: policy
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: candidate
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-reports-attempt-${{ github.run_attempt }}
+          path: candidate
+      - name: Record qualification using trusted module inventory
+        env:
+          YAML_RULE_SHA: ${{ needs.qualify.outputs.yaml_rule }}
+          HTTP_CLIENT_SHA: ${{ needs.qualify.outputs.http_client }}
+        run: |
+          jq -n --arg yaml "$YAML_RULE_SHA" --arg http "$HTTP_CLIENT_SHA" \
+            '{"yaml-rule": $yaml, "http-client": $http}' > source-refs.json
+          python3 policy/scripts/record_jackson3_core_evidence.py \
+            --source candidate --refs source-refs.json --report core-source-qualification.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-source-qualification-attempt-${{ github.run_attempt }}
+          path: core-source-qualification.json
+          if-no-files-found: error
