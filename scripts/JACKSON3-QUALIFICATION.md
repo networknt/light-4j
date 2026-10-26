@@ -35,15 +35,30 @@ SHA, policy SHA, required module coverage, and summed test counters. A later
 failed or pending attempt does not revoke earlier successful retained evidence.
 Missing/expired evidence reports the candidate and policy requiring a new run.
 
-The inventory stores a verified executed-test baseline for 83 modules: 1,276 total,
-measured at `27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in qualification
+The inventory stores a reviewed executed-test baseline for 83 modules: 1,283 total
+for the native-fix corpus. The original 1,276-test corpus was measured at
+`27aed6a44a91d40a4a590be563b3d6e2fbc3415b` in
 [40266655138](https://github.com/networknt/light-4j/actions/runs/40266655138).
-The proposed tolerance allows a loss of `max(1, ceil(5% * baseline))` per module,
+The native-fix stack at `741048ac839351a3f4edcf24c0bc977a2aac31d9` ran
+1,372 tests with 89 skips and no failures/errors in
+[40259691559](https://github.com/networknt/light-4j/actions/runs/40259691559).
+Its Java/POM corpus matches merged runtime candidate
+`97b2359b92ed3e1d05cac04f2da8760aa954e49d`; use that candidate's fresh
+[ordinary CI reports](https://github.com/networknt/light-4j/actions/runs/40356825612)
+for final promotion verification. The reviewed changes are:
+
+| Module | Previous baseline | Native-fix baseline | Executed floor |
+| --- | ---: | ---: | ---: |
+| client-config | 4 | 6 | 5 |
+| jackson-defaults | 3 | 6 | 5 |
+| token-exchange | 60 | 62 | 58 |
+
+The tolerance still allows a loss of `max(1, ceil(5% * baseline))` per module,
 with a floor of one executed test in each required module. Examples: 100 -> 95,
-3 -> 2, 1 -> 1. The resulting floors total 1,171, not 1,276. Both the baseline
-and effective floor are stored, and tooling validates the formula. The existing
-disabled request-transformer suite remains the explicit zero-execution exception.
-This tolerance is proposed for review, not silently adopted by the seven consumers.
+3 -> 2, 1 -> 1. Effective floors now total 1,177. Both baseline and effective floor
+are stored, and tooling validates the formula. The disabled request-transformer
+suite remains the explicit zero-execution exception. Raising these baselines is a
+reviewed policy change; it does not move any consumer pin automatically.
 
 Small consolidations or environment-dependent skips within the allowance need no
 policy change. Adopting a different candidate still requires its own qualification;

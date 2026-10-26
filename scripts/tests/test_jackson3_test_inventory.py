@@ -88,8 +88,8 @@ class ReportCoverageTest(unittest.TestCase):
 
     def test_floors_retain_the_verified_executed_baseline(self):
         policy = inventory.load_inventory()
-        self.assertEqual(1276, sum(entry["baseline_executed"] for entry in policy.values()))
-        self.assertEqual(1171, sum(entry["minimum_executed"] for entry in policy.values()))
+        self.assertEqual(1283, sum(entry["baseline_executed"] for entry in policy.values()))
+        self.assertEqual(1177, sum(entry["minimum_executed"] for entry in policy.values()))
         self.assertEqual(0, policy["request-transformer"]["minimum_executed"])
         self.assertEqual(67, sum(entry["baseline_executed"] > 1 for entry in policy.values()))
 

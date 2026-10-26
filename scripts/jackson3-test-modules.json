@@ -52,8 +52,8 @@
     "baseline_executed": 69
   },
   "client-config": {
-    "minimum_executed": 3,
-    "baseline_executed": 4
+    "minimum_executed": 5,
+    "baseline_executed": 6
   },
   "cluster": {
     "minimum_executed": 8,
@@ -184,8 +184,8 @@
     "baseline_executed": 12
   },
   "jackson-defaults": {
-    "minimum_executed": 2,
-    "baseline_executed": 3
+    "minimum_executed": 5,
+    "baseline_executed": 6
   },
   "ldap-util": {
     "minimum_executed": 8,
@@ -313,8 +313,8 @@
     "baseline_executed": 2
   },
   "token-exchange": {
-    "minimum_executed": 57,
-    "baseline_executed": 60
+    "minimum_executed": 58,
+    "baseline_executed": 62
   },
   "token-limit": {
     "minimum_executed": 7,
