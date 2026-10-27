@@ -8,10 +8,12 @@ from pathlib import Path
 import re
 
 
-# This published Jackson 3 validator is an approved external prerequisite, not a migration snapshot.
+# Published Jackson 3 prerequisites approved by exact artifact SHA-256.
 APPROVED_RELEASES = {
     # https://repo.maven.apache.org/maven2/com/networknt/json-schema-validator/3.0.8/json-schema-validator-3.0.8.jar.sha256
     "com.networknt:json-schema-validator:jar:3.0.8": "d3f4c61ba35c3543bdf1ab42462bf89721542f4adea5b092ee7b430dfd467181",
+    # https://repo.maven.apache.org/maven2/com/networknt/yaml-rule/4.0.0/yaml-rule-4.0.0.jar
+    "com.networknt:yaml-rule:jar:4.0.0": "ca1b92f8275f12918fa103ea51b834ea6d5a1a472f934e9560a0088ce5cf4201",
 }
 KNOWN_JACKSON2_RELEASES = {
     ("com.networknt", "yaml-rule", "3.0.1"),
