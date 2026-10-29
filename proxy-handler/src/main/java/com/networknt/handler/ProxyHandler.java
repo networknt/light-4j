@@ -17,25 +17,9 @@
  */
 package com.networknt.handler;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
-import java.nio.channels.FileChannel;
-import java.security.cert.Certificate;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Executor;
-import java.util.function.UnaryOperator;
-import java.util.concurrent.atomic.AtomicLong;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import java.security.cert.CertificateEncodingException;
-
 import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.handler.thread.LightThreadExecutor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.metrics.AbstractMetricsHandler;
@@ -43,25 +27,6 @@ import com.networknt.utility.CollectionUtils;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.server.*;
-import io.undertow.server.handlers.ResponseCodeHandler;
-import io.undertow.server.handlers.proxy.ProxyCallback;
-import io.undertow.server.handlers.proxy.ProxyClient;
-import io.undertow.server.handlers.proxy.ProxyConnection;
-import io.undertow.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.ChannelExceptionHandler;
-import org.xnio.ChannelListener;
-import org.xnio.ChannelListeners;
-import org.xnio.IoUtils;
-import org.xnio.Option;
-import org.xnio.StreamConnection;
-import org.xnio.XnioIoThread;
-import org.xnio.XnioExecutor;
-import org.xnio.XnioWorker;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.channels.StreamSourceChannel;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.client.ClientCallback;
 import io.undertow.client.ClientConnection;
@@ -73,10 +38,44 @@ import io.undertow.io.IoCallback;
 import io.undertow.io.Sender;
 import io.undertow.predicate.IdempotentPredicate;
 import io.undertow.predicate.Predicate;
+import io.undertow.server.*;
+import io.undertow.server.handlers.ResponseCodeHandler;
+import io.undertow.server.handlers.proxy.ProxyCallback;
+import io.undertow.server.handlers.proxy.ProxyClient;
+import io.undertow.server.handlers.proxy.ProxyConnection;
 import io.undertow.server.protocol.http.HttpAttachments;
 import io.undertow.server.protocol.http.HttpContinue;
+import io.undertow.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.ChannelExceptionHandler;
+import org.xnio.ChannelListener;
+import org.xnio.ChannelListeners;
+import org.xnio.IoUtils;
+import org.xnio.Option;
+import org.xnio.StreamConnection;
+import org.xnio.XnioExecutor;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.channels.StreamSourceChannel;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
+import java.nio.channels.FileChannel;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 /**
  * An HTTP handler which proxies content to a remote server.
@@ -377,37 +376,73 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    /** One immutable policy snapshot and the existing request-MDC executor, reused by all callbacks. */
-    private record ProxyContinuation(UnaryOperator<HttpHandler> boundary, LightThreadExecutor executor) { }
+    /** One immutable policy snapshot, reused by all callbacks. MDC is scoped by capture(). */
+    private record ProxyContinuation(UnaryOperator<HttpHandler> boundary) { }
+    private record CallbackFrame(ProxyContinuation continuation, HttpServerExchange exchange) { }
+    private static final ThreadLocal<CallbackFrame> ACTIVE_CALLBACK = new ThreadLocal<>();
+    private static final AttachmentKey<ClientExchange> CLIENT_EXCHANGE = AttachmentKey.create(ClientExchange.class);
+    private static final AttachmentKey<Boolean> ABORTING = AttachmentKey.create(Boolean.class);
 
-    /** Keep callback setup and upstream-resource cleanup inside the selected boundary. */
+    /** Each asynchronous entry owns one boundary/MDC scope; synchronous internal calls reuse it. */
     private static Runnable continuationTask(HttpServerExchange exchange,
                                              ProxyContinuation continuation,
-                                             HttpHandler callback) {
-        Runnable task = HandlerContinuation.task(exchange, continuation.boundary().apply(ex -> {
-            try {
-                callback.handleRequest(ex);
-            } catch (Exception | Error failure) {
-                ProxyConnection upstream = ex.getAttachment(CONNECTION);
-                if (upstream != null) IoUtils.safeClose(upstream.getConnection());
-                throw failure;
+                                             Consumer<HttpServerExchange> callback) {
+        return () -> {
+            CallbackFrame previous = ACTIVE_CALLBACK.get();
+            if (previous != null && previous.continuation() == continuation && previous.exchange() == exchange) {
+                callback.accept(exchange);
+                return;
             }
-        }));
-        return () -> continuation.executor().execute(task);
+            ACTIVE_CALLBACK.set(new CallbackFrame(continuation, exchange));
+            try {
+                HandlerContinuation.task(exchange, continuation.boundary().apply(ex -> {
+                    try {
+                        callback.accept(ex);
+                    } catch (Exception | Error failure) {
+                        abortUpstream(ex);
+                        throw failure;
+                    }
+                })).run();
+            } finally {
+                if (previous == null) ACTIVE_CALLBACK.remove();
+                else ACTIVE_CALLBACK.set(previous);
+            }
+        };
+    }
+
+    private static void cancelClientExchange(ClientExchange request) {
+        if (request.getConnection().isMultiplexingSupported()) {
+            // Close only this request's channels, never its shared HTTP/2 connection.
+            IoUtils.safeClose(request.getRequestChannel(), request.getResponseChannel());
+        } else IoUtils.safeClose(request.getConnection());
+    }
+
+    private static void abortUpstream(HttpServerExchange exchange) {
+        exchange.putAttachment(ABORTING, Boolean.TRUE);
+        ClientExchange request = exchange.removeAttachment(CLIENT_EXCHANGE);
+        if (request != null) cancelClientExchange(request);
+        else {
+            ProxyConnection connection = exchange.getAttachment(CONNECTION);
+            if (connection != null && !connection.getConnection().isMultiplexingSupported())
+                IoUtils.safeClose(connection.getConnection());
+        }
     }
 
     private static ClientCallback<ClientExchange> boundaryCallback(HttpServerExchange exchange,
             ProxyContinuation continuation, ClientCallback<ClientExchange> callback) {
         return new ClientCallback<>() {
             @Override public void completed(ClientExchange result) {
-                if (exchange.isComplete()) {
-                    IoUtils.safeClose(result.getConnection());
+                if (exchange.isComplete() || Boolean.TRUE.equals(exchange.getAttachment(ABORTING))) {
+                    cancelClientExchange(result);
                     return;
                 }
-                continuationTask(exchange, continuation, ex -> callback.completed(result)).run();
+                continuationTask(exchange, continuation, ex -> {
+                    ex.putAttachment(CLIENT_EXCHANGE, result);
+                    callback.completed(result);
+                }).run();
             }
             @Override public void failed(IOException failure) {
-                if (!exchange.isComplete())
+                if (!exchange.isComplete() && !Boolean.TRUE.equals(exchange.getAttachment(ABORTING)))
                     continuationTask(exchange, continuation, ex -> callback.failed(failure)).run();
             }
         };
@@ -425,7 +460,7 @@ public class ProxyHandler implements HttpHandler {
 
         ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate, boolean streamingRequest) {
             this.exchange = exchange;
-            this.continuation = new ProxyContinuation(HandlerContinuation.capture(exchange), new LightThreadExecutor(exchange));
+            this.continuation = new ProxyContinuation(HandlerContinuation.capture(exchange));
             this.timeout = timeout;
             this.maxRetryAttempts = maxRetryAttempts;
             this.target = target;
@@ -443,13 +478,13 @@ public class ProxyHandler implements HttpHandler {
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             continuationTask(exchange, continuation, ex -> {
                 if (ex.isComplete()) {
-                    IoUtils.safeClose(connection.getConnection());
+                    if (!connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection());
                     return;
                 }
                 LOG.trace("ProxyCallback completed for exchange: {}", ex);
                 ex.putAttachment(CONNECTION, connection);
-                ex.dispatch(INLINE_EXECUTOR, continuationTask(ex, continuation, resumed ->
-                        new ProxyAction(connection, resumed, requestHeaders, rewriteHostHeader, reuseXForwarded, resumed.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run()));
+                continuationTask(ex, continuation, resumed ->
+                        new ProxyAction(connection, resumed, requestHeaders, rewriteHostHeader, reuseXForwarded, resumed.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run()).run();
             }).run();
         }
 
@@ -467,7 +502,7 @@ public class ProxyHandler implements HttpHandler {
 
                 if (this.timeout > 0 && time > this.timeout) {
                     LOG.trace("Current time = {} passes timeout {} for exchange: {}", time, this.timeout, exchange);
-                    cancel(exchange);
+                    cancelRequest(exchange);
 
                 } else {
                     this.target = proxyClient.findTarget(exchange);
@@ -480,19 +515,19 @@ public class ProxyHandler implements HttpHandler {
 
                     } else {
                         LOG.trace("Target is null, cannot resolve the backend");
-                        couldNotResolveBackend(exchange); // The context was registered when we started, so return 503
+                        unresolvedBackend(exchange); // The context was registered when we started, so return 503
                     }
                 }
 
             } else {
                 LOG.trace("Max number fo retry attempts reached for exchange: {}", exchange);
-                couldNotResolveBackend(exchange);
+                unresolvedBackend(exchange);
             }
         }
 
         @Override
         public void queuedRequestFailed(HttpServerExchange exchange) {
-            failed(exchange);
+            continuationTask(exchange, continuation, this::handleFailed).run();
         }
 
         @Override
@@ -530,7 +565,7 @@ public class ProxyHandler implements HttpHandler {
             if (connectionAttachment != null) {
                 ClientConnection clientConnection = connectionAttachment.getConnection();
                 UndertowLogger.PROXY_REQUEST_LOGGER.timingOutRequest(clientConnection.getPeerAddress() + "" + exchange.getRequestURI());
-                IoUtils.safeClose(clientConnection);
+                abortUpstream(exchange);
 
             } else UndertowLogger.PROXY_REQUEST_LOGGER.timingOutRequest(exchange.getRequestURI());
 
@@ -594,7 +629,7 @@ public class ProxyHandler implements HttpHandler {
             this.streamResponseContentTypes = streamResponseContentTypes;
             this.streamIdleTimeout = streamIdleTimeout;
             this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
-            }
+        }
 
         @Override
         public void run() {

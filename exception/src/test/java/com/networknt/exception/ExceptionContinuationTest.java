@@ -26,12 +26,13 @@ class ExceptionContinuationTest {
     static Stream<Arguments> cases() {
         return Stream.of("exception", "continuation-named", "continuation-disabled")
                 .flatMap(name -> Stream.of(false, true).flatMap(async ->
-                        Stream.of(false, true).map(runtime -> Arguments.of(name, async, runtime))));
+                        Stream.of(false, true).flatMap(runtime -> Stream.of(false, true)
+                                .map(mdc -> Arguments.of(name, async, runtime, mdc)))));
     }
 
     @ParameterizedTest
     @MethodSource("cases")
-    void selectedPolicyHandlesInitialAndResumedFailures(String name, boolean async, boolean runtime) throws Exception {
+    void selectedPolicyHandlesInitialAndResumedFailures(String name, boolean async, boolean runtime, boolean hasMdc) throws Exception {
         boolean enabled = !name.endsWith("disabled");
         Map<String, Object> previous = Config.getInstance().getJsonMapConfig("exception");
         Config.getInstance().putInConfigCache(name, Map.of("enabled", enabled));
@@ -42,12 +43,18 @@ class ExceptionContinuationTest {
             }
         };
         HttpHandler failing = exchange -> {
+            if (async) {
+                assertEquals(hasMdc ? "canonical" : null, org.slf4j.MDC.get("request"));
+                assertNull(org.slf4j.MDC.get("executor"));
+            }
             if (runtime) throw new IllegalStateException("runtime failure");
             throw new IOException("checked failure");
         };
         var resumedMdc = new java.util.concurrent.atomic.AtomicReference<String>();
         var resumedDone = new java.util.concurrent.CountDownLatch(1);
         HttpHandler work = exchange -> {
+            if (hasMdc) exchange.putAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT,
+                    Map.of("request", "canonical"));
             if (async) {
                 HttpHandler resumed = HandlerContinuation.capture(exchange, failing);
                 exchange.dispatch(() -> {
@@ -84,4 +91,74 @@ class ExceptionContinuationTest {
             else Config.getInstance().clearConfigCache(name);
         }
     }
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void committedResponseIsNotTruncatedByInitialOrResumedBoundary(boolean resumed) throws Exception {
+        var release = new java.util.concurrent.CountDownLatch(1);
+        ExceptionHandler selected = new ExceptionHandler();
+        HttpHandler streaming = exchange -> {
+            exchange.startBlocking();
+            var output = exchange.getOutputStream();
+            output.write("first".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            output.flush();
+            exchange.dispatch(() -> {
+                try {
+                    assertTrue(release.await(5, java.util.concurrent.TimeUnit.SECONDS));
+                    output.write("second".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    output.close();
+                } catch (Exception e) { throw new RuntimeException(e); }
+            });
+            throw new IOException("failure after sending response headers");
+        };
+        selected.setNext(exchange -> {
+            if (resumed) exchange.dispatch(HandlerContinuation.capture(exchange, streaming));
+            else streaming.handleRequest(exchange);
+        });
+        Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(selected).build();
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            server.start();
+            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+            var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port))
+                    .timeout(Duration.ofSeconds(8)).build(), HttpResponse.BodyHandlers.ofInputStream());
+            assertEquals(200, response.statusCode());
+            try (var body = response.body()) {
+                assertEquals("first", new String(body.readNBytes(5), java.nio.charset.StandardCharsets.UTF_8));
+                release.countDown();
+                assertEquals("second", new String(body.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+            }
+        } finally {
+            release.countDown();
+            server.stop();
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    void lateResumedFailureDoesNotRewriteCompletedResponseOrCloseKeepAliveConnection() throws Exception {
+        var saved = new java.util.concurrent.atomic.AtomicReference<HttpHandler>();
+        var completed = new java.util.concurrent.atomic.AtomicReference<HttpServerExchange>();
+        var done = new java.util.concurrent.CountDownLatch(1);
+        ExceptionHandler selected = new ExceptionHandler();
+        selected.setNext(exchange -> {
+            saved.set(HandlerContinuation.capture(exchange, ex -> { throw new IOException("late failure"); }));
+            exchange.addExchangeCompleteListener((ex, next) -> {
+                completed.set(ex);
+                done.countDown();
+                next.proceed();
+            });
+            exchange.getResponseSender().send("accepted");
+        });
+        Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(selected).build();
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            server.start();
+            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+            var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port)).timeout(Duration.ofSeconds(5)).build();
+            assertEquals("accepted", client.send(request, HttpResponse.BodyHandlers.ofString()).body());
+            assertTrue(done.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            assertTrue(completed.get().isComplete());
+            saved.get().handleRequest(completed.get());
+            assertTrue(completed.get().getConnection().isOpen());
+            assertEquals("accepted", client.send(request, HttpResponse.BodyHandlers.ofString()).body());
+        } finally { server.stop(); }
+    }
+
 }

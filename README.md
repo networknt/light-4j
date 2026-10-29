@@ -176,18 +176,26 @@ ExceptionHandler supplies its existing policy without rebuilding middleware or
 changing its next handler. Named handlers are retained; when exception handling
 is disabled and omitted from the chain, failures remain under Undertow's default
 policy. Nested boundaries restore their enclosing scope, and state is isolated
-per exchange. The continuation contract carries only exception policy; MDC stays
-with the existing MDC_CONTEXT attachment and LightThreadExecutor. Capturing and
-resuming a boundary does not copy or replace thread-local MDC. ExceptionHandler
-clears MDC at initial chain exit, not inside each resumed frame.
+per exchange. Capturing a boundary does not snapshot thread-local MDC. At resume,
+one scope installs the canonical MDC_CONTEXT attachment (or an empty context when
+absent), then restores the executing thread's previous MDC on every exit. Nested
+frames reuse that scope. Proxy callbacks use this scope rather than the unscoped
+LightThreadExecutor. ExceptionHandler retains its original response-channel
+availability policy after commitment; it does not forcibly close general-service
+responses. Its initial worker frame still clears request MDC at chain exit.
 BodyHandler, DumpHandler and McpHandler redispatch, HMAC replay/admin completion,
 and ProxyHandler acquisition, retries, timeout cancellation and client send/response
-callbacks carry the selected boundary. Proxy actions reuse the request's captured
-policy and preserve pending upstream I/O on success. Callback failure closes its
-upstream connection. Before response commitment an unhandled failure returns 500;
-after commitment it closes the connection without appending an error or marking
-a truncated stream complete. Late failures on completed exchanges do not rewrite
-the response or close a reused downstream connection.
+callbacks carry the selected boundary. The body-read callback scopes interceptor
+execution as well as downstream handling, and preserves pending-read lifecycle.
+Proxy actions reuse one captured policy; internal synchronous calls do not add
+boundary frames or reset MDC again. Unexpected proxy failures cancel only the
+upstream request's channels on multiplexed connections. Before response commitment
+an unhandled failure returns 500; after commitment it closes the failed response
+stream without appending an error. Undertow's HTTP/2 ServerConnection.close()
+sends RST_STREAM for that stream, preserving healthy siblings. Late failures on
+completed exchanges do not rewrite a response or close a reused connection.
+The neutral Runnable adapter propagates Error; selected exception policies keep
+their existing handling behavior.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
 Body-reading requests capture lazily only when a read suspends. ingress-proxy uses
