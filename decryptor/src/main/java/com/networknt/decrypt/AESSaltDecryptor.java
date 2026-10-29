@@ -14,7 +14,6 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Decrypts authenticated four-part CRYPT values produced by light-encryptor.
@@ -32,18 +31,10 @@ public class AESSaltDecryptor implements Decryptor {
     // Providers register fresh arrays at creation; overridden getPassword methods
     // may return borrowed arrays, which must never be inferred to be owned.
     private final ThreadLocal<List<char[]>> ownedPasswords = new ThreadLocal<>();
-    private final AtomicBoolean missingProviderLogged = new AtomicBoolean();
-
     /**
-     * Initializes the base of an explicit password-provider subclass.
-     *
-     * @throws MissingMasterPasswordProviderException if instantiated directly
+     * Default constructor for AESSaltDecryptor.
      */
     public AESSaltDecryptor() {
-        // Do not acquire passwords or invoke overridable methods during construction.
-        if (getClass() == AESSaltDecryptor.class) {
-            throw missingPasswordProvider();
-        }
     }
 
     @Override
@@ -183,18 +174,10 @@ public class AESSaltDecryptor implements Decryptor {
      * Gets the password from a subclass provider. The base class has no default secret.
      *
      * @return char array of the password
-     * @throws MissingMasterPasswordProviderException always; subclasses must supply a password
      */
     protected char[] getPassword() {
-        throw missingPasswordProvider();
-    }
-
-    private MissingMasterPasswordProviderException missingPasswordProvider() {
-        MissingMasterPasswordProviderException failure = new MissingMasterPasswordProviderException();
-        if (missingProviderLogged.compareAndSet(false, true)) {
-            logger.error(failure.getMessage());
-        }
-        return failure;
+        throw new IllegalStateException("No master-password provider configured. Select AutoAESSaltDecryptor "
+                + "with an explicit light_4j_config_password, ManualAESSaltDescryptor, or a custom password provider.");
     }
 
     private static byte[] fromHex(String hex, String name) {

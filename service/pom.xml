@@ -33,10 +33,6 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>service-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>utility</artifactId>
         </dependency>
         <dependency>

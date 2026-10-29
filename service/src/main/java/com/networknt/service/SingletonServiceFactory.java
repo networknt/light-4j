@@ -18,7 +18,6 @@ package com.networknt.service;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import com.networknt.service.api.FatalServiceConfiguration;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,16 +67,10 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
-            // #883: stderr remains available before startup logging is ready.
-            // Print exactly once for either fatal or legacy handling; do not also log the stack.
+            // #883 during the server startup, any exception here will stops the server and there is no chance for the
+            // logback to output anything to the log file or stdout/stderr. That is the reason here to printStackTrace.
             e.printStackTrace();
-            // Only an explicit fatal-configuration contract opts out of legacy handling.
-            // Reflection/runtime wrappers may hide the marked failure.
-            for (Throwable cause = e; cause != null; cause = cause.getCause()) {
-                if (cause instanceof FatalServiceConfiguration) {
-                    throw new IllegalStateException("Unable to initialize singleton services.", e);
-                }
-            }
+            logger.error("Exception:", e);
         }
         ModuleRegistry.registerModule(ServiceConfig.CONFIG_NAME, SingletonServiceFactory.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceConfig.CONFIG_NAME), null);
     }

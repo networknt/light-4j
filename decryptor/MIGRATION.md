@@ -43,54 +43,24 @@ cannot identify a configuration key/file on its own.
 ## Credential lifetime and compatibility
 
 **Breaking change on master and 2.x:** the base `AESSaltDecryptor` no longer
-supplies the public `light` password. Direct base-class construction fails,
-including under JUnit. The previous compatibility waiver is withdrawn.
-See [issue #2831](https://github.com/networknt/light-4j/issues/2831).
+supplies the public `light` password. Direct base-class use fails closed on
+otherwise valid CRYPT input, including under JUnit. This withdraws the previous
+compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/issues/2831).
 
 Select `AutoAESSaltDecryptor` with an explicitly supplied
 `light_4j_config_password` (or uppercase equivalent), the interactive
-`ManualAESSaltDescryptor`, or a custom password provider. The Auto provider's
-existing current-thread JUnit-only fixture fallback remains separate and unchanged.
+`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit detection or public-password fallback. Tests supply their synthetic
+password explicitly through the test runner; direct IDE runs must configure the
+same test-only system property.
 Custom providers keep their existing ownership contract.
 
-Inventory all provider bindings before upgrading: `decryptorClass` in config.yml,
-`com.networknt.decrypt.Decryptor` singleton bindings in service.yml (used by
-`DecryptUtil`), direct `new AESSaltDecryptor()` calls, and custom subclasses.
-Direct base-class construction fails immediately, including reflective config.yml
-and service.yml selection. Custom subclasses must supply a password. Any path
-that falls back to `super.getPassword()` fails when invoked. Constructors do not
-call subclass password methods or prompt for secrets.
-
-The `decryptor` and `service` artifacts now depend on the small `service-api`
-artifact. Maven resolves it transitively. Applications assembling a classpath
-manually must include the matching `service-api` JAR. The separate `test-support`
-artifact is test-scoped and is not required by applications at runtime.
-
-Missing-provider exceptions implement the explicit `FatalServiceConfiguration`
-contract from the dependency-free `service-api` module. They have no synthetic
-cause. The service factory recognizes that marker through reflection wrappers;
-it does not classify ordinary `ServiceConfigurationError` failures as fatal.
-The first missing-provider lookup receives `ExceptionInInitializerError`; later
-lookups in that JVM receive `NoClassDefFoundError`. Fix the provider binding and
-restart the JVM.
-
-Both fatal and legacy factory failures print one stack trace to stderr, preserving
-the startup workaround when logging is not ready. The factory does not log a second
-copy. Ordinary missing classes and unmarked constructor failures retain their
-legacy handling: stop processing the singleton list and retain earlier bindings.
-Later bindings may be absent. This PR does not make those unrelated failures fatal.
-
-This change removes the base provider's public default only. Auto's current-thread
-JUnit detection still enables its public fixture password without an explicit
-secret; removing that behavior requires a separate fixture migration. Do not treat
-this change as eliminating every implicit password path.
-
-If the base class was using its public default, migrate affected values offline.
-Decrypt and re-encrypt them with light-encryptor and a deployment-specific master secret.
-Do not print plaintext or put real secrets in commands, logs or issues.
-Replace the provider selection and distribute the new runtime secret before
-adopting the updated library. Supplying the old public password explicitly is
-not remediation.
+Inventory deployed `decryptorClass` settings, service.yml Decryptor bindings,
+direct instantiations, and subclasses calling `super.getPassword()` before upgrading. If the base class
+was using its public default, decrypt and re-encrypt affected values in a controlled
+offline migration with light-encryptor and a deployment-specific master secret.
+Do not print plaintext or put real secrets in commands, logs or issues. Replace
+the provider selection and distribute the new runtime secret before adopting the
+updated library. Supplying the old public password explicitly is not remediation.
 
 The base and Auto providers do not cache derived keys or master passwords. A password change
 is observed on the next decrypt call; it does not reload already cached/decrypted
