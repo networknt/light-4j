@@ -26,7 +26,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.xnio.IoUtils;
 
 /**
  * This is a middleware handler that should be put in the beginning of request/response
@@ -100,11 +99,6 @@ public class ExceptionHandler implements MiddlewareHandler {
             continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
-            if (exchange.isComplete()) return;
-            if (exchange.isResponseStarted()) {
-                IoUtils.safeClose(exchange.getConnection());
-                return;
-            }
             if(exchange.isResponseChannelAvailable()) {
                 //handle exceptions
                 if(e instanceof RuntimeException) {

@@ -268,23 +268,28 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
         @Override
         public void handleEvent(StreamSourceChannel ignored) {
+            // A pending read must not be auto-ended by a root-handler wrapper.
+            HandlerContinuation.task(exchange, ex -> resumeRead()).run();
+        }
+
+        private void resumeRead() throws Exception {
+            boolean complete;
             try {
                 ReadOutcome outcome = readAvailable();
-                if (outcome == ReadOutcome.PENDING)
-                    return;
-
+                if (outcome == ReadOutcome.PENDING) return;
                 stopReading();
-                if (outcome == ReadOutcome.COMPLETE) {
-                    saveBufferAndResetUndertowConnector(exchange, bufferedData);
-                    if (!exchange.isResponseStarted())
-                        Connectors.executeRootHandler(resumedHandler, exchange);
-                }
+                complete = outcome == ReadOutcome.COMPLETE;
+                if (complete) saveBufferAndResetUndertowConnector(exchange, bufferedData);
             } catch (Throwable e) {
                 LOG.error(e.getMessage(), e);
                 stopReading();
                 closeBuffers();
                 setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
+                return;
             }
+            // Downstream failures belong to the selected chain boundary, not body-read errors.
+            if (complete && !exchange.isResponseStarted())
+                Connectors.executeRootHandler(resumedHandler, exchange);
         }
     }
 

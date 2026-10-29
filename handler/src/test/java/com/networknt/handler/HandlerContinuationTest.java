@@ -12,21 +12,44 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HandlerContinuationTest {
-    @Test
-    void captureLeavesExecutorMdcUntouched() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void resumeScopesCanonicalRequestMdcAndRestoresWorker(boolean present) throws Exception {
         var original = org.slf4j.MDC.getCopyOfContextMap();
         try {
             HttpServerExchange exchange = new HttpServerExchange(null);
-            org.slf4j.MDC.put("request", "captured");
+            if (present) exchange.putAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT,
+                    java.util.Map.of("request", "canonical"));
+            org.slf4j.MDC.put("request", "stale-at-capture");
             HttpHandler resumed = HandlerContinuation.capture(exchange, ex -> {
-                assertEquals("unrelated", org.slf4j.MDC.get("worker"));
-                assertNull(org.slf4j.MDC.get("request"));
+                assertEquals(present ? "canonical" : null, org.slf4j.MDC.get("request"));
+                assertNull(org.slf4j.MDC.get("worker"), "Do not borrow the executing thread's MDC");
+                HandlerContinuation.capture(ex, nested -> {
+                    assertEquals(present ? "canonical" : null, org.slf4j.MDC.get("request"));
+                }).handleRequest(ex);
                 throw new IOException("failure");
             });
             org.slf4j.MDC.clear();
             org.slf4j.MDC.put("worker", "unrelated");
             assertThrows(IOException.class, () -> resumed.handleRequest(exchange));
             assertEquals(java.util.Map.of("worker", "unrelated"), org.slf4j.MDC.getCopyOfContextMap());
+        } finally {
+            if (original == null) org.slf4j.MDC.clear();
+            else org.slf4j.MDC.setContextMap(original);
+        }
+    }
+
+    @Test
+    void runnableAdapterPropagatesFatalErrorsAndRestoresMdc() {
+        var original = org.slf4j.MDC.getCopyOfContextMap();
+        try {
+            HttpServerExchange exchange = new HttpServerExchange(null);
+            org.slf4j.MDC.put("worker", "prior");
+            Error error = new OutOfMemoryError("injected sentinel, no memory pressure");
+            Runnable task = HandlerContinuation.task(exchange,
+                    HandlerContinuation.capture(exchange, ex -> { throw error; }));
+            assertSame(error, assertThrows(OutOfMemoryError.class, task::run));
+            assertEquals("prior", org.slf4j.MDC.get("worker"));
         } finally {
             if (original == null) org.slf4j.MDC.clear();
             else org.slf4j.MDC.setContextMap(original);

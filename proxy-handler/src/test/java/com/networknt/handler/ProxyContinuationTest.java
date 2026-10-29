@@ -5,6 +5,7 @@ import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.TimeSeriesDbSender;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.server.*;
 import io.undertow.server.handlers.proxy.*;
@@ -41,21 +42,28 @@ class ProxyContinuationTest {
 
     static Stream<Arguments> failureCases() {
         return Stream.of(Phase.values()).flatMap(phase -> Stream.of(false, true)
-                .map(enabled -> Arguments.of(phase, enabled)));
+                .flatMap(enabled -> Stream.of(false, true).map(mdc -> Arguments.of(phase, enabled, mdc))));
     }
 
     @ParameterizedTest
     @MethodSource("failureCases")
-    void asynchronousFailuresUseSelectedBoundaryAndCloseUpstream(Phase phase, boolean enabled) throws Exception {
+    void asynchronousFailuresUseSelectedBoundaryAndCloseUpstream(Phase phase, boolean enabled, boolean hasMdc) throws Exception {
         var previousMdc = org.slf4j.MDC.getCopyOfContextMap();
+        var legacyMdcLogger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(
+                "com.networknt.handler.thread.LightThreadExecutor");
+        var legacyMdcEvents = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        legacyMdcEvents.start();
+        legacyMdcLogger.addAppender(legacyMdcEvents);
         AtomicInteger injected = new AtomicInteger();
         AtomicInteger selected = new AtomicInteger();
+        AtomicInteger depth = new AtomicInteger();
+        AtomicInteger maxDepth = new AtomicInteger();
         AtomicInteger acquisitions = new AtomicInteger();
         var upstream = new java.util.concurrent.atomic.AtomicReference<ClientConnection>();
         CountDownLatch release = new CountDownLatch(1);
         CompletableFuture<Runnable> retry = new CompletableFuture<>();
         java.util.function.Supplier<ControlledFailure> failure = () -> {
-            assertEquals("canonical-request", org.slf4j.MDC.get("request"),
+            assertEquals(hasMdc ? "canonical-request" : null, org.slf4j.MDC.get("request"),
                     "Callbacks must use the existing MDC_CONTEXT executor, not a stale thread snapshot");
             injected.incrementAndGet();
             return new ControlledFailure(phase);
@@ -94,7 +102,7 @@ class ProxyContinuationTest {
                     .setMaxConnectionRetries(phase == Phase.RETRY ? 1 : 0)
                     .setMaxRequestTime(phase == Phase.TIMEOUT ? 300 : 0).build();
             HttpHandler work = exchange -> {
-                exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, Map.of("request", "canonical-request"));
+                if (hasMdc) exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, Map.of("request", "canonical-request"));
                 if (phase == Phase.TIMEOUT) {
                     exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, new ThrowingMetrics(failure));
                     exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME, "test");
@@ -103,12 +111,13 @@ class ProxyContinuationTest {
                 proxy.handleRequest(exchange);
             };
             URI front = fixture.start(enabled ? exchange -> HandlerContinuation.execute(exchange, (ex, task) -> {
+                maxDepth.accumulateAndGet(depth.incrementAndGet(), Math::max);
                 try { task.handleRequest(ex); }
                 catch (ControlledFailure e) {
                     assertEquals(phase, e.phase);
                     selected.incrementAndGet();
                     ex.setStatusCode(409).getResponseSender().send("selected");
-                }
+                } finally { depth.decrementAndGet(); }
             }, work) : work);
             var pending = http.sendAsync(HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(8)).build(),
                     HttpResponse.BodyHandlers.ofString());
@@ -117,12 +126,16 @@ class ProxyContinuationTest {
             assertEquals(enabled ? 409 : 500, response.statusCode(), response.body());
             assertEquals(1, injected.get(), "The intentional failure must execute exactly once");
             assertEquals(enabled ? 1 : 0, selected.get(), "Do not accept an incidental exception");
+            if (enabled) assertEquals(1, maxDepth.get(), "Internal calls must not nest boundary frames");
             assertEquals(phase == Phase.RETRY ? 2 : 1, acquisitions.get());
             if (phase != Phase.ACQUIRE && phase != Phase.RETRY)
                 assertFalse(upstream.get().isOpen(), "Close upstream resources on callback failure");
+            assertTrue(legacyMdcEvents.list.isEmpty(), "Callbacks must not invoke the unscoped MDC executor");
             release.countDown();
         } finally {
             release.countDown();
+            legacyMdcLogger.detachAppender(legacyMdcEvents);
+            legacyMdcEvents.stop();
             if (previousMdc == null) org.slf4j.MDC.clear();
             else org.slf4j.MDC.setContextMap(previousMdc);
         }
@@ -218,6 +231,126 @@ class ProxyContinuationTest {
         }
     }
 
+    @Test
+    void upstreamHttp2FailureResetsOnlyTheFailedStream() throws Exception {
+        CountDownLatch healthyEntered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Set<Integer> backendPeers = ConcurrentHashMap.newKeySet();
+        Set<Integer> frontendPeers = ConcurrentHashMap.newKeySet();
+        var shared = new java.util.concurrent.atomic.AtomicReference<ClientConnection>();
+        AtomicInteger injected = new AtomicInteger();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()) {
+            URI backend = fixture.start(exchange -> {
+                assertEquals("HTTP/2.0", exchange.getProtocol().toString());
+                backendPeers.add(exchange.getSourceAddress().getPort());
+                if (exchange.getRequestPath().equals("/healthy")) exchange.dispatch(() -> {
+                    healthyEntered.countDown();
+                    try {
+                        assertTrue(release.await(8, TimeUnit.SECONDS));
+                        exchange.getResponseSender().send("healthy");
+                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                });
+                else exchange.getResponseSender().send("accepted");
+            }, true);
+            URI upstream = URI.create("h2c-prior://" + backend.getHost() + ":" + backend.getPort());
+            ProxyClient client = new ProxyClient() {
+                @Override public ProxyTarget findTarget(HttpServerExchange exchange) { return new ProxyTarget() {}; }
+                @Override public void getConnection(ProxyTarget target, HttpServerExchange exchange,
+                        ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
+                    java.util.function.Consumer<ClientConnection> connected = connection -> {
+                        ClientConnection selected = connection;
+                        if (exchange.getRequestPath().equals("/fail")) selected = decorateConnection(connection,
+                                Phase.RESPONSE_CALLBACK, () -> {
+                                    injected.incrementAndGet();
+                                    return new ControlledFailure(Phase.RESPONSE_CALLBACK);
+                                });
+                        callback.completed(exchange, new ProxyConnection(selected, "/"));
+                    };
+                    if (shared.get() != null) connected.accept(shared.get());
+                    else UndertowClient.getInstance().connect(new ClientCallback<>() {
+                        @Override public void completed(ClientConnection connection) {
+                            shared.set(connection);
+                            connected.accept(connection);
+                        }
+                        @Override public void failed(IOException e) { callback.failed(exchange); }
+                    }, upstream, exchange.getIoThread(), exchange.getConnection().getByteBufferPool(), org.xnio.OptionMap.EMPTY);
+                }
+            };
+            ProxyHandler proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
+            URI front = fixture.start(exchange -> {
+                frontendPeers.add(exchange.getSourceAddress().getPort());
+                HandlerContinuation.execute(exchange, (ex, task) -> {
+                    try { task.handleRequest(ex); }
+                    catch (ControlledFailure e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+                }, proxy);
+            }, true);
+            var warm = http.send(HttpRequest.newBuilder(front.resolve("/warm")).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(HttpClient.Version.HTTP_2, warm.version());
+            assertEquals("accepted", warm.body());
+            assertTrue(shared.get().isMultiplexingSupported());
+            var healthy = http.sendAsync(HttpRequest.newBuilder(front.resolve("/healthy")).timeout(Duration.ofSeconds(10)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertTrue(healthyEntered.await(5, TimeUnit.SECONDS));
+            var failed = http.send(HttpRequest.newBuilder(front.resolve("/fail")).timeout(Duration.ofSeconds(5)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(409, failed.statusCode(), failed.body());
+            assertEquals(1, injected.get());
+            assertTrue(shared.get().isOpen(), "Keep the shared upstream HTTP/2 connection open");
+            assertFalse(healthy.isDone(), "Do not cancel the healthy sibling stream");
+            release.countDown();
+            assertEquals("healthy", healthy.get(5, TimeUnit.SECONDS).body());
+            assertEquals("accepted", http.send(HttpRequest.newBuilder(front.resolve("/after")).build(),
+                    HttpResponse.BodyHandlers.ofString()).body());
+            assertEquals(1, backendPeers.size(), "All upstream requests must share one physical connection");
+            assertEquals(1, frontendPeers.size(), "All downstream requests must share one physical connection");
+        } finally {
+            release.countDown();
+            if (shared.get() != null) shared.get().close();
+        }
+    }
+
+    @Test
+    void committedDownstreamHttp2FailureDoesNotCancelSiblingStream() throws Exception {
+        CountDownLatch healthyEntered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Set<Integer> peers = ConcurrentHashMap.newKeySet();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()) {
+            URI front = fixture.start(exchange -> {
+                peers.add(exchange.getSourceAddress().getPort());
+                if (exchange.getRequestPath().equals("/healthy")) exchange.dispatch(() -> {
+                    healthyEntered.countDown();
+                    try {
+                        assertTrue(release.await(8, TimeUnit.SECONDS));
+                        exchange.getResponseSender().send("healthy");
+                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                });
+                else if (exchange.getRequestPath().equals("/fail")) exchange.dispatch(() -> {
+                    try {
+                        var channel = exchange.getResponseChannel();
+                        Channels.writeBlocking(channel, ByteBuffer.wrap("first".getBytes(StandardCharsets.UTF_8)));
+                        Channels.flushBlocking(channel);
+                        assertTrue(exchange.isResponseStarted());
+                        HandlerContinuation.task(exchange, ex -> { throw new ControlledFailure(Phase.RESPONSE_CALLBACK); }).run();
+                    } catch (IOException e) { throw new RuntimeException(e); }
+                });
+                else exchange.getResponseSender().send("accepted");
+            }, true);
+            assertEquals(HttpClient.Version.HTTP_2, http.send(HttpRequest.newBuilder(front.resolve("/warm")).build(),
+                    HttpResponse.BodyHandlers.ofString()).version());
+            var healthy = http.sendAsync(HttpRequest.newBuilder(front.resolve("/healthy")).timeout(Duration.ofSeconds(10)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertTrue(healthyEntered.await(5, TimeUnit.SECONDS));
+            assertThrows(IOException.class, () -> http.send(HttpRequest.newBuilder(front.resolve("/fail"))
+                    .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString()));
+            assertFalse(healthy.isDone());
+            release.countDown();
+            assertEquals("healthy", healthy.get(5, TimeUnit.SECONDS).body());
+            assertEquals("accepted", http.send(HttpRequest.newBuilder(front.resolve("/after")).build(),
+                    HttpResponse.BodyHandlers.ofString()).body());
+            assertEquals(1, peers.size(), "RST_STREAM must not kill the parent HTTP/2 connection");
+        } finally { release.countDown(); }
+    }
+
     private static ClientConnection decorateConnection(ClientConnection real, Phase phase,
             java.util.function.Supplier<ControlledFailure> failure) {
         return (ClientConnection) Proxy.newProxyInstance(ClientConnection.class.getClassLoader(),
@@ -266,8 +399,10 @@ class ProxyContinuationTest {
 
     private static final class Fixture implements AutoCloseable {
         private final List<Undertow> servers = new ArrayList<>();
-        URI start(HttpHandler handler) {
-            Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setIoThreads(1).setHandler(handler).build();
+        URI start(HttpHandler handler) { return start(handler, false); }
+        URI start(HttpHandler handler, boolean http2) {
+            Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setIoThreads(1)
+                    .setServerOption(UndertowOptions.ENABLE_HTTP2, http2).setHandler(handler).build();
             server.start();
             servers.add(server);
             return URI.create("http://127.0.0.1:" + ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort());
