@@ -12,6 +12,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Decrypts authenticated four-part CRYPT values produced by light-encryptor.
@@ -25,6 +27,10 @@ public class AESSaltDecryptor implements Decryptor {
     private static final int ITERATIONS = 65536;
     private static final int KEY_SIZE = 256;
     private static final int GCM_TAG_LENGTH = 128;
+    // Exists only during password acquisition/derivation on the current thread.
+    // Providers register fresh arrays at creation; overridden getPassword methods
+    // may return borrowed arrays, which must never be inferred to be owned.
+    private final ThreadLocal<List<char[]>> ownedPasswords = new ThreadLocal<>();
     /**
      * Default constructor for AESSaltDecryptor.
      */
@@ -56,22 +62,40 @@ public class AESSaltDecryptor implements Decryptor {
         String saltHex = requireHexPart(parts, 1, "salt");
         String ivHex = requireHexPart(parts, 2, "iv");
         String hashHex = requireHexPart(parts, 3, "hash");
-        SecretKeySpec secret = getSecret(fromHex(saltHex, "salt"));
+        if (saltHex.length() != 32 || ivHex.length() != 24) {
+            throw new IllegalArgumentException("CRYPT AES-GCM requires a 16-byte salt and a 12-byte nonce.");
+        }
+        byte[] salt = fromHex(saltHex, "salt");
+        byte[] nonce = fromHex(ivHex, "iv");
+        byte[] ciphertext = fromHex(hashHex, "hash");
+        if (ciphertext.length < GCM_TAG_LENGTH / 8) {
+            throw new IllegalArgumentException("CRYPT AES-GCM ciphertext must contain an authentication tag.");
+        }
+        SecretKeySpec secret = getSecret(salt);
         Cipher cipher = Cipher.getInstance(GCM_CIPHER_TRANSFORMATION);
-        cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_LENGTH, fromHex(ivHex, "iv")));
-        byte[] plaintext = cipher.doFinal(fromHex(hashHex, "hash"));
+        cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_LENGTH, nonce));
+        byte[] plaintext = cipher.doFinal(ciphertext);
         try {
+            authenticatedKey(salt, secret);
             return new String(plaintext, StandardCharsets.UTF_8);
         } finally {
             Arrays.fill(plaintext, (byte) 0);
         }
     }
 
-    private SecretKeySpec getSecret(byte[] salt) throws GeneralSecurityException {
-        char[] password = getPassword();
+    /** Called only after successful GCM authentication; the base provider retains no key. */
+    protected void authenticatedKey(byte[] salt, SecretKeySpec secret) {
+    }
+
+    protected SecretKeySpec getSecret(byte[] salt) throws GeneralSecurityException {
+        List<char[]> previous = ownedPasswords.get();
+        List<char[]> owned = new ArrayList<>();
+        ownedPasswords.set(owned);
+        char[] password = null;
         PBEKeySpec spec = null;
         byte[] encodedKey = null;
         try {
+            password = getPassword();
             validatePassword(password);
             // PBEKeySpec copies the password; never clear a custom provider's borrowed array.
             spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_SIZE);
@@ -82,8 +106,28 @@ public class AESSaltDecryptor implements Decryptor {
         } finally {
             if (spec != null) spec.clearPassword();
             if (encodedKey != null) Arrays.fill(encodedKey, (byte) 0);
-            releasePassword(password);
+            try {
+                releasePassword(password);
+            } finally {
+                for (char[] value : owned) Arrays.fill(value, '\0');
+                if (previous == null) ownedPasswords.remove();
+                else ownedPasswords.set(previous);
+            }
         }
+    }
+
+    /**
+     * Registers a newly allocated provider password for this derivation's cleanup.
+     * Outside a derivation the returned array belongs to the caller. Never register
+     * a borrowed configuration array.
+     *
+     * @param password freshly allocated password array
+     * @return the same array
+     */
+    protected final char[] ownedPassword(char[] password) {
+        List<char[]> owned = ownedPasswords.get();
+        if (owned != null && password != null) owned.add(password);
+        return password;
     }
 
     /**
@@ -131,7 +175,7 @@ public class AESSaltDecryptor implements Decryptor {
      * @return char array of the password
      */
     protected char[] getPassword() {
-        return "light".toCharArray();
+        return ownedPassword("light".toCharArray());
     }
 
     private static byte[] fromHex(String hex, String name) {

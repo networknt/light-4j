@@ -447,7 +447,7 @@ public class Server {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS);
         }
-        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(pass))) {
+        try (PasswordChars password = PasswordChars.required(pass)) {
             return TlsUtil.loadKeyStore(name, password.value());
         }
     }
@@ -463,7 +463,7 @@ public class Server {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
         }
-        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(pass))) {
+        try (PasswordChars password = PasswordChars.required(pass)) {
             return TlsUtil.loadKeyStore(name, password.value());
         }
     }
@@ -510,7 +510,7 @@ public class Server {
                 keyPass = (String) secretConfig.get(SecretConstants.SERVER_KEY_PASS);
             }
             KeyManager[] keyManagers;
-            try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(keyPass))) {
+            try (PasswordChars password = PasswordChars.required(keyPass)) {
                 keyManagers = buildKeyManagers(loadKeyStore(), password.value());
             }
             TrustManager[] trustManagers;

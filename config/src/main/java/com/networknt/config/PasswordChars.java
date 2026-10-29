@@ -1,6 +1,7 @@
 package com.networknt.config;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * An owned temporary password copy. Use with try-with-resources and do not retain
@@ -13,6 +14,11 @@ public final class PasswordChars implements AutoCloseable {
 
     private PasswordChars(char[] value) {
         this.value = value;
+    }
+
+    /** Copies a required password while keeping nullable-password handling explicit. */
+    public static PasswordChars required(String value) {
+        return copyOf(Objects.requireNonNull(value, "Password is required"));
     }
 
     public static PasswordChars copyOf(String value) {

@@ -102,7 +102,16 @@ public class DecryptConstructor extends Constructor {
         }
 
 		private Object constructDecryptedScalar(ScalarNode node) {
-			return decryptor.decrypt(node.getValue());
+            try {
+                return decryptor.decrypt(node.getValue());
+            } catch (RuntimeException e) {
+                var mark = node.getStartMark();
+                String location = mark == null ? "" : " at YAML line " + (mark.getLine() + 1)
+                        + ", column " + (mark.getColumn() + 1);
+                // Never stringify Mark/Node: those include a source snippet with the secret.
+                throw new IllegalArgumentException("Unable to decrypt CRYPT configuration" + location
+                        + ". Re-encrypt legacy three-part values with light-encryptor before upgrading.", e);
+            }
 		}
     }
 }

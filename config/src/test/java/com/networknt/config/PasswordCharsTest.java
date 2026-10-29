@@ -40,4 +40,12 @@ class PasswordCharsTest {
             assertNull(copy.value());
         }
     }
+    @Test
+    void requiredPasswordsRejectNullButOptionalCopiesAllowIt() {
+        assertThrows(NullPointerException.class, () -> PasswordChars.required(null));
+        try (PasswordChars password = PasswordChars.required("value")) {
+            assertArrayEquals("value".toCharArray(), password.value());
+        }
+    }
+
 }
