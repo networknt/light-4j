@@ -13,14 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HandlerContinuationTest {
     @Test
-    void resumedFrameCarriesRequestMdcAndRestoresCallingThreadEvenOnFailure() throws Exception {
+    void captureLeavesExecutorMdcUntouched() throws Exception {
         var original = org.slf4j.MDC.getCopyOfContextMap();
         try {
             HttpServerExchange exchange = new HttpServerExchange(null);
             org.slf4j.MDC.put("request", "captured");
             HttpHandler resumed = HandlerContinuation.capture(exchange, ex -> {
-                assertEquals("captured", org.slf4j.MDC.get("request"));
-                org.slf4j.MDC.clear();
+                assertEquals("unrelated", org.slf4j.MDC.get("worker"));
+                assertNull(org.slf4j.MDC.get("request"));
                 throw new IOException("failure");
             });
             org.slf4j.MDC.clear();

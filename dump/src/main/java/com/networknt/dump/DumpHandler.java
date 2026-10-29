@@ -17,6 +17,7 @@
 package com.networknt.dump;
 
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -77,7 +78,7 @@ public class DumpHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (exchange.isInIoThread()) {
-            exchange.dispatch(com.networknt.handler.HandlerContinuation.capture(exchange, this));
+            exchange.dispatch(HandlerContinuation.capture(exchange, this));
             return;
         }
         if(isEnabled()) {

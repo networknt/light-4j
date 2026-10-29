@@ -1,12 +1,13 @@
 package com.networknt.handler;
 
 import io.undertow.server.HttpHandler;
-import io.undertow.server.Connectors;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
-import org.slf4j.MDC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import io.undertow.util.StatusCodes;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
@@ -17,6 +18,7 @@ import java.util.function.UnaryOperator;
  * handler through Undertow's dispatch or root-handler machinery.
  */
 public final class HandlerContinuation {
+    private static final Logger LOG = LoggerFactory.getLogger(HandlerContinuation.class);
     private static final Boundary UNHANDLED = (exchange, continuation) -> continuation.handleRequest(exchange);
     private static final AttachmentKey<Boundary> ACTIVE = AttachmentKey.create(Boundary.class);
 
@@ -59,45 +61,36 @@ public final class HandlerContinuation {
      * Captures before registering a callback whose result determines its eventual
      * work. Apply the returned wrapper inside that callback. Framework hand-offs
      * must opt in; arbitrary third-party callbacks cannot be intercepted here.
-     * The request MDC is installed only for the resumed frame and the executing
-     * thread's previous MDC is restored, including on failure.
+     * Captures only the exception policy. MDC remains owned by the existing
+     * MDC_CONTEXT attachment and its executor; no thread-local maps are copied.
      */
     public static UnaryOperator<HttpHandler> capture(HttpServerExchange exchange) {
         Boundary active = exchange.getAttachment(ACTIVE);
         Boundary boundary = active == null ? UNHANDLED : active;
-        Map<String, String> context = MDC.getCopyOfContextMap();
-        return continuation -> resumed -> {
-            Map<String, String> previous = MDC.getCopyOfContextMap();
-            restoreMdc(context);
-            try {
-                execute(resumed, boundary, continuation);
-            } finally {
-                restoreMdc(previous);
-            }
-        };
+        return continuation -> resumed -> execute(resumed, boundary, continuation);
     }
 
     /**
      * Adapts an already captured handler for a Runnable dispatch. Unlike a root
      * handler, a successful callback may leave upstream I/O pending; do not end
-     * that exchange. Unhandled failures still enter Undertow's error path.
+     * that exchange. Unhandled failures return 500 before commitment, close a
+     * committed stream, or leave an already completed exchange alone.
      */
     public static Runnable task(HttpServerExchange exchange, HttpHandler continuation) {
         return () -> {
             try {
                 continuation.handleRequest(exchange);
             } catch (Throwable failure) {
-                Connectors.executeRootHandler(ex -> {
-                    if (failure instanceof Error error) throw error;
-                    if (failure instanceof Exception exception) throw exception;
-                    throw new IllegalStateException(failure);
-                }, exchange);
+                LOG.error("Unhandled continuation failure for {}", exchange.getRequestPath(), failure);
+                if (exchange.isComplete()) return;
+                if (exchange.isResponseStarted()) {
+                    // Never replace committed headers or append an error to a stream.
+                    IoUtils.safeClose(exchange.getConnection());
+                } else {
+                    exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                    exchange.endExchange();
+                }
             }
         };
-    }
-
-    private static void restoreMdc(Map<String, String> context) {
-        if (context == null) MDC.clear();
-        else MDC.setContextMap(context);
     }
 }

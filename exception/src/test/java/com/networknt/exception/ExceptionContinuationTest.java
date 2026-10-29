@@ -45,9 +45,22 @@ class ExceptionContinuationTest {
             if (runtime) throw new IllegalStateException("runtime failure");
             throw new IOException("checked failure");
         };
+        var resumedMdc = new java.util.concurrent.atomic.AtomicReference<String>();
+        var resumedDone = new java.util.concurrent.CountDownLatch(1);
         HttpHandler work = exchange -> {
-            if (async) exchange.dispatch(HandlerContinuation.capture(exchange, failing));
-            else failing.handleRequest(exchange);
+            if (async) {
+                HttpHandler resumed = HandlerContinuation.capture(exchange, failing);
+                exchange.dispatch(() -> {
+                    org.slf4j.MDC.put("executor", "owns-context");
+                    try {
+                        HandlerContinuation.task(exchange, resumed).run();
+                        resumedMdc.set(org.slf4j.MDC.get("executor"));
+                    } finally {
+                        org.slf4j.MDC.clear();
+                        resumedDone.countDown();
+                    }
+                });
+            } else failing.handleRequest(exchange);
         };
         selected.setNext(work);
         Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1")
@@ -61,9 +74,13 @@ class ExceptionContinuationTest {
             assertEquals(enabled ? (runtime ? 500 : 400) : 500, response.statusCode(), response.body());
             assertEquals(enabled ? name : "", response.headers().firstValue("X-Selected").orElse(""));
             assertEquals(enabled, response.body().contains(runtime ? "ERR10010" : "ERR10011"), response.body());
+            if (async) {
+                assertTrue(resumedDone.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                assertEquals("owns-context", resumedMdc.get(), "Resumed exception handling must leave executor MDC alone");
+            }
         } finally {
             server.stop();
-            if (name.equals("exception")) Config.getInstance().putInConfigCache(name, previous);
+            if (name.equals("exception") && previous != null) Config.getInstance().putInConfigCache(name, previous);
             else Config.getInstance().clearConfigCache(name);
         }
     }

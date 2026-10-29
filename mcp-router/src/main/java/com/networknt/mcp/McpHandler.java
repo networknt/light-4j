@@ -6,6 +6,7 @@ import com.networknt.access.AccessControlConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
@@ -173,7 +174,7 @@ public class McpHandler implements MiddlewareHandler {
 
     private void handleMessage(HttpServerExchange exchange, McpConfig config) {
         if (exchange.isInIoThread()) {
-            exchange.dispatch(com.networknt.handler.HandlerContinuation.capture(exchange, this));
+            exchange.dispatch(HandlerContinuation.capture(exchange, this));
             return;
         }
 
