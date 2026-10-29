@@ -21,15 +21,9 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
     }
 
     private final static String LIGHT_4J_CONFIG_PASSWORD = "light_4j_config_password";
-    // All junit tests configuration are using this password to encrypt sensitive info in config files. This Decryptor
-    // can detect if the current thread is started by the JUnit test case so that default password is going to be used.
-    // In this way, all other developers can run the build locally without providing the light_4j_config_password as an
-    // environment variable in the .profile or .bashrc file.
-    private final static String DEFAULT_JUNIT_TEST_PASSWORD = "light";
-
     @Override
     protected char[] getPassword() {
-        // get from the -Dlight-4j-config-password Java command line option.
+        // Read the explicit light_4j_config_password system property first.
         String passwordStr = System.getProperty(LIGHT_4J_CONFIG_PASSWORD);
         if(passwordStr == null || passwordStr.isEmpty()) {
             passwordStr = System.getProperty(LIGHT_4J_CONFIG_PASSWORD.toUpperCase());
@@ -42,28 +36,9 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
             passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD.toUpperCase());
         }
         if (passwordStr == null || passwordStr.isEmpty()) {
-            // we cannot get the password from the environment, check if we are in the JUnit tests. If it is we can use the default password "light"
-            // as all test cases are using it to encrypt secret in config files.
-            if(isJUnitTest()) {
-                passwordStr = DEFAULT_JUNIT_TEST_PASSWORD;
-            } else {
-                throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables.");
-            }
+            throw new IllegalStateException("No configuration master password supplied. Set light_4j_config_password explicitly.");
         }
         return ownedPassword(passwordStr.toCharArray());
     }
 
-    /**
-     * Checks if the current thread is executing under JUnit.
-     *
-     * @return boolean true if JUnit is detected
-     */
-    public static boolean isJUnitTest() {
-        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-            if (element.getClassName().startsWith("org.junit.")) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
