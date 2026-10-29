@@ -52,7 +52,7 @@ public class DecryptUtilTest {
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }
@@ -63,7 +63,7 @@ public class DecryptUtilTest {
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }
