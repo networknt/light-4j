@@ -156,3 +156,9 @@ from [ej-technologies](http://www.ej-technologies.com/).
 
 Light-4j and all light-*-4j frameworks are available under the Apache 2.0 license. See the [LICENSE](https://www.apache.org/licenses/LICENSE-2.0)
 file for more info.
+
+## CRYPT upgrade requirement
+
+Both master and 2.x reject legacy three-part CRYPT values. Re-encrypt them to
+four-part AES-GCM before upgrading. See the [migration guide](decryptor/MIGRATION.md)
+for the rollout steps and credential-lifetime hardening scope.

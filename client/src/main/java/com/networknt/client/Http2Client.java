@@ -18,6 +18,7 @@
 
 package com.networknt.client;
 
+import com.networknt.config.PasswordChars;
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.*;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
@@ -1311,10 +1312,13 @@ public class Http2Client {
                         if(keyPass == null) {
                             logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_PASS, "client.yml").toString());
                         }
-                        KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
-                        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                        keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                        keyManagers = keyManagerFactory.getKeyManagers();
+                        try (PasswordChars storePassword = PasswordChars.copyOf(keyStorePass);
+                             PasswordChars keyPassword = PasswordChars.required(keyPass)) {
+                            KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, storePassword.value());
+                            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                            keyManagerFactory.init(keyStore, keyPassword.value());
+                            keyManagers = keyManagerFactory.getKeyManagers();
+                        }
                     }
                 }
             } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
@@ -1338,7 +1342,10 @@ public class Http2Client {
                     }
                     if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     if (trustStoreName != null && trustStorePass != null) {
-                        KeyStore trustStore = TlsUtil.loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        KeyStore trustStore;
+                        try (PasswordChars password = PasswordChars.copyOf(trustStorePass)) {
+                            trustStore = TlsUtil.loadKeyStore(trustStoreName, password.value());
+                        }
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
                         trustManagers = trustManagerFactory.getTrustManagers();
@@ -1404,10 +1411,11 @@ public class Http2Client {
      */
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
         Path location = null;
+        char[] configuredPassword = null; // selected below without copying config into a String
         String password = "changeit"; //default value for cacerts, we can override it from config
         TlsConfig tlsConfig = ClientConfig.get().getTls();
         if(tlsConfig != null &&  tlsConfig.getDefaultCertPassword() != null) {
-            password = String.valueOf(tlsConfig.getDefaultCertPassword());
+            configuredPassword = tlsConfig.getDefaultCertPassword();
         }
         String locationProperty = System.getProperty(TRUST_STORE_PROPERTY);
         if (!StringUtils.isEmpty(locationProperty)) {
@@ -1431,6 +1439,7 @@ public class Http2Client {
         String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
         if (!StringUtils.isEmpty(trustStorePass)) {
             password = trustStorePass;
+            configuredPassword = null;
         }
         String trustStoreType = System.getProperty(TRUST_STORE_TYPE_PROPERTY);
         String type;
@@ -1440,8 +1449,10 @@ public class Http2Client {
             type = KeyStore.getDefaultType();
         }
         KeyStore trustStore = KeyStore.getInstance(type, Security.getProvider("SUN"));
-        try (InputStream is = Files.newInputStream(location)) {
-            trustStore.load(is, password.toCharArray());
+        try (PasswordChars temporaryPassword = configuredPassword == null
+                ? PasswordChars.copyOf(password) : PasswordChars.copyOf(configuredPassword);
+             InputStream is = Files.newInputStream(location)) {
+            trustStore.load(is, temporaryPassword.value());
             logger.info("JDK default trust store loaded from : {} .", location );
         }
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");

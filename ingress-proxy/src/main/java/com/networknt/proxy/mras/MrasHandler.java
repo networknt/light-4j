@@ -1,5 +1,6 @@
 package com.networknt.proxy.mras;
 
+import com.networknt.config.PasswordChars;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
@@ -555,12 +556,14 @@ public class MrasHandler implements MiddlewareHandler {
             String keyStoreName = config.getKeyStoreName();
             String keyStorePass = config.getKeyStorePass();
             String keyPass = config.getKeyPass();
-            if(logger.isTraceEnabled()) logger.trace("keyStoreName = " + keyStoreName + " keyStorePass = " + (keyStorePass == null ? null : keyStorePass.substring(0, 4)) + " keyPass = " + (keyPass == null ? null : keyPass.substring(0, 4)));
             if (keyStoreName != null && keyStorePass != null && keyPass != null) {
-                KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
-                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                keyManagers = keyManagerFactory.getKeyManagers();
+                try (PasswordChars storePassword = PasswordChars.copyOf(keyStorePass);
+                     PasswordChars keyPassword = PasswordChars.copyOf(keyPass)) {
+                    KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, storePassword.value());
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(keyStore, keyPassword.value());
+                    keyManagers = keyManagerFactory.getKeyManagers();
+                }
             }
         } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
             logger.error("Exception:", e);
@@ -573,9 +576,11 @@ public class MrasHandler implements MiddlewareHandler {
             // temp loading the certificate from the keystore instead of truststore from the config.
             String trustStoreName = config.getKeyStoreName();
             String trustStorePass = config.getKeyStorePass();
-            if(logger.isTraceEnabled()) logger.trace("trustStoreName = " + trustStoreName + " trustStorePass = " + (trustStorePass == null ? null : trustStorePass.substring(0, 4)));
             if (trustStoreName != null && trustStorePass != null) {
-                KeyStore trustStore = TlsUtil.loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                KeyStore trustStore;
+                try (PasswordChars password = PasswordChars.copyOf(trustStorePass)) {
+                    trustStore = TlsUtil.loadKeyStore(trustStoreName, password.value());
+                }
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 trustManagerFactory.init(trustStore);
                 trustManagers = trustManagerFactory.getTrustManagers();

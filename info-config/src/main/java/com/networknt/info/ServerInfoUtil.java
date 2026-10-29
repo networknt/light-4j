@@ -1,5 +1,6 @@
 package com.networknt.info;
 
+import com.networknt.config.PasswordChars;
 import com.networknt.config.Config;
 import com.networknt.server.ServerConfig;
 import com.networknt.utility.ConfigUtils;
@@ -98,9 +99,10 @@ public class ServerInfoUtil {
         String keystoreName = serverConfig.getKeystoreName();
         String keystorePass = serverConfig.getKeystorePass();
         if(keystoreName != null) {
-            try (InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
+            try (PasswordChars password = PasswordChars.required(keystorePass);
+                 InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
                 KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-                loadedKeystore.load(stream, keystorePass.toCharArray());
+                loadedKeystore.load(stream, password.value());
                 X509Certificate cert = (X509Certificate)loadedKeystore.getCertificate(ServerConfig.CONFIG_NAME);
                 if(cert != null) {
                     fingerPrint = FingerPrintUtil.getCertFingerPrint(cert);

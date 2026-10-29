@@ -15,6 +15,9 @@
  */
 package com.networknt.security;
 
+import com.networknt.config.PasswordChars;
+import java.io.InputStream;
+
 import com.networknt.config.Config;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -170,13 +173,11 @@ public class JwtIssuer {
         if(logger.isDebugEnabled()) logger.debug("filename = " + filename + " key = " + key);
         PrivateKey privateKey = null;
 
-        try {
+        try (PasswordChars temporaryPassword = PasswordChars.required(password);
+             InputStream stream = Config.getInstance().getInputStreamFromFile(filename)) {
             KeyStore keystore = KeyStore.getInstance("JKS");
-            keystore.load(Config.getInstance().getInputStreamFromFile(filename),
-                    password.toCharArray());
-
-            privateKey = (PrivateKey) keystore.getKey(key,
-                    password.toCharArray());
+            keystore.load(stream, temporaryPassword.value());
+            privateKey = (PrivateKey) keystore.getKey(key, temporaryPassword.value());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

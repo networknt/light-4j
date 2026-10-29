@@ -47,7 +47,7 @@ public class AESDecryptorTest {
     public void testDecryptLegacyCbcFormat() throws Exception {
         AESSaltDecryptor decryptor = new AESSaltDecryptor();
         String secretText = legacyEncrypt("password", "00112233445566778899aabbccddeeff");
-        Assertions.assertEquals("password", decryptor.decrypt(secretText));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(secretText));
     }
 
     @Test
