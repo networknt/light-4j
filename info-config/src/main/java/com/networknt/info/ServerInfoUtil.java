@@ -99,7 +99,7 @@ public class ServerInfoUtil {
         String keystoreName = serverConfig.getKeystoreName();
         String keystorePass = serverConfig.getKeystorePass();
         if(keystoreName != null) {
-            try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(keystorePass));
+            try (PasswordChars password = PasswordChars.required(keystorePass);
                  InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
                 KeyStore loadedKeystore = KeyStore.getInstance("JKS");
                 loadedKeystore.load(stream, password.value());

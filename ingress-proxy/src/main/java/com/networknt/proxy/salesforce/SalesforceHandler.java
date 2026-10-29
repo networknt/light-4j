@@ -248,7 +248,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         token.append(org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(payload.getBytes("UTF-8")));
 
         PrivateKey privateKey;
-        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(certPassword))) {
+        try (PasswordChars password = PasswordChars.required(certPassword)) {
             KeyStore keystore = TlsUtil.loadKeyStore(certFileName, password.value());
             privateKey = (PrivateKey) keystore.getKey(certFileName.substring(0, certFileName.indexOf(".")), password.value());
         }

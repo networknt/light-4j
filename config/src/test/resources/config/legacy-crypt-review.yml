@@ -1,0 +1,2 @@
+service:
+  password: CRYPT:legacy-salt-canary:legacy-ciphertext-canary

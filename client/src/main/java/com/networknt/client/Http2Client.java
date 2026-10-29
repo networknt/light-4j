@@ -1313,7 +1313,7 @@ public class Http2Client {
                             logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_PASS, "client.yml").toString());
                         }
                         try (PasswordChars storePassword = PasswordChars.copyOf(keyStorePass);
-                             PasswordChars keyPassword = PasswordChars.copyOf(java.util.Objects.requireNonNull(keyPass))) {
+                             PasswordChars keyPassword = PasswordChars.required(keyPass)) {
                             KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, storePassword.value());
                             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                             keyManagerFactory.init(keyStore, keyPassword.value());

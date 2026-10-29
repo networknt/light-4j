@@ -50,12 +50,7 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
                 throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables.");
             }
         }
-        return passwordStr.toCharArray();
-    }
-
-    @Override
-    protected void releasePassword(char[] password) {
-        if (password != null) java.util.Arrays.fill(password, '\0');
+        return ownedPassword(passwordStr.toCharArray());
     }
 
     /**
