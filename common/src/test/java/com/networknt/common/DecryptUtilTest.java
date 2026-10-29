@@ -17,9 +17,10 @@
 package com.networknt.common;
 
 import com.networknt.config.Config;
-import com.networknt.decrypt.AESSaltDecryptor;
+import com.networknt.decrypt.AutoAESSaltDecryptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -33,6 +34,7 @@ import java.security.spec.KeySpec;
 import java.util.Base64;
 import java.util.Map;
 
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class DecryptUtilTest {
     private static final String SECRET_KEY = "my_super_secret_key";
     private static final String SALT = "ssshhhhhhhhhhh!!!!";
@@ -52,7 +54,7 @@ public class DecryptUtilTest {
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AutoAESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }
@@ -63,7 +65,7 @@ public class DecryptUtilTest {
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AutoAESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }

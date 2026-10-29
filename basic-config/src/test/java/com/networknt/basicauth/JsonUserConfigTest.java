@@ -2,14 +2,21 @@ package com.networknt.basicauth;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class JsonUserConfigTest {
     static final Logger logger = LoggerFactory.getLogger(JsonUserConfigTest.class);
-    static final BasicAuthConfig config = BasicAuthConfig.load("basic-auth-json");
+    BasicAuthConfig config;
+    @BeforeEach
+    void setup() {
+        config = BasicAuthConfig.load("basic-auth-json");
+    }
 
     @Test
     public void testDecryption() {
