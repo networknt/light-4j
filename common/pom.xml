@@ -33,6 +33,11 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>decryptor</artifactId>
         </dependency>
         <dependency>
@@ -60,34 +65,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/*IT.java</exclude>
-                                <exclude>**/*StartupTest.java</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>provider-startup-tests</id>
-                        <phase>test</phase>
-                        <goals><goal>test</goal></goals>
-                        <configuration>
-                            <includes><include>**/*StartupTest.java</include></includes>
-                            <forkCount>1</forkCount>
-                            <reuseForks>false</reuseForks>
-                            <excludedEnvironmentVariables>light_4j_config_password,LIGHT_4J_CONFIG_PASSWORD</excludedEnvironmentVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

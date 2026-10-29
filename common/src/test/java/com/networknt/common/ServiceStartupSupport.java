@@ -5,6 +5,9 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.core.read.ListAppender;
 import org.slf4j.LoggerFactory;
 import com.networknt.config.Config;
+import com.networknt.test.IsolatedClasses;
+import com.networknt.test.SystemPropertyScope;
+import com.networknt.service.api.FatalServiceConfiguration;
 import com.networknt.decrypt.AESSaltDecryptor;
 import com.networknt.decrypt.Decryptor;
 import com.networknt.service.SingletonServiceFactory;
@@ -20,7 +23,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Module-local fixtures; Surefire isolates each concrete startup test class in a fresh JVM. */
+/** Module-local scenarios run with fresh application classes regardless of the test runner. */
+@org.junit.jupiter.api.parallel.ResourceLock(org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES)
 public abstract class ServiceStartupSupport {
     @TempDir Path directory;
     private static boolean before;
@@ -35,8 +39,14 @@ public abstract class ServiceStartupSupport {
     }
 
     private void check(String binding, String implementation, Class<? extends Throwable> expectedCause, boolean fatal) throws Exception {
-        assertTrue(System.getenv("light_4j_config_password") == null, "Runtime password environment must be excluded");
-        assertTrue(System.getenv("LIGHT_4J_CONFIG_PASSWORD") == null, "Runtime password environment must be excluded");
+        new IsolatedClasses(getClass().getClassLoader(), "com.networknt.").invokeStatic(
+                ServiceStartupSupport.class.getName(), "run",
+                new Class<?>[] {String.class, String.class, String.class, boolean.class, Path.class},
+                binding, implementation, expectedCause == null ? null : expectedCause.getName(), fatal, directory);
+    }
+
+    public static void run(String binding, String implementation, String causeName, boolean fatal, Path directory) throws Exception {
+        Class<?> expectedCause = causeName == null ? null : Class.forName(causeName);
         Files.writeString(directory.resolve("config.yml"), "decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor\nallowDefaultValueEmpty: true\n");
         Files.writeString(directory.resolve("service.yml"), """
                 singletons:
@@ -47,15 +57,12 @@ public abstract class ServiceStartupSupport {
                 - java.lang.Object:
                   - com.networknt.common.ServiceStartupSupport$After
                 """.formatted(binding, implementation));
-        String previous = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
-        String previousPassword = System.getProperty("light_4j_config_password");
         Logger factoryLogger = (Logger) LoggerFactory.getLogger("com.networknt.service.SingletonServiceFactory");
         var factoryLogs = new ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
         factoryLogs.start();
         factoryLogger.addAppender(factoryLogs);
-        try {
-            if (expectedCause == null) System.setProperty("light_4j_config_password", "light");
-            System.setProperty(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
+        try (var configDirectory = new SystemPropertyScope(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
+             var fixturePassword = new SystemPropertyScope("light_4j_config_password", "light")) {
             if (expectedCause == null) {
                 assertNotNull(SingletonServiceFactory.getBean(Decryptor.class));
                 assertTrue(before);
@@ -94,8 +101,7 @@ public abstract class ServiceStartupSupport {
                     if (expectedCause.isInstance(cause)) found = true;
                 }
                 assertTrue(found, "Missing expected fatal cause");
-                assertFalse(stderr.contains("at com.networknt.service.SingletonServiceFactory"),
-                        "The factory must not print a propagated fatal stack trace");
+                assertTrue(stderr.contains(expectedCause.getName()), "Fatal startup failures must reach stderr before logging is ready");
                 assertThrows(NoClassDefFoundError.class, () -> SingletonServiceFactory.getBean(Runnable.class));
             } else {
                 assertTrue(stderr.contains(expectedCause.getName()), "Legacy startup stderr must contain the cause");
@@ -105,10 +111,6 @@ public abstract class ServiceStartupSupport {
         } finally {
             factoryLogger.detachAppender(factoryLogs);
             factoryLogs.stop();
-            if (previousPassword == null) System.clearProperty("light_4j_config_password");
-            else System.setProperty("light_4j_config_password", previousPassword);
-            if (previous == null) System.clearProperty(Config.LIGHT_4J_CONFIG_DIR);
-            else System.setProperty(Config.LIGHT_4J_CONFIG_DIR, previous);
         }
     }
 
@@ -122,8 +124,15 @@ public abstract class ServiceStartupSupport {
     public static class ConstructorFallback extends AESSaltDecryptor {
         public ConstructorFallback() { super.getPassword(); }
     }
+    public static class FatalConfigurationException extends IllegalStateException implements FatalServiceConfiguration {
+        public FatalConfigurationException() { super("Synthetic explicit fatal configuration"); }
+    }
     public static class FatalSingleton implements Runnable {
-        public FatalSingleton() { throw new java.util.ServiceConfigurationError("Synthetic fatal configuration"); }
+        public FatalSingleton() { throw new FatalConfigurationException(); }
+        @Override public void run() { }
+    }
+    public static class ServiceLoaderSingleton implements Runnable {
+        public ServiceLoaderSingleton() { throw new java.util.ServiceConfigurationError("Synthetic ordinary ServiceLoader failure"); }
         @Override public void run() { }
     }
     public static class BrokenSingleton implements Runnable {
