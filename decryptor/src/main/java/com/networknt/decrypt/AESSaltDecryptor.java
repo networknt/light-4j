@@ -14,6 +14,7 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Decrypts authenticated four-part CRYPT values produced by light-encryptor.
@@ -31,8 +32,12 @@ public class AESSaltDecryptor implements Decryptor {
     // Providers register fresh arrays at creation; overridden getPassword methods
     // may return borrowed arrays, which must never be inferred to be owned.
     private final ThreadLocal<List<char[]>> ownedPasswords = new ThreadLocal<>();
+    private final AtomicBoolean missingProviderLogged = new AtomicBoolean();
+
     /**
-     * Default constructor for AESSaltDecryptor.
+     * Initializes the base of an explicit password-provider subclass.
+     *
+     * @throws MissingMasterPasswordProviderException if instantiated directly
      */
     public AESSaltDecryptor() {
         // Do not acquire passwords or invoke overridable methods during construction.
@@ -178,14 +183,17 @@ public class AESSaltDecryptor implements Decryptor {
      * Gets the password from a subclass provider. The base class has no default secret.
      *
      * @return char array of the password
+     * @throws MissingMasterPasswordProviderException always; subclasses must supply a password
      */
     protected char[] getPassword() {
         throw missingPasswordProvider();
     }
 
-    private static MissingMasterPasswordProviderException missingPasswordProvider() {
+    private MissingMasterPasswordProviderException missingPasswordProvider() {
         MissingMasterPasswordProviderException failure = new MissingMasterPasswordProviderException();
-        logger.error(failure.getMessage());
+        if (missingProviderLogged.compareAndSet(false, true)) {
+            logger.error(failure.getMessage());
+        }
         return failure;
     }
 

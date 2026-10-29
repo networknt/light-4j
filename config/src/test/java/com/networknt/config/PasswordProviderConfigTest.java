@@ -9,11 +9,11 @@ import org.yaml.snakeyaml.Yaml;
 import com.networknt.decrypt.AESSaltDecryptor;
 import com.networknt.decrypt.MissingMasterPasswordProviderException;
 import com.networknt.decrypt.fixture.FixturePasswordDecryptor;
+import com.networknt.test.ForkedStartup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -25,19 +25,18 @@ class PasswordProviderConfigTest {
 
     @Test
     void configYmlRejectsBareBaseBeforeReadingAnyCryptValue() throws Exception {
-        Config.getInstance(); // Initialize the shared instance with the normal test configuration.
         Files.writeString(directory.resolve("config.yml"), "decryptorClass: " + AESSaltDecryptor.class.getName());
-        var failure = assertThrows(InvocationTargetException.class, this::newFileConfig);
-        assertInstanceOf(MissingMasterPasswordProviderException.class, failure.getCause());
-        assertTrue(failure.getCause().getMessage().contains("light_4j_config_password"));
+        var result = ForkedStartup.run(PasswordProviderConfigProbe.class, directory, "invalid");
+        assertEquals(0, result.exitCode(), result.output());
+        assertTrue(result.output().contains("No master-password provider configured"));
     }
 
     @Test
     void explicitProviderLoadsCryptThroughRealFileConfig() throws Exception {
-        Config.getInstance();
         Files.writeString(directory.resolve("config.yml"), "decryptorClass: " + FixturePasswordDecryptor.class.getName());
         Files.writeString(directory.resolve("provider-secret.yml"), "password: " + CRYPT);
-        assertEquals("password", newFileConfig().getJsonMapConfig("provider-secret").get("password"));
+        var result = ForkedStartup.run(PasswordProviderConfigProbe.class, directory, "valid");
+        assertEquals(0, result.exitCode(), result.output());
     }
 
     @Test
@@ -55,7 +54,8 @@ class PasswordProviderConfigTest {
             assertTrue(failure.getMessage().contains("No master-password provider configured"));
             assertFalse(failure.getMessage().contains("Check the master password"));
             assertFalse(failure.getMessage().contains(CRYPT));
-            assertTrue(appender.list.stream().anyMatch(e -> e.getFormattedMessage().contains("No master-password provider configured")));
+            assertThrows(RuntimeException.class, () -> reader.load("password: " + CRYPT));
+            assertEquals(1, appender.list.stream().filter(e -> e.getFormattedMessage().contains("No master-password provider configured")).count());
             assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().contains(CRYPT)));
         } finally {
             logger.detachAppender(appender);
@@ -72,26 +72,39 @@ class PasswordProviderConfigTest {
         assertFalse(failure.getMessage().contains("invalid-canary"));
     }
 
-    // Config exposes singleton access only; use a fresh instance so selections cannot
-    // contaminate other tests or be hidden by a previously initialized YAML reader.
-    private Config newFileConfig() throws Exception {
-        String previous = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
-        try {
-            System.setProperty(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
-            var constructor = Class.forName("com.networknt.config.Config$FileConfigImpl").getDeclaredConstructor();
-            constructor.setAccessible(true);
-            return (Config) constructor.newInstance();
-        } finally {
-            if (previous == null) System.clearProperty(Config.LIGHT_4J_CONFIG_DIR);
-            else System.setProperty(Config.LIGHT_4J_CONFIG_DIR, previous);
-        }
-    }
-
     private static Yaml newReader(String provider) {
         var resolver = new Resolver();
         resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
         return new Yaml(DecryptConstructor.getInstance(provider), new org.yaml.snakeyaml.representer.Representer(new org.yaml.snakeyaml.DumperOptions()),
                 new org.yaml.snakeyaml.DumperOptions(), resolver);
+    }
+
+    @Test
+    void constructionDiagnosticsIdentifyClassAndCauseTypeWithoutSecretMessage() {
+        Logger logger = (Logger) LoggerFactory.getLogger(com.networknt.config.yml.DecryptConstructor.class);
+        var appender = new ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            assertThrows(IllegalStateException.class,
+                    () -> com.networknt.config.yml.DecryptConstructor.getInstance(BrokenProvider.class.getName()));
+            assertThrows(IllegalStateException.class,
+                    () -> com.networknt.config.yml.DecryptConstructor.getInstance("missing.Provider"));
+            String messages = appender.list.stream().map(e -> e.getFormattedMessage()).collect(java.util.stream.Collectors.joining("\n"));
+            assertTrue(messages.contains(BrokenProvider.class.getName()));
+            assertTrue(messages.contains(UnsupportedOperationException.class.getName()));
+            assertTrue(messages.contains("missing.Provider"));
+            assertTrue(messages.contains(ClassNotFoundException.class.getName()));
+            assertFalse(messages.contains("constructor-secret-canary"));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    public static class BrokenProvider implements com.networknt.decrypt.Decryptor {
+        public BrokenProvider() { throw new UnsupportedOperationException("constructor-secret-canary"); }
+        @Override public String decrypt(String value) { return value; }
     }
 
     public static class FallbackProvider extends AESSaltDecryptor {
