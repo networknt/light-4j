@@ -108,7 +108,8 @@ class ExternalServiceWorkerDispatchTest {
         SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), previousInterceptors);
         if (previousMetrics == null) Handler.getHandlers().remove(MetricsConfig.CONFIG_NAME);
         else Handler.getHandlers().put(MetricsConfig.CONFIG_NAME, previousMetrics);
-        Config.getInstance().putInConfigCache("exception", previousExceptionConfig);
+        if (previousExceptionConfig == null) Config.getInstance().clearConfigCache("exception");
+        else Config.getInstance().putInConfigCache("exception", previousExceptionConfig);
         for (Policy policy : Policy.values())
             if (policy != Policy.ENABLED) Config.getInstance().clearConfigCache(policy.configName());
         Config.getInstance().clearConfigCache(EXTERNAL_CONFIG);

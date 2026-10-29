@@ -26,6 +26,7 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.xnio.IoUtils;
 
 /**
  * This is a middleware handler that should be put in the beginning of request/response
@@ -80,13 +81,18 @@ public class ExceptionHandler implements MiddlewareHandler {
             return;
         }
 
-        HandlerContinuation.execute(exchange, this::handleContinuation,
-                ex -> Handler.next(ex, next));
+        try {
+            HandlerContinuation.execute(exchange, this::handleContinuation,
+                    ex -> Handler.next(ex, next));
+        } finally {
+            // Initial chain execution owns request-thread cleanup. Resumed frames
+            // use their executor's MDC_CONTEXT and must not erase that context.
+            MDC.clear();
+        }
     }
 
     private void handleContinuation(HttpServerExchange exchange, HttpHandler continuation) throws Exception {
-        // Log each executing frame, including asynchronous continuations. The
-        // captured continuation restores the resuming thread's MDC after this frame.
+        // Log each executing frame, including asynchronous continuations.
         String path = exchange.getRequestPath();
         if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame starting - path: {}", path);
 
@@ -94,6 +100,11 @@ public class ExceptionHandler implements MiddlewareHandler {
             continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
+            if (exchange.isComplete()) return;
+            if (exchange.isResponseStarted()) {
+                IoUtils.safeClose(exchange.getConnection());
+                return;
+            }
             if(exchange.isResponseChannelAvailable()) {
                 //handle exceptions
                 if(e instanceof RuntimeException) {
@@ -131,8 +142,6 @@ public class ExceptionHandler implements MiddlewareHandler {
             }
         } finally {
             if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
-            // Clear this request frame; a captured continuation restores its caller's MDC.
-            MDC.clear();
         }
     }
 
