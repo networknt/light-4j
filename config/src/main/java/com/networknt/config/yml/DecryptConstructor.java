@@ -56,31 +56,38 @@ public class DecryptConstructor extends StandardConstructor {
         return new DecryptConstructor(decryptorClass);
     }
 
-	private Decryptor createDecryptor(String decryptorClass) {
-		// do not create a new decryptor if it is already created.
-		if(decryptor != null) {
-			return decryptor;
-		}
+    private Decryptor createDecryptor(String decryptorClass) {
+        Class<?> type;
+        try {
+            type = Class.forName(decryptorClass);
+        } catch (ClassNotFoundException e) {
+            throw constructionFailure(decryptorClass, e);
+        }
+        if (type.isInterface() || !Decryptor.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("Decryptor " + decryptorClass
+                    + " must be a concrete implementation of " + Decryptor.class.getName() + ".");
+        }
+        if (java.lang.reflect.Modifier.isAbstract(type.getModifiers())) {
+            throw new IllegalArgumentException("Decryptor " + decryptorClass + " must be a concrete class.");
+        }
+        if (type == com.networknt.decrypt.AESSaltDecryptor.class) {
+            throw new IllegalArgumentException("AESSaltDecryptor has no password provider. Select AutoAESSaltDecryptor "
+                    + "with an explicit password, ManualAESSaltDescryptor, or a custom provider.");
+        }
+        try {
+            return type.asSubclass(Decryptor.class).getConstructor().newInstance();
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            throw constructionFailure(decryptorClass, e.getCause());
+        } catch (ReflectiveOperationException e) {
+            throw constructionFailure(decryptorClass, e);
+        }
+    }
 
-		if (logger.isTraceEnabled()) {
-			logger.trace("creating decryptor {}", decryptorClass);
-		}
-
-		try {
-			Class<?> typeClass = Class.forName(decryptorClass);
-
-			if (!typeClass.isInterface()) {
-				return (Decryptor) typeClass.getConstructor().newInstance();
-			}else {
-				logger.error("Please specify an implementing class of com.networknt.decrypt.Decryptor.");
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
-		}
-
-		return null;
-	}
+    private RuntimeException constructionFailure(String decryptorClass, Throwable cause) {
+        logger.error("Unable to construct decryptor {} ({}).", decryptorClass, cause.getClass().getName());
+        return new IllegalArgumentException("Unable to construct decryptor " + decryptorClass
+                + ". Check its class and configuration.", cause);
+    }
 
     /**
      * Gets the decryptor used by this constructor.
@@ -108,8 +115,9 @@ public class DecryptConstructor extends StandardConstructor {
                         .map(mark -> " at YAML line " + (mark.getLine() + 1) + ", column " + (mark.getColumn() + 1))
                         .orElse("");
                 // Never stringify Mark/Node: those include a source snippet with the secret.
+                logger.error("Decryptor {} failed ({}).", decryptor.getClass().getName(), e.getClass().getName());
                 throw new IllegalArgumentException("Unable to decrypt CRYPT configuration" + location
-                        + ". Check the master password and CRYPT value format.", e);
+                        + ". Check the configured decryptor and its reported cause.", e);
             }
 		}
     }

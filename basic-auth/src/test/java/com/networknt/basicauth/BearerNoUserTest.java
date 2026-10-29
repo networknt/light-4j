@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -51,6 +52,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * @author Steve Hu
  */
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class BearerNoUserTest {
     static final Logger logger = LoggerFactory.getLogger(AnonymousBearerTest.class);
 

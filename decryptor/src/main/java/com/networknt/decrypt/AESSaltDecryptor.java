@@ -32,7 +32,7 @@ public class AESSaltDecryptor implements Decryptor {
     // may return borrowed arrays, which must never be inferred to be owned.
     private final ThreadLocal<List<char[]>> ownedPasswords = new ThreadLocal<>();
     /**
-     * Default constructor for AESSaltDecryptor.
+     * Constructs a decryptor without a default password. Subclasses supply a provider.
      */
     public AESSaltDecryptor() {
     }
@@ -171,12 +171,14 @@ public class AESSaltDecryptor implements Decryptor {
     }
 
     /**
-     * Gets the password for decryption.
+     * Gets the password from a subclass provider. The base class has no default secret.
      *
      * @return char array of the password
+     * @throws IllegalStateException if a subclass does not supply a password provider
      */
     protected char[] getPassword() {
-        return ownedPassword("light".toCharArray());
+        throw new IllegalStateException("No master-password provider configured. Select AutoAESSaltDecryptor "
+                + "with an explicit light_4j_config_password, ManualAESSaltDescryptor, or a custom password provider.");
     }
 
     private static byte[] fromHex(String hex, String name) {
