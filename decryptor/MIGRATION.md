@@ -61,14 +61,18 @@ and service.yml selection. Custom subclasses must supply a password. Any path
 that falls back to `super.getPassword()` fails when invoked. Constructors do not
 call subclass password methods or prompt for secrets.
 
-**Service initialization is now fatal on any singleton-construction exception.**
-This applies to missing password providers, missing implementation classes, and
-exceptions thrown by other singleton constructors. The factory prints the failure
-to stderr and logs it before rethrowing with the original cause. The first lookup
-that initializes the factory receives `ExceptionInInitializerError`. Subsequent
-lookups in the same JVM receive `NoClassDefFoundError`, even for beans constructed
-before the failure. Fix the binding or constructor and restart the JVM.
-The failed factory cannot be used as a partially registered service map.
+Missing-provider exceptions carry Java's `ServiceConfigurationError` as their
+cause. The service factory treats that standard signal as explicitly fatal, even
+through reflection wrappers. The first lookup receives `ExceptionInInitializerError`;
+later lookups in that JVM receive `NoClassDefFoundError`. Fix the provider binding
+and restart the JVM. The factory does not print or log another copy of the
+propagated failure; the decryptor logs provider guidance once per instance.
+
+Ordinary missing classes and other constructor exceptions keep their legacy
+handling: the factory prints one stack trace to stderr, stops processing the
+singleton list, and retains earlier bindings. Later bindings may be absent.
+This PR does not make those unrelated failures fatal. The factory recognizes the
+standard fatal signal without depending on the decryptor exception type.
 
 This change removes the base provider's public default only. Auto's current-thread
 JUnit detection still enables its public fixture password without an explicit

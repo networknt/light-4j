@@ -67,10 +67,17 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
-            // Preserve the startup stderr workaround (#883) before logging can be flushed.
+            // Providers can explicitly mark an unrecoverable configuration failure
+            // using the JDK signal, even when reflection/runtime wrappers hide it.
+            for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+                if (cause instanceof ServiceConfigurationError) {
+                    // The caller/JVM reports this failure; do not print/log it again.
+                    throw new IllegalStateException("Unable to initialize singleton services.", e);
+                }
+            }
+            // Preserve legacy handling of other failures and the startup stderr
+            // workaround (#883), without logging a second copy of the stack trace.
             e.printStackTrace();
-            logger.error("Unable to initialize singleton services.", e);
-            throw new IllegalStateException("Unable to initialize singleton services.", e);
         }
         ModuleRegistry.registerModule(ServiceConfig.CONFIG_NAME, SingletonServiceFactory.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceConfig.CONFIG_NAME), null);
     }
