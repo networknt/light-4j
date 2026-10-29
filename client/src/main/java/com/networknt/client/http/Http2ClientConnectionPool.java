@@ -96,13 +96,15 @@ public class Http2ClientConnectionPool {
      */
     public synchronized void cacheConnection(URI uri, ClientConnection connection) {
         connection = IoThreadClientConnection.wrap(connection);
-        CachedConnection cachedConnection = getAndRemoveClosedConnection(uri);
-        if (cachedConnection == null || getConnectionStatus(uri, cachedConnection) != ConnectionStatus.MULTIPLEX_SUPPORT) {
-            if(logger.isDebugEnabled()) logger.debug("Cached connection: {} is either null or not support multiplex", cachedConnection);
-            CachedConnection newConnection = new CachedConnection(connection);
-            connectionPool.computeIfAbsent(uri.toString(), k -> new LinkedList<>()).add(newConnection);
-            connectionCount.getAndIncrement();
+        getAndRemoveClosedConnection(uri);
+        List<CachedConnection> connections = connectionPool.computeIfAbsent(uri.toString(), key -> new LinkedList<>());
+        for (CachedConnection cached : connections) {
+            if (cached.get() == connection) return;
         }
+        // A concurrent connect still belongs to its caller even if another HTTP/2 transport
+        // reached the pool first. Track every distinct transport rather than orphaning it.
+        connections.add(new CachedConnection(connection));
+        connectionCount.incrementAndGet();
     }
 
     private synchronized CachedConnection getAndRemoveClosedConnection(URI uri) {

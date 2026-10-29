@@ -26,7 +26,7 @@ public class Http2ClientCompletableFutureNoRequest extends CompletableFuture<Cli
 
     @Override
     public void completed(ClientExchange result) {
-        result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+        result.setResponseListener(new SafeClientCallback() {
             @Override
             protected void completedSafely(final ClientExchange result) {
                 new StringReadChannelListener(result.getConnection().getBufferPool()) {

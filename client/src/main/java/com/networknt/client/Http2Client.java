@@ -82,7 +82,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -1503,10 +1502,10 @@ public class Http2Client {
      * @return the client callback
      */
     public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             @Override
             protected void completedSafely(ClientExchange result) {
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     @Override
                     protected void completedSafely(final ClientExchange result) {
                         reference.set(result.getResponse());
@@ -1531,6 +1530,7 @@ public class Http2Client {
 
                     @Override
                     protected void failedSafely(IOException e) {
+                        reference.set(null);
                         logger.error("IOException:", e);
                         latch.countDown();
                     }
@@ -1549,6 +1549,7 @@ public class Http2Client {
 
             @Override
             protected void failedSafely(IOException e) {
+                reference.set(null);
                 logger.error("IOException:", e);
                 latch.countDown();
             }
@@ -1562,9 +1563,9 @@ public class Http2Client {
      * @return a ClientCallback for ClientExchange
      */
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             protected void completedSafely(ClientExchange result) {
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     protected void completedSafely(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
@@ -1584,6 +1585,7 @@ public class Http2Client {
                         }).setup(result.getResponseChannel());
                     }
                     protected void failedSafely(IOException e) {
+                        reference.set(null);
                         latch.countDown();
                     }
                 });
@@ -1601,6 +1603,7 @@ public class Http2Client {
             }
 
             protected void failedSafely(IOException e) {
+                reference.set(null);
                 latch.countDown();
             }
         };
@@ -1615,10 +1618,10 @@ public class Http2Client {
      * @return a ClientCallback for ClientExchange
      */
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             protected void completedSafely(ClientExchange result) {
                 new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     protected void completedSafely(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
@@ -1638,6 +1641,7 @@ public class Http2Client {
                         }).setup(result.getResponseChannel());
                     }
                     protected void failedSafely(IOException e) {
+                        reference.set(null);
                         latch.countDown();
                     }
                 });
@@ -1655,6 +1659,7 @@ public class Http2Client {
             }
 
             protected void failedSafely(IOException e) {
+                reference.set(null);
                 latch.countDown();
             }
         };
@@ -1668,11 +1673,11 @@ public class Http2Client {
      * @return the client callback
      */
     public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final String requestBody) {
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             @Override
             protected void completedSafely(ClientExchange result) {
                 new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     @Override
                     protected void completedSafely(ClientExchange result) {
                         reference.set(result.getResponse());
@@ -1696,6 +1701,7 @@ public class Http2Client {
 
                     @Override
                     protected void failedSafely(IOException e) {
+                        reference.set(null);
                         logger.error("IOException:", e);
                         latch.countDown();
                     }
@@ -1704,6 +1710,7 @@ public class Http2Client {
 
             @Override
             protected void failedSafely(IOException e) {
+                reference.set(null);
                 logger.error("IOException:", e);
                 latch.countDown();
             }
@@ -1718,10 +1725,10 @@ public class Http2Client {
      */
     public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch) {
         final long startTime = System.currentTimeMillis();
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             @Override
             protected void completedSafely(ClientExchange result) {
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     @Override
                     protected void completedSafely(final ClientExchange result) {
                         new StringReadChannelListener(result.getConnection().getBufferPool()) {
@@ -1783,11 +1790,11 @@ public class Http2Client {
      */
     public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch, final String requestBody) {
         final long startTime = System.currentTimeMillis();
-        return new SafeClientCallback<ClientExchange>() {
+        return new SafeClientCallback() {
             @Override
             protected void completedSafely(ClientExchange result) {
                 new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                result.setResponseListener(new SafeClientCallback<ClientExchange>() {
+                result.setResponseListener(new SafeClientCallback() {
                     @Override
                     protected void completedSafely(ClientExchange result) {
                         new StringReadChannelListener(BUFFER_POOL) {
@@ -2022,10 +2029,11 @@ public class Http2Client {
                 return;
             }
             IoThreadClientConnection owned = IoThreadClientConnection.wrap(connection);
-            AtomicBoolean sent = new AtomicBoolean();
+            RequestSubmission submission = new RequestSubmission();
             exchangeFuture.whenComplete((response, error) -> {
+                submission.finish();
                 try {
-                    if (error != null && sent.get() && !owned.isMultiplexingSupported()) owned.close();
+                    if (error != null && !owned.isMultiplexingSupported()) owned.close();
                     // This is concurrent pool metadata, not a native connection operation. It must
                     // run even if the owner has stopped; do not discard the exchange outcome.
                     http2ClientConnectionPool.resetConnectionStatus(owned);
@@ -2038,13 +2046,9 @@ public class Http2Client {
                 }
             });
             responseFuture.whenComplete((ignored, error) -> {
-                synchronized (sent) {
-                    if (error != null && sent.get() && !exchangeFuture.isDone() && !owned.isMultiplexingSupported()) {
-                        // A timed-out/cancelled HTTP/1 exchange cannot be reused, even if the
-                        // backend never responds. Retire now and queue native close on its owner.
-                        owned.close();
-                        exchangeFuture.completeExceptionally(error);
-                    }
+                if (error != null && submission.cancel() && !owned.isMultiplexingSupported()) {
+                    owned.close();
+                    exchangeFuture.completeExceptionally(error);
                 }
             });
             if (logger.isDebugEnabled()) {
@@ -2052,13 +2056,7 @@ public class Http2Client {
                         uri, request.getRequestHeaders(), requestBody.get());
                 else logger.debug("The request sent to {} = request header: {}, request body is empty", uri, request.getRequestHeaders());
             }
-            owned.sendRequest(request, callback, () -> {
-                synchronized (sent) {
-                    if (responseFuture.isDone()) return false;
-                    sent.set(true);
-                    return true;
-                }
-            });
+            owned.sendRequest(request, callback, submission);
         });
         return responseFuture;
     }
