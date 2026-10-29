@@ -16,15 +16,13 @@
 
 package com.networknt.config;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import com.networknt.config.yml.YamlUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 import org.snakeyaml.engine.v2.api.Load;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -41,10 +39,8 @@ public class ConfigDecryptTest {
     public void testDecryptMap() {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfigNoCache("secret-map-test");
         Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
-
         secretMap = Config.getInstance().getJsonMapConfig("secret-map-test");
         Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
-
         List<String> testArray = (List<String>) secretMap.get(TEST_ARRAY);
 
         Assertions.assertTrue(testArray.size()>0);
@@ -96,13 +92,4 @@ public class ConfigDecryptTest {
         Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 
-    @Test
-    public void testAutoDecryptorClass() throws IOException {
-        if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
-        Load yaml = YamlUtils.newLoad("com.networknt.config.TestAutoDecryptor");
-
-        Map<String, Object> secret = (Map<String, Object>) yaml.loadFromInputStream(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
-
-        Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
-    }
 }

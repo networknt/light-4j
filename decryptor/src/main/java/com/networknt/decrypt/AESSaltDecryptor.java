@@ -19,7 +19,7 @@ import java.util.List;
  * Decrypts authenticated four-part CRYPT values produced by light-encryptor.
  * Legacy three-part CBC values must be re-encrypted before upgrading.
  */
-public abstract class AESSaltDecryptor implements Decryptor {
+public class AESSaltDecryptor implements Decryptor {
     private static final Logger logger = LoggerFactory.getLogger(AESSaltDecryptor.class);
 
     private static final String KDF_ALGORITHM = "PBKDF2WithHmacSHA256";
@@ -32,7 +32,7 @@ public abstract class AESSaltDecryptor implements Decryptor {
     // may return borrowed arrays, which must never be inferred to be owned.
     private final ThreadLocal<List<char[]>> ownedPasswords = new ThreadLocal<>();
     /**
-     * Constructor for explicit password-provider subclasses.
+     * Constructs a decryptor without a default password. Subclasses supply a provider.
      */
     public AESSaltDecryptor() {
     }

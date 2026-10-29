@@ -1,8 +1,7 @@
 package com.networknt.config;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -16,8 +16,6 @@
 
 package com.networknt.basicauth;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
@@ -45,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 /**
  * This is a test class for BasicAuthHandler. It tests all scenarios of positive and negative.

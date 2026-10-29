@@ -1,6 +1,9 @@
 ---
 # singleton service factory configuration
 singletons:
+# A password-less base binding must not interrupt subsequent registrations.
+- com.networknt.decrypt.Decryptor:
+  - com.networknt.decrypt.AESSaltDecryptor
 - com.networknt.service.A:
   - com.networknt.service.AImpl
 - com.networknt.service.B:

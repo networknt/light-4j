@@ -1,7 +1,5 @@
 package com.networknt.apikey;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
@@ -21,6 +19,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
