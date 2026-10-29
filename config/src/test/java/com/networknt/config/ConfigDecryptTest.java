@@ -27,12 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@org.junit.jupiter.api.parallel.ResourceLock(org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES)
 public class ConfigDecryptTest {
-    @org.junit.jupiter.api.extension.RegisterExtension
-    final com.networknt.test.SystemPropertyExtension fixturePassword =
-            new com.networknt.test.SystemPropertyExtension("light_4j_config_password", "light");
-
 	private static final String SECRET="password";
 	private static final String TEST_MAP="testMap";
 	private static final String TEST_ARRAY="testArray";

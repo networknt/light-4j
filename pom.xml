@@ -143,8 +143,6 @@
     </properties>
 
     <modules>
-        <module>service-api</module>
-        <module>test-support</module>
         <module>jackson-defaults</module>
         <module>config</module>
         <module>utility</module>
@@ -244,16 +242,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>service-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>test-support</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>jackson-defaults</artifactId>
@@ -1000,6 +988,9 @@
                 <version>${version.maven-surefire}</version>
 
                 <configuration>
+                    <systemPropertyVariables>
+                        <light_4j_config_password>light</light_4j_config_password>
+                    </systemPropertyVariables>
                     <argLine>
                         ${argLine}
                         --add-opens java.base/java.lang=ALL-UNNAMED

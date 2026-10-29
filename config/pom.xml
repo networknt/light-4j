@@ -33,11 +33,6 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>test-support</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>jackson-defaults</artifactId>
         </dependency>
         <!-- Compatibility export: downstream applications still use the classic YAML API. -->

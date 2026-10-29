@@ -18,10 +18,6 @@ package com.networknt.common;
 
 import com.networknt.config.Config;
 import com.networknt.decrypt.AESSaltDecryptor;
-import com.networknt.decrypt.Decryptor;
-import com.networknt.decrypt.MissingMasterPasswordProviderException;
-import com.networknt.service.SingletonServiceFactory;
-import com.networknt.decrypt.AutoAESSaltDecryptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -35,17 +31,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Base64;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-@org.junit.jupiter.api.parallel.ResourceLock(org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES)
 public class DecryptUtilTest {
-    @org.junit.jupiter.api.extension.RegisterExtension
-    final com.networknt.test.SystemPropertyExtension fixturePassword =
-            new com.networknt.test.SystemPropertyExtension("light_4j_config_password", "light");
-
     private static final String SECRET_KEY = "my_super_secret_key";
     private static final String SALT = "ssshhhhhhhhhhh!!!!";
     private static final int GCM_IV_LENGTH = 12;
@@ -59,34 +47,12 @@ public class DecryptUtilTest {
     }
 
     @Test
-    public void testNestedDecryptUtilAndMissingProvider() {
-        String crypt = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
-        Decryptor configured = SingletonServiceFactory.getBean(Decryptor.class);
-        Assertions.assertInstanceOf(AutoAESSaltDecryptor.class, configured);
-        Map<String, Object> nested = new HashMap<>(Map.of("secret", crypt));
-        Map<String, Object> map = new HashMap<>(Map.of("nested", new ArrayList<>(List.of(nested))));
-        DecryptUtil.decryptMap(map);
-        Assertions.assertEquals("password", nested.get("secret"));
-        try {
-            SingletonServiceFactory.setBean(Decryptor.class.getName(), new AESSaltDecryptor() {});
-            nested.put("secret", crypt);
-            var failure = Assertions.assertThrows(MissingMasterPasswordProviderException.class,
-                    () -> DecryptUtil.decryptMap(map));
-            Assertions.assertTrue(failure.getMessage().contains("No master-password provider configured"));
-            Assertions.assertFalse(failure.getMessage().contains(crypt));
-            Assertions.assertEquals(crypt, nested.get("secret"));
-        } finally {
-            SingletonServiceFactory.setBean(Decryptor.class.getName(), configured);
-        }
-    }
-
-    @Test
     public void testAESSaltEncryptor() {
         String p = "password";
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }
@@ -97,7 +63,7 @@ public class DecryptUtilTest {
         AESSaltEncryptor encryptor = new AESSaltEncryptor();
         String s = encryptor.encrypt(p);
         System.out.println("s = " + s);
-        AESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         String c = decryptor.decrypt(s);
         System.out.println("c = " + c);
     }
