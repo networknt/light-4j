@@ -17,6 +17,7 @@
  */
 package com.networknt.handler;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -891,7 +892,7 @@ public class ProxyHandler implements HttpHandler {
         }
 
         private void sendWithCallback(ClientRequest r, String host) {
-            this.clientConnection.getConnection().sendRequest(r, new ClientCallback<>() {
+            ClientConnectionOperations.sendRequest(this.clientConnection.getConnection(), r, new ClientCallback<>() {
 
                 @Override
                 public void completed(final ClientExchange result) {
