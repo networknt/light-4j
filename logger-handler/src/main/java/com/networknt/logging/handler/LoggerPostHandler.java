@@ -16,6 +16,7 @@
 
 package com.networknt.logging.handler;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import ch.qos.logback.classic.Level;
 import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
@@ -168,7 +169,7 @@ public class LoggerPostHandler implements LightHttpHandler {
 
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(requestPath);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, Http2Client.getInstance().createClientCallback(reference, latch));
+            ClientConnectionOperations.sendRequest(connection, request, Http2Client.getInstance().createClientCallback(reference, latch));
             latch.await();
             int statusCode = reference.get().getResponseCode();
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -209,7 +210,7 @@ public class LoggerPostHandler implements LightHttpHandler {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, Http2Client.getInstance().createClientCallback(reference, latch, Config.getInstance().getMapper().writeValueAsString(requestBodyMap)));
+            ClientConnectionOperations.sendRequest(connection, request, Http2Client.getInstance().createClientCallback(reference, latch, Config.getInstance().getMapper().writeValueAsString(requestBodyMap)));
             latch.await();
             int statusCode = reference.get().getResponseCode();
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);

@@ -1,5 +1,6 @@
 package com.networknt.mcp;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import tools.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
@@ -65,7 +66,7 @@ public class McpProxyTool extends AbstractRemoteMcpTool {
             String jsonBody = mapper.writeValueAsString(jsonRpcRequest);
             if(logger.isDebugEnabled()) logger.debug("Backend MCP request: {}", jsonBody);
 
-            connection.sendRequest(request, client.createClientCallback(reference, latch, jsonBody));
+            ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, jsonBody));
             latch.await(3000, TimeUnit.MILLISECONDS);
 
             ClientResponse response = reference.get();

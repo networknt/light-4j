@@ -16,6 +16,7 @@
 
 package com.networknt.consul.client;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
@@ -317,10 +318,10 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		if(StringUtils.isBlank(json)) {
-			connection.sendRequest(request, client.createClientCallback(reference, latch));
+			ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch));
 		} else {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
+			ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, json));
 		}
 
 		// Await response and ensure we do not block if there are network or Consul server issues
@@ -333,7 +334,7 @@ public class ConsulClientImpl implements ConsulClient {
 			// - If a timeout occurs, it is not known whether Consul is still alive.
 			// - Close the connection to force reconnect: The next time this connection is borrowed from the pool, a new
 			//   connection will be created as the one returned is not open.
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(connection != null && connection.isOpen()) ClientConnectionOperations.safeClose(connection);
 			throw new RuntimeException(
 					String.format("The request to Consul timed out after %d + %d seconds to: %s", waitInSecond, timeoutBufferInSecond, uri));
 		}

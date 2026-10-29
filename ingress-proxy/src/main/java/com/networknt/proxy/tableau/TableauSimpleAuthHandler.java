@@ -16,6 +16,7 @@
 
 package com.networknt.proxy.tableau;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import tools.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
@@ -144,7 +145,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
+            ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, requestBody));
             latch.await();
             int statusCode = reference.get().getResponseCode();
             if(logger.isDebugEnabled()) logger.debug("statusCode = " + statusCode);

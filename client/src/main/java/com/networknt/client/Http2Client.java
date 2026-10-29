@@ -1846,20 +1846,10 @@ public class Http2Client {
      */
     public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
         addHostHeader(request);
-        CompletableFuture<ClientResponse> futureClientResponse;
-        AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
-            if(logger.isDebugEnabled()) logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
-            futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
-        } else {
-            CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
-            futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
-                currentConnection.set(clientConnection);
-                return getFutureClientResponse(clientConnection, uri, request, requestBody);
-            });
-        }
-        futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
-        return futureClientResponse;
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        CompletableFuture<ClientConnection> futureConnection = connection != null && connection.isOpen()
+                ? CompletableFuture.completedFuture(connection) : this.connectAsync(uri);
+        return getFutureClientResponse(futureConnection, uri, request, requestBody);
     }
 
     /**
@@ -1872,20 +1862,10 @@ public class Http2Client {
      */
     public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
         addHostHeader(request);
-        CompletableFuture<ClientResponse> futureClientResponse;
-        AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
-            if(logger.isDebugEnabled()) logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
-            futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
-        } else {
-            CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri, isHttp2);
-            futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
-                currentConnection.set(clientConnection);
-                return getFutureClientResponse(clientConnection, uri, request, requestBody);
-            });
-        }
-        futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
-        return futureClientResponse;
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        CompletableFuture<ClientConnection> futureConnection = connection != null && connection.isOpen()
+                ? CompletableFuture.completedFuture(connection) : this.connectAsync(uri, isHttp2);
+        return getFutureClientResponse(futureConnection, uri, request, requestBody);
     }
 
     /**
@@ -1984,8 +1964,8 @@ public class Http2Client {
                 provider.connect(new ClientCallback<ClientConnection>() {
                     @Override
                     public void completed(ClientConnection r) {
-                        completableFuture.complete(r);
                         http2ClientConnectionPool.cacheConnection(uri, r);
+                        completableFuture.complete(r);
                     }
 
                     @Override
@@ -1999,30 +1979,53 @@ public class Http2Client {
         return completableFuture;
     }
 
-    private CompletableFuture<ClientResponse> getFutureClientResponse(ClientConnection clientConnection, URI uri, ClientRequest request, Optional<String> requestBody) {
+    private CompletableFuture<ClientResponse> getFutureClientResponse(CompletableFuture<ClientConnection> connectionFuture,
+            URI uri, ClientRequest request, Optional<String> requestBody) {
+        CompletableFuture<ClientResponse> exchangeFuture;
+        ClientCallback<ClientExchange> callback;
         if (requestBody.isPresent()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
-            }
-            Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
-            try {
-                clientConnection.sendRequest(request, futureClientResponseWithRequest);
-            } catch (Exception e) {
-                futureClientResponseWithRequest.completeExceptionally(e);
-            }
-            return futureClientResponseWithRequest;
+            Http2ClientCompletableFutureWithRequest withRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
+            exchangeFuture = withRequest;
+            callback = withRequest;
         } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
-            }
-            Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
-            try {
-                clientConnection.sendRequest(request, futureClientResponseNoRequest);
-            } catch (Exception e) {
-                futureClientResponseNoRequest.completeExceptionally(e);
-            }
-            return futureClientResponseNoRequest;
+            Http2ClientCompletableFutureNoRequest noRequest = new Http2ClientCompletableFutureNoRequest();
+            exchangeFuture = noRequest;
+            callback = noRequest;
         }
+        // Keep transport completion independent of caller cancellation/timeouts. A request already
+        // sent must drain before an HTTP/1 connection can be offered to another caller.
+        CompletableFuture<ClientResponse> responseFuture = new CompletableFuture<>();
+        connectionFuture.whenComplete((connection, connectError) -> {
+            if (connectError != null) {
+                responseFuture.completeExceptionally(connectError);
+                return;
+            }
+            exchangeFuture.whenComplete((response, error) -> {
+                try {
+                    ClientConnectionOperations.execute(connection, () -> {
+                        if (error != null && !connection.isMultiplexingSupported()) IoUtils.safeClose(connection);
+                        http2ClientConnectionPool.resetConnectionStatus(connection);
+                        if (error == null) responseFuture.complete(response);
+                        else responseFuture.completeExceptionally(error);
+                    });
+                } catch (RuntimeException e) {
+                    responseFuture.completeExceptionally(e);
+                }
+            });
+            try {
+                ClientConnectionOperations.execute(connection, () -> {
+                    if (responseFuture.isDone()) {
+                        http2ClientConnectionPool.resetConnectionStatus(connection);
+                        return;
+                    }
+                    if (logger.isDebugEnabled()) logger.debug("Sending request to {} on {}", uri, Thread.currentThread());
+                    ClientConnectionOperations.sendRequest(connection, request, callback);
+                });
+            } catch (RuntimeException e) {
+                exchangeFuture.completeExceptionally(e);
+            }
+        });
+        return responseFuture;
     }
 
     /**

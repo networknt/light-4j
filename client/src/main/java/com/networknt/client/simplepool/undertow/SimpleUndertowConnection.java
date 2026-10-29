@@ -15,10 +15,9 @@
  */
 package com.networknt.client.simplepool.undertow;
 
+import com.networknt.client.http.ClientConnectionOperations;
 import com.networknt.client.simplepool.SimpleConnection;
 import io.undertow.client.ClientConnection;
-
-import java.io.IOException;
 
 /**
  * SimpleUndertowConnection class.
@@ -56,10 +55,6 @@ public class SimpleUndertowConnection implements SimpleConnection {
 
     @Override
     public void safeClose() {
-        try {
-            connection.close();
-        } catch (IOException e) {
-            // ignore
-        }
+        ClientConnectionOperations.safeClose(connection);
     }
 }

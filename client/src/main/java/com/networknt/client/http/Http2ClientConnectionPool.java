@@ -309,7 +309,7 @@ public class Http2ClientConnectionPool {
             if(System.currentTimeMillis() > (this.lifeStartTimeParked + this.ttlParked)) {
                 if(logger.isDebugEnabled()) logger.debug("ParkedConnection expired. Start time of this parked connection is {}", new Date(this.lifeStartTimeParked));
                 try {
-                    this.clientConnection.close();
+                    ClientConnectionOperations.safeClose(this.clientConnection);
                 } catch (Exception ignored){
                     if(logger.isInfoEnabled()) logger.info("Exception while closing the parked connection. This exception is suppressed. Exception is {}", ignored);
                 }
