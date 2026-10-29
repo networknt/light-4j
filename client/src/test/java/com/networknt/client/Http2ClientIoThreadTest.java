@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class Http2ClientIoThreadTest {
     private XnioWorker worker;
     private XnioIoThread owner;
@@ -26,6 +27,12 @@ class Http2ClientIoThreadTest {
     private TestClient client;
     private final Http2ClientConnectionPool pool = Http2ClientConnectionPool.getInstance();
     private final URI uri = URI.create("http://io-thread-test.invalid");
+
+    @BeforeAll
+    void createClient() { client = new TestClient(); }
+
+    @AfterAll
+    void closeClient() { client.shutdown(); }
 
     @BeforeEach
     void setUp() throws IOException {
@@ -35,12 +42,11 @@ class Http2ClientIoThreadTest {
         when(connection.getIoThread()).thenReturn(owner);
         when(connection.isOpen()).thenReturn(true);
         pool.clear();
-        client = new TestClient();
+        client.connected = new CompletableFuture<>();
     }
 
     @AfterEach
     void tearDown() throws InterruptedException {
-        client.shutdown();
         pool.clear();
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
@@ -129,8 +135,9 @@ class Http2ClientIoThreadTest {
         doThrow(new RejectedExecutionException("stopped")).when(stopped).execute(any(Runnable.class));
         CompletableFuture<ClientResponse> response = call(client, false, false);
         client.connected.complete(connection);
-        assertInstanceOf(RejectedExecutionException.class,
-                assertThrows(ExecutionException.class, () -> response.get(5, TimeUnit.SECONDS)).getCause());
+        Throwable failure = assertThrows(ExecutionException.class, () -> response.get(5, TimeUnit.SECONDS)).getCause();
+        assertInstanceOf(IOException.class, failure);
+        assertInstanceOf(RejectedExecutionException.class, failure.getCause());
         verify(connection, never()).sendRequest(any(), any());
     }
 
@@ -172,33 +179,24 @@ class Http2ClientIoThreadTest {
 
     @ParameterizedTest
     @CsvSource({"false", "true"})
-    void cancellationOrTimeoutAfterSendWaitsForTransportBeforeHttp1Reuse(boolean timeout) throws Exception {
+    void cancellationOrTimeoutAfterSendRetiresHttp1WithoutWaitingForBackend(boolean timeout) throws Exception {
         pool.cacheConnection(uri, connection);
         pool.resetConnectionStatus(connection);
-        CompletableFuture<com.networknt.client.http.Http2ClientCompletableFutureNoRequest> sent = new CompletableFuture<>();
-        doAnswer(invocation -> {
-            sent.complete(invocation.getArgument(1));
-            return null;
-        }).when(connection).sendRequest(any(), any());
+        CompletableFuture<ClientCallback<ClientExchange>> sent = new CompletableFuture<>();
+        CompletableFuture<Thread> closed = new CompletableFuture<>();
+        doAnswer(invocation -> { closed.complete(Thread.currentThread()); return null; }).when(connection).close();
+        doAnswer(invocation -> { sent.complete(invocation.getArgument(1)); return null; })
+                .when(connection).sendRequest(any(), any());
         CompletableFuture<ClientResponse> response = call(client, false, false);
-        var transport = sent.get(5, TimeUnit.SECONDS);
+        sent.get(5, TimeUnit.SECONDS);
         if (timeout) {
             response.orTimeout(1, TimeUnit.MILLISECONDS);
             assertInstanceOf(TimeoutException.class,
                     assertThrows(ExecutionException.class, () -> response.get(5, TimeUnit.SECONDS)).getCause());
-        } else {
-            assertTrue(response.cancel(false));
-        }
-        assertNull(pool.getConnection(uri), "in-flight HTTP/1 exchange must remain reserved");
-        CompletableFuture<Void> drained = new CompletableFuture<>();
-        owner.execute(() -> {
-            transport.complete(new ClientResponse(200, "OK", io.undertow.util.Protocols.HTTP_1_1)); // simulate the body-reader reaching EOF
-            drained.complete(null);
-        });
-        drained.get(5, TimeUnit.SECONDS);
-        assertSame(connection, pool.getConnection(uri), "reuse only after transport completion");
-        verify(connection, never()).close();
-        assertTrue(response.isCompletedExceptionally(), "late transport success must not replace cancellation/timeout");
+        } else assertTrue(response.cancel(false));
+        assertSame(owner, closed.get(5, TimeUnit.SECONDS));
+        assertNull(pool.getConnection(uri), "a backend that never answers must not pin a cancelled HTTP/1 connection");
+        assertTrue(response.isCompletedExceptionally());
     }
 
     private CompletableFuture<ClientResponse> call(TestClient client, boolean body, boolean explicitHttp2) {
@@ -208,7 +206,7 @@ class Http2ClientIoThreadTest {
     }
 
     private static class TestClient extends Http2Client {
-        final CompletableFuture<ClientConnection> connected = new CompletableFuture<>();
+        CompletableFuture<ClientConnection> connected = new CompletableFuture<>();
         @Override
         public CompletableFuture<ClientConnection> connectAsync(URI target) { return connected; }
         @Override

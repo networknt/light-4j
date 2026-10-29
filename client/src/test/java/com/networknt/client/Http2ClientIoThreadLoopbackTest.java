@@ -1,6 +1,5 @@
 package com.networknt.client;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.networknt.client.http.Http2ClientConnectionPool;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -33,7 +32,7 @@ class Http2ClientIoThreadLoopbackTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        for (ClientConnection connection : connections) ClientConnectionOperations.safeClose(connection);
+        for (ClientConnection connection : connections) connection.close();
         pool.clear();
         if (client != null) client.shutdown();
         if (worker != null) {
