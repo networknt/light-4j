@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.hmac.config.HmacConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.security.UnifiedSecurityConfig;
@@ -102,8 +103,9 @@ public final class HmacReplayAdminHandler implements LightHttpHandler {
             setExchangeStatus(exchange, HmacVerifier.HMAC_UNAVAILABLE);
             return;
         }
+        var continuation = HandlerContinuation.capture(exchange);
         exchange.dispatch();
-        removalStage.whenComplete((removed, failure) -> exchange.dispatch(completed -> {
+        removalStage.whenComplete((removed, failure) -> exchange.dispatch(continuation.apply(completed -> {
             if (failure != null) {
                 audit(completed, "unavailable", store);
                 setExchangeStatus(completed, HmacVerifier.HMAC_UNAVAILABLE);
@@ -120,7 +122,7 @@ public final class HmacReplayAdminHandler implements LightHttpHandler {
             } catch (Exception e) {
                 setExchangeStatus(completed, HmacVerifier.HMAC_UNAVAILABLE);
             }
-        }));
+        })));
     }
 
     private Removal parse(Object requestBody) {

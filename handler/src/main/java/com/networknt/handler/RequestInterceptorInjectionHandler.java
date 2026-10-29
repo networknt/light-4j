@@ -167,7 +167,8 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     private final class RequestBodyReadState implements ChannelListener<StreamSourceChannel> {
         private final HttpServerExchange exchange;
         private final RequestInjectionConfig config;
-        private final HttpHandler continuation;
+        private final HttpHandler nextHandler;
+        private HttpHandler resumedHandler;
         private final StreamSourceChannel channel;
         private final PooledByteBuffer[] bufferedData;
         private final boolean exactLimit;
@@ -175,10 +176,10 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         private int readBuffers;
         private long bytesRead;
 
-        private RequestBodyReadState(HttpServerExchange exchange, RequestInjectionConfig config, HttpHandler continuation) {
+        private RequestBodyReadState(HttpServerExchange exchange, RequestInjectionConfig config, HttpHandler nextHandler) {
             this.exchange = exchange;
             this.config = config;
-            this.continuation = HandlerContinuation.capture(exchange, ex -> Handler.next(ex, continuation));
+            this.nextHandler = nextHandler;
             this.channel = exchange.getRequestChannel();
             this.bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
             this.exactLimit = config.getMaxBodyBytes() > 0;
@@ -241,6 +242,8 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         }
 
         private ReadOutcome awaitMoreData() {
+            if (resumedHandler == null)
+                resumedHandler = HandlerContinuation.capture(exchange, ex -> Handler.next(ex, nextHandler));
             channel.getReadSetter().set(this);
             channel.resumeReads();
             return ReadOutcome.PENDING;
@@ -274,7 +277,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 if (outcome == ReadOutcome.COMPLETE) {
                     saveBufferAndResetUndertowConnector(exchange, bufferedData);
                     if (!exchange.isResponseStarted())
-                        Connectors.executeRootHandler(continuation, exchange);
+                        Connectors.executeRootHandler(resumedHandler, exchange);
                 }
             } catch (Throwable e) {
                 LOG.error(e.getMessage(), e);

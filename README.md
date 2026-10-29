@@ -176,7 +176,16 @@ ExceptionHandler supplies its existing policy without rebuilding middleware or
 changing its next handler. Named handlers are retained; when exception handling
 is disabled and omitted from the chain, failures remain under Undertow's default
 policy. Nested boundaries restore their enclosing scope, and state is isolated
-per exchange. ingress-proxy uses exception only for tests.
+per exchange. The request MDC is captured with each continuation and the resuming
+thread's previous MDC is restored afterward. BodyHandler redispatch, HMAC replay
+and administration completion, DumpHandler/McpHandler redispatch, and
+ProxyHandler connection/action dispatch also
+carry the selected boundary. Proxy callbacks retain their pending-I/O lifecycle.
+Custom asynchronous handlers must explicitly capture before registering their
+callbacks; this contract cannot intercept arbitrary third-party hand-offs.
+Body-reading requests capture lazily only when a read suspends. ingress-proxy uses
+exception only for tests. Interrupted upstream sends restore the interrupt flag
+and stop retrying immediately.
 
 ExternalServiceWorkerDispatchTest covers synchronous worker entry, partial chunked
 body continuation, enabled/named/disabled exception policies, concurrent requests,

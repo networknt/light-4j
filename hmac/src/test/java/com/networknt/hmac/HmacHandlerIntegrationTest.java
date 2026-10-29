@@ -59,6 +59,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 class HmacHandlerIntegrationTest {
+    private java.util.function.UnaryOperator<HttpHandler> chainWrapper = handler -> handler;
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {true, false})
+    void replayCompletionRetainsExceptionBoundary(boolean enabled) throws Exception {
+        Context context = context("continuation-" + enabled);
+        if (enabled) chainWrapper = handler -> exchange ->
+                com.networknt.handler.HandlerContinuation.execute(exchange, (ex, task) -> {
+                    try { task.handleRequest(ex); }
+                    catch (java.io.IOException e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+                }, handler);
+        try (RunningServer server = start(context, new RequestInterceptor[]{context.interceptor},
+                exchange -> { throw new java.io.IOException("callee failed"); })) {
+            var response = server.post("{}".getBytes(StandardCharsets.UTF_8), "continuation");
+            Assertions.assertTrue(context.store.reserveStarted.await(5, TimeUnit.SECONDS));
+            Assertions.assertFalse(response.isDone());
+            context.store.allowReservation.complete(null);
+            var completed = response.get(5, TimeUnit.SECONDS);
+            Assertions.assertEquals(enabled ? 409 : 500, completed.statusCode());
+            Assertions.assertEquals(enabled, new String(completed.body(), StandardCharsets.UTF_8).contains("selected"));
+        }
+    }
+
     private static final String SECRET = "phase-3-exact-forwarding-secret";
     private static final String INJECTION_CONFIG = "hmac-phase3-request-injection";
     private final List<String> configNames = new java.util.ArrayList<>();
@@ -298,7 +321,7 @@ class HmacHandlerIntegrationTest {
         hmacHandler.setNext(callee);
         RequestInterceptorInjectionHandler injection = new RequestInterceptorInjectionHandler(INJECTION_CONFIG);
         injection.setNext(hmacHandler);
-        return new RunningServer(injection, context, version);
+        return new RunningServer(chainWrapper.apply(injection), context, version);
     }
 
     private Context context(String suffix) {

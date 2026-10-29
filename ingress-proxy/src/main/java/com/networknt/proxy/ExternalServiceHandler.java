@@ -227,7 +227,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             HttpRequest finalRequest = attempt == 0 ? request : buildRetryRequest(request, attempt);
             try {
                 return forwardingClient.send(finalRequest, HttpResponse.BodyHandlers.ofByteArray());
-            } catch (IOException | InterruptedException e) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw e;
+            } catch (IOException e) {
                 if (attempt >= maxRetries - 1) throw e;
                 logger.warn("Attempt {} failed ({}). Retrying...", attempt + 1, e.getMessage());
             }

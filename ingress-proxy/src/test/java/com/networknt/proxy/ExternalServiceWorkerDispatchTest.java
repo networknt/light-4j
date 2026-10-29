@@ -61,9 +61,12 @@ class ExternalServiceWorkerDispatchTest {
     private String previousTlsProperty;
     private HttpHandler previousMetrics;
     private Map<String, Object> previousExceptionConfig;
-    private static final String NAMED_EXCEPTION = "external-worker-named-exception-test";
+    enum Policy {
+        ENABLED, NAMED, DISABLED, NAMED_DISABLED;
 
-    enum Policy { ENABLED, NAMED, DISABLED, NAMED_DISABLED }
+        String configName() { return this == ENABLED ? "exception" : "external-worker-exception-" + name(); }
+        boolean enabled() { return this == ENABLED || this == NAMED; }
+    }
 
     static Stream<Arguments> streamedPolicies() {
         return Stream.of(Policy.values()).flatMap(policy ->
@@ -71,12 +74,7 @@ class ExternalServiceWorkerDispatchTest {
     }
 
     private HttpHandler withPolicy(Policy policy, HttpHandler next) {
-        boolean named = policy == Policy.NAMED || policy == Policy.NAMED_DISABLED;
-        boolean enabled = policy == Policy.ENABLED || policy == Policy.NAMED;
-        // The default deliberately disagrees with the selected named configuration.
-        Config.getInstance().putInConfigCache("exception", Map.of("enabled", named ? !enabled : enabled));
-        Config.getInstance().putInConfigCache(NAMED_EXCEPTION, Map.of("enabled", enabled));
-        ExceptionHandler selected = new ExceptionHandler(named ? NAMED_EXCEPTION : "exception") {
+        ExceptionHandler selected = new ExceptionHandler(policy.configName()) {
             @Override
             public void setExchangeStatus(HttpServerExchange exchange, String code, Object... args) {
                 exchange.getResponseHeaders().put(new HttpString("X-Exception-Policy"), policy.name());
@@ -98,6 +96,8 @@ class ExternalServiceWorkerDispatchTest {
     @BeforeEach
     void rememberSharedState() {
         previousExceptionConfig = Config.getInstance().getJsonMapConfig("exception");
+        for (Policy policy : Policy.values())
+            Config.getInstance().putInConfigCache(policy.configName(), Map.of("enabled", policy.enabled()));
         previousInterceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
         previousTlsProperty = System.getProperty(TLS_PROPERTY);
         previousMetrics = Handler.getHandlers().get(MetricsConfig.CONFIG_NAME);
@@ -109,7 +109,8 @@ class ExternalServiceWorkerDispatchTest {
         if (previousMetrics == null) Handler.getHandlers().remove(MetricsConfig.CONFIG_NAME);
         else Handler.getHandlers().put(MetricsConfig.CONFIG_NAME, previousMetrics);
         Config.getInstance().putInConfigCache("exception", previousExceptionConfig);
-        Config.getInstance().clearConfigCache(NAMED_EXCEPTION);
+        for (Policy policy : Policy.values())
+            if (policy != Policy.ENABLED) Config.getInstance().clearConfigCache(policy.configName());
         Config.getInstance().clearConfigCache(EXTERNAL_CONFIG);
         Config.getInstance().clearConfigCache(INJECTION_CONFIG);
         if (previousTlsProperty == null) System.clearProperty(TLS_PROPERTY);
@@ -227,7 +228,9 @@ class ExternalServiceWorkerDispatchTest {
     }
 
     private static void assertRawFailure(Policy policy, String response) {
-        int status = Integer.parseInt(response.split(" ", 3)[1]);
+        assertTrue(response.matches("(?s)HTTP/1\\.[01] [0-9]{3} .*"),
+                "Expected a complete HTTP status line, received: " + response);
+        int status = Integer.parseInt(response.substring(9, 12));
         String selected = response.lines().filter(line -> line.toLowerCase().startsWith("x-exception-policy:"))
                 .map(line -> line.substring(line.indexOf(':') + 1).trim()).findFirst().orElse("");
         assertFailure(policy, status, response, selected);

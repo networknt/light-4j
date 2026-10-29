@@ -19,6 +19,7 @@ package com.networknt.body;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.StringUtils;
@@ -105,7 +106,7 @@ public class BodyHandler implements MiddlewareHandler {
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null) {
             if (exchange.isInIoThread()) {
-                exchange.dispatch(this);
+                exchange.dispatch(HandlerContinuation.capture(exchange, this));
                 return;
             }
             exchange.startBlocking();

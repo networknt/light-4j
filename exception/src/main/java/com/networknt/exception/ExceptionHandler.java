@@ -85,10 +85,10 @@ public class ExceptionHandler implements MiddlewareHandler {
     }
 
     private void handleContinuation(HttpServerExchange exchange, HttpHandler continuation) throws Exception {
-        // These two lines of code should be placed here to avoid the log being printed twice
-        // when switching from the IO thread to the worker thread.
+        // Log each executing frame, including asynchronous continuations. The
+        // captured continuation restores the resuming thread's MDC after this frame.
         String path = exchange.getRequestPath();
-        if(logger.isDebugEnabled()) logger.debug("ExceptionHandler starting - path: {}", path);
+        if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame starting - path: {}", path);
 
         try {
             continuation.handleRequest(exchange);
@@ -130,9 +130,8 @@ public class ExceptionHandler implements MiddlewareHandler {
                 }
             }
         } finally {
-            if(logger.isDebugEnabled()) logger.debug("ExceptionHandler completed - path: {}", path);
-            // at last, clean the MDC. Most likely, correlationId in side.
-            //logger.debug("Clear MDC");
+            if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
+            // Clear this request frame; a captured continuation restores its caller's MDC.
             MDC.clear();
         }
     }
