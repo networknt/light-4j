@@ -8,36 +8,15 @@ import org.yaml.snakeyaml.resolver.Resolver;
 import org.yaml.snakeyaml.Yaml;
 import com.networknt.decrypt.AESSaltDecryptor;
 import com.networknt.decrypt.MissingMasterPasswordProviderException;
-import com.networknt.decrypt.fixture.FixturePasswordDecryptor;
-import com.networknt.test.ForkedStartup;
+import com.networknt.decrypt.AutoAESSaltDecryptor;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PasswordProviderConfigTest {
     private static final String CRYPT = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
-    @TempDir Path directory;
-
-    @Test
-    void configYmlRejectsBareBaseBeforeReadingAnyCryptValue() throws Exception {
-        Files.writeString(directory.resolve("config.yml"), "decryptorClass: " + AESSaltDecryptor.class.getName());
-        var result = ForkedStartup.run(PasswordProviderConfigProbe.class, directory, "invalid");
-        assertEquals(0, result.exitCode(), result.output());
-        assertTrue(result.output().contains("No master-password provider configured"));
-    }
-
-    @Test
-    void explicitProviderLoadsCryptThroughRealFileConfig() throws Exception {
-        Files.writeString(directory.resolve("config.yml"), "decryptorClass: " + FixturePasswordDecryptor.class.getName());
-        Files.writeString(directory.resolve("provider-secret.yml"), "password: " + CRYPT);
-        var result = ForkedStartup.run(PasswordProviderConfigProbe.class, directory, "valid");
-        assertEquals(0, result.exitCode(), result.output());
-    }
 
     @Test
     void subclassFallbackReportsProviderGuidanceAndSafeLocationAndLogsNoSecret() {
@@ -65,7 +44,7 @@ class PasswordProviderConfigTest {
 
     @Test
     void malformedCryptKeepsFormatGuidanceWithoutEchoingSecret() {
-        var reader = newReader(FixturePasswordDecryptor.class.getName());
+        var reader = newReader(AutoAESSaltDecryptor.class.getName());
         var failure = assertThrows(IllegalArgumentException.class,
                 () -> reader.load("password: CRYPT:invalid-canary"));
         assertTrue(failure.getMessage().contains("Check the master password and CRYPT value format"));

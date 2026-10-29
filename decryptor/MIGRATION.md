@@ -43,9 +43,9 @@ cannot identify a configuration key/file on its own.
 ## Credential lifetime and compatibility
 
 **Breaking change on master and 2.x:** the base `AESSaltDecryptor` no longer
-supplies the public `light` password. Direct base-class use fails closed on
-otherwise valid CRYPT input, including under JUnit. This withdraws the previous
-compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/issues/2831).
+supplies the public `light` password. Direct base-class construction fails,
+including under JUnit. The previous compatibility waiver is withdrawn.
+See [issue #2831](https://github.com/networknt/light-4j/issues/2831).
 
 Select `AutoAESSaltDecryptor` with an explicitly supplied
 `light_4j_config_password` (or uppercase equivalent), the interactive
@@ -56,26 +56,31 @@ Custom providers keep their existing ownership contract.
 Inventory all provider bindings before upgrading: `decryptorClass` in config.yml,
 `com.networknt.decrypt.Decryptor` singleton bindings in service.yml (used by
 `DecryptUtil`), direct `new AESSaltDecryptor()` calls, and custom subclasses.
-Direct base-class construction now fails immediately, including reflective
-config.yml and service.yml selection. A missing-provider error in a service.yml
-constructor aborts SingletonServiceFactory initialization; callers cannot use a
-partially registered factory or silently continue with missing/later beans.
-Other service initialization error handling is unchanged.
-Custom subclasses must supply a password;
-any path that falls back to `super.getPassword()` fails when invoked. Constructors
-do not call subclass password methods or prompt for secrets.
+Direct base-class construction fails immediately, including reflective config.yml
+and service.yml selection. Custom subclasses must supply a password. Any path
+that falls back to `super.getPassword()` fails when invoked. Constructors do not
+call subclass password methods or prompt for secrets.
+
+**Service initialization is now fatal on any singleton-construction exception.**
+This applies to missing password providers, missing implementation classes, and
+exceptions thrown by other singleton constructors. The factory prints the failure
+to stderr and logs it before rethrowing with the original cause. The first lookup
+that initializes the factory receives `ExceptionInInitializerError`. Subsequent
+lookups in the same JVM receive `NoClassDefFoundError`, even for beans constructed
+before the failure. Fix the binding or constructor and restart the JVM.
+The failed factory cannot be used as a partially registered service map.
 
 This change removes the base provider's public default only. Auto's current-thread
 JUnit detection still enables its public fixture password without an explicit
 secret; removing that behavior requires a separate fixture migration. Do not treat
 this change as eliminating every implicit password path.
 
-If the base class
-was using its public default, decrypt and re-encrypt affected values in a controlled
-offline migration with light-encryptor and a deployment-specific master secret.
-Do not print plaintext or put real secrets in commands, logs or issues. Replace
-the provider selection and distribute the new runtime secret before adopting the
-updated library. Supplying the old public password explicitly is not remediation.
+If the base class was using its public default, migrate affected values offline.
+Decrypt and re-encrypt them with light-encryptor and a deployment-specific master secret.
+Do not print plaintext or put real secrets in commands, logs or issues.
+Replace the provider selection and distribute the new runtime secret before
+adopting the updated library. Supplying the old public password explicitly is
+not remediation.
 
 The base and Auto providers do not cache derived keys or master passwords. A password change
 is observed on the next decrypt call; it does not reload already cached/decrypted
