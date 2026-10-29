@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AutoMissingPasswordTest {
     @Test
-    void autoRejectsAbsentRuntimePasswordOnAThreadWithoutJUnitFrames() throws Exception {
+    void autoRejectsAbsentRuntimePasswordOnAThreadWithoutJUnitFrames() {
         AutoAESSaltDecryptor decryptor = new AutoAESSaltDecryptor() {
             @Override String getRuntimePassword() { return null; }
         };

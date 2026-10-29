@@ -8,13 +8,16 @@ import org.junit.jupiter.api.parallel.Resources;
 
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ResourceLock(Resources.SYSTEM_PROPERTIES)
 class ExplicitPasswordProviderStartupTest {
     @TempDir Path directory;
 
     @Test
     void explicitProviderLoadsCryptThroughPublicConfig() throws Exception {
-        new IsolatedClasses(getClass().getClassLoader(), "com.networknt.").invokeStatic(
+        Object result = new IsolatedClasses(getClass().getClassLoader(), "com.networknt.").invokeStatic(
                 ConfigStartupScenarios.class.getName(), "run", new Class<?>[] {String.class, Path.class}, "valid", directory);
+        assertEquals("password", result);
     }
 }
