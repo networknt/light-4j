@@ -18,6 +18,7 @@ package com.networknt.hmac;
 
 import com.networknt.config.ConfigException;
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.HandlerChainValidator;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
@@ -129,8 +130,9 @@ public final class HmacHandler implements MiddlewareHandler, HandlerChainValidat
             return;
         }
 
+        var continuation = HandlerContinuation.capture(exchange);
         exchange.dispatch();
-        stage.whenComplete((outcome, failure) -> exchange.dispatch(completed -> {
+        stage.whenComplete((outcome, failure) -> exchange.dispatch(continuation.apply(completed -> {
             if (failure != null || outcome == null) {
                 unavailable(completed, rule, store, "reserve_failed");
             } else if (outcome instanceof ReserveOutcome.Duplicate) {
@@ -156,7 +158,7 @@ public final class HmacHandler implements MiddlewareHandler, HandlerChainValidat
             } else {
                 unavailable(completed, rule, store, "unknown_reserve_outcome");
             }
-        }));
+        })));
     }
 
     private void addReservationCompletionListener(HttpServerExchange exchange,

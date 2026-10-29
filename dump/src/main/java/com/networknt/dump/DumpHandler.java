@@ -77,7 +77,7 @@ public class DumpHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
+            exchange.dispatch(com.networknt.handler.HandlerContinuation.capture(exchange, this));
             return;
         }
         if(isEnabled()) {

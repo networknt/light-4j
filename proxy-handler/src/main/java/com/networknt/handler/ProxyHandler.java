@@ -26,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.CertificateEncodingException;
@@ -209,7 +210,6 @@ public class ProxyHandler implements HttpHandler {
 
 
         if (exchange.isInIoThread()) exchange.dispatch(lightThreadExecutor, clientHandler);
-
         else exchange.dispatch(exchange.getIoThread(), clientHandler);
     }
 
@@ -378,6 +378,7 @@ public class ProxyHandler implements HttpHandler {
     }
 
     private final class ProxyClientHandler implements ProxyCallback<ProxyConnection>, Runnable {
+        private final UnaryOperator<HttpHandler> continuation;
         private int tries;
         private final long timeout;
         private final int maxRetryAttempts;
@@ -388,6 +389,7 @@ public class ProxyHandler implements HttpHandler {
 
         ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate, boolean streamingRequest) {
             this.exchange = exchange;
+            this.continuation = HandlerContinuation.capture(exchange);
             this.timeout = timeout;
             this.maxRetryAttempts = maxRetryAttempts;
             this.target = target;
@@ -397,14 +399,16 @@ public class ProxyHandler implements HttpHandler {
 
         @Override
         public void run() {
-            proxyClient.getConnection(this.target, this.exchange, this, -1, TimeUnit.MILLISECONDS);
+            HandlerContinuation.task(exchange, continuation.apply(ex ->
+                    proxyClient.getConnection(this.target, ex, this, -1, TimeUnit.MILLISECONDS))).run();
         }
 
         @Override
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             LOG.trace("ProxyCallback completed for exchange: {}", exchange);
             exchange.putAttachment(CONNECTION, connection);
-            exchange.dispatch(lightThreadExecutor, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite));
+            exchange.dispatch(lightThreadExecutor, HandlerContinuation.task(exchange, continuation.apply(ex ->
+                    new ProxyAction(connection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, ex.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite).run())));
         }
 
         @Override
@@ -499,6 +503,7 @@ public class ProxyHandler implements HttpHandler {
     }
 
     private static class ProxyAction implements Runnable {
+        private final UnaryOperator<HttpHandler> continuation;
         private final ProxyConnection clientConnection;
         private final HttpServerExchange exchange;
         private final LightThreadExecutor lightThreadExecutor;
@@ -521,6 +526,7 @@ public class ProxyHandler implements HttpHandler {
                     List<UrlRewriteRule> urlRewriteRules, List<MethodRewriteRule> methodRewriteRules,
                     Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules,
                     boolean streamingRequest, List<String> streamResponseContentTypes, int streamIdleTimeout, List<HttpString> streamResponseHeaderOverwrite) {
+            this.continuation = HandlerContinuation.capture(exchange);
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
@@ -988,7 +994,8 @@ public class ProxyHandler implements HttpHandler {
                             if (i > 0)
                                 path = path.substring(0, i);
 
-                            exchange.dispatch(lightThreadExecutor, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite));
+                            String targetPath = path;
+                            exchange.dispatch(lightThreadExecutor, HandlerContinuation.task(exchange, continuation.apply(ex -> new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), targetPath), ex, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite).run())));
                         });
                         return true;
                     });

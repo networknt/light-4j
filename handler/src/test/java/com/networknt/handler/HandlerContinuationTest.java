@@ -13,6 +13,27 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HandlerContinuationTest {
     @Test
+    void resumedFrameCarriesRequestMdcAndRestoresCallingThreadEvenOnFailure() throws Exception {
+        var original = org.slf4j.MDC.getCopyOfContextMap();
+        try {
+            HttpServerExchange exchange = new HttpServerExchange(null);
+            org.slf4j.MDC.put("request", "captured");
+            HttpHandler resumed = HandlerContinuation.capture(exchange, ex -> {
+                assertEquals("captured", org.slf4j.MDC.get("request"));
+                org.slf4j.MDC.clear();
+                throw new IOException("failure");
+            });
+            org.slf4j.MDC.clear();
+            org.slf4j.MDC.put("worker", "unrelated");
+            assertThrows(IOException.class, () -> resumed.handleRequest(exchange));
+            assertEquals(java.util.Map.of("worker", "unrelated"), org.slf4j.MDC.getCopyOfContextMap());
+        } finally {
+            if (original == null) org.slf4j.MDC.clear();
+            else org.slf4j.MDC.setContextMap(original);
+        }
+    }
+
+    @Test
     void nestedCaptureRestoresEnclosingBoundaryAndRetainsSelectedInstances() throws Exception {
         HttpServerExchange exchange = new HttpServerExchange(null);
         List<String> seen = new ArrayList<>();
