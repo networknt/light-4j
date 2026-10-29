@@ -41,9 +41,16 @@ public class DecryptUtilTest {
 
     @Test
     public void testDecryptMap() {
-        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
-        DecryptUtil.decryptMap(secretMap);
-        Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
+        String previous = System.getProperty("light_4j_config_password");
+        System.setProperty("light_4j_config_password", "light");
+        try {
+            Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
+            DecryptUtil.decryptMap(secretMap);
+            Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
+        } finally {
+            if (previous == null) System.clearProperty("light_4j_config_password");
+            else System.setProperty("light_4j_config_password", previous);
+        }
     }
 
     @Test
