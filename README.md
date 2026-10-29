@@ -285,3 +285,9 @@ commit SHAs. Each green result qualifies only the recorded combination.
 
 GitHub manual dispatch requires this workflow to exist on the default branch.
 Before merge, use the recorded commits to reproduce with local source checkouts.
+
+## CRYPT upgrade requirement
+
+Both master and 2.x reject legacy three-part CRYPT values. Re-encrypt them to
+four-part AES-GCM before upgrading. See the [migration guide](decryptor/MIGRATION.md)
+for the rollout steps and credential-lifetime hardening scope.

@@ -1,5 +1,6 @@
 package com.networknt.proxy.salesforce;
 
+import com.networknt.config.PasswordChars;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
@@ -246,8 +247,11 @@ public class SalesforceHandler implements MiddlewareHandler {
         // Add the encoded claims object
         token.append(org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(payload.getBytes("UTF-8")));
 
-        KeyStore keystore = TlsUtil.loadKeyStore(certFileName, certPassword.toCharArray());
-        PrivateKey privateKey = (PrivateKey) keystore.getKey(certFileName.substring(0, certFileName.indexOf(".")), certPassword.toCharArray());
+        PrivateKey privateKey;
+        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(certPassword))) {
+            KeyStore keystore = TlsUtil.loadKeyStore(certFileName, password.value());
+            privateKey = (PrivateKey) keystore.getKey(certFileName.substring(0, certFileName.indexOf(".")), password.value());
+        }
 
         // Sign the JWT Header + "." + JWT Claims Object
         Signature signature = Signature.getInstance("SHA256withRSA");

@@ -43,4 +43,9 @@ public class ManualAESSaltDescryptor extends AESSaltDecryptor {
         return password;
     }
 
+    @Override
+    protected void releasePassword(char[] password) {
+        if (password != null) java.util.Arrays.fill(password, '\0');
+    }
+
 }
