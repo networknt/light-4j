@@ -178,7 +178,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         private RequestBodyReadState(HttpServerExchange exchange, RequestInjectionConfig config, HttpHandler continuation) {
             this.exchange = exchange;
             this.config = config;
-            this.continuation = continuation;
+            this.continuation = HandlerContinuation.capture(exchange, ex -> Handler.next(ex, continuation));
             this.channel = exchange.getRequestChannel();
             this.bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
             this.exactLimit = config.getMaxBodyBytes() > 0;
@@ -274,7 +274,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 if (outcome == ReadOutcome.COMPLETE) {
                     saveBufferAndResetUndertowConnector(exchange, bufferedData);
                     if (!exchange.isResponseStarted())
-                        Connectors.executeRootHandler(ex -> Handler.next(ex, continuation), exchange);
+                        Connectors.executeRootHandler(continuation, exchange);
                 }
             } catch (Throwable e) {
                 LOG.error(e.getMessage(), e);

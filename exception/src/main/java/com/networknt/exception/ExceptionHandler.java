@@ -17,6 +17,7 @@
 package com.networknt.exception;
 
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -79,13 +80,18 @@ public class ExceptionHandler implements MiddlewareHandler {
             return;
         }
 
+        HandlerContinuation.execute(exchange, this::handleContinuation,
+                ex -> Handler.next(ex, next));
+    }
+
+    private void handleContinuation(HttpServerExchange exchange, HttpHandler continuation) throws Exception {
         // These two lines of code should be placed here to avoid the log being printed twice
         // when switching from the IO thread to the worker thread.
         String path = exchange.getRequestPath();
         if(logger.isDebugEnabled()) logger.debug("ExceptionHandler starting - path: {}", path);
 
         try {
-            Handler.next(exchange, next);
+            continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
             if(exchange.isResponseChannelAvailable()) {

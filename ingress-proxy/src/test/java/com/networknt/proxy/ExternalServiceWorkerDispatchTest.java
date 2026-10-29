@@ -22,6 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import io.undertow.util.HttpString;
+import java.util.stream.Stream;
 
 import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
@@ -55,9 +60,44 @@ class ExternalServiceWorkerDispatchTest {
     private RequestInterceptor[] previousInterceptors;
     private String previousTlsProperty;
     private HttpHandler previousMetrics;
+    private Map<String, Object> previousExceptionConfig;
+    private static final String NAMED_EXCEPTION = "external-worker-named-exception-test";
+
+    enum Policy { ENABLED, NAMED, DISABLED, NAMED_DISABLED }
+
+    static Stream<Arguments> streamedPolicies() {
+        return Stream.of(Policy.values()).flatMap(policy ->
+                Stream.of(false, true).map(failure -> Arguments.of(failure, policy)));
+    }
+
+    private HttpHandler withPolicy(Policy policy, HttpHandler next) {
+        boolean named = policy == Policy.NAMED || policy == Policy.NAMED_DISABLED;
+        boolean enabled = policy == Policy.ENABLED || policy == Policy.NAMED;
+        // The default deliberately disagrees with the selected named configuration.
+        Config.getInstance().putInConfigCache("exception", Map.of("enabled", named ? !enabled : enabled));
+        Config.getInstance().putInConfigCache(NAMED_EXCEPTION, Map.of("enabled", enabled));
+        ExceptionHandler selected = new ExceptionHandler(named ? NAMED_EXCEPTION : "exception") {
+            @Override
+            public void setExchangeStatus(HttpServerExchange exchange, String code, Object... args) {
+                exchange.getResponseHeaders().put(new HttpString("X-Exception-Policy"), policy.name());
+                super.setExchangeStatus(exchange, code, args);
+            }
+        };
+        selected.setNext(next);
+        // Match handler-chain materialization: disabled middleware is omitted.
+        return selected.isEnabled() ? selected : next;
+    }
+
+    private static void assertFailure(Policy policy, int status, String body, String selected) {
+        boolean enabled = policy == Policy.ENABLED || policy == Policy.NAMED;
+        assertEquals(enabled ? 400 : 500, status, body);
+        assertEquals(enabled ? policy.name() : "", selected, "Use the selected instance only");
+        assertEquals(enabled, body.contains("ERR10011"), body);
+    }
 
     @BeforeEach
     void rememberSharedState() {
+        previousExceptionConfig = Config.getInstance().getJsonMapConfig("exception");
         previousInterceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
         previousTlsProperty = System.getProperty(TLS_PROPERTY);
         previousMetrics = Handler.getHandlers().get(MetricsConfig.CONFIG_NAME);
@@ -68,6 +108,8 @@ class ExternalServiceWorkerDispatchTest {
         SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), previousInterceptors);
         if (previousMetrics == null) Handler.getHandlers().remove(MetricsConfig.CONFIG_NAME);
         else Handler.getHandlers().put(MetricsConfig.CONFIG_NAME, previousMetrics);
+        Config.getInstance().putInConfigCache("exception", previousExceptionConfig);
+        Config.getInstance().clearConfigCache(NAMED_EXCEPTION);
         Config.getInstance().clearConfigCache(EXTERNAL_CONFIG);
         Config.getInstance().clearConfigCache(INJECTION_CONFIG);
         if (previousTlsProperty == null) System.clearProperty(TLS_PROPERTY);
@@ -75,8 +117,8 @@ class ExternalServiceWorkerDispatchTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void streamedBodyContinuationCannotBlockTheFrontEndIoThread(boolean upstreamFailure) throws Exception {
+    @MethodSource("streamedPolicies")
+    void streamedBodyContinuationCannotBlockTheFrontEndIoThread(boolean upstreamFailure, Policy policy) throws Exception {
         BodyCaptureInterceptor interceptor = new BodyCaptureInterceptor();
         SingletonServiceFactory.setBean(RequestInterceptor.class.getName(),
                 new RequestInterceptor[]{interceptor});
@@ -89,7 +131,7 @@ class ExternalServiceWorkerDispatchTest {
             RequestInterceptorInjectionHandler reader =
                     new RequestInterceptorInjectionHandler(INJECTION_CONFIG);
             reader.setNext(injection);
-            return new ExceptionHandler().setNext(exchange -> {
+            return withPolicy(policy, exchange -> {
                 reader.handleRequest(exchange);
                 initialReadReturned.countDown();
             });
@@ -116,9 +158,7 @@ class ExternalServiceWorkerDispatchTest {
             fixture.releaseUpstream.countDown();
             String response = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             if (upstreamFailure) {
-                assertTrue(response.startsWith("HTTP/1.1 400"), response);
-                assertTrue(response.contains("application/json"), response);
-                assertTrue(response.contains("ERR10011"), "Use framework structured errors: " + response);
+                assertRawFailure(policy, response);
             } else {
                 assertTrue(response.startsWith("HTTP/1.1 200"), response);
                 assertTrue(response.endsWith("accepted"), response);
@@ -171,18 +211,69 @@ class ExternalServiceWorkerDispatchTest {
         }
     }
 
-    @Test
-    void workerThreadFailureUsesTheSameFrameworkError() throws Exception {
-        try (ProxyFixture fixture = new ProxyFixture(handler -> new ExceptionHandler().setNext(handler));
+    @ParameterizedTest
+    @EnumSource(Policy.class)
+    void workerThreadFailureUsesTheSelectedPolicy(Policy policy) throws Exception {
+        try (ProxyFixture fixture = new ProxyFixture(handler -> new BlockingHandler(withPolicy(policy, handler)));
              HttpClient client = HttpClient.newHttpClient()) {
             fixture.failUpstream.set(true);
             fixture.releaseUpstream.countDown();
             HttpResponse<String> response = client.send(
                     HttpRequest.newBuilder(fixture.uri("/proxy/failure"))
                             .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString());
-            assertEquals(400, response.statusCode(), "Preserve the framework ERR10011 status");
-            assertTrue(response.headers().firstValue("Content-Type").orElse("").contains("application/json"));
-            assertTrue(response.body().contains("ERR10011"), response.body());
+            assertFailure(policy, response.statusCode(), response.body(),
+                    response.headers().firstValue("X-Exception-Policy").orElse(""));
+        }
+    }
+
+    private static void assertRawFailure(Policy policy, String response) {
+        int status = Integer.parseInt(response.split(" ", 3)[1]);
+        String selected = response.lines().filter(line -> line.toLowerCase().startsWith("x-exception-policy:"))
+                .map(line -> line.substring(line.indexOf(':') + 1).trim()).findFirst().orElse("");
+        assertFailure(policy, status, response, selected);
+        if (status == 400) assertTrue(response.contains("application/json"), response);
+    }
+
+    @Test
+    void concurrentStreamedRequestsKeepTheirOwnBoundary() throws Exception {
+        BodyCaptureInterceptor interceptor = new BodyCaptureInterceptor();
+        SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), new RequestInterceptor[]{interceptor});
+        Config.getInstance().putInConfigCache(INJECTION_CONFIG, Map.of(
+                "enabled", true, "maxBuffers", 4, "maxBodyBytes", 1024,
+                "appliedBodyInjectionPathPrefixes", List.of("/proxy")));
+        int count = 8;
+        CountDownLatch initialReads = new CountDownLatch(count);
+        try (ProxyFixture fixture = new ProxyFixture(handler -> {
+            var chains = new java.util.EnumMap<Policy, HttpHandler>(Policy.class);
+            for (Policy policy : Policy.values()) {
+                RequestInterceptorInjectionHandler reader = new RequestInterceptorInjectionHandler(INJECTION_CONFIG);
+                reader.setNext(handler);
+                chains.put(policy, withPolicy(policy, exchange -> {
+                    reader.handleRequest(exchange);
+                    initialReads.countDown();
+                }));
+            }
+            return exchange -> chains.get(Policy.valueOf(exchange.getRequestHeaders().getFirst("X-Policy")))
+                    .handleRequest(exchange);
+        }); var executor = Executors.newFixedThreadPool(count)) {
+            fixture.failUpstream.set(true);
+            fixture.releaseUpstream.countDown();
+            var futures = IntStream.range(0, count).mapToObj(i -> executor.submit(() -> {
+                Policy policy = Policy.values()[i % Policy.values().length];
+                try (Socket socket = new Socket("localhost", fixture.port())) {
+                    socket.setSoTimeout(10000);
+                    write(socket, "POST /proxy/concurrent HTTP/1.1\r\nHost: localhost\r\n"
+                            + "X-Policy: " + policy + "\r\nContent-Type: application/json\r\n"
+                            + "Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n1\r\n{\r\n");
+                    assertTrue(initialReads.await(5, TimeUnit.SECONDS), "All original frames must return before resuming");
+                    write(socket, "1\r\n}\r\n0\r\n\r\n");
+                    assertRawFailure(policy, new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+                }
+                return null;
+            })).toList();
+            for (var future : futures) future.get(15, TimeUnit.SECONDS);
+            assertEquals(count, fixture.handlerEntries.get());
+            assertTrue(interceptor.onIoThread.get());
         }
     }
 

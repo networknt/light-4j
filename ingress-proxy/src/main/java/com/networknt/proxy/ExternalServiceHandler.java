@@ -4,7 +4,6 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
-import com.networknt.exception.ExceptionHandler;
 import com.networknt.handler.*;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
@@ -133,9 +132,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     requestHost, currentTimeout, connectTimeout, startTime);
             // Capture the match once: asynchronous body reads can resume on an I/O thread.
             if (exchange.isInIoThread()) {
-                exchange.dispatch(workerExchange -> new ExceptionHandler()
-                        .setNext(forwardExchange -> forwardMatchedRequest(forwardExchange, context))
-                        .handleRequest(workerExchange));
+                exchange.dispatch(HandlerContinuation.capture(exchange,
+                        forwardExchange -> forwardMatchedRequest(forwardExchange, context)));
             } else {
                 forwardMatchedRequest(exchange, context);
             }
