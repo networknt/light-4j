@@ -50,8 +50,9 @@ public class AESDecryptorTest {
 
     @Test
     public void subclassWithoutProviderRejectsKnownPublicPasswordCiphertext() {
+        AESSaltDecryptor decryptor = new AESSaltDecryptor() {};
         IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
-                () -> new AESSaltDecryptor() {}.decrypt(GCM_PASSWORD_VALUE));
+                () -> decryptor.decrypt(GCM_PASSWORD_VALUE));
         Assertions.assertTrue(failure.getMessage().contains("AutoAESSaltDecryptor"));
         Assertions.assertTrue(failure.getMessage().contains("light_4j_config_password"));
         Assertions.assertFalse(failure.getMessage().contains(GCM_PASSWORD_VALUE));

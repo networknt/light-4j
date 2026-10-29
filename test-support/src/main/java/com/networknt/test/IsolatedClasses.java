@@ -17,8 +17,8 @@ public final class IsolatedClasses extends ClassLoader {
      * @param prefix application package prefix to isolate
      */
     public IsolatedClasses(ClassLoader source, String prefix) {
-        super(source);
         if (prefix == null || prefix.isBlank()) throw new IllegalArgumentException("A package prefix is required");
+        super(source);
         this.prefix = prefix;
     }
 
@@ -43,15 +43,16 @@ public final class IsolatedClasses extends ClassLoader {
 
     /**
      * Calls a public static scenario with this loader as the context loader.
-     * Original assertion failures and application exceptions propagate to the runner.
+     * Runtime exceptions and errors propagate directly. Checked scenario failures
+     * remain the cause of InvocationTargetException.
      * @param className scenario class
      * @param method public static method
      * @param parameterTypes shared parameter types, normally JDK classes
      * @param arguments scenario arguments
      * @return scenario result
-     * @throws Exception if loading, reflection, or the scenario fails
+     * @throws ReflectiveOperationException if reflection fails or the scenario throws a checked exception
      */
-    public Object invokeStatic(String className, String method, Class<?>[] parameterTypes, Object... arguments) throws Exception {
+    public Object invokeStatic(String className, String method, Class<?>[] parameterTypes, Object... arguments) throws ReflectiveOperationException {
         Thread thread = Thread.currentThread();
         ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(this);
@@ -60,8 +61,8 @@ public final class IsolatedClasses extends ClassLoader {
         } catch (InvocationTargetException wrapper) {
             Throwable failure = wrapper.getCause();
             if (failure instanceof Error error) throw error;
-            if (failure instanceof Exception exception) throw exception;
-            throw new AssertionError(failure);
+            if (failure instanceof RuntimeException exception) throw exception;
+            throw wrapper;
         } finally {
             thread.setContextClassLoader(previous);
         }

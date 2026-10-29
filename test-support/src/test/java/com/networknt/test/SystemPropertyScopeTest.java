@@ -11,20 +11,15 @@ class SystemPropertyScopeTest {
     private static final String KEY = "networknt.scope.fixture";
 
     @Test void restoresAfterExceptionalExit() {
-        try (var outer = new SystemPropertyScope(KEY, "outer")) {
-            assertThrows(IllegalStateException.class, () -> {
-                try (var inner = new SystemPropertyScope(KEY, "inner")) {
-                    assertEquals("inner", System.getProperty(KEY));
-                    throw new IllegalStateException("Synthetic failure");
-                }
-            });
+        try (var _ = new SystemPropertyScope(KEY, "outer")) {
+            assertThrows(IllegalStateException.class, SystemPropertyScopeTest::failInsidePropertyScope);
             assertEquals("outer", System.getProperty(KEY));
         }
     }
 
     @Test void restoresAClearedProperty() {
-        try (var outer = new SystemPropertyScope(KEY, "outer")) {
-            try (var inner = new SystemPropertyScope(KEY, null)) {
+        try (var _ = new SystemPropertyScope(KEY, "outer")) {
+            try (var _ = new SystemPropertyScope(KEY, null)) {
                 assertNull(System.getProperty(KEY));
             }
             assertEquals("outer", System.getProperty(KEY));
@@ -32,12 +27,19 @@ class SystemPropertyScopeTest {
     }
 
     @Test void repeatedCloseDoesNotOverwriteLaterChanges() {
-        try (var outer = new SystemPropertyScope(KEY, "outer")) {
+        try (var _ = new SystemPropertyScope(KEY, "outer")) {
             var inner = new SystemPropertyScope(KEY, "inner");
             inner.close();
             System.setProperty(KEY, "later");
             inner.close();
             assertEquals("later", System.getProperty(KEY));
+        }
+    }
+
+    private static void failInsidePropertyScope() {
+        try (var _ = new SystemPropertyScope(KEY, "inner")) {
+            assertEquals("inner", System.getProperty(KEY));
+            throw new IllegalStateException("Synthetic failure");
         }
     }
 }

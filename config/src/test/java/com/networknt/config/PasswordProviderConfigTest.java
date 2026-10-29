@@ -56,13 +56,14 @@ class PasswordProviderConfigTest {
         var appender = new ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
         appender.start();
         logger.addAppender(appender);
+        String brokenProviderClass = BrokenProvider.class.getName();
         try {
             assertThrows(IllegalStateException.class,
-                    () -> com.networknt.config.yml.DecryptConstructor.create(BrokenProvider.class.getName()));
+                    () -> com.networknt.config.yml.DecryptConstructor.create(brokenProviderClass));
             assertThrows(IllegalStateException.class,
                     () -> com.networknt.config.yml.DecryptConstructor.create("missing.Provider"));
             String messages = appender.list.stream().map(e -> e.getFormattedMessage()).collect(java.util.stream.Collectors.joining("\n"));
-            assertTrue(messages.contains(BrokenProvider.class.getName()));
+            assertTrue(messages.contains(brokenProviderClass));
             assertTrue(messages.contains(UnsupportedOperationException.class.getName()));
             assertTrue(messages.contains("missing.Provider"));
             assertTrue(messages.contains(ClassNotFoundException.class.getName()));

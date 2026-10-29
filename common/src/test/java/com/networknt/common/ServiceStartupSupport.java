@@ -61,8 +61,8 @@ public abstract class ServiceStartupSupport {
         var factoryLogs = new ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
         factoryLogs.start();
         factoryLogger.addAppender(factoryLogs);
-        try (var configDirectory = new SystemPropertyScope(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
-             var fixturePassword = new SystemPropertyScope("light_4j_config_password", "light")) {
+        try (var _ = new SystemPropertyScope(Config.LIGHT_4J_CONFIG_DIR, directory.toString());
+             var _ = new SystemPropertyScope("light_4j_config_password", "light")) {
             if (expectedCause == null) {
                 assertNotNull(SingletonServiceFactory.getBean(Decryptor.class));
                 assertTrue(before);
@@ -116,7 +116,9 @@ public abstract class ServiceStartupSupport {
 
     public static class Before implements Runnable {
         public Before() { before = true; }
-        @Override public void run() { }
+        @Override public void run() {
+            // Construction-only fixture; the test never executes this Runnable.
+        }
     }
     public static class After {
         public After() { after = true; }
@@ -129,14 +131,20 @@ public abstract class ServiceStartupSupport {
     }
     public static class FatalSingleton implements Runnable {
         public FatalSingleton() { throw new FatalConfigurationException(); }
-        @Override public void run() { }
+        @Override public void run() {
+            // Construction-only fixture; the test never executes this Runnable.
+        }
     }
     public static class ServiceLoaderSingleton implements Runnable {
         public ServiceLoaderSingleton() { throw new java.util.ServiceConfigurationError("Synthetic ordinary ServiceLoader failure"); }
-        @Override public void run() { }
+        @Override public void run() {
+            // Construction-only fixture; the test never executes this Runnable.
+        }
     }
     public static class BrokenSingleton implements Runnable {
         public BrokenSingleton() { throw new IllegalArgumentException("Synthetic constructor failure"); }
-        @Override public void run() { }
+        @Override public void run() {
+            // Construction-only fixture; the test never executes this Runnable.
+        }
     }
 }

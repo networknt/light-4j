@@ -6,8 +6,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
 
-import java.util.Objects;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @ResourceLock(Resources.SYSTEM_PROPERTIES)
@@ -17,8 +15,11 @@ class SystemPropertyExtensionTest {
     @RegisterExtension final SystemPropertyExtension fixture = new SystemPropertyExtension(KEY, "fixture");
 
     @Test void fixtureIsInstalledForEachTest() { assertEquals("fixture", System.getProperty(KEY)); }
-    @Test void testChangesDoNotEscapeTheScope() { System.setProperty(KEY, "changed"); }
+    @Test void testChangesDoNotEscapeTheScope() {
+        System.setProperty(KEY, "changed");
+        assertEquals("changed", System.getProperty(KEY));
+    }
     @AfterAll static void restoresOriginalAfterAllTests() {
-        assertTrue(Objects.equals(ORIGINAL, System.getProperty(KEY)), "Extension must restore the original property");
+        assertEquals(ORIGINAL, System.getProperty(KEY), "Extension must restore the original property");
     }
 }
