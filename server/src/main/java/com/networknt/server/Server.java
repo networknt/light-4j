@@ -16,6 +16,7 @@
 
 package com.networknt.server;
 
+import com.networknt.config.PasswordChars;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.config.TlsUtil;
@@ -446,7 +447,9 @@ public class Server {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS);
         }
-        return TlsUtil.loadKeyStore(name, pass.toCharArray());
+        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(pass))) {
+            return TlsUtil.loadKeyStore(name, password.value());
+        }
     }
 
     /**
@@ -460,7 +463,9 @@ public class Server {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
         }
-        return TlsUtil.loadKeyStore(name, pass.toCharArray());
+        try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(pass))) {
+            return TlsUtil.loadKeyStore(name, password.value());
+        }
     }
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
@@ -504,7 +509,10 @@ public class Server {
                 Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
                 keyPass = (String) secretConfig.get(SecretConstants.SERVER_KEY_PASS);
             }
-            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), keyPass.toCharArray());
+            KeyManager[] keyManagers;
+            try (PasswordChars password = PasswordChars.copyOf(java.util.Objects.requireNonNull(keyPass))) {
+                keyManagers = buildKeyManagers(loadKeyStore(), password.value());
+            }
             TrustManager[] trustManagers;
             if (ServerConfig.load().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());

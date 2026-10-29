@@ -1,5 +1,6 @@
 package com.networknt.server;
 
+import com.networknt.config.PasswordChars;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
@@ -370,9 +371,10 @@ public class UrlConfigLoader implements IConfigLoader {
 			return null;
 		}
 
-		try (InputStream stream = new FileInputStream(truststoreLocation)) {
+		try (PasswordChars password = PasswordChars.copyOf(truststorePassword);
+		     InputStream stream = new FileInputStream(truststoreLocation)) {
 			KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-			loadedKeystore.load(stream, truststorePassword != null ? truststorePassword.toCharArray() : null);
+			loadedKeystore.load(stream, password.value());
 			return loadedKeystore;
 		} catch (Exception e) {
 			logger.error("Unable to load truststore: " + truststoreLocation, e);

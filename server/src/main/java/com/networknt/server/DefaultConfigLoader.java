@@ -16,6 +16,7 @@
 
 package com.networknt.server;
 
+import com.networknt.config.PasswordChars;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
@@ -571,7 +572,8 @@ public class DefaultConfigLoader implements IConfigLoader{
         if(truststoreLocation == null) truststoreLocation = ServerConfig.load().getBootstrapStoreName();
         if(truststorePassword == null) truststorePassword = ServerConfig.load().getBootstrapStorePass();
 
-        try (InputStream stream = new FileInputStream(truststoreLocation)) {
+        try (PasswordChars password = PasswordChars.copyOf(truststorePassword);
+             InputStream stream = new FileInputStream(truststoreLocation)) {
             if (stream == null) {
                 String message = "Unable to load truststore '" + truststoreLocation + "', please provide the correct truststore to enable TLS connection.";
                 if (logger.isErrorEnabled()) {
@@ -580,7 +582,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 throw new RuntimeException(message);
             }
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, truststorePassword != null ? truststorePassword.toCharArray() : null);
+            loadedKeystore.load(stream, password.value());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load truststore: " + truststoreLocation, e);

@@ -7,37 +7,24 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.spec.KeySpec;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Arrays;
 
 /**
- * This implementation is replaced by AESSaltDecryptor with dynamic salt instead of static one.
- * It allows different application to use different salt so that it is harder to any attacker
- * to perform dictionary attack.
+ * Decrypts authenticated four-part CRYPT values produced by light-encryptor.
+ * Legacy three-part CBC values must be re-encrypted before upgrading.
  */
 public class AESSaltDecryptor implements Decryptor {
     private static final Logger logger = LoggerFactory.getLogger(AESSaltDecryptor.class);
 
     private static final String KDF_ALGORITHM = "PBKDF2WithHmacSHA256";
-    private static final String LEGACY_CIPHER_TRANSFORMATION = "AES/CBC/PKCS5Padding";
     private static final String GCM_CIPHER_TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int ITERATIONS = 65536;
     private static final int KEY_SIZE = 256;
     private static final int GCM_TAG_LENGTH = 128;
-    private static final byte[] LEGACY_IV = new byte[16];
-    private static final AtomicBoolean LEGACY_WARNING_LOGGED = new AtomicBoolean(false);
-
-    // cache the secret to void recreating instances for each decrypt call as all config files
-    // will use the same salt per application.
-    private final Map<String, SecretKeySpec> secretMap = new ConcurrentHashMap<>();
-
     /**
      * Default constructor for AESSaltDecryptor.
      */
@@ -54,7 +41,8 @@ public class AESSaltDecryptor implements Decryptor {
         String[] parts = input.split(":", -1);
         try {
             return switch (parts.length) {
-                case 3 -> decryptLegacyCbc(parts);
+                case 3 -> throw new IllegalArgumentException(
+                        "Legacy three-part CRYPT values are no longer supported. Re-encrypt with light-encryptor using AES-GCM before upgrading.");
                 case 4 -> decryptGcm(parts);
                 default -> throw invalidCryptFormat(parts.length);
             };
@@ -64,43 +52,48 @@ public class AESSaltDecryptor implements Decryptor {
         }
     }
 
-    private String decryptLegacyCbc(String[] parts) throws GeneralSecurityException {
-        String saltHex = requireHexPart(parts, 1, "salt");
-        String hashHex = requireHexPart(parts, 2, "hash");
-        SecretKeySpec secret = getSecret(saltHex, fromHex(saltHex, "salt"));
-        Cipher cipher = Cipher.getInstance(LEGACY_CIPHER_TRANSFORMATION);
-        cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(LEGACY_IV));
-        String decrypted = new String(cipher.doFinal(fromHex(hashHex, "hash")), StandardCharsets.UTF_8);
-        if (LEGACY_WARNING_LOGGED.compareAndSet(false, true)) {
-            logger.warn("Legacy three-part CRYPT value decrypted. Regenerate this secret with the current light-encryptor to migrate to AES-GCM.");
-        }
-        return decrypted;
-    }
-
     private String decryptGcm(String[] parts) throws GeneralSecurityException {
         String saltHex = requireHexPart(parts, 1, "salt");
         String ivHex = requireHexPart(parts, 2, "iv");
         String hashHex = requireHexPart(parts, 3, "hash");
-        SecretKeySpec secret = getSecret(saltHex, fromHex(saltHex, "salt"));
+        SecretKeySpec secret = getSecret(fromHex(saltHex, "salt"));
         Cipher cipher = Cipher.getInstance(GCM_CIPHER_TRANSFORMATION);
         cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_LENGTH, fromHex(ivHex, "iv")));
-        return new String(cipher.doFinal(fromHex(hashHex, "hash")), StandardCharsets.UTF_8);
+        byte[] plaintext = cipher.doFinal(fromHex(hashHex, "hash"));
+        try {
+            return new String(plaintext, StandardCharsets.UTF_8);
+        } finally {
+            Arrays.fill(plaintext, (byte) 0);
+        }
     }
 
-    private SecretKeySpec getSecret(String saltHex, byte[] salt) throws GeneralSecurityException {
-        String cacheKey = KDF_ALGORITHM + ":" + ITERATIONS + ":" + KEY_SIZE + ":" + saltHex;
-        SecretKeySpec secret = secretMap.get(cacheKey);
-        if(secret == null) {
-            char[] password = getPassword();
+    private SecretKeySpec getSecret(byte[] salt) throws GeneralSecurityException {
+        char[] password = getPassword();
+        PBEKeySpec spec = null;
+        byte[] encodedKey = null;
+        try {
             validatePassword(password);
-            KeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_SIZE);
+            // PBEKeySpec copies the password; never clear a custom provider's borrowed array.
+            spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_SIZE);
             SecretKeyFactory factory = SecretKeyFactory.getInstance(KDF_ALGORITHM);
-            SecretKey tmp = factory.generateSecret(spec);
-            SecretKeySpec newSecret = new SecretKeySpec(tmp.getEncoded(), "AES");
-            SecretKeySpec cachedSecret = secretMap.putIfAbsent(cacheKey, newSecret);
-            secret = cachedSecret == null ? newSecret : cachedSecret;
+            SecretKey key = factory.generateSecret(spec);
+            encodedKey = key.getEncoded();
+            return new SecretKeySpec(encodedKey, "AES");
+        } finally {
+            if (spec != null) spec.clearPassword();
+            if (encodedKey != null) Arrays.fill(encodedKey, (byte) 0);
+            releasePassword(password);
         }
-        return secret;
+    }
+
+    /**
+     * Releases a password returned by getPassword. Custom providers retain ownership
+     * by default; providers returning fresh arrays can override this to clear them.
+     *
+     * @param password password obtained for this operation, possibly null
+     */
+    protected void releasePassword(char[] password) {
+        // A custom getPassword implementation may return shared configuration.
     }
 
     private static void validatePassword(char[] password) {
@@ -122,14 +115,14 @@ public class AESSaltDecryptor implements Decryptor {
     private static String requireHexPart(String[] parts, int index, String name) {
         if(parts[index] == null || parts[index].isEmpty()) {
             logger.error("The secret text is not formatted correctly. The {} field is empty.", name);
-            throw new IllegalArgumentException("Unable to decrypt, input string is not formatted correctly with CRYPT:salt:hash or CRYPT:salt:iv:hash.");
+            throw new IllegalArgumentException("Unable to decrypt, input string is not formatted correctly with CRYPT:salt:iv:hash.");
         }
         return parts[index];
     }
 
     private static IllegalArgumentException invalidCryptFormat(int partCount) {
-        logger.error("The secret text is not formatted correctly. Expected 3 or 4 parts, got {}.", partCount);
-        return new IllegalArgumentException("Unable to decrypt, input string is not formatted correctly with CRYPT:salt:hash or CRYPT:salt:iv:hash.");
+        logger.error("The secret text is not formatted correctly. Expected 4 parts, got {}.", partCount);
+        return new IllegalArgumentException("Unable to decrypt, input string is not formatted correctly with CRYPT:salt:iv:hash.");
     }
 
     /**
