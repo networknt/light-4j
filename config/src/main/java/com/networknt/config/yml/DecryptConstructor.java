@@ -110,7 +110,7 @@ public class DecryptConstructor extends Constructor {
                         + ", column " + (mark.getColumn() + 1);
                 // Never stringify Mark/Node: those include a source snippet with the secret.
                 throw new IllegalArgumentException("Unable to decrypt CRYPT configuration" + location
-                        + ". Re-encrypt legacy three-part values with light-encryptor before upgrading.", e);
+                        + ". Check the master password and CRYPT value format.", e);
             }
 		}
     }
