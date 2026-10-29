@@ -33,6 +33,10 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>decryptor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>utility</artifactId>
         </dependency>
         <dependency>

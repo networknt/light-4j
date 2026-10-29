@@ -51,16 +51,15 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.0</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>fixture-provider</id>
-                        <phase>test-compile</phase>
-                        <goals><goal>test-jar</goal></goals>
+                        <id>shared-decryptor-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal></goals>
                         <configuration>
-                            <includes><include>com/networknt/decrypt/fixture/**</include></includes>
+                            <sources><source>${project.basedir}/../test-support/decryptor</source></sources>
                         </configuration>
                     </execution>
                 </executions>

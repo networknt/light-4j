@@ -57,7 +57,11 @@ Inventory all provider bindings before upgrading: `decryptorClass` in config.yml
 `com.networknt.decrypt.Decryptor` singleton bindings in service.yml (used by
 `DecryptUtil`), direct `new AESSaltDecryptor()` calls, and custom subclasses.
 Direct base-class construction now fails immediately, including reflective
-config.yml and service.yml selection. Custom subclasses must supply a password;
+config.yml and service.yml selection. A missing-provider error in a service.yml
+constructor aborts SingletonServiceFactory initialization; callers cannot use a
+partially registered factory or silently continue with missing/later beans.
+Other service initialization error handling is unchanged.
+Custom subclasses must supply a password;
 any path that falls back to `super.getPassword()` fails when invoked. Constructors
 do not call subclass password methods or prompt for secrets.
 

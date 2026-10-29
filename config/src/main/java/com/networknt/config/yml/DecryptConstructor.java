@@ -81,15 +81,21 @@ public class DecryptConstructor extends StandardConstructor {
             if (e.getCause() instanceof MissingMasterPasswordProviderException failure) {
                 throw failure;
             }
-            logger.error("Unable to construct the configured decryptor.");
+            logConstructionFailure(decryptorClass, e.getCause());
             throw new IllegalStateException("Unable to construct the configured decryptor. Check its configuration.", e);
         } catch (ReflectiveOperationException | ClassCastException e) {
-            logger.error("Unable to construct the configured decryptor.");
+            logConstructionFailure(decryptorClass, e);
             throw new IllegalStateException("Unable to construct the configured decryptor. Check its class and configuration.", e);
         }
 
 		return null;
 	}
+
+    private static void logConstructionFailure(String decryptorClass, Throwable cause) {
+        // Exception messages/stack traces from custom providers can contain secrets.
+        logger.error("Unable to construct decryptor {} (cause type {}). Check its class and configuration.",
+                decryptorClass, cause.getClass().getName());
+    }
 
     /**
      * Gets the decryptor used by this constructor.

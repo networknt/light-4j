@@ -18,6 +18,7 @@ package com.networknt.service;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.decrypt.MissingMasterPasswordProviderException;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,13 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
+            // Reflection wraps constructor failures. A missing password provider must
+            // invalidate this factory, not expose a partially populated service map.
+            for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+                if (cause instanceof MissingMasterPasswordProviderException failure) {
+                    throw failure;
+                }
+            }
             // #883 during the server startup, any exception here will stops the server and there is no chance for the
             // logback to output anything to the log file or stdout/stderr. That is the reason here to printStackTrace.
             e.printStackTrace();
