@@ -2,6 +2,9 @@ package com.networknt.config.yml;
 
 import com.networknt.decrypt.AutoAESSaltDecryptor;
 import com.networknt.decrypt.Decryptor;
+import com.networknt.decrypt.MissingMasterPasswordProviderException;
+
+import java.lang.reflect.InvocationTargetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -75,10 +78,16 @@ public class DecryptConstructor extends Constructor {
 			}else {
 				logger.error("Please specify an implementing class of com.networknt.decrypt.Decryptor.");
 			}
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
-		}
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof MissingMasterPasswordProviderException failure) {
+                throw failure;
+            }
+            logger.error("Unable to construct the configured decryptor.");
+            throw new IllegalStateException("Unable to construct the configured decryptor. Check its configuration.", e);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            logger.error("Unable to construct the configured decryptor.");
+            throw new IllegalStateException("Unable to construct the configured decryptor. Check its class and configuration.", e);
+        }
 
 		return null;
 	}
@@ -109,6 +118,10 @@ public class DecryptConstructor extends Constructor {
                 String location = mark == null ? "" : " at YAML line " + (mark.getLine() + 1)
                         + ", column " + (mark.getColumn() + 1);
                 // Never stringify Mark/Node: those include a source snippet with the secret.
+                if (e instanceof MissingMasterPasswordProviderException) {
+                    throw new IllegalStateException("Unable to decrypt CRYPT configuration" + location
+                            + ". " + e.getMessage(), e);
+                }
                 throw new IllegalArgumentException("Unable to decrypt CRYPT configuration" + location
                         + ". Check the master password and CRYPT value format.", e);
             }

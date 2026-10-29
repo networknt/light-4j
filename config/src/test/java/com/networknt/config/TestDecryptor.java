@@ -1,12 +1,8 @@
 package com.networknt.config;
 
-import com.networknt.decrypt.AESSaltDecryptor;
+import com.networknt.decrypt.fixture.FixturePasswordDecryptor;
 
-public class TestDecryptor extends AESSaltDecryptor {
-    // Explicit fixture secret; the base class intentionally has no public fallback.
-    @Override
-    protected char[] getPassword() { return ownedPassword("light".toCharArray()); }
-
+public class TestDecryptor extends FixturePasswordDecryptor {
 
     @Override
 	public String decrypt(String input) {

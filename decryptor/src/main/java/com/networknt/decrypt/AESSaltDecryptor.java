@@ -35,6 +35,10 @@ public class AESSaltDecryptor implements Decryptor {
      * Default constructor for AESSaltDecryptor.
      */
     public AESSaltDecryptor() {
+        // Do not acquire passwords or invoke overridable methods during construction.
+        if (getClass() == AESSaltDecryptor.class) {
+            throw missingPasswordProvider();
+        }
     }
 
     @Override
@@ -176,8 +180,13 @@ public class AESSaltDecryptor implements Decryptor {
      * @return char array of the password
      */
     protected char[] getPassword() {
-        throw new IllegalStateException("No master-password provider configured. Select AutoAESSaltDecryptor "
-                + "with an explicit light_4j_config_password, ManualAESSaltDescryptor, or a custom password provider.");
+        throw missingPasswordProvider();
+    }
+
+    private static MissingMasterPasswordProviderException missingPasswordProvider() {
+        MissingMasterPasswordProviderException failure = new MissingMasterPasswordProviderException();
+        logger.error(failure.getMessage());
+        return failure;
     }
 
     private static byte[] fromHex(String hex, String name) {

@@ -53,7 +53,20 @@ Select `AutoAESSaltDecryptor` with an explicitly supplied
 existing current-thread JUnit-only fixture fallback remains separate and unchanged.
 Custom providers keep their existing ownership contract.
 
-Inventory deployed `decryptorClass` settings before upgrading. If the base class
+Inventory all provider bindings before upgrading: `decryptorClass` in config.yml,
+`com.networknt.decrypt.Decryptor` singleton bindings in service.yml (used by
+`DecryptUtil`), direct `new AESSaltDecryptor()` calls, and custom subclasses.
+Direct base-class construction now fails immediately, including reflective
+config.yml and service.yml selection. Custom subclasses must supply a password;
+any path that falls back to `super.getPassword()` fails when invoked. Constructors
+do not call subclass password methods or prompt for secrets.
+
+This change removes the base provider's public default only. Auto's current-thread
+JUnit detection still enables its public fixture password without an explicit
+secret; removing that behavior requires a separate fixture migration. Do not treat
+this change as eliminating every implicit password path.
+
+If the base class
 was using its public default, decrypt and re-encrypt affected values in a controlled
 offline migration with light-encryptor and a deployment-specific master secret.
 Do not print plaintext or put real secrets in commands, logs or issues. Replace
