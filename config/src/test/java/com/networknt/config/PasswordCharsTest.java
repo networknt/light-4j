@@ -27,7 +27,7 @@ class PasswordCharsTest {
         temporary = copy.value();
         assertThrows(RuntimeException.class, () -> {
             try (copy) {
-                TlsUtil.loadKeyStore("client.keystore", copy.value());
+                TlsUtil.loadKeyStore("client.keystore", temporary);
             }
         });
         assertArrayEquals(new char[temporary.length], temporary);

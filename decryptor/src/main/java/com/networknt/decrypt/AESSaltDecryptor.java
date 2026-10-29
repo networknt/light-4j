@@ -85,6 +85,7 @@ public class AESSaltDecryptor implements Decryptor {
 
     /** Called only after successful GCM authentication; the base provider retains no key. */
     protected void authenticatedKey(byte[] salt, SecretKeySpec secret) {
+        // No cache in the base provider; the interactive manual provider overrides this hook.
     }
 
     protected SecretKeySpec getSecret(byte[] salt) throws GeneralSecurityException {

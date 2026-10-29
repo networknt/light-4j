@@ -49,7 +49,8 @@ class AESSaltSecurityTest {
         for (int field = 1; field <= 3; field++) {
             String[] parts = encrypted.split(":");
             parts[field] = (parts[field].charAt(0) == '0' ? "1" : "0") + parts[field].substring(1);
-            assertThrows(RuntimeException.class, () -> decryptor.decrypt(String.join(":", parts)));
+            String tampered = String.join(":", parts);
+            assertThrows(RuntimeException.class, () -> decryptor.decrypt(tampered));
         }
     }
 
@@ -113,17 +114,17 @@ class AESSaltSecurityTest {
             }
         };
         for (int saltBytes : new int[]{0, 1, 15, 17}) {
-            assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(
-                    "CRYPT:" + "00".repeat(saltBytes) + ":" + "00".repeat(12) + ":" + "00".repeat(16)));
+            String malformed = "CRYPT:" + "00".repeat(saltBytes) + ":" + "00".repeat(12) + ":" + "00".repeat(16);
+            assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(malformed));
         }
         for (int nonceBytes : new int[]{0, 1, 11, 13, 16}) {
-            assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(
-                    "CRYPT:" + "00".repeat(16) + ":" + "00".repeat(nonceBytes) + ":" + "00".repeat(16)));
+            String malformed = "CRYPT:" + "00".repeat(16) + ":" + "00".repeat(nonceBytes) + ":" + "00".repeat(16);
+            assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(malformed));
         }
-        assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(
-                "CRYPT:" + "00".repeat(16) + ":" + "00".repeat(12) + ":00"));
-        assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(
-                "CRYPT:" + "00".repeat(16) + ":" + "zz".repeat(12) + ":" + "00".repeat(16)));
+        String missingTag = "CRYPT:" + "00".repeat(16) + ":" + "00".repeat(12) + ":00";
+        assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(missingTag));
+        String invalidNonce = "CRYPT:" + "00".repeat(16) + ":" + "zz".repeat(12) + ":" + "00".repeat(16);
+        assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(invalidNonce));
     }
 
     @Test
