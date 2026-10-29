@@ -49,9 +49,9 @@ compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/is
 
 Select `AutoAESSaltDecryptor` with an explicitly supplied
 `light_4j_config_password` (or uppercase equivalent), the interactive
-`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit detection or public-password fallback. Tests supply their synthetic
-password explicitly through the test runner; direct IDE runs must configure the
-same test-only system property.
+`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit detection or public-password fallback. Tests supply synthetic passwords explicitly in test-only providers or scoped
+test setup that restores the original property afterward. No password is supplied
+by the parent POM.
 Custom providers keep their existing ownership contract.
 
 Inventory deployed `decryptorClass` settings, service.yml Decryptor bindings,

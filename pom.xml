@@ -975,9 +975,6 @@
                 <version>${version.maven-surefire}</version>
 
                 <configuration>
-                    <systemPropertyVariables>
-                        <light_4j_config_password>light</light_4j_config_password>
-                    </systemPropertyVariables>
                     <argLine>
                         ${argLine}
                         --add-opens java.base/java.lang=ALL-UNNAMED
