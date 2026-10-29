@@ -34,6 +34,13 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>decryptor</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>decryptor</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

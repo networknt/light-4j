@@ -21,8 +21,9 @@ exclusionConfigFileList:
 # To learn how the decryptor works, please visit the document URL.
 # https://doc.networknt.com/concern/decryptor/
 decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
-# decryptorClass: com.networknt.decrypt.AESSaltDecryptor
-# decryptorClass: com.networknt.decrypt.ManualAESSaltDecryptor
+# The base AESSaltDecryptor has no password provider and cannot be selected directly.
+# Interactive applications can select the manual provider (historical class spelling):
+# decryptorClass: com.networknt.decrypt.ManualAESSaltDescryptor
 
 # For some configuration files, we have left some properties without default values as there
 # would be negative impact on the application security. The following config will ensure that

@@ -1,5 +1,6 @@
 package com.networknt.decrypt;
 
+import com.networknt.decrypt.fixture.FixturePasswordDecryptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.lang.reflect.InvocationTargetException;
 import java.security.spec.KeySpec;
 import java.util.HexFormat;
 
@@ -22,46 +24,34 @@ public class AESDecryptorTest {
     private static final String GCM_PASSWORD_VALUE = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
 
     @Test
-    public void testConstructor() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
-        Assertions.assertNotNull(decryptor);
+    public void testConstructorRejectsMissingProvider() {
+        Assertions.assertThrows(MissingMasterPasswordProviderException.class, AESSaltDecryptor::new);
     }
 
     @Test
-    public void testForName() {
-        String decryptorClass = "com.networknt.decrypt.AESSaltDecryptor";
-        try {
-            Class<?> typeClass = Class.forName(decryptorClass);
-
-            if (!typeClass.isInterface()) {
-                Decryptor decryptor = (Decryptor) typeClass.getConstructor().newInstance();
-                Assertions.assertNotNull(decryptor);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
-        }
-
+    public void testForNameRejectsMissingProvider() throws Exception {
+        var constructor = Class.forName("com.networknt.decrypt.AESSaltDecryptor").getConstructor();
+        var failure = Assertions.assertThrows(InvocationTargetException.class, constructor::newInstance);
+        Assertions.assertInstanceOf(MissingMasterPasswordProviderException.class, failure.getCause());
     }
 
     @Test
     public void testDecryptLegacyCbcFormat() throws Exception {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         String secretText = legacyEncrypt("password", "00112233445566778899aabbccddeeff");
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(secretText));
     }
 
     @Test
     public void testDecryptGcmFormat() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {
-            @Override protected char[] getPassword() { return ownedPassword("light".toCharArray()); }
-        };
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         Assertions.assertEquals("password", decryptor.decrypt(GCM_PASSWORD_VALUE));
     }
 
     @Test
-    public void baseDecryptorRejectsKnownPublicPasswordCiphertext() {
+    public void subclassWithoutProviderRejectsKnownPublicPasswordCiphertext() {
         IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
-                () -> new AESSaltDecryptor().decrypt(GCM_PASSWORD_VALUE));
+                () -> new AESSaltDecryptor() {}.decrypt(GCM_PASSWORD_VALUE));
         Assertions.assertTrue(failure.getMessage().contains("AutoAESSaltDecryptor"));
         Assertions.assertTrue(failure.getMessage().contains("light_4j_config_password"));
         Assertions.assertFalse(failure.getMessage().contains(GCM_PASSWORD_VALUE));
@@ -69,14 +59,14 @@ public class AESDecryptorTest {
 
     @Test
     public void testDecryptRejectsInvalidPartCount() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122"));
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122:334455:667788:99aabb"));
     }
 
     @Test
     public void testDecryptRejectsEmptyParts() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new FixturePasswordDecryptor();
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122::667788"));
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122:334455:"));
     }

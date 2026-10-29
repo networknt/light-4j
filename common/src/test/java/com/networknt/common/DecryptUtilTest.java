@@ -18,6 +18,10 @@ package com.networknt.common;
 
 import com.networknt.config.Config;
 import com.networknt.decrypt.AESSaltDecryptor;
+import com.networknt.decrypt.Decryptor;
+import com.networknt.decrypt.MissingMasterPasswordProviderException;
+import com.networknt.service.SingletonServiceFactory;
+import com.networknt.decrypt.fixture.FixturePasswordDecryptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +35,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Base64;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DecryptUtilTest {
@@ -44,6 +51,28 @@ public class DecryptUtilTest {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
         DecryptUtil.decryptMap(secretMap);
         Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
+    }
+
+    @Test
+    public void testNestedDecryptUtilAndMissingProvider() {
+        String crypt = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
+        Decryptor configured = SingletonServiceFactory.getBean(Decryptor.class);
+        Assertions.assertInstanceOf(FixturePasswordDecryptor.class, configured);
+        Map<String, Object> nested = new HashMap<>(Map.of("secret", crypt));
+        Map<String, Object> map = new HashMap<>(Map.of("nested", new ArrayList<>(List.of(nested))));
+        DecryptUtil.decryptMap(map);
+        Assertions.assertEquals("password", nested.get("secret"));
+        try {
+            SingletonServiceFactory.setBean(Decryptor.class.getName(), new AESSaltDecryptor() {});
+            nested.put("secret", crypt);
+            var failure = Assertions.assertThrows(MissingMasterPasswordProviderException.class,
+                    () -> DecryptUtil.decryptMap(map));
+            Assertions.assertTrue(failure.getMessage().contains("No master-password provider configured"));
+            Assertions.assertFalse(failure.getMessage().contains(crypt));
+            Assertions.assertEquals(crypt, nested.get("secret"));
+        } finally {
+            SingletonServiceFactory.setBean(Decryptor.class.getName(), configured);
+        }
     }
 
     @Test

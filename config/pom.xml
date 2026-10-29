@@ -33,6 +33,13 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>decryptor</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>jackson-defaults</artifactId>
         </dependency>
         <!-- Compatibility export: downstream applications still use the classic YAML API. -->
