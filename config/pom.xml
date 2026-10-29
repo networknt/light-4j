@@ -77,15 +77,28 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <!-- Startup tests mutate configuration and initialize singletons once per class. -->
-                    <forkCount>1</forkCount>
-                    <reuseForks>false</reuseForks>
-                    <excludedEnvironmentVariables>light_4j_config_password,LIGHT_4J_CONFIG_PASSWORD</excludedEnvironmentVariables>
-                    <systemPropertyVariables>
-                        <light_4j_config_password>light</light_4j_config_password>
-                    </systemPropertyVariables>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/*IT.java</exclude>
+                                <exclude>**/*StartupTest.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>provider-startup-tests</id>
+                        <phase>test</phase>
+                        <goals><goal>test</goal></goals>
+                        <configuration>
+                            <includes><include>**/*StartupTest.java</include></includes>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <excludedEnvironmentVariables>light_4j_config_password,LIGHT_4J_CONFIG_PASSWORD</excludedEnvironmentVariables>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

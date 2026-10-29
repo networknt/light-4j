@@ -41,6 +41,20 @@ import java.util.List;
 import java.util.Map;
 
 public class DecryptUtilTest {
+    private String previousFixturePassword;
+
+    @org.junit.jupiter.api.BeforeEach
+    void configureFixturePassword() {
+        previousFixturePassword = System.getProperty("light_4j_config_password");
+        System.setProperty("light_4j_config_password", "light");
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void restoreFixturePassword() {
+        if (previousFixturePassword == null) System.clearProperty("light_4j_config_password");
+        else System.setProperty("light_4j_config_password", previousFixturePassword);
+    }
+
     private static final String SECRET_KEY = "my_super_secret_key";
     private static final String SALT = "ssshhhhhhhhhhh!!!!";
     private static final int GCM_IV_LENGTH = 12;
