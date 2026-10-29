@@ -40,20 +40,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@org.junit.jupiter.api.parallel.ResourceLock(org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES)
 public class DecryptUtilTest {
-    private String previousFixturePassword;
-
-    @org.junit.jupiter.api.BeforeEach
-    void configureFixturePassword() {
-        previousFixturePassword = System.getProperty("light_4j_config_password");
-        System.setProperty("light_4j_config_password", "light");
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    void restoreFixturePassword() {
-        if (previousFixturePassword == null) System.clearProperty("light_4j_config_password");
-        else System.setProperty("light_4j_config_password", previousFixturePassword);
-    }
+    @org.junit.jupiter.api.extension.RegisterExtension
+    final com.networknt.test.SystemPropertyExtension fixturePassword =
+            new com.networknt.test.SystemPropertyExtension("light_4j_config_password", "light");
 
     private static final String SECRET_KEY = "my_super_secret_key";
     private static final String SALT = "ssshhhhhhhhhhh!!!!";

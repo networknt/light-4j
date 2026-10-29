@@ -18,6 +18,7 @@ package com.networknt.service;
 
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.service.api.FatalServiceConfiguration;
 import com.networknt.server.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,17 +68,16 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
-            // Providers can explicitly mark an unrecoverable configuration failure
-            // using the JDK signal, even when reflection/runtime wrappers hide it.
+            // #883: stderr remains available before startup logging is ready.
+            // Print exactly once for either fatal or legacy handling; do not also log the stack.
+            e.printStackTrace();
+            // Only an explicit fatal-configuration contract opts out of legacy handling.
+            // Reflection/runtime wrappers may hide the marked failure.
             for (Throwable cause = e; cause != null; cause = cause.getCause()) {
-                if (cause instanceof ServiceConfigurationError) {
-                    // The caller/JVM reports this failure; do not print/log it again.
+                if (cause instanceof FatalServiceConfiguration) {
                     throw new IllegalStateException("Unable to initialize singleton services.", e);
                 }
             }
-            // Preserve legacy handling of other failures and the startup stderr
-            // workaround (#883), without logging a second copy of the stack trace.
-            e.printStackTrace();
         }
         ModuleRegistry.registerModule(ServiceConfig.CONFIG_NAME, SingletonServiceFactory.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceConfig.CONFIG_NAME), null);
     }
