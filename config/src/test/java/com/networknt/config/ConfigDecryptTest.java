@@ -16,6 +16,8 @@
 
 package com.networknt.config;
 
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
 import org.junit.jupiter.api.Assertions;
@@ -30,21 +32,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class ConfigDecryptTest {
-    private String previousPassword;
-
-    @org.junit.jupiter.api.BeforeEach
-    void setFixturePassword() {
-        previousPassword = System.getProperty("light_4j_config_password");
-        System.setProperty("light_4j_config_password", "light");
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    void restorePassword() {
-        if (previousPassword == null) System.clearProperty("light_4j_config_password");
-        else System.setProperty("light_4j_config_password", previousPassword);
-    }
 
 	private static final String SECRET="password";
 	private static final String TEST_MAP="testMap";

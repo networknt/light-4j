@@ -1,5 +1,9 @@
 package com.networknt.apikey;
 
+import org.junit.jupiter.api.BeforeEach;
+
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -7,10 +11,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class ApiKeyConfigTest {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyConfigTest.class);
-    static final ApiKeyConfig config = ApiKeyConfig.load();
+    ApiKeyConfig config;
+    @BeforeEach
+    void setup() {
+        config = ApiKeyConfig.load();
+    }
 
     @Test
     public void testDecryption() {

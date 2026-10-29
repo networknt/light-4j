@@ -70,14 +70,17 @@ public class DecryptConstructor extends Constructor {
 		try {
 			Class<?> typeClass = Class.forName(decryptorClass);
 
+            if (java.lang.reflect.Modifier.isAbstract(typeClass.getModifiers())) {
+                throw new IllegalArgumentException("Select a concrete password-provider class; the base decryptor has no password.");
+            }
 			if (!typeClass.isInterface()) {
 				return (Decryptor) typeClass.getConstructor().newInstance();
 			}else {
 				logger.error("Please specify an implementing class of com.networknt.decrypt.Decryptor.");
 			}
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
+			logger.error("Unable to construct decryptor {} ({}).", decryptorClass, e.getClass().getName());
+			throw new RuntimeException("Unable to construct the configured decryptor. Check its class and configuration.", e);
 		}
 
 		return null;
@@ -109,6 +112,11 @@ public class DecryptConstructor extends Constructor {
                 String location = mark == null ? "" : " at YAML line " + (mark.getLine() + 1)
                         + ", column " + (mark.getColumn() + 1);
                 // Never stringify Mark/Node: those include a source snippet with the secret.
+                if (e instanceof IllegalStateException) {
+                    logger.error("Configuration password provider {} is unavailable.", decryptor.getClass().getName());
+                    throw new IllegalStateException("Unable to decrypt CRYPT configuration" + location
+                            + ". Configure an explicit master-password provider and password.", e);
+                }
                 throw new IllegalArgumentException("Unable to decrypt CRYPT configuration" + location
                         + ". Check the master password and CRYPT value format.", e);
             }

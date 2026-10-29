@@ -16,6 +16,8 @@
 
 package com.networknt.basicauth;
 
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.exception.ClientException;
@@ -49,6 +51,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * @author Steve Hu
  */
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class AnonymousBearerTest {
     static final Logger logger = LoggerFactory.getLogger(AnonymousBearerTest.class);
 

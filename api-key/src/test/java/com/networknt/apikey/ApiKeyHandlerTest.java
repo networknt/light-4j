@@ -1,5 +1,7 @@
 package com.networknt.apikey;
 
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
@@ -28,6 +30,7 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class ApiKeyHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyHandlerTest.class);
 
