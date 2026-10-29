@@ -40,7 +40,7 @@ public class Http2ClientConnectionPool {
             protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
                 if (connectionPool.size() > poolSize) {
                     for (CachedConnection connection : eldest.getValue()) {
-                        connectionStatusMap.remove(connection.get());
+                        connectionStatusMap.remove(IoThreadClientConnection.identity(connection.get()));
                         connectionCount.getAndDecrement();
                     }
                     return true;
@@ -95,6 +95,7 @@ public class Http2ClientConnectionPool {
      * @param connection the connection to cache
      */
     public synchronized void cacheConnection(URI uri, ClientConnection connection) {
+        connection = IoThreadClientConnection.wrap(connection);
         CachedConnection cachedConnection = getAndRemoveClosedConnection(uri);
         if (cachedConnection == null || getConnectionStatus(uri, cachedConnection) != ConnectionStatus.MULTIPLEX_SUPPORT) {
             if(logger.isDebugEnabled()) logger.debug("Cached connection: {} is either null or not support multiplex", cachedConnection);
@@ -170,7 +171,7 @@ public class Http2ClientConnectionPool {
                         if (ConnectionStatus.CLOSE == status) {
                             // Remove unavailable connection from the list.
                             iterator.remove();
-                               connectionStatusMap.remove(connection.get());
+                               connectionStatusMap.remove(IoThreadClientConnection.identity(connection.get()));
                             connectionCount.getAndDecrement();
                         }
                     }
@@ -197,10 +198,10 @@ public class Http2ClientConnectionPool {
     }
 
     private ConnectionStatus getConnectionStatus(URI uri, CachedConnection connection) {
-        ConnectionStatus status = connectionStatusMap.get(connection.get());
+        ConnectionStatus status = connectionStatusMap.get(IoThreadClientConnection.identity(connection.get()));
         if (status == null) {
             synchronized (Http2ClientConnectionPool.class) {
-                status = connectionStatusMap.get(connection.get());
+                status = connectionStatusMap.get(IoThreadClientConnection.identity(connection.get()));
             }
         }
         if (connection == null || !connection.isOpen()) {
@@ -224,11 +225,11 @@ public class Http2ClientConnectionPool {
     public void resetConnectionStatus(ClientConnection connection) {
         if (connection != null) {
             if (!connection.isOpen()) {
-                connectionStatusMap.remove(connection);
+                connectionStatusMap.remove(IoThreadClientConnection.identity(connection));
             } else if (connection.isMultiplexingSupported()) {
-                connectionStatusMap.put(connection, ConnectionStatus.MULTIPLEX_SUPPORT);
+                connectionStatusMap.put(IoThreadClientConnection.identity(connection), ConnectionStatus.MULTIPLEX_SUPPORT);
             } else {
-                connectionStatusMap.put(connection, ConnectionStatus.AVAILABLE);
+                connectionStatusMap.put(IoThreadClientConnection.identity(connection), ConnectionStatus.AVAILABLE);
             }
         }
     }
@@ -241,7 +242,7 @@ public class Http2ClientConnectionPool {
             if(logger.isDebugEnabled()) logger.debug("Got connection status: {} for uri: {} before hang it", status, uri);
             // Hanging new or old Http/1.1 connection
             if ((status == null && !connection.isHttp2Connection()) || status == ConnectionStatus.AVAILABLE) {
-                connectionStatusMap.put(connection.get(), ConnectionStatus.HANGING);
+                connectionStatusMap.put(IoThreadClientConnection.identity(connection.get()), ConnectionStatus.HANGING);
             }
         }
     }
@@ -309,7 +310,7 @@ public class Http2ClientConnectionPool {
             if(System.currentTimeMillis() > (this.lifeStartTimeParked + this.ttlParked)) {
                 if(logger.isDebugEnabled()) logger.debug("ParkedConnection expired. Start time of this parked connection is {}", new Date(this.lifeStartTimeParked));
                 try {
-                    ClientConnectionOperations.safeClose(this.clientConnection);
+                    this.clientConnection.close();
                 } catch (Exception ignored){
                     if(logger.isInfoEnabled()) logger.info("Exception while closing the parked connection. This exception is suppressed. Exception is {}", ignored);
                 }

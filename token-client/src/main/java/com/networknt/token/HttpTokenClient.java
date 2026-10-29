@@ -1,6 +1,5 @@
 package com.networknt.token;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
@@ -47,9 +46,9 @@ public class HttpTokenClient implements TokenClient {
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 
             if (requestBody != null) {
-                ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, requestBody));
+                connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
             } else {
-                ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch));
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
             }
 
             if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {

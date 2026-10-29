@@ -1,6 +1,5 @@
 package com.networknt.proxy;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
@@ -107,7 +106,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
         try {
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(config.getDownstreamPath());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
             int statusCode = reference.get().getResponseCode();
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
@@ -122,7 +121,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
             // for Java EE backend like spring boot, the connection created and opened but might not ready. So we need to close
             // the connection if there are any exception here to work around the spring boot backend.
             if(connection != null && connection.isOpen()) {
-                ClientConnectionOperations.safeClose(connection);
+                try { connection.close(); } catch (Exception e) { logger.error("Exception:", e); }
             }
             result = HEALTH_RESULT_ERROR;
         }

@@ -15,7 +15,8 @@
  */
 package com.networknt.client.simplepool.undertow;
 
-import com.networknt.client.http.ClientConnectionOperations;
+import com.networknt.client.http.IoThreadClientConnection;
+import org.xnio.IoUtils;
 import com.networknt.client.simplepool.SimpleConnection;
 import io.undertow.client.ClientConnection;
 
@@ -30,7 +31,7 @@ public class SimpleUndertowConnection implements SimpleConnection {
      * @param connection the client connection
      */
     public SimpleUndertowConnection(ClientConnection connection) {
-        this.connection = connection;
+        this.connection = IoThreadClientConnection.wrap(connection);
     }
 
     @Override
@@ -55,6 +56,6 @@ public class SimpleUndertowConnection implements SimpleConnection {
 
     @Override
     public void safeClose() {
-        ClientConnectionOperations.safeClose(connection);
+        IoUtils.safeClose(connection);
     }
 }

@@ -1,6 +1,5 @@
 package com.networknt.proxy;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
@@ -144,11 +143,11 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
         request.getRequestHeaders().put(Headers.HOST, "localhost");
         if (token != null) request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer "  + token);
         if(StringUtils.isBlank(json)) {
-            ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
         } else {
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, json));
+            connection.sendRequest(request, client.createClientCallback(reference, latch, json));
         }
         latch.await(1000, TimeUnit.MILLISECONDS);
         return reference;

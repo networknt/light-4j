@@ -1,6 +1,5 @@
 package com.networknt.server;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.networknt.config.PasswordChars;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -312,7 +311,7 @@ public class UrlConfigLoader implements IConfigLoader {
 			AtomicReference<ClientResponse> responseReference = new AtomicReference<>();
 			CountDownLatch latch = new CountDownLatch(1);
 			ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
-			ClientConnectionOperations.sendRequest(connection, clientRequest, raw ? client.byteBufferClientCallback(responseReference, latch)
+			connection.sendRequest(clientRequest, raw ? client.byteBufferClientCallback(responseReference, latch)
 					: client.createClientCallback(responseReference, latch));
 
 			latch.await(10000, TimeUnit.MILLISECONDS);

@@ -1,6 +1,5 @@
 package com.networknt.mcp;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
@@ -70,11 +69,11 @@ public class HttpMcpTool extends AbstractRemoteMcpTool {
             request.getRequestHeaders().put(Headers.HOST, buildHostHeader(uri));
 
             if ("GET".equalsIgnoreCase(method)) {
-                 ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch));
+                 connection.sendRequest(request, client.createClientCallback(reference, latch));
             } else {
                  String jsonBody = mapper.writeValueAsString(arguments);
                  if(logger.isDebugEnabled()) logger.debug("Transformed body: {}", jsonBody);
-                 ClientConnectionOperations.sendRequest(connection, request, client.createClientCallback(reference, latch, jsonBody));
+                 connection.sendRequest(request, client.createClientCallback(reference, latch, jsonBody));
             }
 
             latch.await(5000, TimeUnit.MILLISECONDS); // Default 5s timeout

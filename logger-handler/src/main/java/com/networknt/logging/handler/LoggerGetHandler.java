@@ -16,7 +16,6 @@
 
 package com.networknt.logging.handler;
 
-import com.networknt.client.http.ClientConnectionOperations;
 import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
@@ -132,7 +131,7 @@ public class LoggerGetHandler implements LightHttpHandler {
 
             ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(getRequestPath(config));
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            ClientConnectionOperations.sendRequest(connection, request, Http2Client.getInstance().createClientCallback(reference, latch));
+            connection.sendRequest(request, Http2Client.getInstance().createClientCallback(reference, latch));
             latch.await();
             int statusCode = reference.get().getResponseCode();
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
