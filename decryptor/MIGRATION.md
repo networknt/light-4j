@@ -42,11 +42,23 @@ cannot identify a configuration key/file on its own.
 
 ## Credential lifetime and compatibility
 
-Password-provider selection is unchanged. The base `AESSaltDecryptor` retains
-its historical public `light` default for compatibility; that default is not a
-production secret. Production deployments should use `AutoAESSaltDecryptor`
-with an explicitly supplied `light_4j_config_password` (or uppercase equivalent),
-or a custom password provider. The existing Auto JUnit-only fallback remains.
+**Breaking change on master and 2.x:** the base `AESSaltDecryptor` no longer
+supplies the public `light` password. Direct base-class use fails closed on
+otherwise valid CRYPT input, including under JUnit. This withdraws the previous
+compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/issues/2831).
+
+Select `AutoAESSaltDecryptor` with an explicitly supplied
+`light_4j_config_password` (or uppercase equivalent), the interactive
+`ManualAESSaltDescryptor`, or a custom password provider. The Auto provider's
+existing current-thread JUnit-only fixture fallback remains separate and unchanged.
+Custom providers keep their existing ownership contract.
+
+Inventory deployed `decryptorClass` settings before upgrading. If the base class
+was using its public default, decrypt and re-encrypt affected values in a controlled
+offline migration with light-encryptor and a deployment-specific master secret.
+Do not print plaintext or put real secrets in commands, logs or issues. Replace
+the provider selection and distribute the new runtime secret before adopting the
+updated library. Supplying the old public password explicitly is not remediation.
 
 The base and Auto providers do not cache derived keys or master passwords. A password change
 is observed on the next decrypt call; it does not reload already cached/decrypted

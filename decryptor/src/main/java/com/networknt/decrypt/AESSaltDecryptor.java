@@ -171,12 +171,13 @@ public class AESSaltDecryptor implements Decryptor {
     }
 
     /**
-     * Gets the password for decryption.
+     * Gets the password from a subclass provider. The base class has no default secret.
      *
      * @return char array of the password
      */
     protected char[] getPassword() {
-        return ownedPassword("light".toCharArray());
+        throw new IllegalStateException("No master-password provider configured. Select AutoAESSaltDecryptor "
+                + "with an explicit light_4j_config_password, ManualAESSaltDescryptor, or a custom password provider.");
     }
 
     private static byte[] fromHex(String hex, String name) {
