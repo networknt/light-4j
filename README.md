@@ -162,3 +162,24 @@ file for more info.
 Both master and 2.x reject legacy three-part CRYPT values. Re-encrypt them to
 four-part AES-GCM before upgrading. See the [migration guide](decryptor/MIGRATION.md)
 for the rollout steps and credential-lifetime hardening scope.
+
+### External-service asynchronous exception handling
+
+Matched ExternalServiceHandler requests dispatch blocking forwarding to a worker,
+including after an asynchronous request-body read. Routing and configuration are
+resolved once, and dispatch does not repeat rewriting or sending. Unmatched paths
+keep their original thread. Client initialization is shared safely across requests.
+
+HandlerContinuation in the handler module captures the active chain exception
+boundary before asynchronous body reads and matched-request worker dispatch.
+ExceptionHandler supplies its existing policy without rebuilding middleware or
+changing its next handler. Named handlers are retained; when exception handling
+is disabled and omitted from the chain, failures remain under Undertow's default
+policy. Nested boundaries restore their enclosing scope, and state is isolated
+per exchange. ingress-proxy uses exception only for tests.
+
+ExternalServiceWorkerDispatchTest covers synchronous worker entry, partial chunked
+body continuation, enabled/named/disabled exception policies, concurrent requests,
+body preservation, one rewrite, unmatched routing, method rejection, and metrics.
+This does not qualify worker-pool saturation or add backpressure, and does not
+qualify Salesforce/MRAS handlers or the separate Http2Client threading work.
