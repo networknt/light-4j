@@ -23,6 +23,15 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
     private final static String LIGHT_4J_CONFIG_PASSWORD = "light_4j_config_password";
     @Override
     protected char[] getPassword() {
+        String passwordStr = getRuntimePassword();
+        if (passwordStr == null || passwordStr.isEmpty()) {
+            throw new IllegalStateException("No configuration master password supplied. Set light_4j_config_password explicitly.");
+        }
+
+        return ownedPassword(passwordStr.toCharArray());
+    }
+
+    String getRuntimePassword() {
         // Read the explicit light_4j_config_password system property first.
         String passwordStr = System.getProperty(LIGHT_4J_CONFIG_PASSWORD);
         if(passwordStr == null || passwordStr.isEmpty()) {
@@ -35,11 +44,7 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
         if(passwordStr == null || passwordStr.isEmpty()) {
             passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD.toUpperCase());
         }
-        if (passwordStr == null || passwordStr.isEmpty()) {
-            throw new IllegalStateException("No configuration master password supplied. Set light_4j_config_password explicitly.");
-        }
-
-        return ownedPassword(passwordStr.toCharArray());
+        return passwordStr;
     }
 
 }

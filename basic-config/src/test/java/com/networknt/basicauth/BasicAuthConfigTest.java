@@ -16,6 +16,10 @@
 
 package com.networknt.basicauth;
 
+import org.junit.jupiter.api.BeforeEach;
+
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import com.networknt.config.Config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,9 +28,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class BasicAuthConfigTest {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthConfigTest.class);
-    static final BasicAuthConfig config = BasicAuthConfig.load();
+    BasicAuthConfig config;
+    @BeforeEach
+    void setup() {
+        config = BasicAuthConfig.load();
+    }
 
     @Test
     public void testDecryption() {

@@ -16,6 +16,8 @@
 
 package com.networknt.common;
 
+import org.junit.jupiter.api.util.SetSystemProperty;
+
 import com.networknt.config.Config;
 import com.networknt.decrypt.AESSaltDecryptor;
 import org.junit.jupiter.api.Assertions;
@@ -40,17 +42,12 @@ public class DecryptUtilTest {
     private static final int GCM_TAG_LENGTH = 128;
 
     @Test
+    @SetSystemProperty(key = "light_4j_config_password", value = "light")
     public void testDecryptMap() {
-        String previous = System.getProperty("light_4j_config_password");
-        System.setProperty("light_4j_config_password", "light");
-        try {
-            Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
-            DecryptUtil.decryptMap(secretMap);
-            Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
-        } finally {
-            if (previous == null) System.clearProperty("light_4j_config_password");
-            else System.setProperty("light_4j_config_password", previous);
-        }
+        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
+        DecryptUtil.decryptMap(secretMap);
+        Assertions.assertEquals("password", secretMap.get("serverKeystorePass"));
+
     }
 
     @Test
