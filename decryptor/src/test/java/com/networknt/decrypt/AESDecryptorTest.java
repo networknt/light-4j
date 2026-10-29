@@ -52,8 +52,19 @@ public class AESDecryptorTest {
 
     @Test
     public void testDecryptGcmFormat() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        AESSaltDecryptor decryptor = new AESSaltDecryptor() {
+            @Override protected char[] getPassword() { return ownedPassword("light".toCharArray()); }
+        };
         Assertions.assertEquals("password", decryptor.decrypt(GCM_PASSWORD_VALUE));
+    }
+
+    @Test
+    public void baseDecryptorRejectsKnownPublicPasswordCiphertext() {
+        IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
+                () -> new AESSaltDecryptor().decrypt(GCM_PASSWORD_VALUE));
+        Assertions.assertTrue(failure.getMessage().contains("AutoAESSaltDecryptor"));
+        Assertions.assertTrue(failure.getMessage().contains("light_4j_config_password"));
+        Assertions.assertFalse(failure.getMessage().contains(GCM_PASSWORD_VALUE));
     }
 
     @Test
