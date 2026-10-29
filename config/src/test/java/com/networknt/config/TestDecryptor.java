@@ -1,15 +1,11 @@
 package com.networknt.config;
 
-import com.networknt.decrypt.AESSaltDecryptor;
+import com.networknt.decrypt.AutoAESSaltDecryptor;
 
-public class TestDecryptor extends AESSaltDecryptor {
-    // Explicit fixture secret; the base class intentionally has no public fallback.
+/** Test-only customization using the password supplied by the test case. */
+public class TestDecryptor extends AutoAESSaltDecryptor {
     @Override
-    protected char[] getPassword() { return ownedPassword("light".toCharArray()); }
-
-
-    @Override
-	public String decrypt(String input) {
-    	return super.decrypt(input) + "-test";
+    public String decrypt(String input) {
+        return super.decrypt(input) + "-test";
     }
 }

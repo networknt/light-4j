@@ -16,19 +16,17 @@
 
 package com.networknt.config;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 import org.yaml.snakeyaml.resolver.Resolver;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -45,10 +43,8 @@ public class ConfigDecryptTest {
     public void testDecryptMap() {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfigNoCache("secret-map-test");
         Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
-
         secretMap = Config.getInstance().getJsonMapConfig("secret-map-test");
         Assertions.assertEquals(SECRET, secretMap.get("serverKeystorePass"));
-
         List<String> testArray = (List<String>) secretMap.get(TEST_ARRAY);
 
         Assertions.assertTrue(testArray.size()>0);
@@ -102,15 +98,4 @@ public class ConfigDecryptTest {
         Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 
-    @Test
-    public void testAutoDecryptorClass() throws IOException {
-        if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
-        final Resolver resolver = new Resolver();
-        resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        Yaml yaml = new Yaml(DecryptConstructor.getInstance("com.networknt.config.TestAutoDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
-
-        Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
-
-        Assertions.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
-    }
 }

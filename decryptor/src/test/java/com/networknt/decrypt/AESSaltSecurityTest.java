@@ -1,8 +1,7 @@
 package com.networknt.decrypt;
 
-import org.junit.jupiter.api.util.SetSystemProperty;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;

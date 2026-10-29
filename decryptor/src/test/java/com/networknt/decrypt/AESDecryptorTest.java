@@ -3,6 +3,7 @@ package com.networknt.decrypt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -22,31 +23,22 @@ public class AESDecryptorTest {
     private static final String GCM_PASSWORD_VALUE = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
 
     @Test
-    public void baseClassCannotBeSelectedAsAConcreteProvider() throws Exception {
-        Class<?> type = Class.forName("com.networknt.decrypt.AESSaltDecryptor");
-        Assertions.assertTrue(java.lang.reflect.Modifier.isAbstract(type.getModifiers()));
-        var constructor = type.getConstructor();
-        Assertions.assertThrows(InstantiationException.class, constructor::newInstance);
-    }
-
-    @Test
     public void testDecryptLegacyCbcFormat() throws Exception {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {};
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
         String secretText = legacyEncrypt("password", "00112233445566778899aabbccddeeff");
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt(secretText));
     }
 
     @Test
+    @SetSystemProperty(key = "light_4j_config_password", value = "light")
     public void testDecryptGcmFormat() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {
-            @Override protected char[] getPassword() { return ownedPassword("light".toCharArray()); }
-        };
+        AutoAESSaltDecryptor decryptor = new AutoAESSaltDecryptor();
         Assertions.assertEquals("password", decryptor.decrypt(GCM_PASSWORD_VALUE));
     }
 
     @Test
     public void baseDecryptorRejectsKnownPublicPasswordCiphertext() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {};
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
         IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
                 () -> decryptor.decrypt(GCM_PASSWORD_VALUE));
         Assertions.assertTrue(failure.getMessage().contains("AutoAESSaltDecryptor"));
@@ -56,14 +48,14 @@ public class AESDecryptorTest {
 
     @Test
     public void testDecryptRejectsInvalidPartCount() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {};
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122"));
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122:334455:667788:99aabb"));
     }
 
     @Test
     public void testDecryptRejectsEmptyParts() {
-        AESSaltDecryptor decryptor = new AESSaltDecryptor() {};
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122::667788"));
         Assertions.assertThrows(IllegalArgumentException.class, () -> decryptor.decrypt("CRYPT:001122:334455:"));
     }

@@ -43,22 +43,23 @@ cannot identify a configuration key/file on its own.
 ## Credential lifetime and compatibility
 
 **Breaking change on master and 2.x:** the base `AESSaltDecryptor` no longer
-supplies the public `light` password. The base class is abstract, so direct
-instantiation is unsupported, including in tests. This withdraws the previous
+supplies the public `light` password. It remains concrete for existing service.yml
+bindings, but supplies no password and throws when password acquisition is
+requested. This withdraws the previous
 compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/issues/2831).
 
 Select `AutoAESSaltDecryptor` with an explicitly supplied
 `light_4j_config_password` (or uppercase equivalent), the interactive
-`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit detection or public-password fallback. Tests supply synthetic
-passwords explicitly in test-only providers or scoped test setup that restores the original property afterward. No password is supplied
+`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit
+detection or public-password fallback. Tests supply synthetic passwords in scoped
+test setup that restores the original property afterward. No password is supplied
 by the parent POM.
 Custom providers keep their existing ownership contract.
 
 Inventory deployed `decryptorClass` settings, service.yml Decryptor bindings,
 direct instantiations, and subclasses calling `super.getPassword()` before
 upgrading. If the base class was using its public default, decrypt and re-encrypt
-affected values in a controlled
-offline migration with light-encryptor and a deployment-specific master secret.
+affected values in a controlled offline migration with light-encryptor and a deployment-specific master secret.
 Do not print plaintext or put real secrets in commands, logs or issues. Replace
 the provider selection and distribute the new runtime secret before adopting the
 updated library. Supplying the old public password explicitly is not remediation.
@@ -127,12 +128,12 @@ Remove calls to that helper. Set the synthetic password in the test case before
 loading encrypted fixtures and restore the previous property afterward. Do not
 set it in production resources or the parent POM. Other repositories, including
 light-rest-4j, must migrate their encrypted test fixtures as part of their upgrade.
-The base class is now abstract and cannot be instantiated directly or reflectively.
-Select Auto, Manual, or a concrete custom provider instead.
-Service-factory startup behavior is unchanged: an invalid service.yml binding is
-logged under the existing policy, and stops the remaining singleton registrations.
-It does not make application startup fatal. Replace bare-base bindings before
-upgrading; do not rely on service initialization to enforce password availability.
+Configuration loading rejects a bare-base `decryptorClass` selection with provider
+guidance. Use Auto, Manual, or a custom provider instead. A bare-base service.yml
+binding still constructs and allows later singleton registrations; it throws
+when a valid CRYPT value first requests a password. Service-factory behavior is
+unchanged. This fix does not promise startup-time validation for all provider
+bindings or direct instances.
 
 For JUnit 6.1+, use `org.junit.jupiter.api.util.SetSystemProperty` on the fixture
 test class or method. It sets the explicit test password and restores the original

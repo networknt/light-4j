@@ -3,4 +3,4 @@
 singletons:
 # HandlerProvider implementation
 - com.networknt.decrypt.Decryptor:
-  - com.networknt.common.FixturePasswordDecryptor
+  - com.networknt.decrypt.AutoAESSaltDecryptor
