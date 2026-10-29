@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClientConnectionReviewTest {
+class ClientConnectionLifecycleTest {
     private XnioWorker worker;
     private XnioIoThread owner;
     private ClientConnection delegate;
@@ -196,7 +196,12 @@ class ClientConnectionReviewTest {
         when(exchange.getRequestChannel()).thenReturn(requestChannel);
         when(delegate.getBufferPool()).thenReturn(Http2Client.BUFFER_POOL);
         StreamSourceChannel channel = mock(StreamSourceChannel.class);
-        when(channel.read(any(ByteBuffer.class))).thenReturn(-1);
+        XnioIoThread stopped = mock(XnioIoThread.class);
+        doThrow(new RejectedExecutionException("stopped")).when(stopped).execute(any(Runnable.class));
+        when(channel.read(any(ByteBuffer.class))).thenAnswer(invocation -> {
+            when(delegate.getIoThread()).thenReturn(stopped);
+            return -1;
+        });
         when(exchange.getResponseChannel()).thenReturn(channel);
         ClientResponse expected = new ClientResponse(200, "OK", io.undertow.util.Protocols.HTTP_1_1);
         when(exchange.getResponse()).thenReturn(expected);
@@ -208,16 +213,17 @@ class ClientConnectionReviewTest {
         }).when(delegate).sendRequest(any(), any());
         var response = client.callService(uri, new ClientRequest(), Optional.empty());
         ClientCallback<ClientExchange> listener = listenerFuture.get(5, TimeUnit.SECONDS);
-        XnioIoThread stopped = mock(XnioIoThread.class);
-        doThrow(new RejectedExecutionException("stopped")).when(stopped).execute(any(Runnable.class));
-        when(delegate.getIoThread()).thenReturn(stopped);
+        CompletableFuture<Void> setupDone = new CompletableFuture<>();
+        owner.execute(() -> setupDone.complete(null));
+        setupDone.get(5, TimeUnit.SECONDS);
         if (failed) {
+            when(delegate.getIoThread()).thenReturn(stopped);
             IOException original = new IOException("response failed");
             listener.failed(original);
             assertSame(original, assertThrows(ExecutionException.class, () -> response.get(5, TimeUnit.SECONDS)).getCause());
             assertNull(pool.getConnection(uri));
         } else {
-            listener.completed(exchange);
+            owner.execute(() -> listener.completed(exchange));
             assertSame(expected, response.get(5, TimeUnit.SECONDS));
             assertNotNull(pool.getConnection(uri), "pool bookkeeping must still complete without owner dispatch");
         }
