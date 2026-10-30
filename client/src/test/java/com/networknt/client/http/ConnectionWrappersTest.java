@@ -53,7 +53,7 @@ class ConnectionWrappersTest {
         state.view.get().clear();
         IoThreadClientConnection recreated = IoThreadClientConnection.wrap(raw);
         assertSame(state, ConnectionWrappers.lookup(raw));
-        assertTrue(ConnectionWrappers.isRegistered(state));
+        assertTrue(state.isRegistered());
         assertNotSame(original, recreated);
         assertFalse(recreated.isOpen());
         assertFalse(original.isOpen());
@@ -69,16 +69,16 @@ class ConnectionWrappersTest {
         ConnectionWrappers.Entry firstState = ConnectionWrappers.lookup(first);
         ConnectionWrappers.Entry secondState = ConnectionWrappers.lookup(second);
         ConnectionWrappers.Entry liveState = ConnectionWrappers.lookup(live);
-        assertTrue(ConnectionWrappers.isRegistered(firstState));
-        assertTrue(ConnectionWrappers.isRegistered(secondState));
+        assertTrue(firstState.isRegistered());
+        assertTrue(secondState.isRegistered());
         firstState.key.clear();
         secondState.key.clear();
         assertTrue(firstState.key.enqueue());
         assertTrue(secondState.key.enqueue());
         firstState.cleanable.clean(); // Actual registered action also drains the real queue's other key.
-        assertFalse(ConnectionWrappers.isRegistered(firstState));
-        assertFalse(ConnectionWrappers.isRegistered(secondState));
-        assertTrue(ConnectionWrappers.isRegistered(liveState));
+        assertFalse(firstState.isRegistered());
+        assertFalse(secondState.isRegistered());
+        assertTrue(liveState.isRegistered());
         Reference.reachabilityFence(first);
         Reference.reachabilityFence(second);
         Reference.reachabilityFence(live);
