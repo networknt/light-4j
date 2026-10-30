@@ -26,10 +26,13 @@ public class Http2ClientConnectionPool {
     private enum ConnectionStatus { HANGING, AVAILABLE, CLOSE, MULTIPLEX_SUPPORT }
     private static final Logger logger = LoggerFactory.getLogger(Http2ClientConnectionPool.class);
     private static final long RETIREMENT_GRACE_MS = 100_000;
-    private final Map<String, List<CachedConnection>> connectionPool;
+    private final Map<String, UriConnections> connectionPool;
     // Canonical views have identity equality, including transports supplied by custom providers.
     private final ConcurrentMap<ClientConnection, CachedConnection> tracked = new ConcurrentHashMap<>();
     private final Queue<CachedConnection> pendingClose = new ConcurrentLinkedQueue<>();
+    private final Queue<CachedConnection> closedRecords = new ConcurrentLinkedQueue<>();
+    private final AtomicInteger reaperFailures = new AtomicInteger();
+    private static final int MAX_MAINTENANCE_FAILURES = 5;
     private final Supplier<RequestConfig> requestConfig;
     private final LongSupplier clock;
     private final ScheduledExecutorService reaper;
@@ -81,10 +84,10 @@ public class Http2ClientConnectionPool {
         this.reaper = reaper;
         int poolSize = requestConfig.get().getConnectionPoolSize();
         connectionPool = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
-            @Override protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
+            @Override protected boolean removeEldestEntry(Map.Entry<String, UriConnections> eldest) {
                 if (size() <= poolSize) return false;
-                logger.debug("Evicting {} cached connections for uri: {}", eldest.getValue().size(), eldest.getKey());
-                eldest.getValue().forEach(Http2ClientConnectionPool.this::retire);
+                logger.debug("Evicting {} cached connections for uri: {}", eldest.getValue().connections.size(), eldest.getKey());
+                eldest.getValue().connections.forEach(Http2ClientConnectionPool.this::retire);
                 return true;
             }
         };
@@ -102,13 +105,14 @@ public class Http2ClientConnectionPool {
         try {
             synchronized (this) {
                 if (uri == null) return null;
-                List<CachedConnection> connections = connectionPool.get(uri.toString());
+                UriConnections bucket = connectionPool.get(uri.toString());
+                List<CachedConnection> connections = bucket == null ? null : bucket.connections;
                 logger.debug("Got {} connections for uri: {}", connections == null ? 0 : connections.size(), uri);
                 CachedConnection selected = selectConnection(uri, connections);
                 logger.debug("Got cached connection: {} for uri: {}", selected, uri);
                 if (selected == null) return null;
-                hangConnection(selected);
                 selected.borrowers.incrementAndGet();
+                hangConnection(selected);
                 return selected.get();
             }
         } finally { closeRetiredConnections(); }
@@ -127,16 +131,19 @@ public class Http2ClientConnectionPool {
         try {
             synchronized (this) {
                 if (tracked.containsKey(owned)) return;
-                List<CachedConnection> existing = connectionPool.get(uriString);
-                if (existing != null) removeClosedConnections(existing);
+                UriConnections existing = connectionPool.get(uriString);
+                if (existing != null) removeClosedConnections(existing.connections);
                 added = new CachedConnection(uriString, owned, clock.getAsLong(), requestConfig.get());
                 tracked.put(owned, added);
-                List<CachedConnection> connections = connectionPool.computeIfAbsent(uriString, key -> new LinkedList<>());
-                connections.add(added);
-                added.owner = new WeakReference<>(connections);
-                logger.debug("Cached connection for uri: {}, per-uri count: {}, total tracked: {}", uri, connections.size(), tracked.size());
+                UriConnections bucket = connectionPool.computeIfAbsent(uriString, key -> new UriConnections());
+                bucket.connections.add(added);
+                added.owner = new WeakReference<>(bucket);
+                logger.debug("Cached connection for uri: {}, per-uri count: {}, total tracked: {}", uri, bucket.connections.size(), tracked.size());
                 if (!connectionPool.containsKey(uriString)) retire(added);
-                else replaceDeadline(added, added.lifeStartTime + added.expireTime);
+                else if (added.requestLimitReached()) {
+                    detachFromUri(added);
+                    retire(added);
+                } else replaceDeadline(added, added.lifeStartTime + added.expireTime);
             }
             CachedConnection registered = added;
             owned.addCloseListener(ignored -> connectionClosed(registered));
@@ -155,10 +162,10 @@ public class Http2ClientConnectionPool {
 
     // Retain access order: LinkedHashMap.get() here would turn cleanup into apparent URI traffic.
     private void detachFromUri(CachedConnection connection) {
-        List<CachedConnection> connections = connection.owner == null ? null : connection.owner.get();
-        if (connections != null) {
-            connections.remove(connection);
-            if (connections.isEmpty()) connectionPool.remove(connection.uri, connections);
+        UriConnections bucket = connection.owner == null ? null : connection.owner.get();
+        if (bucket != null) {
+            bucket.connections.remove(connection);
+            if (bucket.connections.isEmpty()) connectionPool.remove(connection.uri, bucket);
         }
     }
 
@@ -223,6 +230,10 @@ public class Http2ClientConnectionPool {
     private void hangConnection(CachedConnection connection) {
         connection.requestCount.incrementAndGet();
         connection.status = ConnectionStatus.HANGING;
+        if (connection.requestLimitReached()) {
+            detachFromUri(connection);
+            retire(connection);
+        }
     }
 
     // Called under the pool monitor; returns only read the published retirement state.
@@ -247,10 +258,19 @@ public class Http2ClientConnectionPool {
         }
     }
 
-    private synchronized void connectionClosed(CachedConnection connection) {
-        tracked.remove(connection.get(), connection);
-        cancelDeadline(connection);
+    private void connectionClosed(CachedConnection connection) {
+        if (tracked.remove(connection.get(), connection)) {
+            connection.closedCleanup = true;
+            closedRecords.add(connection);
+        }
+    }
+
+    private void cleanClosedRecord(CachedConnection connection) {
+        // Invoked by maintenance, never by the transport's native close listener.
         detachFromUri(connection);
+        cancelDeadline(connection);
+        connection.closedCleanup = false;
+        connection.maintenanceFailures = 0;
     }
 
     private void closeRetiredConnections() {
@@ -268,16 +288,29 @@ public class Http2ClientConnectionPool {
     }
 
     private final class ReaperTask implements Runnable {
-        private int processed;
+        private long nextDelay = 1000;
         @Override public void run() {
             try {
-                ClientConnectionOperations.runWithFailureHandler(() -> processed = reapExpiredConnections(),
-                        error -> logger.error("Unable to process client connection deadlines", error));
+                ClientConnectionOperations.runWithFailureHandler(() -> {
+                    int processed = reapExpiredConnections();
+                    reaperFailures.set(0);
+                    nextDelay = processed == REAPER_BATCH_SIZE ? 0 : 1000;
+                }, error -> {
+                    int failures = reaperFailures.incrementAndGet();
+                    nextDelay = retryDelay(failures);
+                    if (failures == 1 || IoThreadClientConnection.isFatal(error)) {
+                        logger.error("Client connection maintenance failed; next run in {} ms", nextDelay, error);
+                    } else logger.debug("Client connection maintenance retry in {} ms", nextDelay, error);
+                });
             } finally {
                 // One-shot scheduling survives a failing run, including a rethrown fatal Error.
-                scheduleReaper(processed == REAPER_BATCH_SIZE ? 0 : 1000);
+                scheduleReaper(nextDelay);
             }
         }
+    }
+
+    private static long retryDelay(int failures) {
+        return Math.min(30_000L, 1000L << Math.min(5, failures - 1));
     }
 
     private void replaceDeadline(CachedConnection connection, long at) {
@@ -286,7 +319,7 @@ public class Http2ClientConnectionPool {
         if (previous != null) deadlines.remove(previous);
         deadlines.add(next);
         // Do not retain a deadline if its record is no longer tracked.
-        if (connection.deadline.get() != next || tracked.get(connection.get()) != connection) deadlines.remove(next);
+        if (connection.deadline.get() != next || !isManaged(connection)) deadlines.remove(next);
     }
 
     private void cancelDeadline(CachedConnection connection) {
@@ -294,45 +327,102 @@ public class Http2ClientConnectionPool {
         if (previous != null) deadlines.remove(previous);
     }
 
-    // Only due records are visited. No pool monitor is acquired for idle, unexpired connections.
+    private boolean isManaged(CachedConnection connection) {
+        return tracked.get(connection.get()) == connection || connection.closedCleanup;
+    }
+
+    // Share each bounded batch between closed-record cleanup and time/request-count deadlines.
     int reapExpiredConnections() {
         long now = clock.getAsLong();
+        try {
+            int processed = drainClosedRecords(REAPER_BATCH_SIZE / 2, now);
+            processed += drainDeadlines(REAPER_BATCH_SIZE - processed, now);
+            return processed + drainClosedRecords(REAPER_BATCH_SIZE - processed, now);
+        } finally { closeRetiredConnections(); }
+    }
+
+    private int drainClosedRecords(int limit, long now) {
+        int processed = 0;
+        CachedConnection closed;
+        while (processed < limit && (closed = closedRecords.poll()) != null) {
+            CachedConnection current = closed;
+            processed++;
+            ClientConnectionOperations.runWithFailureHandler(() -> processClosedRecord(current),
+                    error -> retryClosedRecord(current, now, error));
+        }
+        return processed;
+    }
+
+    private int drainDeadlines(int limit, long now) {
         NavigableSet<Deadline> due = deadlines.headSet(new Deadline(now, Long.MAX_VALUE, null), true);
         int processed = 0;
-        try {
-            Deadline deadline;
-            while (processed < REAPER_BATCH_SIZE && (deadline = due.pollFirst()) != null) {
-                Deadline current = deadline;
-                processed++;
-                ClientConnectionOperations.runWithFailureHandler(() -> processDeadline(current, now),
-                        error -> retryDeadline(current, now, error));
-            }
-        } finally { closeRetiredConnections(); }
+        Deadline deadline;
+        while (processed < limit && (deadline = due.pollFirst()) != null) {
+            Deadline current = deadline;
+            processed++;
+            ClientConnectionOperations.runWithFailureHandler(() -> processDeadline(current, now),
+                    error -> retryDeadline(current, now, error));
+        }
         return processed;
+    }
+
+    private void processClosedRecord(CachedConnection connection) {
+        synchronized (this) {
+            if (connection.closedCleanup) cleanClosedRecord(connection);
+        }
     }
 
     private void processDeadline(Deadline deadline, long now) {
         synchronized (this) {
             CachedConnection connection = deadline.connection;
-            if (tracked.get(connection.get()) != connection || connection.deadline.get() != deadline) return;
-            if (!connection.retired) {
-                detachFromUri(connection);
-                retire(connection);
-            } else if (now >= connection.retiredAt + RETIREMENT_GRACE_MS) {
-                logger.debug("ParkedConnection expired: {}, outstanding borrowers: {}", connection.get(), connection.borrowers.get());
-                queueClose(connection);
-            } else replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
+            if (!isManaged(connection) || connection.deadline.get() != deadline) return;
+            if (connection.closedCleanup) cleanClosedRecord(connection);
+            else {
+                if (!connection.retired) {
+                    detachFromUri(connection);
+                    retire(connection);
+                } else if (now >= connection.retiredAt + RETIREMENT_GRACE_MS) {
+                    logger.debug("ParkedConnection expired: {}, outstanding borrowers: {}", connection.get(), connection.borrowers.get());
+                    queueClose(connection);
+                } else replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
+                connection.maintenanceFailures = 0;
+            }
+        }
+    }
+
+    private void retryClosedRecord(CachedConnection connection, long now, Throwable error) {
+        synchronized (this) {
+            if (connection.closedCleanup) retryMaintenance(connection, now, error);
         }
     }
 
     private void retryDeadline(Deadline deadline, long now, Throwable error) {
-        logger.error("Unable to retire client connection; retrying its deadline", error);
         synchronized (this) {
             CachedConnection connection = deadline.connection;
-            if (tracked.get(connection.get()) == connection && connection.deadline.get() == deadline) {
-                replaceDeadline(connection, now + 1000);
+            if (isManaged(connection) && connection.deadline.get() == deadline) {
+                retryMaintenance(connection, now, error);
             }
         }
+    }
+
+    private void retryMaintenance(CachedConnection connection, long now, Throwable error) {
+        int failures = ++connection.maintenanceFailures;
+        if (failures < MAX_MAINTENANCE_FAILURES) {
+            long delay = retryDelay(failures);
+            replaceDeadline(connection, now + delay);
+            if (failures == 1) logger.warn("Unable to maintain client connection; retrying in {} ms", delay, error);
+            else logger.debug("Retrying client connection maintenance in {} ms", delay, error);
+            return;
+        }
+        cancelDeadline(connection);
+        if (connection.closedCleanup) connection.closedCleanup = false;
+        else {
+            // Quarantine and close outside the monitor; do not depend on the failing clock/path.
+            connection.retired = true;
+            connection.status = ConnectionStatus.CLOSE;
+            queueClose(connection);
+        }
+        logger.error("Stopping client connection maintenance after {} failures", failures, error);
     }
 
     private record Deadline(long at, long sequence, CachedConnection connection) implements Comparable<Deadline> {
@@ -348,17 +438,23 @@ public class Http2ClientConnectionPool {
     /** Clear pool metadata without closing caller-owned transports, including in-flight requests. */
     public synchronized void clear() {
         pendingClose.clear();
-        tracked.values().forEach(this::cancelDeadline);
+        closedRecords.clear();
+        deadlines.clear();
         tracked.clear();
         connectionPool.clear();
         logger.debug("Cleared client connection pool metadata");
     }
 
+    // Object equality deliberately gives each URI bucket identity semantics.
+    private static final class UriConnections {
+        private final List<CachedConnection> connections = new LinkedList<>();
+    }
+
     private static final class CachedConnection {
-        private final AtomicInteger requestCount = new AtomicInteger();
+        private final AtomicInteger requestCount = new AtomicInteger(1);
         private final ClientConnection clientConnection;
         private final String uri;
-        private WeakReference<List<CachedConnection>> owner;
+        private WeakReference<UriConnections> owner;
         private final AtomicReference<Deadline> deadline = new AtomicReference<>();
         private final long lifeStartTime;
         private final int maxReqCount;
@@ -366,6 +462,8 @@ public class Http2ClientConnectionPool {
         private final AtomicInteger borrowers = new AtomicInteger(1);
         private volatile ConnectionStatus status = ConnectionStatus.HANGING;
         private volatile boolean retired;
+        private volatile boolean closedCleanup;
+        private int maintenanceFailures;
         private volatile long retiredAt;
         private final AtomicBoolean closing = new AtomicBoolean();
 
@@ -376,9 +474,9 @@ public class Http2ClientConnectionPool {
             maxReqCount = config.getMaxReqPerConn();
             expireTime = config.getConnectionExpireTime();
         }
+        private boolean requestLimitReached() { return maxReqCount != -1 && requestCount.get() >= maxReqCount; }
         private boolean isOpen(long now) {
-            return now - lifeStartTime < expireTime
-                    && (maxReqCount == -1 || requestCount.get() < maxReqCount) && clientConnection.isOpen();
+            return now - lifeStartTime < expireTime && !requestLimitReached() && clientConnection.isOpen();
         }
         private ClientConnection get() { return clientConnection; }
     }
