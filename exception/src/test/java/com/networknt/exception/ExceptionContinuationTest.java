@@ -1,10 +1,9 @@
 package com.networknt.exception;
 
-
 import com.networknt.config.Config;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
+import ch.qos.logback.core.AppenderBase;
 import com.networknt.handler.HandlerContinuation;
 import com.networknt.status.Status;
 import io.undertow.Undertow;
@@ -26,8 +25,10 @@ import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -103,6 +104,50 @@ class ExceptionContinuationTest {
             else Config.getInstance().clearConfigCache(name);
         }
     }
+    @ParameterizedTest
+    @ValueSource(strings = {"rejected", "accepted-io", "accepted-error"})
+    void dispatcherFailuresRetainFrameworkPolicy(String mode) throws Exception {
+        String name = "continuation-dispatch-failure";
+        Config.getInstance().putInConfigCache(name, Map.of("enabled", true));
+        var calls = new AtomicInteger();
+        ExceptionHandler selected = new ExceptionHandler(name) {
+            @Override public void setExchangeStatus(HttpServerExchange exchange, String code, Object... args) {
+                exchange.getResponseHeaders().put(new HttpString("X-Selected"), name);
+                super.setExchangeStatus(exchange, code, args);
+            }
+        };
+        selected.setNext(exchange -> {
+            var scope = HandlerContinuation.capture(exchange);
+            exchange.dispatch(() -> {
+                if (mode.equals("rejected")) {
+                    scope.dispatcher(task -> {
+                        throw new RejectedExecutionException("injected shutdown");
+                    }, () -> false, () -> { /* No transport resources in this fixture. */ })
+                            .execute(ex -> fail("Rejected callback ran"));
+                } else scope.resume(ex -> {
+                    calls.incrementAndGet();
+                    if (mode.equals("accepted-error")) throw new StackOverflowError("injected fatal sentinel");
+                    throw new IOException("accepted I/O failure");
+                });
+            });
+        });
+        var server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(selected).build();
+        try (var client = HttpClient.newHttpClient()) {
+            server.start();
+            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+            var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/dispatch"))
+                    .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString());
+            boolean rejected = mode.equals("rejected");
+            assertEquals(rejected ? 500 : 400, response.statusCode(), response.body());
+            assertTrue(response.body().contains(rejected ? "ERR10010" : "ERR10011"), response.body());
+            assertEquals(name, response.headers().firstValue("X-Selected").orElseThrow());
+            assertEquals(rejected ? 0 : 1, calls.get());
+        } finally {
+            server.stop();
+            Config.getInstance().clearConfigCache(name);
+        }
+    }
+
     static Stream<Arguments> typedFailureCases() {
         return Stream.of("framework", "api", "client", "client-without-status")
                 .flatMap(kind -> Stream.of(false, true).map(resumed -> Arguments.of(kind, resumed)));
@@ -120,7 +165,17 @@ class ExceptionContinuationTest {
             case "client-without-status" -> new ClientException(new Status());
             default -> throw new IllegalArgumentException(kind);
         };
-        var events = new ListAppender<ILoggingEvent>();
+        var logged = new CompletableFuture<ILoggingEvent>();
+        String expectedMessage = status.toString();
+        var events = new AppenderBase<ILoggingEvent>() {
+            @Override protected void append(ILoggingEvent event) {
+                if (expectedMessage.equals(event.getMessage()) && event.getThrowableProxy() != null
+                        && failure.getClass().getName().equals(event.getThrowableProxy().getClassName())) {
+                    event.prepareForDeferredProcessing();
+                    logged.complete(event);
+                }
+            }
+        };
         var log = (Logger) ExceptionHandler.logger;
         events.start();
         log.addAppender(events);
@@ -141,10 +196,8 @@ class ExceptionContinuationTest {
             assertTrue(response.body().contains(missingStatus ? "ERR10011" : "TEST_TYPED_FAILURE"), response.body());
             assertEquals("application/json", response.headers().firstValue("Content-Type").orElse(""));
             if (kind.equals("framework") || kind.equals("api"))
-                assertTrue(events.list.stream().anyMatch(event -> status.toString().equals(event.getMessage())
-                        && event.getThrowableProxy() != null
-                        && failure.getClass().getName().equals(event.getThrowableProxy().getClassName())),
-                        "Keep the existing raw JSON log message and throwable");
+                assertEquals(expectedMessage, logged.get(5, TimeUnit.SECONDS).getMessage(),
+                        "Await the server's typed log event, independently of response delivery");
         } finally {
             server.stop();
             ClientException.setStatus(previousClientStatus);

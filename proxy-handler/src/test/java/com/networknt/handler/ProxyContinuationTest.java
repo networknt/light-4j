@@ -118,7 +118,7 @@ class ProxyContinuationTest {
                 }
                 proxy.handleRequest(exchange);
             };
-            URI front = fixture.start(enabled ? exchange -> HandlerContinuation.execute(exchange, (ex, task) -> {
+            URI front = fixture.start(enabled ? exchange -> HandlerContinuation.execute(exchange, task -> ex -> {
                 depth.set(depth.get() + 1);
                 maxDepth.accumulateAndGet(depth.get(), Math::max);
                 try { task.handleRequest(ex); }
@@ -172,7 +172,7 @@ class ProxyContinuationTest {
                 proxy.handleRequest(exchange);
             };
             URI front = fixture.start(enabled ? exchange -> HandlerContinuation.execute(exchange,
-                    (ex, task) -> task.handleRequest(ex), work) : work);
+                    task -> ex -> task.handleRequest(ex), work) : work);
             var response = http.send(HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(8)).build(),
                     HttpResponse.BodyHandlers.ofInputStream());
             assertEquals(200, response.statusCode());
@@ -299,7 +299,7 @@ class ProxyContinuationTest {
                     .setPathPrefixMaxRequestTime(Map.of("/fail", mode.equals("timeout") || mode.equals("late") ? 300 : 0)).build();
             URI front = fixture.start(exchange -> {
                 frontendPeers.add(exchange.getSourceAddress().getPort());
-                HandlerContinuation.execute(exchange, (ex, task) -> {
+                HandlerContinuation.execute(exchange, task -> ex -> {
                     try { task.handleRequest(ex); }
                     catch (ControlledFailure _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
                 }, proxy);
@@ -583,23 +583,28 @@ class ProxyContinuationTest {
             @Override public ProxyTarget findTarget(HttpServerExchange exchange) { return new ProxyTarget() {}; }
             @Override public void getConnection(ProxyTarget target, HttpServerExchange exchange,
                     ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
-                try {
-                    assertFalse(exchange.isRequestComplete());
-                    callback.couldNotResolveBackend(exchange);
-                    var responseChannel = exchange.getResponseChannel();
-                    if (responseChannel != null) { responseChannel.shutdownWrites(); responseChannel.flush(); }
-                    assertTrue(exchange.isResponseStarted());
-                    assertFalse(exchange.isComplete(), "The 503 is still draining the request body");
-                    callback.completed(exchange, new ProxyConnection(reusable, "/"));
-                    callback.failed(exchange);
-                    callback.queuedRequestFailed(exchange);
-                    assertTrue(exchange.getConnection().isOpen(), "Keep the draining 503 stream open");
-                    callbacksDone.complete(null);
-                } catch (Throwable failure) { callbacksDone.completeExceptionally(failure); throw new AssertionError(failure); }
+                assertFalse(exchange.isRequestComplete());
+                callback.couldNotResolveBackend(exchange);
+                exchange.getIoThread().execute(() -> {
+                    try {
+                        // The dispatcher processes the queued terminal callback
+                        // before this I/O task commits and probes its response.
+                        var responseChannel = exchange.getResponseChannel();
+                        if (responseChannel != null) { responseChannel.shutdownWrites(); responseChannel.flush(); }
+                        assertTrue(exchange.isResponseStarted());
+                        assertFalse(exchange.isComplete(), "The 503 is still draining the request body");
+                        callback.completed(exchange, new ProxyConnection(reusable, "/"));
+                        callback.failed(exchange);
+                        callback.queuedRequestFailed(exchange);
+                        assertTrue(exchange.getConnection().isOpen(), "Keep the draining 503 stream open");
+                        callbacksDone.complete(null);
+                    } catch (Exception | Error failure) { callbacksDone.completeExceptionally(failure); }
+                });
             }
         };
         ProxyHandler proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
         try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()) {
+            try {
             URI front = fixture.start(exchange -> {
                 peers.add(exchange.getSourceAddress().getPort());
                 if (exchange.getRequestPath().equals("/fail")) proxy.handleRequest(exchange);
@@ -635,7 +640,8 @@ class ProxyContinuationTest {
             assertEquals("accepted", http.send(HttpRequest.newBuilder(front.resolve("/after")).build(),
                     HttpResponse.BodyHandlers.ofString()).body());
             assertEquals(1, peers.size());
-        } finally { releaseBody.countDown(); releaseHealthy.countDown(); }
+            } finally { releaseBody.countDown(); releaseHealthy.countDown(); http.shutdownNow(); }
+        }
     }
 
     @ParameterizedTest
@@ -675,7 +681,7 @@ class ProxyContinuationTest {
                 URI front = fixture.start(exchange -> {
                     peers.add(exchange.getSourceAddress().getPort());
                     if (exchange.getRequestPath().equals("/warm")) exchange.getResponseSender().send("warm");
-                    else HandlerContinuation.execute(exchange, (ex, next) -> {
+                    else HandlerContinuation.execute(exchange, next -> ex -> {
                         if (ex.getRequestPath().equals("/pushed")) childExchange.set(ex);
                         else parentExchange.set(ex);
                         try { next.handleRequest(ex); }
@@ -735,7 +741,7 @@ class ProxyContinuationTest {
             var proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
             URI front = fixture.start(exchange -> {
                 frontendExchange.set(exchange);
-                HandlerContinuation.execute(exchange, (ex, next) -> {
+                HandlerContinuation.execute(exchange, next -> ex -> {
                     if (boundaryCalls.getAndIncrement() == 0) next.handleRequest(ex);
                     else ex.dispatch(ex.getConnection().getWorker(), () -> {
                         try { next.handleRequest(ex); }
@@ -755,6 +761,8 @@ class ProxyContinuationTest {
     @Test
     void retryTimeoutReleasesCurrentConnectionAndIgnoresOldAcquisitionFailure() throws Exception {
         var firstResponseFailure = new CompletableFuture<Runnable>();
+        var staleSendCompletion = new CompletableFuture<Runnable>();
+        var staleResponseCompletion = new CompletableFuture<Runnable>();
         var secondSend = new CountDownLatch(1);
         var connections = new CopyOnWriteArrayList<ClientConnection>();
         var acquired = new CopyOnWriteArrayList<ProxyConnection>();
@@ -785,11 +793,13 @@ class ProxyContinuationTest {
                                                 if (method.getName().equals("setResponseListener")) {
                                                     @SuppressWarnings("unchecked") var listener = (ClientCallback<ClientExchange>) args[0];
                                                     firstResponseFailure.complete(() -> listener.failed(new IOException("first response failed")));
+                                                    staleResponseCompletion.complete(() -> listener.completed(request));
                                                     return null;
                                                 }
                                                 try { return method.invoke(request, args); }
                                                 catch (InvocationTargetException e) { throw e.getCause(); }
                                             });
+                                            staleSendCompletion.complete(() -> send.completed(decoratedRequest));
                                             send.completed(decoratedRequest);
                                         }
                                         @Override public void failed(IOException e) { send.failed(e); }
@@ -812,6 +822,8 @@ class ProxyContinuationTest {
             var response = http.sendAsync(HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(6)).build(), HttpResponse.BodyHandlers.ofString());
             firstResponseFailure.get(5, TimeUnit.SECONDS).run();
             assertTrue(secondSend.await(5, TimeUnit.SECONDS));
+            staleSendCompletion.get(5, TimeUnit.SECONDS).run();
+            staleResponseCompletion.get(5, TimeUnit.SECONDS).run();
             callbacks.getFirst().failed(frontend.get());
             callbacks.getFirst().queuedRequestFailed(frontend.get());
             callbacks.getFirst().couldNotResolveBackend(frontend.get());

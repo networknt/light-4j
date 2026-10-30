@@ -20,7 +20,7 @@ class BodyContinuationTest {
             assertFalse(exchange.isInIoThread());
             throw new IllegalStateException("downstream failure");
         });
-        HttpHandler root = enabled ? exchange -> HandlerContinuation.execute(exchange, (ex, task) -> {
+        HttpHandler root = enabled ? exchange -> HandlerContinuation.execute(exchange, task -> ex -> {
             try { task.handleRequest(ex); }
             catch (IllegalStateException _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
         }, body) : body;

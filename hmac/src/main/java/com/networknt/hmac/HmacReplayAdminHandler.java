@@ -105,7 +105,7 @@ public final class HmacReplayAdminHandler implements LightHttpHandler {
         }
         var continuation = HandlerContinuation.capture(exchange);
         exchange.dispatch();
-        removalStage.whenComplete((removed, failure) -> exchange.dispatch(continuation.apply(completed -> {
+        removalStage.whenComplete((removed, failure) -> exchange.dispatch(continuation.wrap(completed -> {
             if (failure != null) {
                 audit(completed, "unavailable", store);
                 setExchangeStatus(completed, HmacVerifier.HMAC_UNAVAILABLE);
