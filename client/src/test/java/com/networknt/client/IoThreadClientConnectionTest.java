@@ -45,6 +45,21 @@ class IoThreadClientConnectionTest {
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
     }
 
+    @Test void concurrentRawWrappingKeepsOneViewAndNativeBridge() throws Exception {
+        ClientConnection raw = mock(ClientConnection.class);
+        when(raw.getIoThread()).thenReturn(owner);
+        when(raw.isOpen()).thenReturn(true);
+        List<CompletableFuture<IoThreadClientConnection>> wrapping = new ArrayList<>();
+        for (int i = 0; i < 100; i++) wrapping.add(CompletableFuture.supplyAsync(() -> IoThreadClientConnection.wrap(raw)));
+        IoThreadClientConnection canonical = wrapping.getFirst().get(5, TimeUnit.SECONDS);
+        for (var future : wrapping) assertSame(canonical, future.get(5, TimeUnit.SECONDS));
+        drainOwner();
+        verify(raw).addCloseListener(any());
+        canonical.close();
+        drainOwner();
+        verify(raw).close();
+    }
+
     @Test void repeatedWrappingPreservesIdentityAndCloseState() {
         ClientConnection second = IoThreadClientConnection.wrap(nativeConnection);
         assertSame(connection, second);

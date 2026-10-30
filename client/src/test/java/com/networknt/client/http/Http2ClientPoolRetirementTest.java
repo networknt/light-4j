@@ -13,6 +13,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -20,45 +21,30 @@ class Http2ClientPoolRetirementTest {
     private XnioWorker worker;
     private XnioIoThread owner;
     private Http2ClientConnectionPool pool;
-    private Field requestField;
-    private Field configNameField;
-    private String previousConfigName;
-    private ClientConfig selectedConfig;
-    private RequestConfig originalRequest;
+    private final AtomicLong clock = new AtomicLong();
+    private final List<ClientConnection> transports = new ArrayList<>();
 
     @BeforeEach void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
-        configNameField = ClientConfig.class.getDeclaredField("configName");
-        configNameField.setAccessible(true);
-        previousConfigName = (String) configNameField.get(null);
-        configNameField.set(null, ClientConfig.CONFIG_NAME);
-        selectedConfig = ClientConfig.get();
-        requestField = ClientConfig.class.getDeclaredField("request");
-        requestField.setAccessible(true);
-        originalRequest = selectedConfig.getRequest();
         RequestConfig request = Config.getInstance().getMapper().convertValue(Map.of(
                 ClientConfig.CONNECTION_POOL_SIZE, 2,
                 ClientConfig.MAX_CONNECTION_NUM_PER_HOST, 4,
                 ClientConfig.MIN_CONNECTION_NUM_PER_HOST, 1,
                 ClientConfig.MAX_REQ_PER_CONN, -1,
                 ClientConfig.CONNECTION_EXPIRE_TIME, 30000), RequestConfig.class);
-        requestField.set(selectedConfig, request);
-        assertSame(request, ClientConfig.get().getRequest());
-        var constructor = Http2ClientConnectionPool.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        pool = constructor.newInstance();
+        pool = new Http2ClientConnectionPool(request, clock::get);
     }
     @AfterEach void tearDown() throws Exception {
         if (pool != null) pool.clear();
+        transports.forEach(connection -> IoThreadClientConnection.wrap(connection).close());
         drainOwner();
-        if (requestField != null) requestField.set(selectedConfig, originalRequest);
-        if (configNameField != null) configNameField.set(null, previousConfigName);
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
     }
     private ClientConnection transport() throws Exception {
         ClientConnection raw = mock(ClientConnection.class);
+        transports.add(raw);
         AtomicBoolean open = new AtomicBoolean(true);
         when(raw.getIoThread()).thenReturn(owner);
         when(raw.isOpen()).thenAnswer(ignored -> open.get());
@@ -143,7 +129,7 @@ class Http2ClientPoolRetirementTest {
         verify(raw).close();
         assertEquals(2, pool.numberOfConnections());
     }
-    @Test void clearClosesDrainingAndSelectableTransports() throws Exception {
+    @Test void clearLeavesDrainingAndSelectableTransportsOpen() throws Exception {
         List<ClientConnection> open = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             ClientConnection raw = transport();
@@ -152,8 +138,46 @@ class Http2ClientPoolRetirementTest {
         }
         pool.clear();
         drainOwner();
-        for (ClientConnection raw : open) verify(raw).close();
+        for (ClientConnection raw : open) verify(raw, never()).close();
         assertEquals(0, pool.numberOfConnections());
+    }
+    @Test void expiredBorrowClosesAfterGraceWithoutAReturnOrUriLookup() throws Exception {
+        ClientConnection raw = transport();
+        URI uri = URI.create("https://unreturned.invalid");
+        pool.cacheConnection(uri, raw);
+        clock.set(30000);
+        pool.reapExpiredConnections();
+        assertNull(pool.getConnection(uri));
+        verify(raw, never()).close();
+        clock.addAndGet(99999);
+        pool.reapExpiredConnections();
+        verify(raw, never()).close();
+        clock.incrementAndGet();
+        pool.reapExpiredConnections();
+        drainOwner();
+        verify(raw).close();
+        assertEquals(0, pool.numberOfConnections());
+    }
+    @Test void evictedBorrowClosesAfterGraceWithoutAReturn() throws Exception {
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://first.invalid"), raw);
+        for (String host : List.of("second", "third")) {
+            pool.cacheConnection(URI.create("https://" + host + ".invalid"), transport());
+        }
+        clock.set(100000);
+        pool.reapExpiredConnections();
+        drainOwner();
+        verify(raw).close();
+    }
+    @Test void normalReturnDoesNotWaitForPoolMonitor() throws Exception {
+        ClientConnection raw = transport();
+        URI uri = URI.create("https://return.invalid");
+        pool.cacheConnection(uri, raw);
+        synchronized (pool) {
+            CompletableFuture.runAsync(() -> pool.resetConnectionStatus(raw)).get(5, TimeUnit.SECONDS);
+        }
+        assertSame(IoThreadClientConnection.wrap(raw), pool.getConnection(uri));
+        verify(raw, never()).close();
     }
     @Test void failedInsertionRollsBackTracking() throws Exception {
         ClientConnection raw = transport();

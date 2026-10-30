@@ -28,21 +28,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class IoThreadClientConnection implements ClientConnection {
     private static final Logger logger = LoggerFactory.getLogger(IoThreadClientConnection.class);
     private final ClientConnection delegate;
-    private final AtomicBoolean closed;
+    private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicBoolean closeBridgeInstalled = new AtomicBoolean();
     private final ConnectionCloseListeners closeListeners = new ConnectionCloseListeners(this);
     private final ChannelListener.Setter<ClientConnection> closeSetter = listener -> {
         closeListeners.set(listener);
         if (listener != null) installCloseBridge();
     };
-    private final ConnectionWrappers.Entry transportState;
+    private volatile IOException closeReason;
 
-    IoThreadClientConnection(ClientConnection delegate, ConnectionWrappers.Entry state) {
-        this.delegate = delegate;
-        this.closed = state.closed;
-        this.transportState = state;
-        if (this.closed.get()) closeListeners.fire();
-    }
+    IoThreadClientConnection(ClientConnection delegate) { this.delegate = delegate; }
     /** Return the same live view for the same raw transport, without retaining dead transports. */
     public static IoThreadClientConnection wrap(ClientConnection connection) {
         Objects.requireNonNull(connection, "connection");
@@ -62,7 +57,7 @@ public final class IoThreadClientConnection implements ClientConnection {
     public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback, RequestSubmission submission) {
         OnceCallback guarded = new OnceCallback(callback, submission);
         Runnable send = () -> ClientConnectionOperations.runWithFailureHandler(() -> {
-            if (!isOpen()) { guarded.failed(transportState.closeReason == null ? new ClosedChannelException() : transportState.closeReason); return; }
+            if (!isOpen()) { guarded.failed(closeReason == null ? new ClosedChannelException() : closeReason); return; }
             if (!submission.start()) { guarded.notSent(new IOException("Request submission cancelled")); return; }
             delegate.sendRequest(request, guarded);
         }, guarded::sendFailed);
@@ -81,7 +76,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         else {
             try { getIoThread().execute(close); }
             catch (java.util.concurrent.RejectedExecutionException error) {
-                transportState.closeReason = asIOException(error);
+                closeReason = asIOException(error);
                 closeListeners.fire();
             }
         }
@@ -95,7 +90,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         try { ClientConnectionOperations.execute(delegate, install); }
         catch (java.util.concurrent.RejectedExecutionException error) {
             closed.set(true);
-            transportState.closeReason = asIOException(error);
+            closeReason = asIOException(error);
             closeListeners.fire();
         }
     }
