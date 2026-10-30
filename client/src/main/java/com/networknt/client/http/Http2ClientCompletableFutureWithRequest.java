@@ -31,9 +31,9 @@ public class Http2ClientCompletableFutureWithRequest extends CompletableFuture<C
     @Override
     public void completed(ClientExchange result) {
         new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-        result.setResponseListener(new ClientCallback<ClientExchange>() {
+        result.setResponseListener(new SafeClientCallback() {
             @Override
-            public void completed(ClientExchange result) {
+            protected void completedSafely(ClientExchange result) {
                 new StringReadChannelListener(com.networknt.client.Http2Client.BUFFER_POOL) {
                     @Override
                     protected void stringDone(String string) {
@@ -53,7 +53,7 @@ public class Http2ClientCompletableFutureWithRequest extends CompletableFuture<C
             }
 
             @Override
-            public void failed(IOException e) {
+            protected void failedSafely(IOException e) {
                 logger.error("IOException:", e);
                 completeExceptionally(e);
             }
