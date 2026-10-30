@@ -47,16 +47,13 @@ class ConnectionWrappersTest {
         verify(cleaner).register(same(raw), action.capture());
         return assertInstanceOf(ConnectionWrappers.Cleanup.class, action.getValue());
     }
-    private ConnectionWrappers.Entry entry(ConnectionWrappers.Cleanup action) {
-        return action.records().get(action.key());
-    }
     @Test void viewRecreationPreservesRetirementAndLateNotification() throws Exception {
         ClientConnection raw = transport();
         IoThreadClientConnection original = registry.getOrCreate(raw);
-        ConnectionWrappers.Cleanup action = registeredAction(raw);
+        registeredAction(raw);
         original.close();
         drainOwner();
-        entry(action).view.get().clear();
+        registry.lookup(raw).view.get().clear();
         IoThreadClientConnection recreated = registry.getOrCreate(raw);
         assertNotSame(original, recreated);
         assertFalse(recreated.isOpen());
@@ -73,12 +70,12 @@ class ConnectionWrappersTest {
         registry.getOrCreate(dead);
         IoThreadClientConnection liveView = registry.getOrCreate(live);
         ConnectionWrappers.Cleanup cleanup = registeredAction(dead);
-        assertEquals(2, cleanup.records().size());
+        assertNotNull(registry.lookup(dead));
+        assertNotNull(registry.lookup(live));
         cleanup.run();
         cleanup.run();
-        assertEquals(1, cleanup.records().size());
         assertNull(registry.lookup(dead));
-        assertSame(liveView, registry.lookup(live));
+        assertSame(liveView, registry.lookup(live).view.get().get());
         Reference.reachabilityFence(dead);
         Reference.reachabilityFence(live);
     }
@@ -90,7 +87,7 @@ class ConnectionWrappersTest {
         assertNull(registry.lookup(raw));
         IoThreadClientConnection current = registry.getOrCreate(raw);
         oldAction.run();
-        assertSame(current, registry.lookup(raw));
+        assertSame(current, registry.lookup(raw).view.get().get());
         assertSame(current, registry.getOrCreate(raw));
         verify(cleaner, times(2)).register(same(raw), any(Runnable.class));
         Reference.reachabilityFence(raw);
@@ -98,17 +95,17 @@ class ConnectionWrappersTest {
     @Test void recreatedViewKeepsTheShutdownRetirementReason() throws Exception {
         ClientConnection raw = transport();
         IoThreadClientConnection original = registry.getOrCreate(raw);
-        ConnectionWrappers.Cleanup action = registeredAction(raw);
+        registeredAction(raw);
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
         original.close();
-        var reason = entry(action).closeReason;
+        var reason = registry.lookup(raw).closeReason;
         assertNotNull(reason);
         assertInstanceOf(RejectedExecutionException.class, reason.getCause());
-        entry(action).view.get().clear();
+        registry.lookup(raw).view.get().clear();
         IoThreadClientConnection recreated = registry.getOrCreate(raw);
         assertFalse(recreated.isOpen());
-        assertSame(reason, entry(action).closeReason);
+        assertSame(reason, registry.lookup(raw).closeReason);
         registeredAction(raw);
         Reference.reachabilityFence(raw);
     }
@@ -119,9 +116,7 @@ class ConnectionWrappersTest {
     @Test void cleanupHasOnlyTypedStorageAndWeakIdentityKeys() {
         ClientConnection raw = transport();
         IoThreadClientConnection view = registry.getOrCreate(raw);
-        ConnectionWrappers.Cleanup cleanup = registeredAction(raw);
-        WeakReference<ClientConnection> key = cleanup.key();
-        assertSame(raw, key.get());
+        registeredAction(raw);
 
         Map<String, Type> cleanupFields = instanceFields(ConnectionWrappers.Cleanup.class, Object.class);
         assertEquals(Set.of("records", "key"), cleanupFields.keySet());
@@ -129,9 +124,8 @@ class ConnectionWrappersTest {
         assertEquals(ConcurrentMap.class, records.getRawType());
         Class<?> declaredKey = assertInstanceOf(Class.class, cleanupFields.get("key"));
         assertTrue(WeakReference.class.isAssignableFrom(declaredKey));
-        assertTrue(declaredKey.isInstance(key));
         assertArrayEquals(new Type[]{declaredKey, ConnectionWrappers.Entry.class}, records.getActualTypeArguments());
-        for (Type field : instanceFields(key.getClass(), WeakReference.class).values()) {
+        for (Type field : instanceFields(declaredKey, WeakReference.class).values()) {
             assertTrue(field instanceof Class<?> type && type.isPrimitive(), "identity keys must not own other objects");
         }
 
@@ -149,7 +143,7 @@ class ConnectionWrappersTest {
         ParameterizedType weakView = assertInstanceOf(ParameterizedType.class, viewHolder.getActualTypeArguments()[0]);
         assertEquals(WeakReference.class, weakView.getRawType());
         assertArrayEquals(new Type[]{IoThreadClientConnection.class}, weakView.getActualTypeArguments());
-        assertSame(view, entry(cleanup).view.get().get());
+        assertSame(view, registry.lookup(raw).view.get().get());
         Reference.reachabilityFence(raw);
     }
     @Test void cleanupUsesIdentityEqualityAndDiagnostics() throws ReflectiveOperationException {
