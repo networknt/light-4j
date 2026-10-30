@@ -189,6 +189,45 @@ class Http2ClientPoolRetirementTest {
         assertSame(IoThreadClientConnection.wrap(raw), pool.getConnection(uri));
         verify(raw, never()).close();
     }
+    @Test void expiryDoesNotRefreshUriRecency() throws Exception {
+        URI first = URI.create("https://first.invalid");
+        URI second = URI.create("https://second.invalid");
+        URI third = URI.create("https://third.invalid");
+        ClientConnection expired = transport();
+        pool.cacheConnection(first, expired);
+        pool.resetConnectionStatus(expired);
+        clock.set(10000);
+        ClientConnection other = transport();
+        pool.cacheConnection(second, other);
+        pool.resetConnectionStatus(other);
+        clock.set(20000);
+        ClientConnection newer = transport();
+        pool.cacheConnection(first, newer);
+        pool.resetConnectionStatus(newer);
+        ClientConnection borrowed = pool.getConnection(second); // second is the most recently used URI.
+        pool.resetConnectionStatus(borrowed);
+        clock.set(30000);
+        pool.reapExpiredConnections();
+        pool.cacheConnection(third, transport());
+        drainOwner();
+        assertNull(pool.getConnection(first), "expiry cleanup must not refresh the older URI");
+        assertSame(IoThreadClientConnection.wrap(other), pool.getConnection(second));
+        verify(newer).close();
+    }
+
+    @Test void nativeCloseRemovesUriMetadataWithoutWaitingForTheReaper() throws Exception {
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://closed.invalid"), raw);
+        IoThreadClientConnection.wrap(raw).close();
+        drainOwner();
+        // The public count alone would miss a closed transport still rooted by its URI list.
+        Field cache = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
+        cache.setAccessible(true);
+        assertTrue(((Map<?, ?>) cache.get(pool)).isEmpty());
+        assertEquals(0, pool.numberOfConnections());
+        assertEquals(0, pool.reapExpiredConnections());
+    }
+
     @Test void untrackedReturnDoesNotTouchTheRawTransport() {
         ClientConnection raw = mock(ClientConnection.class);
         pool.resetConnectionStatus(raw);
