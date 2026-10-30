@@ -2,7 +2,9 @@ package com.networknt.server;
 
 import com.networknt.config.Config;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * This enum class is used to set and validate server options.
@@ -18,20 +20,23 @@ import java.util.Map;
  * Note: To set these options, configuring them in server.yml
  */
 public enum ServerOption {
-    IO_THREADS("ioThreads"),
-    WORKER_THREADS("workerThreads"),
-    BUFFER_SIZE("bufferSize"),
-    BACKLOG("backlog"),
-    SERVER_STRING("serverString"),
-    ALWAYS_SET_DATE("alwaysSetDate"),
-    MAX_TRANSFER_FILE_SIZE("maxTransferFileSize"),
-    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl"),
-    SHUTDOWN_TIMEOUT("shutdownTimeout");
+    IO_THREADS("ioThreads", ServerConfig::getIoThreads),
+    WORKER_THREADS("workerThreads", ServerConfig::getWorkerThreads),
+    BUFFER_SIZE("bufferSize", ServerConfig::getBufferSize),
+    BACKLOG("backlog", ServerConfig::getBacklog),
+    SERVER_STRING("serverString", ServerConfig::getServerString),
+    ALWAYS_SET_DATE("alwaysSetDate", ServerConfig::isAlwaysSetDate),
+    MAX_TRANSFER_FILE_SIZE("maxTransferFileSize", ServerConfig::getMaxTransferFileSize),
+    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl", ServerConfig::isAllowUnescapedCharactersInUrl),
+    SHUTDOWN_TIMEOUT("shutdownTimeout", ServerConfig::getShutdownTimeout);
 
     private final String value;
 
-    ServerOption(String serverOption) {
+    private final Function<ServerConfig, Object> effectiveValue;
+
+    ServerOption(String serverOption, Function<ServerConfig, Object> effectiveValue) {
         this.value = serverOption;
+        this.effectiveValue = effectiveValue;
     }
 
     public String value() {
@@ -43,16 +48,27 @@ public enum ServerOption {
      * @param serverConfig object config generated from server.yml
      */
     protected static void serverOptionInit(Map<String, Object> mapConfig, ServerConfig serverConfig) {
+        validateServerOptions(mapConfig, serverConfig);
+    }
+
+    /** Validate fields and return corrections for explicitly configured options only. */
+    static Map<String, Object> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig) {
+        Map<String, Object> corrections = new HashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
-            if (mapConfig.containsKey(serverOption.value())) {
-                if (!setServerOption(serverOption, mapConfig.get(serverOption.value), serverConfig)) {
+            if (mapConfig != null && mapConfig.containsKey(serverOption.value())) {
+                Object value = mapConfig.get(serverOption.value());
+                boolean valid = setServerOption(serverOption, value, serverConfig);
+                if (!valid) {
                     ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
+                }
+                if (!valid || value == null) {
+                    corrections.put(serverOption.value(), serverOption.effectiveValue.apply(serverConfig));
                 }
             } else {
                 setToDefaultServerOption(serverOption, serverConfig);
             }
         }
-        serverConfig.registerValidatedServerOptions();
+        return corrections;
     }
 
     /**
