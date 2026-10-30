@@ -13,28 +13,40 @@ import java.util.function.UnaryOperator;
 
 /**
  * Carries the active exception boundary across an asynchronous hand-off. Boundary
- * policy is captured from the executing frame, never stored on shared middleware.
- * Capture before returning from the current chain frame; invoke the captured
- * handler through Undertow's dispatch or root-handler machinery.
+ * policy belongs to the exchange. A frame only selects nested policy overrides.
+ * Initialize before the first hand-off; subsequent captures can occur off-frame.
+ * Invoke captured handlers through Undertow's dispatch or root-handler machinery.
  */
 public final class HandlerContinuation {
     private static final Logger LOG = LoggerFactory.getLogger(HandlerContinuation.class);
-    private static final Boundary UNHANDLED = (exchange, continuation) -> continuation.handleRequest(exchange);
     private record Frame(HttpServerExchange exchange, CapturedBoundary boundary, boolean mdcScoped) { }
     private static final ThreadLocal<Frame> CURRENT_FRAME = new ThreadLocal<>();
 
     @FunctionalInterface
     private interface ScopedAction<E extends Exception> { void run() throws E; }
 
-    private record CapturedBoundary(Boundary boundary, RequestMdcContext context) implements UnaryOperator<HttpHandler> {
+    private record CapturedBoundary(UnaryOperator<HttpHandler> boundary, RequestState state) implements UnaryOperator<HttpHandler> {
         @Override public HttpHandler apply(HttpHandler continuation) {
             return new CapturedHandler(this, continuation);
         }
     }
 
-    private record CapturedHandler(CapturedBoundary policy, HttpHandler continuation) implements HttpHandler {
+    private static final class CapturedHandler implements HttpHandler {
+        private final CapturedBoundary policy;
+        private final HttpHandler handler;
+
+        private CapturedHandler(CapturedBoundary policy, HttpHandler continuation) {
+            this(policy, continuation, true);
+        }
+
+        private CapturedHandler(CapturedBoundary policy, HttpHandler continuation, boolean enterBoundary) {
+            this.policy = policy;
+            this.handler = enterBoundary
+                    ? policy.boundary().apply(ex -> withMdc(ex, () -> continuation.handleRequest(ex))) : continuation;
+        }
+
         @Override public void handleRequest(HttpServerExchange exchange) throws Exception {
-            withMdc(exchange, () -> policy.boundary().handle(exchange, continuation));
+            withMdc(exchange, () -> handler.handleRequest(exchange));
         }
 
         private <E extends Exception> void withMdc(HttpServerExchange exchange, ScopedAction<E> callback) throws E {
@@ -48,7 +60,7 @@ public final class HandlerContinuation {
             CURRENT_FRAME.set(new Frame(exchange, policy, true));
             try {
                 if (!reuseMdc) {
-                    Map<String, String> requestMdc = policy.context().snapshot();
+                    Map<String, String> requestMdc = policy.state().mdc.snapshot();
                     if (!requestMdc.equals(previousMdc == null ? Map.of() : previousMdc)) setMdc(requestMdc);
                 }
                 callback.run();
@@ -91,8 +103,10 @@ public final class HandlerContinuation {
                                HttpHandler continuation) throws Exception {
         Objects.requireNonNull(boundary);
         Frame previous = CURRENT_FRAME.get();
-        RequestMdcContext context = context(exchange);
-        CURRENT_FRAME.set(new Frame(exchange, new CapturedBoundary(boundary, context),
+        RequestState state = RequestState.initialize(exchange);
+        UnaryOperator<HttpHandler> wrapper = next -> ex -> boundary.handle(ex, next);
+        state.rememberBoundary(wrapper);
+        CURRENT_FRAME.set(new Frame(exchange, new CapturedBoundary(wrapper, state),
                 previous != null && previous.exchange() == exchange && previous.mdcScoped()));
         try { boundary.handle(exchange, continuation); }
         finally { restoreFrame(previous); }
@@ -107,7 +121,8 @@ public final class HandlerContinuation {
     }
 
     /**
-     * Captures before registering a callback whose result determines its eventual
+     * Captures the entry policy even outside an executing frame; an active nested
+     * frame overrides that policy. Capture before registering a callback whose result determines its eventual
      * work. Apply the returned wrapper inside that callback. Framework hand-offs
      * must opt in; arbitrary third-party callbacks cannot be intercepted here.
      * Captures the exception policy and the stable request MDC holder. At resume,
@@ -116,20 +131,20 @@ public final class HandlerContinuation {
      * for the same exchange reuse the active scope.
      */
     public static UnaryOperator<HttpHandler> capture(HttpServerExchange exchange) {
+        RequestState state = RequestState.initialize(exchange);
         Frame frame = CURRENT_FRAME.get();
-        Boundary boundary = frame != null && frame.exchange() == exchange ? frame.boundary().boundary() : UNHANDLED;
-        return new CapturedBoundary(boundary, context(exchange));
+        UnaryOperator<HttpHandler> boundary = frame != null && frame.exchange() == exchange
+                ? frame.boundary().boundary() : state.boundary();
+        return new CapturedBoundary(boundary, state);
     }
 
-    // Resume paths use the captured holder, never the exchange attachment map.
-    static RequestMdcContext activeContext(HttpServerExchange exchange) {
-        Frame frame = CURRENT_FRAME.get();
-        return frame != null && frame.exchange() == exchange ? frame.boundary().context() : null;
-    }
-
-    private static RequestMdcContext context(HttpServerExchange exchange) {
-        RequestMdcContext active = activeContext(exchange);
-        return active != null ? active : RequestMdcContext.initialize(exchange);
+    /** Give a child exchange its own state while retaining the captured policy and request MDC. */
+    public static UnaryOperator<HttpHandler> inherit(HttpServerExchange child, UnaryOperator<HttpHandler> captured) {
+        if (!(captured instanceof CapturedBoundary parent))
+            throw new IllegalArgumentException("Expected a captured continuation policy");
+        RequestState state = RequestState.initialize(child, parent.state().mdc.snapshot());
+        state.rememberBoundary(parent.boundary());
+        return new CapturedBoundary(parent.boundary(), state);
     }
 
     private static void restoreFrame(Frame previous) {
@@ -156,6 +171,19 @@ public final class HandlerContinuation {
                 LOG.error("Unhandled continuation failure for {}", exchange.getRequestPath(), failure);
             }
         };
+    }
+
+    /**
+     * Schedule work already accepted by a boundary onto its required transport
+     * thread. Restore that captured MDC/scope without invoking the policy twice.
+     * Unhandled failures use task() cleanup; an asynchronous boundary owns any
+     * custom cross-thread error handling of its own.
+     */
+    public static Runnable acceptedTask(HttpServerExchange exchange, UnaryOperator<HttpHandler> captured,
+                                        HttpHandler continuation) {
+        if (!(captured instanceof CapturedBoundary policy))
+            throw new IllegalArgumentException("Expected a captured continuation policy");
+        return task(exchange, new CapturedHandler(policy, continuation, false));
     }
 
     /** Preserve the original failure even if the response or stream cleanup fails. */

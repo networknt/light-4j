@@ -1,9 +1,0 @@
-Negative control for productionResumesReadStableSnapshotsWhileWritersPublish:
-Temporarily replace immutable CAS publication with one mutable HashMap and return
-an unmodifiable view over that same backing map. Run the production resume/helper
-reader-writer test. It fails deterministically after the held reader observes the
-writer's publication:
-
-A retained generation must not change during publication ==> expected: <0> but was: <2000>
-
-The original source was restored byte-for-byte before the final passing runs.
