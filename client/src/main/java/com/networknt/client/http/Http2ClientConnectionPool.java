@@ -12,6 +12,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -29,28 +31,53 @@ public class Http2ClientConnectionPool {
     private final Queue<CachedConnection> pendingClose = new ConcurrentLinkedQueue<>();
     private final Supplier<RequestConfig> requestConfig;
     private final LongSupplier clock;
-
-    private static final class Holder {
-        static final Http2ClientConnectionPool INSTANCE = new Http2ClientConnectionPool(
+    private final ScheduledExecutorService reaper;
+    private final NavigableSet<Deadline> deadlines = new ConcurrentSkipListSet<>();
+    private final AtomicLong deadlineSequence = new AtomicLong();
+    private static final int REAPER_BATCH_SIZE = 64;
+    private static final RetryablePool shared = new RetryablePool(() -> {
+        Http2ClientConnectionPool pool = new Http2ClientConnectionPool(
                 () -> ClientConfig.get().getRequest(), () -> TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
-        static {
-            ScheduledExecutorService reaper = Executors.newSingleThreadScheduledExecutor(task -> {
-                Thread thread = new Thread(task, "client-connection-reaper");
-                thread.setDaemon(true);
-                return thread;
-            });
-            reaper.scheduleWithFixedDelay(INSTANCE::reapSafely, 1, 1, TimeUnit.SECONDS);
+        pool.startReaper();
+        return pool;
+    });
+
+    // Only the successful result is published. Configuration failures can be retried.
+    static final class RetryablePool {
+        private final Supplier<Http2ClientConnectionPool> factory;
+        private volatile Http2ClientConnectionPool instance;
+        RetryablePool(Supplier<Http2ClientConnectionPool> factory) { this.factory = factory; }
+        Http2ClientConnectionPool get() {
+            Http2ClientConnectionPool result = instance;
+            if (result != null) return result;
+            synchronized (this) {
+                if (instance == null) instance = factory.get();
+                return instance;
+            }
         }
     }
 
     // Package-local configuration and clock keep lifecycle tests independent of global config/time.
     Http2ClientConnectionPool(RequestConfig requestConfig, LongSupplier clock) {
-        this(() -> requestConfig, clock);
+        this(() -> requestConfig, clock, null);
+    }
+
+    Http2ClientConnectionPool(RequestConfig requestConfig, LongSupplier clock, ScheduledExecutorService reaper) {
+        this(() -> requestConfig, clock, reaper);
     }
 
     private Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock) {
+        this(requestConfig, clock, Executors.newSingleThreadScheduledExecutor(task -> {
+            Thread thread = new Thread(task, "client-connection-reaper");
+            thread.setDaemon(true);
+            return thread;
+        }));
+    }
+
+    private Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock, ScheduledExecutorService reaper) {
         this.requestConfig = requestConfig;
         this.clock = clock;
+        this.reaper = reaper;
         int poolSize = requestConfig.get().getConnectionPoolSize();
         connectionPool = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
             @Override protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
@@ -63,7 +90,7 @@ public class Http2ClientConnectionPool {
     }
 
     /** @return the shared connection pool */
-    public static Http2ClientConnectionPool getInstance() { return Holder.INSTANCE; }
+    public static Http2ClientConnectionPool getInstance() { return shared.get(); }
 
     /**
      * Borrow a cached connection. Return each borrow with resetConnectionStatus.
@@ -101,12 +128,13 @@ public class Http2ClientConnectionPool {
                 if (tracked.containsKey(owned)) return;
                 List<CachedConnection> existing = connectionPool.get(uriString);
                 if (existing != null) removeClosedConnections(existing);
-                added = new CachedConnection(owned, clock.getAsLong(), requestConfig.get());
+                added = new CachedConnection(uriString, owned, clock.getAsLong(), requestConfig.get());
                 tracked.put(owned, added);
                 List<CachedConnection> connections = connectionPool.computeIfAbsent(uriString, key -> new LinkedList<>());
                 connections.add(added);
                 logger.debug("Cached connection for uri: {}, per-uri count: {}, total tracked: {}", uri, connections.size(), tracked.size());
                 if (!connectionPool.containsKey(uriString)) retire(added);
+                else replaceDeadline(added, added.lifeStartTime + added.expireTime);
             }
             CachedConnection registered = added;
             owned.addCloseListener(ignored -> connectionClosed(registered));
@@ -119,6 +147,7 @@ public class Http2ClientConnectionPool {
 
     private synchronized void rollbackCache(String uri, CachedConnection added) {
         tracked.remove(added.get(), added);
+        cancelDeadline(added);
         List<CachedConnection> connections = connectionPool.get(uri);
         if (connections != null) {
             connections.remove(added);
@@ -136,9 +165,9 @@ public class Http2ClientConnectionPool {
             CachedConnection candidate = connections.get((i + offset) % connections.size());
             ConnectionStatus status = getConnectionStatus(candidate);
             if (status == ConnectionStatus.AVAILABLE || status == ConnectionStatus.MULTIPLEX_SUPPORT) return candidate;
-            logger.warn("Connection status for uri: {} is {}", uri, status);
+            logger.debug("Connection status for uri: {} is {}", uri, status);
         }
-        logger.warn("None of the connection cached can be used for uri: {}", uri);
+        logger.debug("None of the connection cached can be used for uri: {}", uri);
         return null;
     }
 
@@ -173,7 +202,9 @@ public class Http2ClientConnectionPool {
      */
     public void resetConnectionStatus(ClientConnection connection) {
         if (connection == null) return;
-        CachedConnection cached = tracked.get(IoThreadClientConnection.wrap(connection));
+        ClientConnection existing = ConnectionWrappers.find(connection);
+        if (existing == null) return;
+        CachedConnection cached = tracked.get(existing);
         if (cached == null) return;
         cached.borrowers.updateAndGet(count -> Math.max(0, count - 1));
         if (cached.retired) {
@@ -192,6 +223,7 @@ public class Http2ClientConnectionPool {
         if (!connection.retired) {
             connection.retiredAt = clock.getAsLong();
             connection.retired = true;
+            replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
             logger.debug("Parked the connection: {}, borrowers: {}, grace: {} ms", connection.get(), connection.borrowers.get(), RETIREMENT_GRACE_MS);
         }
         releaseRetired(connection);
@@ -208,7 +240,10 @@ public class Http2ClientConnectionPool {
         }
     }
 
-    private void connectionClosed(CachedConnection connection) { tracked.remove(connection.get(), connection); }
+    private void connectionClosed(CachedConnection connection) {
+        tracked.remove(connection.get(), connection);
+        cancelDeadline(connection);
+    }
 
     private void closeRetiredConnections() {
         CachedConnection connection;
@@ -218,24 +253,89 @@ public class Http2ClientConnectionPool {
         }
     }
 
-    private void reapSafely() {
-        try { reapExpiredConnections(); }
-        catch (RuntimeException error) { logger.warn("Unable to reap retired client connections", error); }
+    void startReaper() { scheduleReaper(1000); }
+
+    private void scheduleReaper(long delay) {
+        if (reaper != null) reaper.schedule(new ReaperTask(), delay, TimeUnit.MILLISECONDS);
     }
 
-    // The singleton timer runs this even if no request returns or touches this URI again.
-    void reapExpiredConnections() {
-        synchronized (this) {
-            connectionPool.values().forEach(this::removeClosedConnections);
-            long now = clock.getAsLong();
-            for (CachedConnection connection : tracked.values()) {
-                if (connection.retired && now - connection.retiredAt >= RETIREMENT_GRACE_MS) {
-                    logger.debug("ParkedConnection expired: {}, outstanding borrowers: {}", connection.get(), connection.borrowers.get());
-                    queueClose(connection);
-                }
+    private final class ReaperTask implements Runnable {
+        private int processed;
+        @Override public void run() {
+            try {
+                ClientConnectionOperations.runWithFailureHandler(() -> processed = reapExpiredConnections(),
+                        error -> logger.error("Unable to process client connection deadlines", error));
+            } finally {
+                // One-shot scheduling survives a failing run, including a rethrown fatal Error.
+                scheduleReaper(processed == REAPER_BATCH_SIZE ? 0 : 1000);
             }
         }
-        closeRetiredConnections();
+    }
+
+    private void replaceDeadline(CachedConnection connection, long at) {
+        Deadline next = new Deadline(at, deadlineSequence.incrementAndGet(), connection);
+        Deadline previous = connection.deadline.getAndSet(next);
+        if (previous != null) deadlines.remove(previous);
+        deadlines.add(next);
+        // Native close can race registration without taking the pool monitor.
+        if (connection.deadline.get() != next || tracked.get(connection.get()) != connection) deadlines.remove(next);
+    }
+
+    private void cancelDeadline(CachedConnection connection) {
+        Deadline previous = connection.deadline.getAndSet(null);
+        if (previous != null) deadlines.remove(previous);
+    }
+
+    // Only due records are visited. No pool monitor is acquired for idle, unexpired connections.
+    int reapExpiredConnections() {
+        long now = clock.getAsLong();
+        NavigableSet<Deadline> due = deadlines.headSet(new Deadline(now, Long.MAX_VALUE, null), true);
+        int processed = 0;
+        try {
+            Deadline deadline;
+            while (processed < REAPER_BATCH_SIZE && (deadline = due.pollFirst()) != null) {
+                Deadline current = deadline;
+                processed++;
+                ClientConnectionOperations.runWithFailureHandler(() -> processDeadline(current, now),
+                        error -> retryDeadline(current, now, error));
+            }
+        } finally { closeRetiredConnections(); }
+        return processed;
+    }
+
+    private void processDeadline(Deadline deadline, long now) {
+        synchronized (this) {
+            CachedConnection connection = deadline.connection;
+            if (tracked.get(connection.get()) != connection || connection.deadline.get() != deadline) return;
+            if (!connection.retired) {
+                List<CachedConnection> connections = connectionPool.get(connection.uri);
+                if (connections != null) {
+                    connections.remove(connection);
+                    if (connections.isEmpty()) connectionPool.remove(connection.uri);
+                }
+                retire(connection);
+            } else if (now >= connection.retiredAt + RETIREMENT_GRACE_MS) {
+                logger.debug("ParkedConnection expired: {}, outstanding borrowers: {}", connection.get(), connection.borrowers.get());
+                queueClose(connection);
+            } else replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
+        }
+    }
+
+    private void retryDeadline(Deadline deadline, long now, Throwable error) {
+        logger.error("Unable to retire client connection; retrying its deadline", error);
+        synchronized (this) {
+            CachedConnection connection = deadline.connection;
+            if (tracked.get(connection.get()) == connection && connection.deadline.get() == deadline) {
+                replaceDeadline(connection, now + 1000);
+            }
+        }
+    }
+
+    private record Deadline(long at, long sequence, CachedConnection connection) implements Comparable<Deadline> {
+        @Override public int compareTo(Deadline other) {
+            int order = Long.compare(at, other.at);
+            return order != 0 ? order : Long.compare(sequence, other.sequence);
+        }
     }
 
     /** @return all tracked transports, including evicted transports still borrowed */
@@ -244,6 +344,7 @@ public class Http2ClientConnectionPool {
     /** Clear pool metadata without closing caller-owned transports, including in-flight requests. */
     public synchronized void clear() {
         pendingClose.clear();
+        tracked.values().forEach(this::cancelDeadline);
         tracked.clear();
         connectionPool.clear();
         logger.debug("Cleared client connection pool metadata");
@@ -252,6 +353,8 @@ public class Http2ClientConnectionPool {
     private static final class CachedConnection {
         private final AtomicInteger requestCount = new AtomicInteger();
         private final ClientConnection clientConnection;
+        private final String uri;
+        private final AtomicReference<Deadline> deadline = new AtomicReference<>();
         private final long lifeStartTime;
         private final int maxReqCount;
         private final long expireTime;
@@ -261,7 +364,8 @@ public class Http2ClientConnectionPool {
         private volatile long retiredAt;
         private final AtomicBoolean closing = new AtomicBoolean();
 
-        private CachedConnection(ClientConnection connection, long now, RequestConfig config) {
+        private CachedConnection(String uri, ClientConnection connection, long now, RequestConfig config) {
+            this.uri = uri;
             clientConnection = connection;
             lifeStartTime = now;
             maxReqCount = config.getMaxReqPerConn();

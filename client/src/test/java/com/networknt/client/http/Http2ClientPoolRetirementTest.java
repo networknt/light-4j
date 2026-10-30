@@ -6,6 +6,13 @@ import io.undertow.client.ClientConnection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.networknt.config.Config;
 import java.lang.reflect.Field;
 import org.xnio.*;
@@ -14,20 +21,23 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Isolated("Observes pool logging and creates concurrent pool operations")
 class Http2ClientPoolRetirementTest {
     private XnioWorker worker;
     private XnioIoThread owner;
     private Http2ClientConnectionPool pool;
+    private RequestConfig request;
     private final AtomicLong clock = new AtomicLong();
     private final List<ClientConnection> transports = new ArrayList<>();
 
     @BeforeEach void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
-        RequestConfig request = Config.getInstance().getMapper().convertValue(Map.of(
+        request = Config.getInstance().getMapper().convertValue(Map.of(
                 ClientConfig.CONNECTION_POOL_SIZE, 2,
                 ClientConfig.MAX_CONNECTION_NUM_PER_HOST, 4,
                 ClientConfig.MIN_CONNECTION_NUM_PER_HOST, 1,
@@ -179,6 +189,116 @@ class Http2ClientPoolRetirementTest {
         assertSame(IoThreadClientConnection.wrap(raw), pool.getConnection(uri));
         verify(raw, never()).close();
     }
+    @Test void untrackedReturnDoesNotTouchTheRawTransport() {
+        ClientConnection raw = mock(ClientConnection.class);
+        pool.resetConnectionStatus(raw);
+        verifyNoInteractions(raw);
+        assertEquals(0, pool.numberOfConnections());
+    }
+
+    @Test void unexpiredDeadlinesDoNotScanConnectionsOrTakeThePoolMonitor() throws Exception {
+        for (int i = 0; i < 16; i++) {
+            pool.cacheConnection(URI.create("https://fresh" + i + ".invalid"), transport());
+        }
+        drainOwner();
+        transports.forEach(org.mockito.Mockito::clearInvocations);
+        synchronized (pool) {
+            assertEquals(0, CompletableFuture.supplyAsync(pool::reapExpiredConnections).get(5, TimeUnit.SECONDS));
+        }
+        for (ClientConnection raw : transports) verifyNoInteractions(raw);
+    }
+
+    @Test void busyHttp1CandidatesDoNotProduceWarnings() throws Exception {
+        ClientConnection raw = transport();
+        when(raw.isMultiplexingSupported()).thenReturn(false);
+        URI uri = URI.create("https://busy.invalid");
+        pool.cacheConnection(uri, raw);
+        Logger logger = (Logger) LoggerFactory.getLogger(Http2ClientConnectionPool.class);
+        ListAppender<ILoggingEvent> events = new ListAppender<>();
+        events.start();
+        logger.addAppender(events);
+        try {
+            for (int i = 0; i < 20; i++) assertNull(pool.getConnection(uri));
+            assertTrue(events.list.stream().noneMatch(event -> event.getLevel().isGreaterOrEqual(Level.WARN)));
+        } finally {
+            logger.detachAppender(events);
+            events.stop();
+        }
+    }
+
+    @Test void lastReturnRacingLruRetirementAlwaysClosesExactlyOnce() throws Exception {
+        URI first = URI.create("https://first.invalid");
+        URI second = URI.create("https://second.invalid");
+        URI third = URI.create("https://third.invalid");
+        for (int i = 0; i < 100; i++) {
+            ClientConnection raw = transport();
+            ClientConnection next = transport();
+            ClientConnection last = transport();
+            pool.cacheConnection(first, raw);
+            pool.cacheConnection(second, next);
+            CompletableFuture<Void> gate = new CompletableFuture<>();
+            CompletableFuture<Void> returning = gate.thenRunAsync(() -> pool.resetConnectionStatus(raw));
+            CompletableFuture<Void> evicting = gate.thenRunAsync(() -> pool.cacheConnection(third, last));
+            gate.complete(null);
+            CompletableFuture.allOf(returning, evicting).get(5, TimeUnit.SECONDS);
+            drainOwner();
+            verify(raw).close();
+            assertNull(pool.getConnection(first));
+            assertEquals(2, pool.numberOfConnections());
+            pool.clear();
+        }
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void initializationFailureCanBeRetried(boolean fatal) {
+        AtomicInteger attempts = new AtomicInteger();
+        Http2ClientConnectionPool.RetryablePool retryable = new Http2ClientConnectionPool.RetryablePool(() -> {
+            if (attempts.getAndIncrement() == 0) {
+                if (fatal) throw new LinkageError("initialization failure");
+                throw new IllegalStateException("configuration not ready");
+            }
+            return pool;
+        });
+        if (fatal) assertThrows(LinkageError.class, retryable::get);
+        else assertThrows(IllegalStateException.class, retryable::get);
+        assertSame(pool, retryable.get());
+        assertSame(pool, retryable.get());
+        assertEquals(2, attempts.get());
+    }
+
+    @ParameterizedTest @CsvSource({"false,1", "false,2", "true,1", "true,2"})
+    void deadlineErrorReschedulesAndRetriesTheAffectedConnection(boolean fatal, int failingRead) throws Exception {
+        AtomicInteger failAt = new AtomicInteger();
+        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+        Queue<Runnable> ticks = new ConcurrentLinkedQueue<>();
+        doAnswer(invocation -> { ticks.add(invocation.getArgument(0)); return null; })
+                .when(scheduler).schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS));
+        pool = new Http2ClientConnectionPool(request, () -> {
+            if (failAt.getAndUpdate(count -> Math.max(0, count - 1)) == 1) {
+                if (fatal) throw new LinkageError("deadline failure");
+                throw new AssertionError("deadline failure");
+            }
+            return clock.get();
+        }, scheduler);
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://retry.invalid"), raw);
+        pool.startReaper();
+        clock.set(30000);
+        failAt.set(failingRead);
+        Runnable first = ticks.remove();
+        if (fatal) assertThrows(LinkageError.class, first::run);
+        else assertDoesNotThrow(first::run);
+        assertEquals(1, ticks.size(), "a failed run must schedule its successor");
+        clock.set(31000);
+        ticks.remove().run();
+        verify(raw, never()).close();
+        clock.set(131000);
+        ticks.remove().run();
+        drainOwner();
+        verify(raw).close();
+        assertEquals(0, pool.numberOfConnections());
+    }
+
     @Test void failedInsertionRollsBackTracking() throws Exception {
         ClientConnection raw = transport();
         IllegalStateException failure = new IllegalStateException("cache insertion failed");
