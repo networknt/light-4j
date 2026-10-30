@@ -25,11 +25,13 @@ public final class RequestMdcContext extends AbstractMap<String, String> {
     }
 
     /**
-     * First use must be serial. Capture and ExceptionHandler call this before
-     * dispatch; repeated calls after publication do not write any attachment.
+     * First use must be serial. Boundary execution and capture initialize before
+     * registering asynchronous work; repeated calls do not write any attachment.
      * Legacy Map-valued context is migrated once in that serial frame.
      */
     public static RequestMdcContext initialize(HttpServerExchange exchange) {
+        RequestMdcContext active = HandlerContinuation.activeContext(exchange);
+        if (active != null) return active;
         Map<String, String> attached = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
         if (attached instanceof RequestMdcContext holder) return holder;
         RequestMdcContext holder = new RequestMdcContext(attached);
@@ -37,14 +39,8 @@ public final class RequestMdcContext extends AbstractMap<String, String> {
         return holder;
     }
 
-    static Map<String, String> read(HttpServerExchange exchange) {
-        Map<String, String> attached = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-        if (attached == null) return Map.of();
-        if (attached instanceof RequestMdcContext holder) return holder.snapshot();
-        throw new IllegalStateException("Initialize request MDC in the serial frame before asynchronous hand-off");
-    }
-
-    Map<String, String> snapshot() { return current.get(); }
+    /** One immutable generation suitable for coherent iteration by external readers. */
+    public Map<String, String> snapshot() { return current.get(); }
 
     void putField(String field, String value) {
         current.updateAndGet(previous -> {
@@ -54,15 +50,10 @@ public final class RequestMdcContext extends AbstractMap<String, String> {
         });
     }
 
-    void putFields(Map<String, String> fields) {
-        current.updateAndGet(previous -> {
-            Map<String, String> next = new HashMap<>(previous);
-            next.putAll(fields);
-            return Collections.unmodifiableMap(next);
-        });
-    }
-
     @Override public String get(Object key) { return current.get().get(key); }
+    @Override public boolean containsKey(Object key) { return current.get().containsKey(key); }
+    @Override public boolean equals(Object other) { return other == this || current.get().equals(other); }
+    @Override public int hashCode() { return current.get().hashCode(); }
     @Override public int size() { return current.get().size(); }
     @Override public Set<Entry<String, String>> entrySet() { return current.get().entrySet(); }
     @Override public void forEach(BiConsumer<? super String, ? super String> consumer) {
