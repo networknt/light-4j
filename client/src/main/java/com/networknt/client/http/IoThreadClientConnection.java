@@ -59,18 +59,13 @@ public final class IoThreadClientConnection implements ClientConnection {
     /** Admission is explicit and occurs once, after the open check and before native handoff. */
     public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback, RequestSubmission submission) {
         OnceCallback guarded = new OnceCallback(callback);
-        Runnable send = () -> {
-            try {
-                if (!isOpen()) { guarded.failed(closeReason == null ? new ClosedChannelException() : closeReason); return; }
-                if (!submission.start()) { guarded.failed(new IOException("Request submission cancelled")); return; }
-                delegate.sendRequest(request, guarded);
-            } catch (Throwable error) { guarded.sendFailed(error); }
-        };
+        Runnable send = () -> ClientConnectionOperations.runWithFailureHandler(() -> {
+            if (!isOpen()) { guarded.failed(closeReason == null ? new ClosedChannelException() : closeReason); return; }
+            if (!submission.start()) { guarded.failed(new IOException("Request submission cancelled")); return; }
+            delegate.sendRequest(request, guarded);
+        }, guarded::sendFailed);
         if (Thread.currentThread() == getIoThread()) send.run();
-        else {
-            try { getIoThread().execute(send); }
-            catch (Throwable error) { guarded.sendFailed(error); }
-        }
+        else ClientConnectionOperations.runWithFailureHandler(() -> getIoThread().execute(send), guarded::sendFailed);
     }
     @Override public boolean isOpen() { return !closed.get() && delegate.isOpen(); }
     @Override public void close() {
@@ -117,14 +112,18 @@ public final class IoThreadClientConnection implements ClientConnection {
         @Override public void completed(ClientExchange raw) {
             if (!delivered.compareAndSet(false, true)) return;
             exchange = new OwnedExchange(raw, new ExchangeState());
-            try { callback.completed(exchange); }
-            catch (Throwable error) { callbackError = error; callbackFailed(error); }
+            ClientConnectionOperations.runWithFailureHandler(() -> callback.completed(exchange), error -> {
+                callbackError = error;
+                callbackFailed(error);
+            });
         }
         @Override public void failed(IOException error) {
             if (!delivered.compareAndSet(false, true)) return;
             if (!isMultiplexingSupported()) close();
-            try { callback.failed(error); }
-            catch (Throwable failure) { callbackError = failure; callbackFailed(failure); }
+            ClientConnectionOperations.runWithFailureHandler(() -> callback.failed(error), failure -> {
+                callbackError = failure;
+                callbackFailed(failure);
+            });
         }
         void sendFailed(Throwable error) {
             if (error == callbackError) { rethrow(error); return; }
@@ -137,7 +136,10 @@ public final class IoThreadClientConnection implements ClientConnection {
                 if (callback instanceof CompletableFuture<?> future) future.completeExceptionally(error);
             };
             if (exchange != null) exchange.abort(error, complete);
-            else { if (!isMultiplexingSupported()) close(); complete.run(); }
+            else {
+                if (!isMultiplexingSupported()) close();
+                complete.run();
+            }
             if (!(callback instanceof CompletableFuture<?>) || isFatal(error)) rethrow(error);
         }
     }
@@ -188,7 +190,7 @@ public final class IoThreadClientConnection implements ClientConnection {
             if (Thread.currentThread() == getIoThread()) cleanup.run();
             else {
                 try { getIoThread().execute(cleanup); }
-                catch (java.util.concurrent.RejectedExecutionException rejected) {
+                catch (java.util.concurrent.RejectedExecutionException _) {
                     // The owner cannot execute more stream callbacks. Quarantine remains in force.
                     if (!isMultiplexingSupported()) close();
                     state.retired.complete(null);
@@ -197,11 +199,9 @@ public final class IoThreadClientConnection implements ClientConnection {
             }
         }
         private void cleanup(Runnable action, Throwable original) {
-            try { action.run(); }
-            catch (Throwable error) {
+            ClientConnectionOperations.runWithFailureHandler(action::run, error -> {
                 if (error != original) original.addSuppressed(error);
-                if (isFatal(error)) rethrow(error);
-            }
+            });
         }
         @Override public ClientConnection getConnection() { return IoThreadClientConnection.this; }
         @Override public void setResponseListener(ClientCallback<ClientExchange> listener) {
@@ -254,29 +254,28 @@ public final class IoThreadClientConnection implements ClientConnection {
     @Override public boolean isPingSupported() { return delegate.isPingSupported(); }
 
     @Override public void sendPing(PingListener listener, long timeout, TimeUnit unit) {
-        AtomicBoolean notified = new AtomicBoolean();
-        PingListener once = new PingListener() {
-            @Override public void acknowledged() { if (notified.compareAndSet(false, true)) listener.acknowledged(); }
-            @Override public void failed(IOException error) { if (notified.compareAndSet(false, true)) listener.failed(error); }
-        };
-        Runnable ping = () -> {
-            try {
-                if (!isOpen()) once.failed(new ClosedChannelException());
-                else delegate.sendPing(once, timeout, unit);
-            } catch (Throwable error) {
-                if (notified.get()) rethrow(error);
-                once.failed(asIOException(error));
-                if (isFatal(error)) rethrow(error);
-            }
-        };
+        OncePingListener once = new OncePingListener(listener);
+        Runnable ping = () -> ClientConnectionOperations.runWithFailureHandler(() -> {
+            if (!isOpen()) once.failed(new ClosedChannelException());
+            else delegate.sendPing(once, timeout, unit);
+        }, once::sendFailed);
         if (Thread.currentThread() == getIoThread()) ping.run();
-        else {
-            try { getIoThread().execute(ping); }
-            catch (Throwable error) {
-                if (notified.get()) rethrow(error);
-                once.failed(asIOException(error));
-                if (isFatal(error)) rethrow(error);
-            }
+        else ClientConnectionOperations.runWithFailureHandler(() -> getIoThread().execute(ping), once::sendFailed);
+    }
+
+    private static final class OncePingListener implements PingListener {
+        private final PingListener listener;
+        private final AtomicBoolean notified = new AtomicBoolean();
+        OncePingListener(PingListener listener) { this.listener = listener; }
+        @Override public void acknowledged() {
+            if (notified.compareAndSet(false, true)) listener.acknowledged();
+        }
+        @Override public void failed(IOException error) {
+            if (notified.compareAndSet(false, true)) listener.failed(error);
+        }
+        void sendFailed(Throwable error) {
+            if (notified.get()) rethrow(error);
+            failed(asIOException(error));
         }
     }
 }

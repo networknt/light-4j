@@ -114,16 +114,15 @@ class IoThreadClientConnectionTest {
             public void failed(IOException error) { exchangeFuture.completeExceptionally(error); }
         });
         ClientExchange owned = exchangeFuture.get(5, TimeUnit.SECONDS);
-        assertThrows(IllegalStateException.class, () -> {
-            switch (operation) {
-                case "supports" -> connection.supportsOption(Options.READ_TIMEOUT);
-                case "get" -> connection.getOption(Options.READ_TIMEOUT);
-                case "set" -> connection.setOption(Options.READ_TIMEOUT, 1);
-                case "upgrade" -> connection.performUpgrade();
-                case "request" -> owned.getRequestChannel();
-                default -> owned.getResponseChannel();
-            }
-        });
+        org.junit.jupiter.api.function.Executable call = switch (operation) {
+            case "supports" -> () -> connection.supportsOption(Options.READ_TIMEOUT);
+            case "get" -> () -> connection.getOption(Options.READ_TIMEOUT);
+            case "set" -> () -> connection.setOption(Options.READ_TIMEOUT, 1);
+            case "upgrade" -> connection::performUpgrade;
+            case "request" -> owned::getRequestChannel;
+            default -> owned::getResponseChannel;
+        };
+        assertThrows(IllegalStateException.class, call);
     }
 
     @ParameterizedTest @ValueSource(booleans = {false, true})
@@ -173,7 +172,7 @@ class IoThreadClientConnectionTest {
             protected void completedSafely(ClientExchange exchange) {
                 exchange.setResponseListener(new ClientCallback<>() {
                     public void completed(ClientExchange result) { successes.incrementAndGet(); }
-                    public void failed(IOException error) { }
+                    public void failed(IOException error) { /* Setup failures are observed by the outer callback. */ }
                 });
                 throw new IllegalStateException("partial setup");
             }
@@ -228,7 +227,7 @@ class IoThreadClientConnectionTest {
         owner.execute(() -> {
             entered.countDown();
             try { release.await(5, TimeUnit.SECONDS); }
-            catch (InterruptedException error) { Thread.currentThread().interrupt(); }
+            catch (InterruptedException _) { Thread.currentThread().interrupt(); }
         });
         assertTrue(entered.await(5, TimeUnit.SECONDS));
         AtomicInteger count = new AtomicInteger();

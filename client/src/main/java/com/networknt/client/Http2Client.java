@@ -707,13 +707,13 @@ public class Http2Client {
             public void completed(ClientConnection r) {
                 if(logger.isDebugEnabled()) logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 ClientConnection connection = IoThreadClientConnection.wrap(r);
-                try {
+                ClientConnectionOperations.runWithFailureHandler(() -> {
                     http2ClientConnectionPool.cacheConnection(uri, connection);
                     result.setResult(connection);
-                } catch (Throwable error) {
+                }, error -> {
                     IoUtils.safeClose(connection);
                     result.setException(new IOException("Unable to cache client connection", error));
-                }
+                });
             }
 
             @Override
@@ -903,13 +903,13 @@ public class Http2Client {
             public void completed(ClientConnection r) {
                 if(logger.isDebugEnabled()) logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 ClientConnection connection = IoThreadClientConnection.wrap(r);
-                try {
+                ClientConnectionOperations.runWithFailureHandler(() -> {
                     http2ClientConnectionPool.cacheConnection(uri, connection);
                     result.setResult(connection);
-                } catch (Throwable error) {
+                }, error -> {
                     IoUtils.safeClose(connection);
                     result.setException(new IOException("Unable to cache client connection", error));
-                }
+                });
             }
 
             @Override
@@ -1978,13 +1978,13 @@ public class Http2Client {
                     @Override
                     public void completed(ClientConnection r) {
                         ClientConnection connection = IoThreadClientConnection.wrap(r);
-                        try {
+                        ClientConnectionOperations.runWithFailureHandler(() -> {
                             http2ClientConnectionPool.cacheConnection(uri, connection);
                             completableFuture.complete(connection);
-                        } catch (Throwable error) {
+                        }, error -> {
                             IoUtils.safeClose(connection);
                             completableFuture.completeExceptionally(error);
-                        }
+                        });
                     }
 
                     @Override
@@ -2028,37 +2028,55 @@ public class Http2Client {
                 responseFuture.completeExceptionally(connectError);
                 return;
             }
-            IoThreadClientConnection owned = IoThreadClientConnection.wrap(connection);
-            RequestSubmission submission = new RequestSubmission();
-            exchangeFuture.whenComplete((response, error) -> {
-                submission.finish();
-                try {
-                    if (error != null && !owned.isMultiplexingSupported()) owned.close();
-                    // This is concurrent pool metadata, not a native connection operation. It must
-                    // run even if the owner has stopped; do not discard the exchange outcome.
-                    http2ClientConnectionPool.resetConnectionStatus(owned);
-                } catch (Throwable cleanupError) {
-                    if (error != null && error != cleanupError) error.addSuppressed(cleanupError);
-                    logger.error("Client connection cleanup failed", cleanupError);
-                } finally {
-                    if (error == null) responseFuture.complete(response);
-                    else responseFuture.completeExceptionally(error);
-                }
-            });
-            responseFuture.whenComplete((ignored, error) -> {
-                if (error != null && submission.cancel() && !owned.isMultiplexingSupported()) {
-                    owned.close();
-                    exchangeFuture.completeExceptionally(error);
-                }
-            });
-            if (logger.isDebugEnabled()) {
-                if (requestBody.isPresent()) logger.debug("The request sent to {} = request header: {}, request body: {}",
-                        uri, request.getRequestHeaders(), requestBody.get());
-                else logger.debug("The request sent to {} = request header: {}, request body is empty", uri, request.getRequestHeaders());
-            }
-            owned.sendRequest(request, callback, submission);
+            sendClientRequest(connection, uri, request, requestBody, callback, exchangeFuture, responseFuture);
         });
         return responseFuture;
+    }
+
+    private void sendClientRequest(ClientConnection connection, URI uri, ClientRequest request,
+            Optional<String> requestBody, ClientCallback<ClientExchange> callback,
+            CompletableFuture<ClientResponse> exchangeFuture, CompletableFuture<ClientResponse> responseFuture) {
+        IoThreadClientConnection owned = IoThreadClientConnection.wrap(connection);
+        RequestSubmission submission = new RequestSubmission();
+        exchangeFuture.whenComplete((response, error) ->
+                finishClientResponse(owned, submission, response, error, responseFuture));
+        responseFuture.whenComplete((ignored, error) -> cancelClientRequest(owned, submission, error, exchangeFuture));
+        logClientRequest(uri, request, requestBody);
+        owned.sendRequest(request, callback, submission);
+    }
+
+    private void finishClientResponse(IoThreadClientConnection connection, RequestSubmission submission,
+            ClientResponse response, Throwable error, CompletableFuture<ClientResponse> responseFuture) {
+        submission.finish();
+        try {
+            ClientConnectionOperations.runWithFailureHandler(() -> {
+                if (error != null && !connection.isMultiplexingSupported()) connection.close();
+                // Concurrent pool metadata must be updated even when the I/O owner has stopped.
+                http2ClientConnectionPool.resetConnectionStatus(connection);
+            }, cleanupError -> {
+                if (error != null && error != cleanupError) error.addSuppressed(cleanupError);
+                logger.error("Client connection cleanup failed", cleanupError);
+            });
+        } finally {
+            if (error == null) responseFuture.complete(response);
+            else responseFuture.completeExceptionally(error);
+        }
+    }
+
+    private void cancelClientRequest(IoThreadClientConnection connection, RequestSubmission submission,
+            Throwable error, CompletableFuture<ClientResponse> exchangeFuture) {
+        if (error != null && submission.cancel() && !connection.isMultiplexingSupported()) {
+            connection.close();
+            exchangeFuture.completeExceptionally(error);
+        }
+    }
+
+    private void logClientRequest(URI uri, ClientRequest request, Optional<String> requestBody) {
+        if (logger.isDebugEnabled()) {
+            if (requestBody.isPresent()) logger.debug("The request sent to {} = request header: {}, request body: {}",
+                    uri, request.getRequestHeaders(), requestBody.get());
+            else logger.debug("The request sent to {} = request header: {}, request body is empty", uri, request.getRequestHeaders());
+        }
     }
 
     /**
