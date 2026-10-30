@@ -5,6 +5,9 @@ import org.junit.jupiter.api.*;
 import org.xnio.*;
 import java.lang.ref.*;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -119,23 +122,57 @@ class ConnectionWrappersTest {
         ConnectionWrappers.Cleanup cleanup = registeredAction(raw);
         WeakReference<ClientConnection> key = cleanup.key();
         assertSame(raw, key.get());
-        assertTrue(ConnectionWrappers.Cleanup.class.isRecord());
-        assertEquals(List.of(ConcurrentMap.class, key.getClass()),
-                Arrays.stream(ConnectionWrappers.Cleanup.class.getRecordComponents()).map(component -> component.getType()).toList());
-        assertSame(WeakReference.class, key.getClass().getSuperclass());
-        assertTrue(Modifier.isFinal(key.getClass().getModifiers()));
-        assertEquals(List.of(int.class), Arrays.stream(key.getClass().getDeclaredFields())
-                .filter(field -> !Modifier.isStatic(field.getModifiers())).map(field -> field.getType()).toList());
-        assertSame(ConcurrentHashMap.class, cleanup.records().getClass());
-        for (Object stored : cleanup.records().keySet()) assertSame(key.getClass(), stored.getClass());
-        for (ConnectionWrappers.Entry stored : cleanup.records().values()) {
-            assertSame(ConnectionWrappers.Entry.class, stored.getClass());
-            assertSame(AtomicBoolean.class, stored.closed.getClass());
-            assertNull(stored.closeReason);
-            assertSame(AtomicReference.class, stored.view.getClass());
-            assertSame(WeakReference.class, stored.view.get().getClass());
+
+        Map<String, Type> cleanupFields = instanceFields(ConnectionWrappers.Cleanup.class, Object.class);
+        assertEquals(Set.of("records", "key"), cleanupFields.keySet());
+        ParameterizedType records = assertInstanceOf(ParameterizedType.class, cleanupFields.get("records"));
+        assertEquals(ConcurrentMap.class, records.getRawType());
+        Class<?> declaredKey = assertInstanceOf(Class.class, cleanupFields.get("key"));
+        assertTrue(WeakReference.class.isAssignableFrom(declaredKey));
+        assertTrue(declaredKey.isInstance(key));
+        assertArrayEquals(new Type[]{declaredKey, ConnectionWrappers.Entry.class}, records.getActualTypeArguments());
+        for (Type field : instanceFields(key.getClass(), WeakReference.class).values()) {
+            assertTrue(field instanceof Class<?> type && type.isPrimitive(), "identity keys must not own other objects");
         }
+
+        Map<String, Type> entryFields = instanceFields(ConnectionWrappers.Entry.class, Object.class);
+        Set<String> owningFields = new HashSet<>();
+        entryFields.forEach((name, type) -> {
+            if (!(type instanceof Class<?> concrete && concrete.isPrimitive())) owningFields.add(name);
+        });
+        assertEquals(Set.of("closed", "closeReason", "view"), owningFields,
+                "new owning Entry fields require an explicit retention review");
+        assertEquals(AtomicBoolean.class, entryFields.get("closed"));
+        assertEquals(IOException.class, entryFields.get("closeReason"));
+        ParameterizedType viewHolder = assertInstanceOf(ParameterizedType.class, entryFields.get("view"));
+        assertEquals(AtomicReference.class, viewHolder.getRawType());
+        ParameterizedType weakView = assertInstanceOf(ParameterizedType.class, viewHolder.getActualTypeArguments()[0]);
+        assertEquals(WeakReference.class, weakView.getRawType());
+        assertArrayEquals(new Type[]{IoThreadClientConnection.class}, weakView.getActualTypeArguments());
         assertSame(view, entry(cleanup).view.get().get());
         Reference.reachabilityFence(raw);
+    }
+    @Test void cleanupUsesIdentityEqualityAndDiagnostics() throws ReflectiveOperationException {
+        assertEquals(Object.class, ConnectionWrappers.Cleanup.class.getMethod("equals", Object.class).getDeclaringClass());
+        assertEquals(Object.class, ConnectionWrappers.Cleanup.class.getMethod("hashCode").getDeclaringClass());
+        assertEquals(Object.class, ConnectionWrappers.Cleanup.class.getMethod("toString").getDeclaringClass());
+        ClientConnection raw = transport();
+        registry.getOrCreate(raw);
+        ConnectionWrappers.Cleanup cleanup = registeredAction(raw);
+        assertEquals(System.identityHashCode(cleanup), cleanup.hashCode());
+        Reference.reachabilityFence(raw);
+    }
+    // Inspect ownership declarations only: no field values, map implementation assumptions or GC timing.
+    private static Map<String, Type> instanceFields(Class<?> type, Class<?> stop) {
+        Map<String, Type> fields = new HashMap<>();
+        for (Class<?> current = type; current != stop; current = current.getSuperclass()) {
+            assertNotNull(current, "unexpected field hierarchy");
+            for (var field : current.getDeclaredFields()) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    assertNull(fields.put(field.getName(), field.getGenericType()), "shadowed ownership declaration");
+                }
+            }
+        }
+        return fields;
     }
 }
