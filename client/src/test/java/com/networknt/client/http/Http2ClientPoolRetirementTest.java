@@ -155,4 +155,23 @@ class Http2ClientPoolRetirementTest {
         for (ClientConnection raw : open) verify(raw).close();
         assertEquals(0, pool.numberOfConnections());
     }
+    @Test void failedInsertionRollsBackTracking() throws Exception {
+        ClientConnection raw = transport();
+        IllegalStateException failure = new IllegalStateException("cache insertion failed");
+        Map<String, Object> broken = new HashMap<>() {
+            @Override public Object computeIfAbsent(String key, java.util.function.Function<? super String, ?> factory) {
+                throw failure;
+            }
+        };
+        Field cache = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
+        cache.setAccessible(true);
+        cache.set(pool, broken);
+        try {
+            URI uri = URI.create("https://failure.invalid");
+            assertSame(failure, assertThrows(IllegalStateException.class, () -> pool.cacheConnection(uri, raw)));
+            assertEquals(0, pool.numberOfConnections());
+            assertNull(pool.getConnection(uri));
+        } finally { IoThreadClientConnection.wrap(raw).close(); }
+    }
+
 }

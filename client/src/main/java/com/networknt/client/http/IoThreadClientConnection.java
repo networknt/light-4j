@@ -118,7 +118,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         @Override public void completed(ClientExchange raw) {
             if (!delivered.compareAndSet(false, true)) return;
             exchange = new OwnedExchange(raw, new ExchangeState());
-            submission.onCancellation(error -> exchange.abort(error, () -> { /* The caller future already carries cancellation. */ }));
+            submission.onCancellation(exchange::cancel);
             ClientConnectionOperations.runWithFailureHandler(() -> {
                 if (exchange.state.aborted.get()) callback.failed(new IOException("Request cancelled"));
                 else callback.completed(exchange);
@@ -183,16 +183,22 @@ public final class IoThreadClientConnection implements ClientConnection {
     private static final class ExchangeState {
         final AtomicBoolean aborted = new AtomicBoolean();
         final CompletableFuture<Void> retired = new CompletableFuture<>();
+        volatile boolean resetCompletedRequest;
     }
     private final class OwnedExchange implements ClientExchange {
         private final ClientExchange exchange;
         private final ExchangeState state;
         OwnedExchange(ClientExchange exchange, ExchangeState state) { this.exchange = exchange; this.state = state; }
+        void cancel(Throwable error) {
+            state.resetCompletedRequest = true;
+            abort(error, () -> { /* The caller future already carries cancellation. */ });
+        }
         void abort(Throwable original, Runnable afterRetirement) {
             if (!state.aborted.compareAndSet(false, true)) {
                 state.retired.thenRun(afterRetirement);
                 return;
             }
+            if (!isMultiplexingSupported()) close();
             Runnable cleanup = () -> {
                 try {
                     if (!isMultiplexingSupported()) close();
@@ -202,22 +208,25 @@ public final class IoThreadClientConnection implements ClientConnection {
                     }
                 } finally { state.retired.complete(null); afterRetirement.run(); }
             };
-            if (Thread.currentThread() == getIoThread()) cleanup.run();
-            else {
-                try { getIoThread().execute(cleanup); }
-                catch (java.util.concurrent.RejectedExecutionException _) {
-                    // The owner cannot execute more stream callbacks. Quarantine remains in force.
-                    if (!isMultiplexingSupported()) close();
-                    state.retired.complete(null);
-                    afterRetirement.run();
-                }
+            // Defer even on the owner: Undertow may still finish/flush the request after
+            // invoking completed(). Closing inside that callback can break the transport.
+            try { getIoThread().execute(cleanup); }
+            catch (java.util.concurrent.RejectedExecutionException _) {
+                // The stopped worker owns native cleanup; local quarantine is already active.
+                state.retired.complete(null);
+                afterRetirement.run();
             }
         }
-        private void closeRequestChannel(StreamSinkChannel channel) {
+        private void closeRequestChannel(StreamSinkChannel channel) throws IOException {
             if (channel == null) return;
             try {
                 channel.suspendWrites();
                 if (channel.getWriteSetter() != null) channel.getWriteSetter().set(null);
+                if (state.resetCompletedRequest && channel instanceof io.undertow.protocols.http2.Http2StreamSinkChannel stream
+                        && stream.isWritesShutdown() && stream.flush()) {
+                    // close() is a no-op for a fully flushed sink, even while the response is pending.
+                    stream.getChannel().sendRstStream(stream.getStreamId(), io.undertow.protocols.http2.Http2Channel.ERROR_CANCEL);
+                }
             } finally { IoUtils.safeClose(channel); }
         }
         private void closeResponseChannel(StreamSourceChannel channel) {
@@ -227,7 +236,7 @@ public final class IoThreadClientConnection implements ClientConnection {
                 if (channel.getReadSetter() != null) channel.getReadSetter().set(null);
             } finally { IoUtils.safeClose(channel); }
         }
-        private void cleanup(Runnable action, Throwable original) {
+        private void cleanup(ClientConnectionOperations.IoOperation action, Throwable original) {
             ClientConnectionOperations.runWithFailureHandler(action::run, error -> {
                 if (error != original) original.addSuppressed(error);
             });

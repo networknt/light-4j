@@ -223,6 +223,10 @@ class Http2ClientIoThreadTest {
         ClientExchange raw = mock(ClientExchange.class);
         org.xnio.channels.StreamSinkChannel request = mock(org.xnio.channels.StreamSinkChannel.class);
         org.xnio.channels.StreamSourceChannel body = mock(org.xnio.channels.StreamSourceChannel.class);
+        CompletableFuture<Void> requestClosed = new CompletableFuture<>();
+        CompletableFuture<Void> responseClosed = new CompletableFuture<>();
+        doAnswer(ignored -> { requestClosed.complete(null); return null; }).when(request).close();
+        doAnswer(ignored -> { responseClosed.complete(null); return null; }).when(body).close();
         when(request.flush()).thenReturn(true);
         when(raw.getRequestChannel()).thenReturn(request);
         when(raw.getResponseChannel()).thenReturn(body);
@@ -251,6 +255,7 @@ class Http2ClientIoThreadTest {
         if (timeout) response.completeExceptionally(new TimeoutException("caller timeout"));
         else assertTrue(response.cancel(false));
         if (lateExchange) owner.execute(() -> sendCallback.completed(raw));
+        CompletableFuture.allOf(requestClosed, responseClosed).get(5, TimeUnit.SECONDS);
         drainOwner();
         verify(request).close();
         verify(body).close();
