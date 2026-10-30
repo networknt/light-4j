@@ -21,6 +21,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -66,6 +67,34 @@ class Http2ClientPoolRetirementTest {
         drainOwner();
         return raw;
     }
+    private static class ForwardingMap<K, V> extends AbstractMap<K, V> {
+        protected final Map<K, V> backing;
+        ForwardingMap(Map<K, V> backing) { this.backing = backing; }
+        @Override public Set<Map.Entry<K, V>> entrySet() { return backing.entrySet(); }
+        @Override public V get(Object key) { return backing.get(key); }
+        @Override public V put(K key, V value) { return backing.put(key, value); }
+        @Override public V remove(Object key) { return backing.remove(key); }
+        @Override public boolean remove(Object key, Object value) { return backing.remove(key, value); }
+        @Override public void clear() { backing.clear(); }
+        @Override public V computeIfAbsent(K key, java.util.function.Function<? super K, ? extends V> factory) {
+            return backing.computeIfAbsent(key, factory);
+        }
+    }
+    private static class ForwardingConcurrentMap<K, V> extends ForwardingMap<K, V> implements ConcurrentMap<K, V> {
+        private final ConcurrentMap<K, V> concurrent;
+        ForwardingConcurrentMap(ConcurrentMap<K, V> backing) { super(backing); concurrent = backing; }
+        @Override public V putIfAbsent(K key, V value) { return concurrent.putIfAbsent(key, value); }
+        @Override public boolean replace(K key, V oldValue, V newValue) { return concurrent.replace(key, oldValue, newValue); }
+        @Override public V replace(K key, V value) { return concurrent.replace(key, value); }
+    }
+    private static Http2ClientConnectionPool.StateMaps observeUris(AtomicReference<Map<?, ?>> observed) {
+        return new Http2ClientConnectionPool.StateMaps() {
+            @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
+                observed.set(backing);
+                return new ForwardingMap<>(backing);
+            }
+        };
+    }
     private void drainOwner() throws Exception {
         CompletableFuture<Void> drained = new CompletableFuture<>();
         owner.execute(() -> drained.complete(null));
@@ -93,6 +122,32 @@ class Http2ClientPoolRetirementTest {
         verify(raw).close();
         assertEquals(2, pool.numberOfConnections());
     }
+    @Test void decoratedUriMapStillEvictsTheLruAndDrainsBorrowedTransports() throws Exception {
+        AtomicReference<Map<?, ?>> uris = new AtomicReference<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, observeUris(uris));
+        URI first = URI.create("https://decorated-first.invalid");
+        URI second = URI.create("https://decorated-second.invalid");
+        URI third = URI.create("https://decorated-third.invalid");
+        ClientConnection hot = transport();
+        ClientConnection evicted = transport();
+        pool.cacheConnection(first, hot);
+        pool.resetConnectionStatus(hot);
+        pool.cacheConnection(second, evicted);
+        pool.resetConnectionStatus(pool.getConnection(first)); // Refresh access order through the decorator.
+        pool.cacheConnection(third, transport());
+        assertEquals(List.of(first.toString(), third.toString()), new ArrayList<>(uris.get().keySet()));
+        assertNull(pool.getConnection(second));
+        assertSame(IoThreadClientConnection.wrap(hot), pool.getConnection(first));
+        drainOwner();
+        assertEquals(3, pool.numberOfConnections(), "the evicted borrowed transport remains tracked");
+        verify(evicted, never()).close();
+        pool.resetConnectionStatus(evicted);
+        drainOwner();
+        verify(evicted).close();
+        assertEquals(2, pool.numberOfConnections());
+        assertEquals(2, uris.get().size(), "the production URI bound remains active through the decorator");
+    }
+
     @Test void perHostTrimDrainsEveryBorrowBeforeClosing() throws Exception {
         URI uri = URI.create("https://backend.invalid");
         ClientConnection first = transport();
@@ -218,8 +273,8 @@ class Http2ClientPoolRetirementTest {
     }
 
     @Test void nativeCloseSignalsWithoutWaitingForThePoolMonitor() throws Exception {
-        Map<String, Http2ClientConnectionPool.UriConnections> uris = new LinkedHashMap<>();
-        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), uris);
+        AtomicReference<Map<?, ?>> uris = new AtomicReference<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, observeUris(uris));
         ClientConnection raw = transport();
         pool.cacheConnection(URI.create("https://closed.invalid"), raw);
         IoThreadClientConnection owned = IoThreadClientConnection.wrap(raw);
@@ -230,14 +285,15 @@ class Http2ClientPoolRetirementTest {
             assertEquals(0, pool.numberOfConnections());
         }
         assertEquals(1, pool.reapExpiredConnections(), "metadata cleanup is performed by maintenance");
-        assertTrue(uris.isEmpty());
+        assertTrue(uris.get().isEmpty());
         verify(raw).close();
     }
 
     @Test void staleEmptyUriBucketCannotRemoveANewEmptyBucket() throws Exception {
         URI uri = URI.create("https://recreated.invalid");
-        Map<String, Http2ClientConnectionPool.UriConnections> cache = new LinkedHashMap<>();
-        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), cache);
+        AtomicReference<Map<?, ?>> observed = new AtomicReference<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, observeUris(observed));
+        Map<?, ?> cache = observed.get();
         ClientConnection old = transport();
         pool.cacheConnection(uri, old);
         Object oldBucket = cache.get(uri.toString());
@@ -432,15 +488,19 @@ class Http2ClientPoolRetirementTest {
                 new java.util.concurrent.atomic.AtomicReference<>(requestConfig(-1, 1_000_000));
         AtomicBoolean failNextLookup = new AtomicBoolean();
         java.util.concurrent.atomic.AtomicReference<ClientConnection> failingKey = new java.util.concurrent.atomic.AtomicReference<>();
-        ConcurrentMap<ClientConnection, Http2ClientConnectionPool.CachedConnection> records = new ConcurrentHashMap<>() {
-            @Override public Http2ClientConnectionPool.CachedConnection get(Object key) {
-                if (key == failingKey.get() && failNextLookup.compareAndSet(true, false)) {
-                    throw new AssertionError("failure before detaching");
-                }
-                return super.get(key);
+        Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
+            @Override public <K, V> ConcurrentMap<K, V> tracked(ConcurrentMap<K, V> backing) {
+                return new ForwardingConcurrentMap<>(backing) {
+                    @Override public V get(Object key) {
+                        if (key == failingKey.get() && failNextLookup.compareAndSet(true, false)) {
+                            throw new AssertionError("failure before detaching");
+                        }
+                        return super.get(key);
+                    }
+                };
             }
         };
-        pool = new Http2ClientConnectionPool(settings::get, clock::get, null, records, null);
+        pool = new Http2ClientConnectionPool(settings::get, clock::get, null, maps);
         ClientConnection survivor = transport();
         ClientConnection bad = transport();
         URI survivorUri = URI.create("https://survivor.invalid");
@@ -473,13 +533,17 @@ class Http2ClientPoolRetirementTest {
 
     @Test void permanentlyFailingClosedMetadataCleanupStopsAfterItsBudget() throws Exception {
         AtomicInteger removals = new AtomicInteger();
-        Map<String, Http2ClientConnectionPool.UriConnections> broken = new LinkedHashMap<>() {
-            @Override public boolean remove(Object key, Object value) {
-                removals.incrementAndGet();
-                throw new AssertionError("permanent metadata failure");
+        Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
+            @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
+                return new ForwardingMap<>(backing) {
+                    @Override public boolean remove(Object key, Object value) {
+                        removals.incrementAndGet();
+                        throw new AssertionError("permanent metadata failure");
+                    }
+                };
             }
         };
-        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), broken);
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);
         ClientConnection raw = transport();
         pool.cacheConnection(URI.create("https://metadata-failure.invalid"), raw);
         IoThreadClientConnection.wrap(raw).close();
@@ -548,18 +612,26 @@ class Http2ClientPoolRetirementTest {
     @Test void closedCleanupOwnershipIsPublishedBeforeUntracking() throws Exception {
         CountDownLatch removed = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        ConcurrentMap<ClientConnection, Http2ClientConnectionPool.CachedConnection> records = new ConcurrentHashMap<>() {
-            @Override public boolean remove(Object key, Object value) {
-                boolean result = super.remove(key, value);
-                removed.countDown();
-                try {
-                    if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("Close publication gate timed out");
-                } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new CompletionException(error); }
-                return result;
+        AtomicReference<Map<?, ?>> uris = new AtomicReference<>();
+        Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
+            @Override public <K, V> ConcurrentMap<K, V> tracked(ConcurrentMap<K, V> backing) {
+                return new ForwardingConcurrentMap<>(backing) {
+                    @Override public boolean remove(Object key, Object value) {
+                        boolean result = super.remove(key, value);
+                        removed.countDown();
+                        try {
+                            if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("Close publication gate timed out");
+                        } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new CompletionException(error); }
+                        return result;
+                    }
+                };
+            }
+            @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
+                uris.set(backing);
+                return new ForwardingMap<>(backing);
             }
         };
-        Map<String, Http2ClientConnectionPool.UriConnections> uris = new LinkedHashMap<>();
-        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, records, uris);
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);
         ClientConnection raw = transport();
         URI uri = URI.create("https://publication.invalid");
         pool.cacheConnection(uri, raw);
@@ -569,7 +641,7 @@ class Http2ClientPoolRetirementTest {
             assertTrue(removed.await(5, TimeUnit.SECONDS));
             clock.set(30000);
             assertEquals(1, pool.reapExpiredConnections());
-            assertTrue(uris.isEmpty(), "pending close cleanup must run before its notice can be enqueued");
+            assertTrue(uris.get().isEmpty(), "pending close cleanup must run before its notice can be enqueued");
         } finally { release.countDown(); }
         closeDone.get(5, TimeUnit.SECONDS);
         pool.reapExpiredConnections();
@@ -690,12 +762,16 @@ class Http2ClientPoolRetirementTest {
     @Test void failedInsertionRollsBackTracking() throws Exception {
         ClientConnection raw = transport();
         IllegalStateException failure = new IllegalStateException("cache insertion failed");
-        Map<String, Http2ClientConnectionPool.UriConnections> broken = new HashMap<>() {
-            @Override public Http2ClientConnectionPool.UriConnections computeIfAbsent(String key, java.util.function.Function<? super String, ? extends Http2ClientConnectionPool.UriConnections> factory) {
-                throw failure;
+        Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
+            @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
+                return new ForwardingMap<>(backing) {
+                    @Override public V computeIfAbsent(K key, java.util.function.Function<? super K, ? extends V> factory) {
+                        throw failure;
+                    }
+                };
             }
         };
-        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), broken);
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);
         try {
             URI uri = URI.create("https://failure.invalid");
             assertSame(failure, assertThrows(IllegalStateException.class, () -> pool.cacheConnection(uri, raw)));

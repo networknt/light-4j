@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 
 /**
  * URI LRU pool. Pool-initiated retirement allows a 100-second borrower-drain grace.
- * Native closure can end exchanges earlier; Undertow 2.4.4 closes upon receiving GOAWAY.
+ * The underlying transport may close earlier.
  * @author Jiachen Sun
  */
 public class Http2ClientConnectionPool {
@@ -82,18 +82,18 @@ public class Http2ClientConnectionPool {
     }
 
     private Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock, ScheduledExecutorService reaper) {
-        this(requestConfig, clock, reaper, new ConcurrentHashMap<>(), null);
+        this(requestConfig, clock, reaper, new StateMaps() { });
     }
 
     Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock, ScheduledExecutorService reaper,
-                              ConcurrentMap<ClientConnection, CachedConnection> tracked, Map<String, UriConnections> uriConnections) {
+                              StateMaps maps) {
         this.requestConfig = requestConfig;
         this.clock = clock;
         this.reaper = reaper;
-        this.tracked = tracked;
+        this.tracked = maps.tracked(new ConcurrentHashMap<>());
         int poolSize = requestConfig.get().getConnectionPoolSize();
         maxUriCount = poolSize;
-        connectionPool = uriConnections == null ? new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
+        Map<String, UriConnections> lru = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
             @Override protected boolean removeEldestEntry(Map.Entry<String, UriConnections> eldest) {
                 if (size() <= poolSize) return false;
                 logger.debug("Evicting {} cached connections for uri: {}", eldest.getValue().connections.size(), eldest.getKey());
@@ -102,7 +102,14 @@ public class Http2ClientConnectionPool {
                 emptyBuckets.remove(eldest.getValue());
                 return true;
             }
-        } : uriConnections;
+        };
+        connectionPool = maps.uris(lru);
+    }
+
+    /** Decorators must delegate storage operations to the supplied production backing maps. */
+    interface StateMaps {
+        default <K, V> ConcurrentMap<K, V> tracked(ConcurrentMap<K, V> backing) { return backing; }
+        default <K, V> Map<K, V> uris(Map<K, V> backing) { return backing; }
     }
 
     /** @return the shared connection pool */
@@ -501,7 +508,7 @@ public class Http2ClientConnectionPool {
     }
 
     // Object equality deliberately gives each URI bucket identity semantics.
-    static final class UriConnections {
+    private static final class UriConnections {
         private final String uri;
         private final List<CachedConnection> connections = new LinkedList<>();
         private final AtomicInteger members = new AtomicInteger();
@@ -509,7 +516,7 @@ public class Http2ClientConnectionPool {
         private UriConnections(String uri) { this.uri = uri; }
     }
 
-    static final class CachedConnection {
+    private static final class CachedConnection {
         private final AtomicInteger requestCount = new AtomicInteger(1);
         private final ClientConnection clientConnection;
         private WeakReference<UriConnections> owner;
