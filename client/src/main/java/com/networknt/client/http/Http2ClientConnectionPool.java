@@ -265,7 +265,12 @@ public class Http2ClientConnectionPool {
      */
     public void resetConnectionStatus(ClientConnection connection) {
         if (connection == null) return;
-        ClientConnection existing = ConnectionWrappers.INSTANCE.lookup(connection);
+        ClientConnection existing = connection;
+        if (!(connection instanceof IoThreadClientConnection)) {
+            ConnectionWrappers.Entry entry = ConnectionWrappers.INSTANCE.lookup(connection);
+            if (entry == null) return;
+            existing = entry.view.get().get();
+        }
         if (existing == null) return;
         CachedConnection cached = tracked.get(existing);
         if (cached == null) return;

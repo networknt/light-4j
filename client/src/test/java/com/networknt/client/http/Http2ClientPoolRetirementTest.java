@@ -17,11 +17,9 @@ import com.networknt.config.Config;
 import org.xnio.*;
 import java.net.URI;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
-import java.util.function.Function;
-import java.util.function.BiFunction;
-import java.util.function.BiConsumer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,48 +71,24 @@ class Http2ClientPoolRetirementTest {
         drainOwner();
         return raw;
     }
-    private static class ForwardingMap<K, V> extends AbstractMap<K, V> {
-        protected final Map<K, V> backing;
-        ForwardingMap(Map<K, V> backing) { this.backing = backing; }
-        @Override public int size() { return backing.size(); }
-        @Override public boolean isEmpty() { return backing.isEmpty(); }
-        @Override public boolean containsKey(Object key) { return backing.containsKey(key); }
-        @Override public boolean containsValue(Object value) { return backing.containsValue(value); }
-        @Override public Set<K> keySet() { return backing.keySet(); }
-        @Override public Collection<V> values() { return backing.values(); }
-        @Override public Set<Map.Entry<K, V>> entrySet() { return backing.entrySet(); }
-        @Override public V get(Object key) { return backing.get(key); }
-        @Override public V getOrDefault(Object key, V fallback) { return backing.getOrDefault(key, fallback); }
-        @Override public V put(K key, V value) { return backing.put(key, value); }
-        @Override public void putAll(Map<? extends K, ? extends V> values) { backing.putAll(values); }
-        @Override public V putIfAbsent(K key, V value) { return backing.putIfAbsent(key, value); }
-        @Override public V remove(Object key) { return backing.remove(key); }
-        @Override public boolean remove(Object key, Object value) { return backing.remove(key, value); }
-        @Override public V replace(K key, V value) { return backing.replace(key, value); }
-        @Override public boolean replace(K key, V oldValue, V newValue) { return backing.replace(key, oldValue, newValue); }
-        @Override public void clear() { backing.clear(); }
-        @Override public void forEach(BiConsumer<? super K, ? super V> action) { backing.forEach(action); }
-        @Override public void replaceAll(BiFunction<? super K, ? super V, ? extends V> factory) { backing.replaceAll(factory); }
-        @Override public V computeIfAbsent(K key, Function<? super K, ? extends V> factory) { return backing.computeIfAbsent(key, factory); }
-        @Override public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> factory) {
-            return backing.computeIfPresent(key, factory);
-        }
-        @Override public V compute(K key, BiFunction<? super K, ? super V, ? extends V> factory) { return backing.compute(key, factory); }
-        @Override public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> factory) {
-            return backing.merge(key, value, factory);
-        }
-        @Override public boolean equals(Object other) { return other == this || backing.equals(other); }
-        @Override public int hashCode() { return backing.hashCode(); }
-        @Override public String toString() { return backing.toString(); }
+    private static <M extends Map<?, ?>> M forwarding(M backing) {
+        return forwarding(backing, (proxy, method, args) -> invoke(backing, method, args));
     }
-    private static class ForwardingConcurrentMap<K, V> extends ForwardingMap<K, V> implements ConcurrentMap<K, V> {
-        ForwardingConcurrentMap(ConcurrentMap<K, V> backing) { super(backing); }
+    @SuppressWarnings("unchecked")
+    private static <M extends Map<?, ?>> M forwarding(M backing, InvocationHandler handler) {
+        Class<?> contract = backing instanceof ConcurrentMap ? ConcurrentMap.class : Map.class;
+        return (M) Proxy.newProxyInstance(Http2ClientPoolRetirementTest.class.getClassLoader(),
+                new Class<?>[]{contract}, handler);
+    }
+    private static Object invoke(Map<?, ?> backing, Method method, Object[] args) throws Throwable {
+        try { return method.invoke(backing, args); }
+        catch (InvocationTargetException error) { throw error.getCause(); }
     }
     private static Http2ClientConnectionPool.StateMaps observeUris(AtomicReference<Map<?, ?>> observed) {
         return new Http2ClientConnectionPool.StateMaps() {
             @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
                 observed.set(backing);
-                return new ForwardingMap<>(backing);
+                return forwarding(backing);
             }
         };
     }
@@ -123,46 +97,6 @@ class Http2ClientPoolRetirementTest {
         owner.execute(() -> drained.complete(null));
         drained.get(5, TimeUnit.SECONDS);
     }
-    @ParameterizedTest @ValueSource(booleans = {false, true})
-    @SuppressWarnings("unchecked")
-    void forwardingMapsDelegateEveryMapOperation(boolean concurrent) throws ReflectiveOperationException {
-        List<Method> calls = new ArrayList<>();
-        List<Object[]> arguments = new ArrayList<>();
-        Class<?> contract = concurrent ? ConcurrentMap.class : Map.class;
-        Map<Object, Object> backing = (Map<Object, Object>) Proxy.newProxyInstance(
-                getClass().getClassLoader(), new Class<?>[]{contract}, (proxy, method, args) -> {
-                    calls.add(method);
-                    arguments.add(args == null ? new Object[0] : args);
-                    if (method.getReturnType() == int.class) return 7;
-                    if (method.getReturnType() == boolean.class) return false;
-                    if (method.getReturnType() == String.class) return "backing";
-                    return null;
-                });
-        Map<Object, Object> forwarding = concurrent
-                ? new ForwardingConcurrentMap<>((ConcurrentMap<Object, Object>) backing) : new ForwardingMap<>(backing);
-        List<Method> operations = new ArrayList<>(Arrays.asList(Map.class.getMethods()));
-        operations.add(Object.class.getMethod("toString"));
-        for (Method operation : operations) {
-            if (Modifier.isStatic(operation.getModifiers())) continue;
-            Object[] args = Arrays.stream(operation.getParameterTypes()).map(Http2ClientPoolRetirementTest::mapArgument).toArray();
-            calls.clear();
-            arguments.clear();
-            operation.invoke(forwarding, args);
-            assertEquals(1, calls.size(), operation.toString());
-            assertEquals(operation.getName(), calls.getFirst().getName());
-            assertArrayEquals(operation.getParameterTypes(), calls.getFirst().getParameterTypes());
-            assertArrayEquals(args, arguments.getFirst());
-        }
-    }
-    private static Object mapArgument(Class<?> type) {
-        if (type == Map.class) return Map.of("key", "value");
-        if (type == Function.class) return Function.identity();
-        if (type == BiFunction.class) return (BiFunction<Object, Object, Object>) (left, right) -> right;
-        if (type == BiConsumer.class) return (BiConsumer<Object, Object>) (key, value) -> { };
-        if (type == Object.class) return new Object();
-        throw new IllegalArgumentException("Missing argument for Map method parameter: " + type);
-    }
-
     @ParameterizedTest @ValueSource(booleans = {false, true})
     void lruEvictionClosesIdleOrDrainsBorrowedTransport(boolean borrowed) throws Exception {
         URI first = URI.create("https://first.invalid");
@@ -553,14 +487,13 @@ class Http2ClientPoolRetirementTest {
         AtomicReference<ClientConnection> failingKey = new AtomicReference<>();
         Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
             @Override public <K, V> ConcurrentMap<K, V> tracked(ConcurrentMap<K, V> backing) {
-                return new ForwardingConcurrentMap<>(backing) {
-                    @Override public V get(Object key) {
-                        if (key == failingKey.get() && failNextLookup.compareAndSet(true, false)) {
-                            throw new AssertionError("failure before detaching");
-                        }
-                        return super.get(key);
+                return forwarding(backing, (proxy, method, args) -> {
+                    if (method.getName().equals("get") && args[0] == failingKey.get()
+                            && failNextLookup.compareAndSet(true, false)) {
+                        throw new AssertionError("failure before detaching");
                     }
-                };
+                    return invoke(backing, method, args);
+                });
             }
         };
         pool = new Http2ClientConnectionPool(settings::get, clock::get, null, maps);
@@ -598,12 +531,13 @@ class Http2ClientPoolRetirementTest {
         AtomicInteger removals = new AtomicInteger();
         Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
             @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
-                return new ForwardingMap<>(backing) {
-                    @Override public boolean remove(Object key, Object value) {
+                return forwarding(backing, (proxy, method, args) -> {
+                    if (method.getName().equals("remove") && method.getParameterCount() == 2) {
                         removals.incrementAndGet();
                         throw new AssertionError("permanent metadata failure");
                     }
-                };
+                    return invoke(backing, method, args);
+                });
             }
         };
         pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);
@@ -678,20 +612,20 @@ class Http2ClientPoolRetirementTest {
         AtomicReference<Map<?, ?>> uris = new AtomicReference<>();
         Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
             @Override public <K, V> ConcurrentMap<K, V> tracked(ConcurrentMap<K, V> backing) {
-                return new ForwardingConcurrentMap<>(backing) {
-                    @Override public boolean remove(Object key, Object value) {
-                        boolean result = super.remove(key, value);
+                return forwarding(backing, (proxy, method, args) -> {
+                    Object result = invoke(backing, method, args);
+                    if (method.getName().equals("remove") && method.getParameterCount() == 2) {
                         removed.countDown();
                         try {
                             if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("Close publication gate timed out");
                         } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new CompletionException(error); }
-                        return result;
                     }
-                };
+                    return result;
+                });
             }
             @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
                 uris.set(backing);
-                return new ForwardingMap<>(backing);
+                return forwarding(backing);
             }
         };
         pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);
@@ -827,11 +761,10 @@ class Http2ClientPoolRetirementTest {
         IllegalStateException failure = new IllegalStateException("cache insertion failed");
         Http2ClientConnectionPool.StateMaps maps = new Http2ClientConnectionPool.StateMaps() {
             @Override public <K, V> Map<K, V> uris(Map<K, V> backing) {
-                return new ForwardingMap<>(backing) {
-                    @Override public V computeIfAbsent(K key, Function<? super K, ? extends V> factory) {
-                        throw failure;
-                    }
-                };
+                return forwarding(backing, (proxy, method, args) -> {
+                    if (method.getName().equals("computeIfAbsent")) throw failure;
+                    return invoke(backing, method, args);
+                });
             }
         };
         pool = new Http2ClientConnectionPool(() -> request, clock::get, null, maps);

@@ -25,10 +25,8 @@ final class ConnectionWrappers {
         return entry.getOrCreateView(raw);
     }
     // Lookup does not create a view, register listeners, or touch the raw transport.
-    IoThreadClientConnection lookup(ClientConnection connection) {
-        if (connection instanceof IoThreadClientConnection owned) return owned;
-        Entry entry = entries.get(new Key(connection));
-        return entry == null ? null : entry.view.get().get();
+    Entry lookup(ClientConnection connection) {
+        return entries.get(new Key(connection));
     }
 
     static final class Cleanup implements Runnable {
@@ -38,8 +36,6 @@ final class ConnectionWrappers {
             this.records = records;
             this.key = key;
         }
-        ConcurrentMap<Key, Entry> records() { return records; }
-        WeakReference<ClientConnection> key() { return key; }
         @Override public void run() {
             key.clear();
             records.remove(key);
