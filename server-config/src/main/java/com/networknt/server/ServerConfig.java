@@ -384,6 +384,7 @@ public class  ServerConfig {
 
     private static final List<String> masks = Arrays.asList("keystorePass", "keyPass", "truststorePass", "bootstrapStorePass");
     private Map<String, Object> mappedConfig;
+    private final Map<String, Object> validatedOptions;
     private static volatile ServerConfig instance;
 
     private ServerConfig() {
@@ -400,6 +401,7 @@ public class  ServerConfig {
         if (mappedConfig != null) {
             loadData();
         }
+        validatedOptions = ServerOption.validateServerOptions(mappedConfig, this);
     }
 
     public static ServerConfig load() {
@@ -421,29 +423,24 @@ public class  ServerConfig {
                     return instance;
                 }
                 instance = new ServerConfig(configName);
-                ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+                Map<String, Object> reportedConfig = instance.validatedConfig(
+                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME));
+                ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), reportedConfig, masks);
                 return instance;
             }
         }
         return new ServerConfig(configName);
     }
 
-    /** Publish validated startup options without exposing decrypted configuration values. */
-    void registerValidatedServerOptions() {
-        // Named configurations are test instances and must not replace the running server's entry.
-        if (this != instance) return;
-        Map<String, Object> config = new HashMap<>(
-                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME));
-        config.put(IO_THREADS, ioThreads);
-        config.put(WORKER_THREADS, workerThreads);
-        config.put(BUFFER_SIZE, bufferSize);
-        config.put(BACKLOG, backlog);
-        config.put(SERVER_STRING, serverString);
-        config.put(ALWAYS_SET_DATE, alwaysSetDate);
-        config.put(MAX_TRANSFER_FILE_SIZE, maxTransferFileSize);
-        config.put(ALLOW_UNESCAPED_CHARACTERS_IN_URL, allowUnescapedCharactersInUrl);
-        config.put(SHUTDOWN_TIMEOUT, shutdownTimeout);
-        ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), config, masks);
+    /** Keep raw values and key presence except where validation corrected a configured option. */
+    private Map<String, Object> validatedConfig(Map<String, Object> rawConfig) {
+        // Never fall back to mappedConfig: it can contain decrypted credentials.
+        if (rawConfig == null) return null;
+        Map<String, Object> reportedConfig = new HashMap<>(rawConfig);
+        validatedOptions.forEach((key, value) -> {
+            if (reportedConfig.containsKey(key)) reportedConfig.put(key, value);
+        });
+        return reportedConfig;
     }
 
     private void loadData() {
