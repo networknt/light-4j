@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 
 import java.net.URI;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -132,6 +133,7 @@ public class Http2ClientConnectionPool {
                 tracked.put(owned, added);
                 List<CachedConnection> connections = connectionPool.computeIfAbsent(uriString, key -> new LinkedList<>());
                 connections.add(added);
+                added.owner = new WeakReference<>(connections);
                 logger.debug("Cached connection for uri: {}, per-uri count: {}, total tracked: {}", uri, connections.size(), tracked.size());
                 if (!connectionPool.containsKey(uriString)) retire(added);
                 else replaceDeadline(added, added.lifeStartTime + added.expireTime);
@@ -140,18 +142,23 @@ public class Http2ClientConnectionPool {
             owned.addCloseListener(ignored -> connectionClosed(registered));
             committed = true;
         } finally {
-            if (!committed && added != null) rollbackCache(uriString, added);
+            if (!committed && added != null) rollbackCache(added);
             closeRetiredConnections();
         }
     }
 
-    private synchronized void rollbackCache(String uri, CachedConnection added) {
+    private synchronized void rollbackCache(CachedConnection added) {
         tracked.remove(added.get(), added);
         cancelDeadline(added);
-        List<CachedConnection> connections = connectionPool.get(uri);
+        detachFromUri(added);
+    }
+
+    // Retain access order: LinkedHashMap.get() here would turn cleanup into apparent URI traffic.
+    private void detachFromUri(CachedConnection connection) {
+        List<CachedConnection> connections = connection.owner == null ? null : connection.owner.get();
         if (connections != null) {
-            connections.remove(added);
-            if (connections.isEmpty()) connectionPool.remove(uri);
+            connections.remove(connection);
+            if (connections.isEmpty()) connectionPool.remove(connection.uri, connections);
         }
     }
 
@@ -240,9 +247,10 @@ public class Http2ClientConnectionPool {
         }
     }
 
-    private void connectionClosed(CachedConnection connection) {
+    private synchronized void connectionClosed(CachedConnection connection) {
         tracked.remove(connection.get(), connection);
         cancelDeadline(connection);
+        detachFromUri(connection);
     }
 
     private void closeRetiredConnections() {
@@ -277,7 +285,7 @@ public class Http2ClientConnectionPool {
         Deadline previous = connection.deadline.getAndSet(next);
         if (previous != null) deadlines.remove(previous);
         deadlines.add(next);
-        // Native close can race registration without taking the pool monitor.
+        // Do not retain a deadline if its record is no longer tracked.
         if (connection.deadline.get() != next || tracked.get(connection.get()) != connection) deadlines.remove(next);
     }
 
@@ -308,11 +316,7 @@ public class Http2ClientConnectionPool {
             CachedConnection connection = deadline.connection;
             if (tracked.get(connection.get()) != connection || connection.deadline.get() != deadline) return;
             if (!connection.retired) {
-                List<CachedConnection> connections = connectionPool.get(connection.uri);
-                if (connections != null) {
-                    connections.remove(connection);
-                    if (connections.isEmpty()) connectionPool.remove(connection.uri);
-                }
+                detachFromUri(connection);
                 retire(connection);
             } else if (now >= connection.retiredAt + RETIREMENT_GRACE_MS) {
                 logger.debug("ParkedConnection expired: {}, outstanding borrowers: {}", connection.get(), connection.borrowers.get());
@@ -334,7 +338,7 @@ public class Http2ClientConnectionPool {
     private record Deadline(long at, long sequence, CachedConnection connection) implements Comparable<Deadline> {
         @Override public int compareTo(Deadline other) {
             int order = Long.compare(at, other.at);
-            return order != 0 ? order : Long.compare(sequence, other.sequence);
+            return order == 0 ? Long.compare(sequence, other.sequence) : order;
         }
     }
 
@@ -354,6 +358,7 @@ public class Http2ClientConnectionPool {
         private final AtomicInteger requestCount = new AtomicInteger();
         private final ClientConnection clientConnection;
         private final String uri;
+        private WeakReference<List<CachedConnection>> owner;
         private final AtomicReference<Deadline> deadline = new AtomicReference<>();
         private final long lifeStartTime;
         private final int maxReqCount;
