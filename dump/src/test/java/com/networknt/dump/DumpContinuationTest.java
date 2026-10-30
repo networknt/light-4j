@@ -23,7 +23,7 @@ class DumpContinuationTest {
         };
         HttpHandler root = enabled ? exchange -> HandlerContinuation.execute(exchange, (ex, task) -> {
             try { task.handleRequest(ex); }
-            catch (IllegalStateException e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+            catch (IllegalStateException _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
         }, handler) : handler;
         Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(root).build();
         try (HttpClient client = HttpClient.newHttpClient()) {

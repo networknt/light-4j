@@ -378,6 +378,7 @@ public class ProxyHandler implements HttpHandler {
         private boolean stopping;
         private volatile XnioExecutor.Key timeoutKey;
 
+        @SuppressWarnings("java:S1181") // Release the upstream stream before rethrowing fatal Errors unchanged.
         private ProxyContinuation(HttpServerExchange exchange, UnaryOperator<HttpHandler> boundary) {
             this.boundary = boundary;
             this.resumed = HandlerContinuation.task(exchange, boundary.apply(ex -> {
@@ -429,27 +430,6 @@ public class ProxyHandler implements HttpHandler {
             if (connection != null && !connection.getConnection().isMultiplexingSupported())
                 IoUtils.safeClose(connection.getConnection());
         }
-    }
-
-    private static ClientCallback<ClientExchange> boundaryCallback(HttpServerExchange exchange,
-            ProxyContinuation continuation, ClientCallback<ClientExchange> callback) {
-        return new ClientCallback<>() {
-            @Override public void completed(ClientExchange result) {
-                continuationTask(exchange, continuation, ex -> {
-                    if (ex.isComplete() || continuation.stopping) {
-                        cancelClientExchange(result);
-                        return;
-                    }
-                    continuation.request = result;
-                    callback.completed(result);
-                }).run();
-            }
-            @Override public void failed(IOException failure) {
-                continuationTask(exchange, continuation, ex -> {
-                    if (!ex.isComplete() && !continuation.stopping) callback.failed(failure);
-                }).run();
-            }
-        };
     }
 
     /** Ignore callbacks owned by a terminal response; terminate only unexpected commitment. */
@@ -989,8 +969,28 @@ public class ProxyHandler implements HttpHandler {
             }
         }
 
+        private ClientCallback<ClientExchange> boundaryCallback(ClientCallback<ClientExchange> callback) {
+            return new ClientCallback<>() {
+                @Override public void completed(ClientExchange result) {
+                    continuationTask(exchange, continuation, ex -> {
+                        if (ex.isComplete() || continuation.stopping) {
+                            cancelClientExchange(result);
+                            return;
+                        }
+                        continuation.request = result;
+                        callback.completed(result);
+                    }).run();
+                }
+                @Override public void failed(IOException failure) {
+                    continuationTask(exchange, continuation, ex -> {
+                        if (!ex.isComplete() && !continuation.stopping) callback.failed(failure);
+                    }).run();
+                }
+            };
+        }
+
         private void sendWithCallback(ClientRequest r, String host) {
-            this.clientConnection.getConnection().sendRequest(r, boundaryCallback(exchange, continuation, new ClientCallback<>() {
+            this.clientConnection.getConnection().sendRequest(r, boundaryCallback(new ClientCallback<>() {
 
                 @Override
                 public void completed(final ClientExchange result) {
@@ -1007,7 +1007,7 @@ public class ProxyHandler implements HttpHandler {
                     if (exchange.getConnection().isPushSupported() && result.getConnection().isPushSupported())
                         this.handleServerPush(result);
 
-                    result.setResponseListener(boundaryCallback(exchange, continuation, new ResponseCallback(exchange, continuation, proxyClientHandler, idempotentPredicate, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite)));
+                    result.setResponseListener(boundaryCallback(new ResponseCallback(ProxyAction.this)));
 
                     final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
 
@@ -1147,17 +1147,16 @@ public class ProxyHandler implements HttpHandler {
         private final int streamIdleTimeout;
         private final List<HttpString> streamResponseHeaderOverwrite;
 
-        private ResponseCallback(HttpServerExchange exchange, ProxyContinuation continuation, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules,
-                                 boolean streamingRequest, List<String> streamResponseContentTypes, int streamIdleTimeout, List<HttpString> streamResponseHeaderOverwrite) {
-            this.exchange = exchange;
-            this.continuation = continuation;
-            this.proxyClientHandler = proxyClientHandler;
-            this.idempotentPredicate = idempotentPredicate;
-            this.headerRewriteRules = headerRewriteRules;
-            this.streamingRequest = streamingRequest;
-            this.streamResponseContentTypes = streamResponseContentTypes;
-            this.streamIdleTimeout = streamIdleTimeout;
-            this.streamResponseHeaderOverwrite = streamResponseHeaderOverwrite;
+        private ResponseCallback(ProxyAction action) {
+            this.exchange = action.exchange;
+            this.continuation = action.continuation;
+            this.proxyClientHandler = action.proxyClientHandler;
+            this.idempotentPredicate = action.idempotentPredicate;
+            this.headerRewriteRules = action.headerRewriteRules;
+            this.streamingRequest = action.streamingRequest;
+            this.streamResponseContentTypes = action.streamResponseContentTypes;
+            this.streamIdleTimeout = action.streamIdleTimeout;
+            this.streamResponseHeaderOverwrite = action.streamResponseHeaderOverwrite;
         }
 
         @Override

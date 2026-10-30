@@ -51,7 +51,7 @@ class RequestInjectionContinuationTest {
         CountDownLatch suspended = new CountDownLatch(1);
         HandlerContinuation.Boundary boundary = (exchange, task) -> {
             try { task.handleRequest(exchange); }
-            catch (IOException e) { exchange.setStatusCode(409).getResponseSender().send("selected boundary"); }
+            catch (IOException _) { exchange.setStatusCode(409).getResponseSender().send("selected boundary"); }
         };
         Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setIoThreads(1)
                 .setHandler(exchange -> {
@@ -72,8 +72,16 @@ class RequestInjectionContinuationTest {
             int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
             try (Socket socket = new Socket("127.0.0.1", port)) {
                 socket.setSoTimeout(5000);
-                socket.getOutputStream().write(("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n"
-                        + "Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n1\r\n{\r\n").getBytes(StandardCharsets.UTF_8));
+                socket.getOutputStream().write(("""
+                        POST / HTTP/1.1\r
+                        Host: localhost\r
+                        Content-Type: application/json\r
+                        Transfer-Encoding: chunked\r
+                        Connection: close\r
+                        \r
+                        1\r
+                        {\r
+                        """).getBytes(StandardCharsets.UTF_8));
                 socket.getOutputStream().flush();
                 assertTrue(suspended.await(5, TimeUnit.SECONDS));
                 socket.getOutputStream().write("1\r\n}\r\n0\r\n\r\n".getBytes(StandardCharsets.UTF_8));

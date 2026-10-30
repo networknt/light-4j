@@ -26,7 +26,7 @@
     {
       "case": "empty_request_empty_caller",
       "sample": 0,
-      "bytes_per_frame": 64.8313
+      "bytes_per_frame": 67.9083
     },
     {
       "case": "empty_request_empty_caller",
@@ -56,7 +56,7 @@
     {
       "case": "three_fields_different_caller",
       "sample": 0,
-      "bytes_per_frame": 891.0095
+      "bytes_per_frame": 895.7879
     },
     {
       "case": "three_fields_different_caller",
@@ -71,7 +71,7 @@
     {
       "case": "three_fields_different_caller_same_size",
       "sample": 0,
-      "bytes_per_frame": 1180.0388
+      "bytes_per_frame": 1164.5655
     },
     {
       "case": "three_fields_different_caller_same_size",
@@ -108,8 +108,8 @@
     "twelve_fields_different_caller": 1360.0
   },
   "source_sha256": {
-    "handler/src/main/java/com/networknt/handler/HandlerContinuation.java": "d4facd6530d2fe2de3e10962cfc91db7e25f73cde2a663542bb2e18be159e1ed",
+    "handler/src/main/java/com/networknt/handler/HandlerContinuation.java": "b650d3da1471fe7c96cab45e9458dc3b80bd0cc8143767ed87acad1da748fc01",
     "handler/src/main/java/com/networknt/handler/RequestMdcContext.java": "e9788732232232700d33a63ea24eeb0a6a52899dc0a5aa9730f0bf5b7b6692c5",
-    "proxy-handler/src/main/java/com/networknt/handler/ProxyHandler.java": "db186cd98d2e2579f32f71b7594b9706344489745a1332d9264a03d2f8b1e50c"
+    "proxy-handler/src/main/java/com/networknt/handler/ProxyHandler.java": "88195df98d81d55ea70549127fa7258b5464983945e4eae68d9531bd1fa83927"
   }
 }

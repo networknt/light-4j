@@ -291,8 +291,8 @@ class HandlerContinuationTest {
         IOException failure = new IOException("failure");
         HttpHandler unwrapped = HandlerContinuation.capture(exchange, ignored -> { throw failure; });
         HandlerContinuation.Boundary selected = (ex, task) -> {
-            try { task.handleRequest(ex); }
-            catch (IOException e) { fail("A captured absent boundary must hide the active boundary", e); }
+            assertDoesNotThrow(() -> task.handleRequest(ex),
+                    "A captured absent boundary must hide the active boundary");
         };
         HandlerContinuation.execute(exchange, selected, ex ->
                 assertSame(failure, assertThrows(IOException.class, () -> unwrapped.handleRequest(ex))));

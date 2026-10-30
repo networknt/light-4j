@@ -19,6 +19,7 @@ package com.networknt.exception;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -99,44 +100,36 @@ public class ExceptionHandler implements MiddlewareHandler {
             continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
-            if(exchange.isResponseChannelAvailable()) {
-                //handle exceptions
-                if(e instanceof RuntimeException) {
-                    // check if it is FrameworkException which is subclass of RuntimeException.
-                    if(e instanceof FrameworkException) {
-                        FrameworkException fe = (FrameworkException)e;
-                        exchange.setStatusCode(fe.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(fe.getStatus().toString());
-                        logger.error(fe.getStatus().toString(), e);
-                    } else {
-                        setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
-                    }
-                } else {
-                    if(e instanceof ApiException) {
-                        ApiException ae = (ApiException)e;
-                        exchange.setStatusCode(ae.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(ae.getStatus().toString());
-                        logger.error(ae.getStatus().toString(), e);
-                    } else if(e instanceof ClientException){
-                        ClientException ce = (ClientException)e;
-                        if(ce.getStatus().getStatusCode() == 0){
-                            setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                        } else {
-                            exchange.setStatusCode(ce.getStatus().getStatusCode());
-                            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                            exchange.getResponseSender().send(ce.getStatus().toString());
-                        }
-
-                    } else {
-                        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                    }
-                }
-            }
+            if (exchange.isResponseChannelAvailable()) writeFailureResponse(exchange, e);
         } finally {
             if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
         }
+    }
+
+    private void writeFailureResponse(HttpServerExchange exchange, Throwable failure) {
+        if (failure instanceof RuntimeException) {
+            if (failure instanceof FrameworkException framework) {
+                sendStatus(exchange, framework.getStatus());
+                logger.error(framework.getStatus().toString(), failure);
+            } else setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
+            return;
+        }
+        if (failure instanceof ApiException api) {
+            sendStatus(exchange, api.getStatus());
+            logger.error(api.getStatus().toString(), failure);
+            return;
+        }
+        if (failure instanceof ClientException && ClientException.getStatus().getStatusCode() != 0) {
+            sendStatus(exchange, ClientException.getStatus());
+            return;
+        }
+        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+    }
+
+    private static void sendStatus(HttpServerExchange exchange, Status status) {
+        exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseSender().send(status.toString());
     }
 
     @Override

@@ -68,7 +68,7 @@ class HmacHandlerIntegrationTest {
         if (enabled) chainWrapper = handler -> exchange ->
                 com.networknt.handler.HandlerContinuation.execute(exchange, (ex, task) -> {
                     try { task.handleRequest(ex); }
-                    catch (java.io.IOException e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+                    catch (java.io.IOException _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
                 }, handler);
         try (RunningServer server = start(context, new RequestInterceptor[]{context.interceptor},
                 exchange -> { throw new java.io.IOException("callee failed"); })) {
