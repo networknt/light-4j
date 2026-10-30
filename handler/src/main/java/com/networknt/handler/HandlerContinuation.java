@@ -140,11 +140,11 @@ public final class HandlerContinuation {
 
     /** Give a child exchange its own state while retaining the captured policy and request MDC. */
     public static UnaryOperator<HttpHandler> inherit(HttpServerExchange child, UnaryOperator<HttpHandler> captured) {
-        if (!(captured instanceof CapturedBoundary parent))
+        if (!(captured instanceof CapturedBoundary(var boundary, var parentState)))
             throw new IllegalArgumentException("Expected a captured continuation policy");
-        RequestState state = RequestState.initialize(child, parent.state().mdc.snapshot());
-        state.rememberBoundary(parent.boundary());
-        return new CapturedBoundary(parent.boundary(), state);
+        RequestState state = RequestState.initialize(child, parentState.mdc.snapshot());
+        state.rememberBoundary(boundary);
+        return new CapturedBoundary(boundary, state);
     }
 
     private static void restoreFrame(Frame previous) {
