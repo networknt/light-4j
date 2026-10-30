@@ -66,7 +66,7 @@ class HmacHandlerIntegrationTest {
     void replayCompletionRetainsExceptionBoundary(boolean enabled) throws Exception {
         Context context = context("continuation-" + enabled);
         if (enabled) chainWrapper = handler -> exchange ->
-                com.networknt.handler.HandlerContinuation.execute(exchange, (ex, task) -> {
+                com.networknt.handler.HandlerContinuation.execute(exchange, task -> ex -> {
                     try { task.handleRequest(ex); }
                     catch (java.io.IOException _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
                 }, handler);

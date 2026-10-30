@@ -268,13 +268,14 @@ MDC updates use one stable RequestMdcContext holder with an atomic immutable-map
 reference. The first boundary execution or capture initializes that holder
 before its asynchronous hand-off; addHandlerMDCContext can also initialize it on
 first serial use. Later updates replace only the holder's snapshot, never its
-attachment. An exchange-owned RequestState retains the entry exception policy
-and MDC holder. A synchronized weak-key/weak-value index supports off-frame lookups
-without reading Undertow's mutable attachment map; the exchange attachment owns the
-state's lifetime. The index lock covers lookup/initialization only, never handlers
-or callbacks. Captured frames read their holder directly. Thread-local frames only
-select nested policy overrides and scope MDC; off-frame capture retains the entry
-policy. Custom asynchronous code must initialize/capture before hand-off.
+attachment. RequestState stores only MDC in a concurrent weak-identity index; it never stores
+an exception policy. Completion removes the entry immediately, with weak-key cleanup
+for abandoned exchanges. Captured scopes read the holder directly, avoiding index
+lookups on callback resumes. An explicitly retained HandlerContinuation.Scope carries
+the lexical policy across hand-offs; a new capture outside its frame has no policy.
+This prevents an earlier sub-pipeline boundary from shadowing a later one. Native
+Undertow HandlerWrapper policies are applied at execution, not capture time.
+Custom asynchronous code must initialize/capture before hand-off.
 The Map-typed attachment key remains compatible with read-only consumers; direct
 attachment replacement or mutation is unsupported after initialization.
 Proxy callbacks use this scope rather than the unscoped
@@ -293,11 +294,13 @@ stream without appending an error. Undertow's HTTP/2 ServerConnection.close()
 sends RST_STREAM for that stream, preserving healthy siblings. Late failures on
 completed exchanges do not rewrite a response or close a reused connection.
 The neutral Runnable adapter attempts a 500 before commitment or a stream reset
-after commitment before propagating the original Error. Failed writes/resets are
-suppressed on that Error and cannot replace it; selected exception policies keep
+after commitment before propagating the original Error. Failed writes/resets cannot replace the original Error; selected exception policies keep
 their existing handling behavior. Ordinary exceptions use the same guarded cleanup.
 Proxy callbacks execute on the downstream exchange's I/O thread, without a
-callback-wide monitor or shared mutable callback slot. The public `CONNECTION`
+callback-wide monitor or shared mutable callback slot. A per-request FIFO queues
+both foreign-thread and owner-thread arrivals, preserving submission order. Executor
+rejection retires pending resources and sends the failure through the selected policy;
+accepted work that fails replays only its failure through that policy. The public `CONNECTION`
 attachment is populated when a connection is accepted. Retry generations discard
 late acquisition/send/response callbacks and release the previous attempt's resources
 before accepting a new connection. A proxy-generated terminal response is marked

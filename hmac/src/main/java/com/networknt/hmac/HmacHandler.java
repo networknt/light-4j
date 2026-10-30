@@ -132,7 +132,7 @@ public final class HmacHandler implements MiddlewareHandler, HandlerChainValidat
 
         var continuation = HandlerContinuation.capture(exchange);
         exchange.dispatch();
-        stage.whenComplete((outcome, failure) -> exchange.dispatch(continuation.apply(completed -> {
+        stage.whenComplete((outcome, failure) -> exchange.dispatch(continuation.wrap(completed -> {
             if (failure != null || outcome == null) {
                 unavailable(completed, rule, store, "reserve_failed");
             } else if (outcome instanceof ReserveOutcome.Duplicate) {

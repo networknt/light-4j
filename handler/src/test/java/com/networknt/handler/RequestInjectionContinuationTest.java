@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HandlerWrapper;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Timeout;
@@ -49,7 +50,7 @@ class RequestInjectionContinuationTest {
             throw new IOException("downstream");
         });
         CountDownLatch suspended = new CountDownLatch(1);
-        HandlerContinuation.Boundary boundary = (exchange, task) -> {
+        HandlerWrapper boundary = task -> exchange -> {
             try { task.handleRequest(exchange); }
             catch (IOException _) { exchange.setStatusCode(409).getResponseSender().send("selected boundary"); }
         };

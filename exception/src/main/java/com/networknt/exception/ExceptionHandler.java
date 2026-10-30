@@ -22,6 +22,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ import org.slf4j.MDC;
  *
  * @author Steve Hu
  */
-public class ExceptionHandler implements MiddlewareHandler {
+public class ExceptionHandler implements MiddlewareHandler, HandlerWrapper {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     private String configName = ExceptionConfig.CONFIG_NAME;
@@ -82,7 +83,7 @@ public class ExceptionHandler implements MiddlewareHandler {
         }
 
         try {
-            HandlerContinuation.execute(exchange, this::handleContinuation,
+            HandlerContinuation.execute(exchange, this,
                     ex -> Handler.next(ex, next));
         } finally {
             // Initial chain execution owns request-thread cleanup. Resumed frames
@@ -91,7 +92,6 @@ public class ExceptionHandler implements MiddlewareHandler {
         }
     }
 
-    @SuppressWarnings("java:S3776") // Preserve the established exception-policy branches while adapting asynchronous frames.
     private void handleContinuation(HttpServerExchange exchange, HttpHandler continuation) throws Exception {
         // Log each executing frame, including asynchronous continuations.
         String path = exchange.getRequestPath();
@@ -101,42 +101,36 @@ public class ExceptionHandler implements MiddlewareHandler {
             continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
-            if(exchange.isResponseChannelAvailable()) {
-                //handle exceptions
-                if(e instanceof RuntimeException) {
-                    // check if it is FrameworkException which is subclass of RuntimeException.
-                    if(e instanceof FrameworkException fe) {
-                        exchange.setStatusCode(fe.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(fe.getStatus().toString());
-                        if (logger.isErrorEnabled()) logger.error(fe.getStatus().toString(), e);
-                    } else {
-                        setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
-                    }
-                } else {
-                    if(e instanceof ApiException ae) {
-                        exchange.setStatusCode(ae.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(ae.getStatus().toString());
-                        if (logger.isErrorEnabled()) logger.error(ae.getStatus().toString(), e);
-                    } else if(e instanceof ClientException){
-                        Status clientStatus = ClientException.getStatus();
-                        if(clientStatus.getStatusCode() == 0){
-                            setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                        } else {
-                            exchange.setStatusCode(clientStatus.getStatusCode());
-                            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                            exchange.getResponseSender().send(clientStatus.toString());
-                        }
-
-                    } else {
-                        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                    }
-                }
-            }
+            if (exchange.isResponseChannelAvailable()) writeFailure(exchange, e);
         } finally {
             if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
         }
+    }
+
+    @Override
+    public HttpHandler wrap(HttpHandler continuation) {
+        return exchange -> handleContinuation(exchange, continuation);
+    }
+
+    private void writeFailure(HttpServerExchange exchange, Throwable failure) {
+        if (failure instanceof FrameworkException framework) {
+            sendTypedStatus(exchange, framework.getStatus(), failure, true);
+        } else if (failure instanceof RuntimeException) {
+            setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
+        } else if (failure instanceof ApiException api) {
+            sendTypedStatus(exchange, api.getStatus(), failure, true);
+        } else if (failure instanceof ClientException) {
+            Status status = ClientException.getStatus();
+            if (status.getStatusCode() == 0) setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+            else sendTypedStatus(exchange, status, failure, false);
+        } else setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+    }
+
+    private static void sendTypedStatus(HttpServerExchange exchange, Status status, Throwable failure, boolean log) {
+        exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseSender().send(status.toString());
+        if (log && logger.isErrorEnabled()) logger.error(status.toString(), failure);
     }
 
     @Override
