@@ -236,10 +236,10 @@ state. Unexpected committed-response callbacks reset only the affected HTTP/2 st
 Local allocation probes are separate qualification artifacts, not repository source
 or CI qualification; gateway performance remains an explicit review gate.
 The review-11 ThreadMXBean probe includes request setup and four callbacks: both
-branches measured 1.25-1.31 KB with empty MDC and 2.97-3.04 KB with three fields
+branches measured 1.25-1.31 KB with empty MDC and 2.97-3.40 KB with three fields
 (20k warm-up, three 20k samples). A separate real HTTP/1.1 loopback probe includes
 ExceptionHandler, ProxyHandler, upstream transport and the Java HTTP client; its
-129-132 KB/request totals are not attributable solely to continuation overhead.
+129-133 KB/request totals are not attributable solely to continuation overhead.
 Neither probe is a production throughput qualification.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
