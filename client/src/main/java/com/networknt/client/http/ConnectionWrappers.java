@@ -11,21 +11,19 @@ import java.util.concurrent.ConcurrentMap;
 
 /** Weak transport keys and views avoid rooting transports; retirement state outlives collected views. */
 final class ConnectionWrappers {
-    private static final ConnectionWrappers SHARED = new ConnectionWrappers(Cleaner.create(), new ConcurrentHashMap<>());
+    static final ConnectionWrappers INSTANCE = new ConnectionWrappers(Cleaner.create());
     private final Cleaner cleaner;
-    private final ConcurrentMap<WeakReference<ClientConnection>, Entry> entries;
+    private final ConcurrentMap<Key, Entry> entries = new ConcurrentHashMap<>();
 
-    ConnectionWrappers(Cleaner cleaner, ConcurrentMap<WeakReference<ClientConnection>, Entry> entries) {
-        this.cleaner = cleaner;
-        this.entries = entries;
-    }
-    static IoThreadClientConnection wrap(ClientConnection raw) { return SHARED.getOrCreate(raw); }
-    static IoThreadClientConnection find(ClientConnection connection) { return SHARED.lookup(connection); }
+    ConnectionWrappers(Cleaner cleaner) { this.cleaner = cleaner; }
 
     IoThreadClientConnection getOrCreate(ClientConnection raw) {
-        Entry entry = entries.computeIfAbsent(new Key(raw, entries), key -> {
-            // The registered action is the stored weak key, never a closure capturing raw or a view.
-            cleaner.register(raw, (Key) key);
+        Entry entry = entries.computeIfAbsent(new Key(raw), key -> {
+            ConcurrentMap<Key, Entry> records = entries;
+            cleaner.register(raw, () -> {
+                key.clear();
+                records.remove(key);
+            });
             return new Entry();
         });
         return entry.getOrCreateView(raw);
@@ -33,7 +31,7 @@ final class ConnectionWrappers {
     // Lookup does not create a view, register listeners, or touch the raw transport.
     IoThreadClientConnection lookup(ClientConnection connection) {
         if (connection instanceof IoThreadClientConnection owned) return owned;
-        Entry entry = entries.get(new Key(connection, entries));
+        Entry entry = entries.get(new Key(connection));
         return entry == null ? null : entry.view.get().get();
     }
 
@@ -53,15 +51,12 @@ final class ConnectionWrappers {
         }
     }
 
-    private static final class Key extends WeakReference<ClientConnection> implements Runnable {
+    private static final class Key extends WeakReference<ClientConnection> {
         private final int hash;
-        private final ConcurrentMap<WeakReference<ClientConnection>, Entry> owner;
-        Key(ClientConnection raw, ConcurrentMap<WeakReference<ClientConnection>, Entry> owner) {
+        Key(ClientConnection raw) {
             super(raw);
             hash = System.identityHashCode(raw);
-            this.owner = owner;
         }
-        @Override public void run() { owner.remove(this); }
         @Override public int hashCode() { return hash; }
         @Override public boolean equals(Object other) {
             if (this == other) return true;
