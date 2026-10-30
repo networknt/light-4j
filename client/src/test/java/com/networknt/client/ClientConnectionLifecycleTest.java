@@ -60,7 +60,7 @@ class ClientConnectionLifecycleTest {
         owner.execute(() -> {
             entered.countDown();
             try { release.await(5, TimeUnit.SECONDS); }
-            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            catch (InterruptedException _) { Thread.currentThread().interrupt(); }
         });
         assertTrue(entered.await(5, TimeUnit.SECONDS));
         try {
@@ -85,7 +85,7 @@ class ClientConnectionLifecycleTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void throwingCompletedDoesNotCauseASecondTerminalCallback(boolean error) throws Exception {
+    void throwingCompletedDoesNotCauseASecondTerminalCallback(boolean error) {
         Throwable problem = error ? new AssertionError("callback failed") : new IllegalStateException("callback failed");
         RecordingCallback callback = new RecordingCallback(problem);
         doAnswer(invocation -> {
@@ -100,7 +100,7 @@ class ClientConnectionLifecycleTest {
     }
 
     @Test
-    void errorBeforeCallbackIsDeliveredAsOneFailure() throws Exception {
+    void errorBeforeCallbackIsDeliveredAsOneFailure() {
         AssertionError problem = new AssertionError("send failed");
         doThrow(problem).when(delegate).sendRequest(any(), any());
         RecordingCallback callback = new RecordingCallback(null);

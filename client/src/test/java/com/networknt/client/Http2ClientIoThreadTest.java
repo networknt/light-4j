@@ -55,7 +55,7 @@ class Http2ClientIoThreadTest {
     @ParameterizedTest
     @CsvSource({"false,false,false", "false,false,true", "false,true,false", "false,true,true",
                 "true,false,false", "true,false,true", "true,true,false", "true,true,true"})
-    void sendsOnOwnerForWarmAndColdCalls(boolean warm, boolean body, boolean explicitHttp2) throws Exception {
+    void sendsOnOwnerForWarmAndColdCalls(boolean warm, boolean body, boolean explicitHttp2) {
         IOException failure = new IOException("expected send failure");
         AtomicReference<Thread> sendThread = new AtomicReference<>();
         doAnswer(invocation -> {
@@ -82,7 +82,7 @@ class Http2ClientIoThreadTest {
         owner.execute(() -> {
             blocked.countDown();
             try { release.await(5, TimeUnit.SECONDS); }
-            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            catch (InterruptedException _) { Thread.currentThread().interrupt(); }
         });
         assertTrue(blocked.await(5, TimeUnit.SECONDS));
         try {
@@ -105,7 +105,7 @@ class Http2ClientIoThreadTest {
     }
 
     @Test
-    void connectionFailureRemainsExceptional() throws Exception {
+    void connectionFailureRemainsExceptional() {
         CompletableFuture<ClientResponse> response = call(client, false, false);
         IOException failure = new IOException("connect failed");
         client.connected.completeExceptionally(failure);
@@ -129,7 +129,7 @@ class Http2ClientIoThreadTest {
     }
 
     @Test
-    void dispatchRejectionCompletesFutureInsteadOfHanging() throws Exception {
+    void dispatchRejectionCompletesFutureInsteadOfHanging() {
         XnioIoThread stopped = mock(XnioIoThread.class);
         when(connection.getIoThread()).thenReturn(stopped);
         doThrow(new RejectedExecutionException("stopped")).when(stopped).execute(any(Runnable.class));

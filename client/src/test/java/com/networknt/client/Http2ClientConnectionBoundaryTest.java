@@ -51,7 +51,7 @@ class Http2ClientConnectionBoundaryTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        connections.forEach(connection -> { try { connection.close(); } catch (IOException ignored) { } });
+        connections.forEach(connection -> { try { connection.close(); } catch (IOException _) { /* Continue closing the remaining fixture connections. */ } });
         connections.clear();
         Http2ClientConnectionPool.getInstance().clear();
         worker.shutdown();

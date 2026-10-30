@@ -43,10 +43,7 @@ final class ConnectionCloseListeners {
         for (ChannelListener<? super ClientConnection> listener : snapshot) invoke(listener);
     }
     private void invoke(ChannelListener<? super ClientConnection> listener) {
-        try { listener.handleEvent(connection); }
-        catch (Throwable error) {
-            if (IoThreadClientConnection.isFatal(error)) IoThreadClientConnection.rethrow(error);
-            logger.error("Client close listener failed", error);
-        }
+        ClientConnectionOperations.runWithFailureHandler(() -> listener.handleEvent(connection),
+                error -> logger.error("Client close listener failed", error));
     }
 }

@@ -11,13 +11,9 @@ public abstract class SafeClientCallback implements ClientCallback<ClientExchang
     @Override public final void completed(ClientExchange result) {
         if (!notified.compareAndSet(false, true)) return;
         ClientExchange owned = IoThreadClientConnection.ownExchange(result);
-        try { completedSafely(owned); }
-        catch (Throwable error) {
-            try {
+        ClientConnectionOperations.runWithFailureHandler(() -> completedSafely(owned), error ->
                 IoThreadClientConnection.abortExchange(owned, error,
-                        () -> failedSafely(IoThreadClientConnection.asIOException(error)));
-            } finally { if (IoThreadClientConnection.isFatal(error)) IoThreadClientConnection.rethrow(error); }
-        }
+                        () -> failedSafely(IoThreadClientConnection.asIOException(error))));
     }
     @Override public final void failed(IOException error) {
         if (notified.compareAndSet(false, true)) failedSafely(error);
