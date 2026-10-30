@@ -24,15 +24,16 @@ final class ConnectionWrappers {
         }
         IoThreadClientConnection view = entry.view.get();
         if (view == null) {
-            view = new IoThreadClientConnection(raw, entry.closed);
+            view = new IoThreadClientConnection(raw, entry);
             entry.view = new WeakReference<>(view);
         }
         return view;
     }
 
-    private static final class Entry {
+    static final class Entry {
         // Retirement persists while the raw transport is reachable, even if its view is collected.
         final AtomicBoolean closed = new AtomicBoolean();
+        volatile java.io.IOException closeReason;
         WeakReference<IoThreadClientConnection> view = new WeakReference<>(null);
     }
     private static final class Key extends WeakReference<ClientConnection> {

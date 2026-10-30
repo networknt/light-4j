@@ -22,6 +22,7 @@ class IoThreadClientConnectionTest {
     private XnioIoThread owner;
     private ClientConnection nativeConnection;
     private IoThreadClientConnection connection;
+    private ChannelListener<ClientConnection> nativeCloseListener;
     private final AtomicBoolean open = new AtomicBoolean(true);
 
     @BeforeEach void setUp() throws Exception {
@@ -31,7 +32,10 @@ class IoThreadClientConnectionTest {
         when(nativeConnection.getIoThread()).thenReturn(owner);
         when(nativeConnection.isOpen()).thenAnswer(ignored -> open.get());
         doAnswer(ignored -> { open.set(false); return null; }).when(nativeConnection).close();
+        doAnswer(invocation -> { nativeCloseListener = invocation.getArgument(0); return null; })
+                .when(nativeConnection).addCloseListener(any());
         connection = IoThreadClientConnection.wrap(nativeConnection);
+        drainOwner();
     }
 
     @AfterEach void tearDown() throws Exception {
@@ -103,7 +107,7 @@ class IoThreadClientConnectionTest {
     }
 
     @ParameterizedTest @ValueSource(strings = {"supports", "get", "set", "upgrade", "request", "response"})
-    void synchronousIoOperationsRejectNonOwnerCalls(String operation) throws Exception {
+    void synchronousIoOperationsDelegateFromCallingThread(String operation) throws Exception {
         ClientExchange exchange = mock(ClientExchange.class);
         CompletableFuture<ClientExchange> exchangeFuture = new CompletableFuture<>();
         doAnswer(invocation -> {
@@ -122,7 +126,7 @@ class IoThreadClientConnectionTest {
             case "request" -> owned::getRequestChannel;
             default -> owned::getResponseChannel;
         };
-        assertThrows(IllegalStateException.class, call);
+        assertDoesNotThrow(call);
     }
 
     @ParameterizedTest @ValueSource(booleans = {false, true})
@@ -208,12 +212,9 @@ class IoThreadClientConnectionTest {
     }
 
     @Test void nativeCloseEventUsesCanonicalIdentityAndNotifiesOnce() throws Exception {
-        CompletableFuture<ChannelListener<ClientConnection>> bridge = new CompletableFuture<>();
-        doAnswer(invocation -> { bridge.complete(invocation.getArgument(0)); return null; })
-                .when(nativeConnection).addCloseListener(any());
         AtomicInteger count = new AtomicInteger();
         connection.addCloseListener(closed -> { assertSame(connection, closed); count.incrementAndGet(); });
-        ChannelListener<ClientConnection> listener = bridge.get(5, TimeUnit.SECONDS);
+        ChannelListener<ClientConnection> listener = nativeCloseListener;
         onOwner(() -> { open.set(false); listener.handleEvent(nativeConnection); listener.handleEvent(nativeConnection); return null; });
         assertFalse(connection.isOpen());
         assertEquals(1, count.get());
@@ -232,8 +233,13 @@ class IoThreadClientConnectionTest {
         assertTrue(entered.await(5, TimeUnit.SECONDS));
         AtomicInteger count = new AtomicInteger();
         try {
-            connection.addCloseListener(closed -> count.incrementAndGet());
-            open.set(false); // transport shutdown before queued native-listener installation
+            ClientConnection fresh = mock(ClientConnection.class);
+            AtomicBoolean freshOpen = new AtomicBoolean(true);
+            when(fresh.getIoThread()).thenReturn(owner);
+            when(fresh.isOpen()).thenAnswer(ignored -> freshOpen.get());
+            IoThreadClientConnection pending = IoThreadClientConnection.wrap(fresh);
+            pending.addCloseListener(closed -> count.incrementAndGet());
+            freshOpen.set(false); // transport shutdown before queued native-listener installation
         } finally { release.countDown(); }
         drainOwner();
         assertEquals(1, count.get());
@@ -324,6 +330,38 @@ class IoThreadClientConnectionTest {
             return null;
         });
         assertEquals(2, callbacks.get());
+    }
+
+    @Test void abortedExchangeKeepsDelegateMetadataAndChannelAccess() throws Exception {
+        when(nativeConnection.isMultiplexingSupported()).thenReturn(true);
+        ClientExchange raw = mock(ClientExchange.class);
+        StreamSinkChannel request = mock(StreamSinkChannel.class);
+        StreamSourceChannel response = mock(StreamSourceChannel.class);
+        ClientResponse metadata = new ClientResponse(200, "OK", io.undertow.util.Protocols.HTTP_2_0);
+        when(raw.getRequestChannel()).thenReturn(request);
+        when(raw.getResponseChannel()).thenReturn(response);
+        when(raw.getResponse()).thenReturn(metadata);
+        doAnswer(invocation -> {
+            invocation.<ClientCallback<ClientExchange>>getArgument(1).completed(raw);
+            return null;
+        }).when(nativeConnection).sendRequest(any(), any());
+        com.networknt.client.http.RequestSubmission submission = new com.networknt.client.http.RequestSubmission();
+        CompletableFuture<ClientExchange> captured = new CompletableFuture<>();
+        connection.sendRequest(new ClientRequest(), new ClientCallback<>() {
+            public void completed(ClientExchange result) { captured.complete(result); }
+            public void failed(IOException error) { captured.completeExceptionally(error); }
+        }, submission);
+        ClientExchange owned = captured.get(5, TimeUnit.SECONDS);
+        assertTrue(submission.cancel());
+        drainOwner();
+        assertSame(metadata, owned.getResponse());
+        assertSame(request, owned.getRequestChannel());
+        assertSame(response, owned.getResponseChannel());
+        io.undertow.util.AttachmentKey<String> key = io.undertow.util.AttachmentKey.create(String.class);
+        owned.putAttachment(key, "value");
+        verify(raw).putAttachment(key, "value");
+        owned.setContinueHandler(null);
+        owned.setPushHandler(null);
     }
 
     private <T> T onOwner(Callable<T> operation) throws Exception {

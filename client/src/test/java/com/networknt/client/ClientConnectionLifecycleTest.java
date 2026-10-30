@@ -44,6 +44,9 @@ class ClientConnectionLifecycleTest {
         when(delegate.isOpen()).thenReturn(true);
         guarded = (ClientConnection) new SimpleUndertowConnection(delegate).getRawConnection();
         Http2ClientConnectionPool.getInstance().clear();
+        CompletableFuture<Void> bridgeInstalled = new CompletableFuture<>();
+        owner.execute(() -> bridgeInstalled.complete(null));
+        bridgeInstalled.get(5, TimeUnit.SECONDS);
     }
 
     @AfterEach
