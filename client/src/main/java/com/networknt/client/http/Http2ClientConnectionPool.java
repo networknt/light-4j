@@ -19,7 +19,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * URI LRU pool. Ordinary retirement has a 100-second grace; maintenance quarantine waits for borrowers.
+ * URI LRU pool. Retired and quarantined transports drain borrowers for at most 100 seconds.
  * @author Jiachen Sun
  */
 public class Http2ClientConnectionPool {
@@ -284,7 +284,7 @@ public class Http2ClientConnectionPool {
     }
 
     private void releaseRetired(CachedConnection connection) {
-        if (connection.borrowers.get() == 0) queueClose(connection);
+        if (connection.borrowers.get() == 0 || !connection.get().isOpen()) queueClose(connection);
     }
 
     private void queueClose(CachedConnection connection) {
@@ -458,11 +458,14 @@ public class Http2ClientConnectionPool {
         cancelDeadline(connection);
         if (connection.closedCleanup) connection.closedCleanup = false;
         else {
-            // Maintenance failure does not establish transport failure. Stop selection and drain.
+            // Use this run's timestamp, avoiding the clock/path that exhausted its retry budget.
+            // Maintenance failure starts bounded draining, rather than closing active streams now.
+            if (!connection.retired) connection.retiredAt = now;
             connection.retired = true;
             connection.status = ConnectionStatus.CLOSE;
             releaseBucketMember(connection);
-            releaseRetired(connection);
+            replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
+            if (connection.borrowers.get() == 0) queueClose(connection);
         }
         logger.error("Stopping client connection maintenance after {} failures", failures, error);
     }
