@@ -109,14 +109,16 @@ public class ExceptionHandler implements MiddlewareHandler {
     private void writeFailureResponse(HttpServerExchange exchange, Throwable failure) {
         if (failure instanceof RuntimeException) {
             if (failure instanceof FrameworkException framework) {
-                sendStatus(exchange, framework.getStatus());
-                logger.error(framework.getStatus().toString(), failure);
+                Status status = framework.getStatus();
+                sendStatus(exchange, status);
+                logger.error("{}", status, failure);
             } else setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
             return;
         }
         if (failure instanceof ApiException api) {
-            sendStatus(exchange, api.getStatus());
-            logger.error(api.getStatus().toString(), failure);
+            Status status = api.getStatus();
+            sendStatus(exchange, status);
+            logger.error("{}", status, failure);
             return;
         }
         if (failure instanceof ClientException && ClientException.getStatus().getStatusCode() != 0) {
