@@ -312,14 +312,18 @@ class Http2ClientPoolRetirementTest {
         verify(due).close();
     }
 
-    @Test void permanentlyFailingRetirementBacksOffThenClosesOnce() throws Exception {
+    @ParameterizedTest @ValueSource(ints = {0, 1, 3})
+    void permanentlyFailingRetirementDrainsBorrowersBeforeClosing(int borrowers) throws Exception {
         AtomicBoolean fail = new AtomicBoolean();
         pool = new Http2ClientConnectionPool(request, () -> {
             if (fail.get() && Thread.holdsLock(pool)) throw new AssertionError("permanent retirement failure");
             return clock.get();
         });
         ClientConnection raw = transport();
-        pool.cacheConnection(URI.create("https://failure.invalid"), raw);
+        URI uri = URI.create("https://failure.invalid");
+        pool.cacheConnection(uri, raw);
+        if (borrowers == 0) pool.resetConnectionStatus(raw);
+        for (int i = 1; i < borrowers; i++) assertNotNull(pool.getConnection(uri));
         Logger logger = (Logger) LoggerFactory.getLogger(Http2ClientConnectionPool.class);
         Level previous = logger.getLevel();
         ListAppender<ILoggingEvent> events = new ListAppender<>();
@@ -340,6 +344,16 @@ class Http2ClientPoolRetirementTest {
             }
             fail.set(false);
             drainOwner();
+            assertNull(pool.getConnection(uri));
+            if (borrowers > 0) {
+                assertTrue(IoThreadClientConnection.wrap(raw).isOpen());
+                verify(raw, never()).close();
+                for (int i = 0; i < borrowers; i++) {
+                    pool.resetConnectionStatus(raw);
+                    drainOwner();
+                    if (i + 1 < borrowers) verify(raw, never()).close();
+                }
+            }
             verify(raw).close();
             assertEquals(0, pool.numberOfConnections());
             pool.reapExpiredConnections();
@@ -408,6 +422,63 @@ class Http2ClientPoolRetirementTest {
             logger.setLevel(previous);
             events.stop();
         }
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void closedUriDoesNotEvictALiveUriBeforeMetadataCleanup(boolean multiplexed) throws Exception {
+        URI first = URI.create("https://live.invalid");
+        URI closed = URI.create("https://closed-slot.invalid");
+        URI next = URI.create("https://next.invalid");
+        ClientConnection live = transport();
+        when(live.isMultiplexingSupported()).thenReturn(multiplexed);
+        pool.cacheConnection(first, live);
+        pool.resetConnectionStatus(live);
+        ClientConnection dead = transport();
+        pool.cacheConnection(closed, dead);
+        IoThreadClientConnection.wrap(dead).close();
+        drainOwner(); // Do not run the reaper: the closed notice is still queued.
+        pool.cacheConnection(next, transport());
+        drainOwner();
+        verify(live, never()).close();
+        assertSame(IoThreadClientConnection.wrap(live), pool.getConnection(first));
+        assertEquals(2, pool.numberOfConnections());
+    }
+
+    @Test void closedCleanupOwnershipIsPublishedBeforeUntracking() throws Exception {
+        ClientConnection raw = transport();
+        URI uri = URI.create("https://publication.invalid");
+        pool.cacheConnection(uri, raw);
+        Field trackedField = Http2ClientConnectionPool.class.getDeclaredField("tracked");
+        trackedField.setAccessible(true);
+        Map<?, ?> original = (Map<?, ?>) trackedField.get(pool);
+        Object record = original.values().iterator().next();
+        CountDownLatch removed = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ConcurrentMap<Object, Object> gated = new ConcurrentHashMap<>(original) {
+            @Override public boolean remove(Object key, Object value) {
+                boolean result = super.remove(key, value);
+                removed.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("Close publication gate timed out");
+                } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new CompletionException(error); }
+                return result;
+            }
+        };
+        trackedField.set(pool, gated);
+        CompletableFuture<Void> closeDone = new CompletableFuture<>();
+        owner.execute(() -> { IoThreadClientConnection.wrap(raw).close(); closeDone.complete(null); });
+        try {
+            assertTrue(removed.await(5, TimeUnit.SECONDS));
+            var managed = Http2ClientConnectionPool.class.getDeclaredMethod("isManaged", record.getClass());
+            managed.setAccessible(true);
+            assertEquals(Boolean.TRUE, managed.invoke(pool, record));
+            clock.set(30000);
+            pool.reapExpiredConnections(); // Cleanup can complete before the native notice is enqueued.
+        } finally { release.countDown(); }
+        closeDone.get(5, TimeUnit.SECONDS);
+        pool.reapExpiredConnections();
+        assertEquals(0, pool.numberOfConnections());
+        assertNull(pool.getConnection(uri));
     }
 
     @Test void untrackedReturnDoesNotTouchTheRawTransport() {
