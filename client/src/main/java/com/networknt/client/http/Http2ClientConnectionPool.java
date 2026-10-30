@@ -19,7 +19,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * URI LRU pool. Retired transports drain borrowers for a 100-second grace period.
+ * URI LRU pool. Ordinary retirement has a 100-second grace; maintenance quarantine waits for borrowers.
  * @author Jiachen Sun
  */
 public class Http2ClientConnectionPool {
@@ -27,6 +27,8 @@ public class Http2ClientConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(Http2ClientConnectionPool.class);
     private static final long RETIREMENT_GRACE_MS = 100_000;
     private final Map<String, UriConnections> connectionPool;
+    private final Set<UriConnections> emptyBuckets = ConcurrentHashMap.newKeySet();
+    private final int maxUriCount;
     // Canonical views have identity equality, including transports supplied by custom providers.
     private final ConcurrentMap<ClientConnection, CachedConnection> tracked = new ConcurrentHashMap<>();
     private final Queue<CachedConnection> pendingClose = new ConcurrentLinkedQueue<>();
@@ -83,11 +85,14 @@ public class Http2ClientConnectionPool {
         this.clock = clock;
         this.reaper = reaper;
         int poolSize = requestConfig.get().getConnectionPoolSize();
+        maxUriCount = poolSize;
         connectionPool = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
             @Override protected boolean removeEldestEntry(Map.Entry<String, UriConnections> eldest) {
                 if (size() <= poolSize) return false;
                 logger.debug("Evicting {} cached connections for uri: {}", eldest.getValue().connections.size(), eldest.getKey());
                 eldest.getValue().connections.forEach(Http2ClientConnectionPool.this::retire);
+                eldest.getValue().discarded = true;
+                emptyBuckets.remove(eldest.getValue());
                 return true;
             }
         };
@@ -130,14 +135,17 @@ public class Http2ClientConnectionPool {
         boolean committed = false;
         try {
             synchronized (this) {
+                pruneEmptyBucketsForAdmission();
                 if (tracked.containsKey(owned)) return;
                 UriConnections existing = connectionPool.get(uriString);
                 if (existing != null) removeClosedConnections(existing.connections);
-                added = new CachedConnection(uriString, owned, clock.getAsLong(), requestConfig.get());
+                added = new CachedConnection(owned, clock.getAsLong(), requestConfig.get());
                 tracked.put(owned, added);
-                UriConnections bucket = connectionPool.computeIfAbsent(uriString, key -> new UriConnections());
+                UriConnections bucket = connectionPool.computeIfAbsent(uriString, UriConnections::new);
                 bucket.connections.add(added);
                 added.owner = new WeakReference<>(bucket);
+                bucket.members.incrementAndGet();
+                added.bucketMember.set(true);
                 logger.debug("Cached connection for uri: {}, per-uri count: {}, total tracked: {}", uri, bucket.connections.size(), tracked.size());
                 if (!connectionPool.containsKey(uriString)) retire(added);
                 else if (added.requestLimitReached()) {
@@ -162,10 +170,37 @@ public class Http2ClientConnectionPool {
 
     // Retain access order: LinkedHashMap.get() here would turn cleanup into apparent URI traffic.
     private void detachFromUri(CachedConnection connection) {
+        releaseBucketMember(connection);
         UriConnections bucket = connection.owner == null ? null : connection.owner.get();
         if (bucket != null) {
             bucket.connections.remove(connection);
-            if (bucket.connections.isEmpty()) connectionPool.remove(connection.uri, bucket);
+            if (bucket.connections.isEmpty()) discardBucket(bucket);
+        }
+    }
+
+    // Admission handles completed close notices before considering eviction of any live URI.
+    private void pruneEmptyBucketsForAdmission() {
+        Iterator<UriConnections> candidates = emptyBuckets.iterator();
+        while (connectionPool.size() >= maxUriCount && candidates.hasNext()) {
+            UriConnections bucket = candidates.next();
+            emptyBuckets.remove(bucket);
+            if (bucket.members.get() == 0) discardBucket(bucket);
+        }
+    }
+
+    private void discardBucket(UriConnections bucket) {
+        connectionPool.remove(bucket.uri, bucket);
+        bucket.discarded = true;
+        emptyBuckets.remove(bucket);
+    }
+
+    private void releaseBucketMember(CachedConnection connection) {
+        if (!connection.bucketMember.compareAndSet(true, false)) return;
+        UriConnections bucket = connection.owner == null ? null : connection.owner.get();
+        if (bucket != null && bucket.members.decrementAndGet() == 0) {
+            emptyBuckets.add(bucket);
+            // A clear/eviction may have raced the native close notification.
+            if (bucket.discarded) emptyBuckets.remove(bucket);
         }
     }
 
@@ -206,7 +241,7 @@ public class Http2ClientConnectionPool {
     }
 
     private ConnectionStatus getConnectionStatus(CachedConnection connection) {
-        if (connection.retired || !connection.isOpen(clock.getAsLong())) return ConnectionStatus.CLOSE;
+        if (!connection.bucketMember.get() || connection.retired || !connection.isOpen(clock.getAsLong())) return ConnectionStatus.CLOSE;
         return connection.get().isMultiplexingSupported() ? ConnectionStatus.MULTIPLEX_SUPPORT : connection.status;
     }
 
@@ -238,6 +273,7 @@ public class Http2ClientConnectionPool {
 
     // Called under the pool monitor; returns only read the published retirement state.
     private void retire(CachedConnection connection) {
+        releaseBucketMember(connection);
         if (!connection.retired) {
             connection.retiredAt = clock.getAsLong();
             connection.retired = true;
@@ -248,8 +284,7 @@ public class Http2ClientConnectionPool {
     }
 
     private void releaseRetired(CachedConnection connection) {
-        if (connection.borrowers.get() > 0 && connection.get().isOpen()) return;
-        queueClose(connection);
+        if (connection.borrowers.get() == 0) queueClose(connection);
     }
 
     private void queueClose(CachedConnection connection) {
@@ -259,10 +294,11 @@ public class Http2ClientConnectionPool {
     }
 
     private void connectionClosed(CachedConnection connection) {
-        if (tracked.remove(connection.get(), connection)) {
-            connection.closedCleanup = true;
-            closedRecords.add(connection);
-        }
+        // Publish cleanup ownership before untracking so isManaged never loses pending work.
+        connection.closedCleanup = true;
+        releaseBucketMember(connection);
+        if (tracked.remove(connection.get(), connection)) closedRecords.add(connection);
+        else connection.closedCleanup = false;
     }
 
     private void cleanClosedRecord(CachedConnection connection) {
@@ -347,7 +383,7 @@ public class Http2ClientConnectionPool {
         while (processed < limit && (closed = closedRecords.poll()) != null) {
             CachedConnection current = closed;
             processed++;
-            ClientConnectionOperations.runWithFailureHandler(() -> processClosedRecord(current),
+            ClientConnectionOperations.runWithFailureHandler(() -> processClosedRecord(current, now),
                     error -> retryClosedRecord(current, now, error));
         }
         return processed;
@@ -366,8 +402,11 @@ public class Http2ClientConnectionPool {
         return processed;
     }
 
-    private void processClosedRecord(CachedConnection connection) {
+    private void processClosedRecord(CachedConnection connection, long now) {
         synchronized (this) {
+            Deadline pending = connection.deadline.get();
+            // A deadline can have seen the close before its queued notice arrived.
+            if (connection.maintenanceFailures > 0 && pending != null && pending.at > now) return;
             if (connection.closedCleanup) cleanClosedRecord(connection);
         }
     }
@@ -376,8 +415,10 @@ public class Http2ClientConnectionPool {
         synchronized (this) {
             CachedConnection connection = deadline.connection;
             if (!isManaged(connection) || connection.deadline.get() != deadline) return;
-            if (connection.closedCleanup) cleanClosedRecord(connection);
-            else {
+            if (connection.closedCleanup) {
+                if (tracked.get(connection.get()) == connection) replaceDeadline(connection, now + 1000);
+                else cleanClosedRecord(connection);
+            } else {
                 if (!connection.retired) {
                     detachFromUri(connection);
                     retire(connection);
@@ -417,10 +458,11 @@ public class Http2ClientConnectionPool {
         cancelDeadline(connection);
         if (connection.closedCleanup) connection.closedCleanup = false;
         else {
-            // Quarantine and close outside the monitor; do not depend on the failing clock/path.
+            // Maintenance failure does not establish transport failure. Stop selection and drain.
             connection.retired = true;
             connection.status = ConnectionStatus.CLOSE;
-            queueClose(connection);
+            releaseBucketMember(connection);
+            releaseRetired(connection);
         }
         logger.error("Stopping client connection maintenance after {} failures", failures, error);
     }
@@ -441,20 +483,26 @@ public class Http2ClientConnectionPool {
         closedRecords.clear();
         deadlines.clear();
         tracked.clear();
+        connectionPool.values().forEach(bucket -> bucket.discarded = true);
         connectionPool.clear();
+        emptyBuckets.clear();
         logger.debug("Cleared client connection pool metadata");
     }
 
     // Object equality deliberately gives each URI bucket identity semantics.
     private static final class UriConnections {
+        private final String uri;
         private final List<CachedConnection> connections = new LinkedList<>();
+        private final AtomicInteger members = new AtomicInteger();
+        private volatile boolean discarded;
+        private UriConnections(String uri) { this.uri = uri; }
     }
 
     private static final class CachedConnection {
         private final AtomicInteger requestCount = new AtomicInteger(1);
         private final ClientConnection clientConnection;
-        private final String uri;
         private WeakReference<UriConnections> owner;
+        private final AtomicBoolean bucketMember = new AtomicBoolean();
         private final AtomicReference<Deadline> deadline = new AtomicReference<>();
         private final long lifeStartTime;
         private final int maxReqCount;
@@ -467,8 +515,7 @@ public class Http2ClientConnectionPool {
         private volatile long retiredAt;
         private final AtomicBoolean closing = new AtomicBoolean();
 
-        private CachedConnection(String uri, ClientConnection connection, long now, RequestConfig config) {
-            this.uri = uri;
+        private CachedConnection(ClientConnection connection, long now, RequestConfig config) {
             clientConnection = connection;
             lifeStartTime = now;
             maxReqCount = config.getMaxReqPerConn();
