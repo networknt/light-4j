@@ -100,11 +100,11 @@ public final class HandlerContinuation {
                 inContext(continuation, true);
                 returned = true;
             } catch (Exception failure) {
-                finishFailedRequest(exchange);
+                finishFailedRequest();
                 LOG.error("Unhandled continuation failure for {}", exchange.getRequestPath(), failure);
                 returned = true;
             } finally {
-                if (!returned) finishFailedRequest(exchange);
+                if (!returned) finishFailedRequest();
             }
         }
 
@@ -135,14 +135,44 @@ public final class HandlerContinuation {
                     Map<String, String> request = state.mdc.snapshot();
                     if (!request.equals(before == null ? Map.of() : before)) setMdc(request);
                 }
-                if (enterBoundary && boundary != null) {
-                    HttpHandler contextual = continuation instanceof ScopedCallback callback && callback.scope() == this
-                            ? continuation : new ContextualHandler(this, continuation);
-                    boundary.wrap(contextual).handleRequest(exchange);
-                } else continuation.handleRequest(exchange);
+                invoke(continuation, enterBoundary);
             } finally {
                 if (!reuse) setMdc(before);
                 if (!same) restore(previous);
+            }
+        }
+
+        private void invoke(HttpHandler continuation, boolean enterBoundary) throws Exception {
+            if (!enterBoundary || boundary == null) {
+                continuation.handleRequest(exchange);
+                return;
+            }
+            HttpHandler contextual = continuation instanceof ScopedCallback callback && callback.scope() == this
+                    ? continuation : new ContextualHandler(this, continuation);
+            boundary.wrap(contextual).handleRequest(exchange);
+        }
+
+        private static void setMdc(Map<String, String> context) {
+            if (context == null || context.isEmpty()) MDC.clear();
+            else MDC.setContextMap(context);
+        }
+
+        /** Best-effort cleanup must never mask an already propagating failure. */
+        private void finishFailedRequest() {
+            if (exchange.isComplete()) return;
+            if (!exchange.isResponseStarted()) {
+                try {
+                    exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                    exchange.endExchange();
+                    return;
+                } catch (Throwable _) {
+                    // The primary failure is retained by the caller; try stream cleanup.
+                }
+            }
+            try {
+                if (exchange.getConnection() != null) exchange.getConnection().close();
+            } catch (Throwable _) {
+                // Preserve the primary failure, including VM Errors, if close also fails.
             }
         }
     }
@@ -257,11 +287,11 @@ public final class HandlerContinuation {
                 if (failure != null) scope.fail(failure);
             }
         }
-    }
+        private static void cleanup(Runnable cleanup) {
+            try { cleanup.run(); }
+            catch (Throwable _) { /* Retain the callback failure and retire the remaining resources. */ }
+        }
 
-    private static void cleanup(Runnable cleanup) {
-        try { cleanup.run(); }
-        catch (Throwable ignored) { /* Retain the callback failure and retire the remaining resources. */ }
     }
 
     private static void restore(Frame frame) {
@@ -269,27 +299,5 @@ public final class HandlerContinuation {
         else CURRENT.set(frame);
     }
 
-    private static void setMdc(Map<String, String> context) {
-        if (context == null || context.isEmpty()) MDC.clear();
-        else MDC.setContextMap(context);
-    }
 
-    /** Best-effort cleanup must never mask an already propagating failure. */
-    private static void finishFailedRequest(HttpServerExchange exchange) {
-        if (exchange.isComplete()) return;
-        if (!exchange.isResponseStarted()) {
-            try {
-                exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.endExchange();
-                return;
-            } catch (Throwable ignored) {
-                // The primary failure is retained by the caller; try stream cleanup.
-            }
-        }
-        try {
-            if (exchange.getConnection() != null) exchange.getConnection().close();
-        } catch (Throwable ignored) {
-            // Preserve the primary failure, including VM Errors, if close also fails.
-        }
-    }
 }
