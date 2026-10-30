@@ -1,6 +1,7 @@
 package com.networknt.config;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,6 +24,7 @@ class CryptMigrationDiagnosticTest {
         assertFalse(diagnostic.contains("legacy-ciphertext-canary"));
     }
     @Test
+    @SetSystemProperty(key = "light_4j_config_password", value = "light")
     void authenticationFailureDoesNotSuggestLegacyMigration() {
         Config config = Config.getInstance();
         RuntimeException failure = assertThrows(RuntimeException.class,
@@ -40,6 +42,7 @@ class CryptMigrationDiagnosticTest {
         assertFalse(diagnostic.contains("Re-encrypt"));
         assertFalse(diagnostic.contains("legacy three-part"));
         assertFalse(diagnostic.contains("e499d4501d0372fe37073d88a1025f19"));
+
     }
 
 }

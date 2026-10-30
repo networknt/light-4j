@@ -42,12 +42,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 /**
  * This is a test class for BasicAuthHandler. It tests all scenarios of positive and negative.
  *
  * @author Steve Hu
  */
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class LdapAuthTest {
     static final Logger logger = LoggerFactory.getLogger(LdapAuthTest.class);
 

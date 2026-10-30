@@ -38,6 +38,15 @@ public class SingletonServiceFactoryTest {
     }
 
     @Test
+    void baseDecryptorBindingDoesNotDropLaterSingletons() {
+        var decryptor = SingletonServiceFactory.getBean(com.networknt.decrypt.Decryptor.class);
+        Assertions.assertInstanceOf(com.networknt.decrypt.AESSaltDecryptor.class, decryptor);
+        Assertions.assertNotNull(SingletonServiceFactory.getBean(Pair.class));
+        String encrypted = "CRYPT:" + "00".repeat(16) + ":" + "00".repeat(12) + ":" + "00".repeat(16);
+        Assertions.assertThrows(IllegalStateException.class, () -> decryptor.decrypt(encrypted));
+    }
+
+    @Test
     public void testInjectedBean() {
         InjectedBean injectedBean = SingletonServiceFactory.getBean(InjectedBean.class);
         Assertions.assertEquals("Injected Bean", injectedBean.name());
