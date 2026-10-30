@@ -3,6 +3,14 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Undertow;
+import io.undertow.server.DefaultByteBufferPool;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.ServerConnection;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.Methods;
+import org.junit.jupiter.api.Test;
+import org.xnio.ChannelListener;
+import org.xnio.channels.StreamSourceChannel;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HandlerWrapper;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,8 +26,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @Timeout(20)
 class RequestInjectionContinuationTest {
@@ -106,4 +117,54 @@ class RequestInjectionContinuationTest {
             Config.getInstance().clearConfigCache(config);
         }
     }
+    @Test
+    void listenerFailureOutsideBodyReadTryUsesCapturedPolicy() throws Exception {
+        String config = "request-listener-failure";
+        RequestInterceptor[] previous = SingletonServiceFactory.getBeans(RequestInterceptor.class);
+        var interceptor = mock(RequestInterceptor.class);
+        when(interceptor.isRequiredContent()).thenReturn(true);
+        SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), new RequestInterceptor[]{interceptor});
+        Config.getInstance().putInConfigCache(config, Map.of("enabled", true, "maxBuffers", 4,
+                "maxBodyBytes", 1024, "appliedBodyInjectionPathPrefixes", List.of("/")));
+        var exchange = mock(HttpServerExchange.class);
+        var connection = mock(ServerConnection.class);
+        var channel = mock(StreamSourceChannel.class);
+        ChannelListener.Setter<StreamSourceChannel> setter = new ChannelListener.SimpleSetter<>();
+        doReturn(setter).when(channel).getReadSetter();
+        when(channel.read(any(java.nio.ByteBuffer.class))).thenReturn(0, -1);
+        var headers = new HeaderMap();
+        when(exchange.getRequestHeaders()).thenReturn(headers);
+        when(exchange.getRequestMethod()).thenReturn(Methods.POST);
+        when(exchange.getRequestPath()).thenReturn("/");
+        when(exchange.getRequestContentLength()).thenReturn(-1L);
+        when(exchange.getRequestChannel()).thenReturn(channel);
+        when(exchange.getConnection()).thenReturn(connection);
+        var failure = new IllegalStateException("outside resumeRead's body-read catch");
+        var responseChecks = new AtomicInteger();
+        when(exchange.isResponseStarted()).thenAnswer(invocation -> {
+            if (responseChecks.getAndIncrement() == 1) throw failure; // outside the body-read catch
+            return false;
+        });
+        var selected = new AtomicReference<RuntimeException>();
+        try (var pool = new DefaultByteBufferPool(false, 16)) {
+            when(connection.getByteBufferPool()).thenReturn(pool);
+            var reader = new RequestInterceptorInjectionHandler(config);
+            reader.setNext(ex -> fail("Failure must occur before downstream execution"));
+            HandlerContinuation.execute(exchange, next -> ex -> {
+                try { next.handleRequest(ex); }
+                catch (IllegalStateException caught) { selected.set(caught); }
+            }, reader);
+            ChannelListener<? super StreamSourceChannel> listener =
+                    ((ChannelListener.SimpleSetter<StreamSourceChannel>) setter).get();
+            assertNotNull(listener);
+            listener.handleEvent(channel);
+            assertSame(failure, selected.get(), "The listener itself must retain the lexical policy");
+            verify(channel).suspendReads();
+            verify(exchange, never()).setStatusCode(500);
+        } finally {
+            SingletonServiceFactory.setBean(RequestInterceptor.class.getName(), previous);
+            Config.getInstance().clearConfigCache(config);
+        }
+    }
+
 }

@@ -22,7 +22,6 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ import org.slf4j.MDC;
  *
  * @author Steve Hu
  */
-public class ExceptionHandler implements MiddlewareHandler, HandlerWrapper {
+public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     private String configName = ExceptionConfig.CONFIG_NAME;
@@ -83,7 +82,7 @@ public class ExceptionHandler implements MiddlewareHandler, HandlerWrapper {
         }
 
         try {
-            HandlerContinuation.execute(exchange, this,
+            HandlerContinuation.execute(exchange, continuation -> ex -> handleContinuation(ex, continuation),
                     ex -> Handler.next(ex, next));
         } finally {
             // Initial chain execution owns request-thread cleanup. Resumed frames
@@ -105,11 +104,6 @@ public class ExceptionHandler implements MiddlewareHandler, HandlerWrapper {
         } finally {
             if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
         }
-    }
-
-    @Override
-    public HttpHandler wrap(HttpHandler continuation) {
-        return exchange -> handleContinuation(exchange, continuation);
     }
 
     private void writeFailure(HttpServerExchange exchange, Throwable failure) {

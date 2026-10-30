@@ -269,8 +269,9 @@ reference. The first boundary execution or capture initializes that holder
 before its asynchronous hand-off; addHandlerMDCContext can also initialize it on
 first serial use. Later updates replace only the holder's snapshot, never its
 attachment. RequestState stores only MDC in a concurrent weak-identity index; it never stores
-an exception policy. Completion removes the entry immediately, with weak-key cleanup
-for abandoned exchanges. Captured scopes read the holder directly, avoiding index
+an exception policy. Entries are removed through bounded ReferenceQueue cleanup
+after their exchange is collected; initialization never registers a completion listener.
+Captured scopes read the holder directly, avoiding index
 lookups on callback resumes. An explicitly retained HandlerContinuation.Scope carries
 the lexical policy across hand-offs; a new capture outside its frame has no policy.
 This prevents an earlier sub-pipeline boundary from shadowing a later one. Native
@@ -284,7 +285,8 @@ availability policy after commitment; it does not forcibly close general-service
 responses. Its initial worker frame still clears request MDC at chain exit.
 BodyHandler, DumpHandler and McpHandler redispatch, HMAC replay/admin completion,
 and ProxyHandler acquisition, retries, timeout cancellation and client send/response
-callbacks carry the selected boundary. The body-read callback scopes interceptor
+callbacks carry the selected boundary. The body-read listener itself uses its
+pre-suspension scope and scopes interceptor
 execution as well as downstream handling, and preserves pending-read lifecycle.
 Proxy actions reuse one captured policy; internal synchronous calls do not add
 boundary frames or reset MDC again. Unexpected proxy failures cancel only the
@@ -294,13 +296,20 @@ stream without appending an error. Undertow's HTTP/2 ServerConnection.close()
 sends RST_STREAM for that stream, preserving healthy siblings. Late failures on
 completed exchanges do not rewrite a response or close a reused connection.
 The neutral Runnable adapter attempts a 500 before commitment or a stream reset
-after commitment before propagating the original Error. Failed writes/resets cannot replace the original Error; selected exception policies keep
+after commitment before propagating the original Error. Failed writes/resets are
+attached as suppressed failures and logged without replacing the original Error;
+selected exception policies keep
 their existing handling behavior. Ordinary exceptions use the same guarded cleanup.
 Proxy callbacks execute on the downstream exchange's I/O thread, without a
 callback-wide monitor or shared mutable callback slot. A per-request FIFO queues
-both foreign-thread and owner-thread arrivals, preserving submission order. Executor
-rejection retires pending resources and sends the failure through the selected policy;
-accepted work that fails replays only its failure through that policy. The public `CONNECTION`
+both foreign-thread and owner-thread arrivals, preserving submission order. The queue
+is private to proxy-handler. Fatal cleanup runs on its I/O owner before
+the queue stops. Executor rejection closes an immutable resource snapshot
+published through a volatile field
+and reports the failure through the selected policy once; it never reads or mutates
+the owner's request/connection/attempt/stopping fields. Later stopped submissions
+only close their own incoming resources. Accepted work that fails replays only its
+failure through that policy. The public `CONNECTION`
 attachment is populated when a connection is accepted. Retry generations discard
 late acquisition/send/response callbacks and release the previous attempt's resources
 before accepting a new connection. A proxy-generated terminal response is marked
@@ -309,6 +318,12 @@ the selected policy and an independent MDC snapshot, with their own cancellation
 state. Unexpected committed-response callbacks reset only the affected HTTP/2 stream.
 Local allocation probes are separate qualification artifacts, not repository source
 or CI qualification; gateway performance remains an explicit review gate.
+The review-11 ThreadMXBean probe includes request setup and four callbacks: both
+branches measured 1.25-1.31 KB with empty MDC and 2.97-3.04 KB with three fields
+(20k warm-up, three 20k samples). A separate real HTTP/1.1 loopback probe includes
+ExceptionHandler, ProxyHandler, upstream transport and the Java HTTP client; its
+129-132 KB/request totals are not attributable solely to continuation overhead.
+Neither probe is a production throughput qualification.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
 Body-reading requests capture lazily only when a read suspends. ingress-proxy uses

@@ -1,14 +1,6 @@
 package com.networknt.handler;
 
 import com.networknt.httpstring.AttachmentConstants;
-import java.net.URI;
-import java.net.InetSocketAddress;
-import java.net.http.HttpResponse;
-import java.net.http.HttpRequest;
-import java.net.http.HttpClient;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpServerExchange;
@@ -19,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.MDC;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,21 +114,21 @@ class HandlerContinuationTest {
         HttpServerExchange second = new HttpServerExchange(null);
         var policy = HandlerContinuation.capture(first);
         var otherPolicy = HandlerContinuation.capture(first);
-        assertFalse(policy.isActive(first));
+        assertNotSame(policy, HandlerContinuation.capture(first));
         policy.wrap(ex -> {
-            assertTrue(policy.isActive(first));
-            assertFalse(otherPolicy.isActive(first));
-            assertFalse(policy.isActive(second));
+            assertSame(policy, HandlerContinuation.capture(first));
+            assertNotSame(otherPolicy, HandlerContinuation.capture(first));
+            assertNotSame(policy, HandlerContinuation.capture(second));
             var child = policy.fork(second);
             assertThrows(IOException.class, () -> child.wrap(nested -> {
-                assertTrue(child.isActive(second));
-                assertFalse(policy.isActive(first));
+                assertSame(child, HandlerContinuation.capture(second));
+                assertNotSame(policy, HandlerContinuation.capture(first));
                 throw new IOException("nested failure");
             }).handleRequest(second));
-            assertTrue(policy.isActive(first));
+            assertSame(policy, HandlerContinuation.capture(first));
         }).handleRequest(first);
-        assertFalse(policy.isActive(first));
-        assertFalse(policy.isActive(second));
+        assertNotSame(policy, HandlerContinuation.capture(first));
+        assertNotSame(policy, HandlerContinuation.capture(second));
     }
 
     @Test
@@ -236,45 +229,6 @@ class HandlerContinuationTest {
     }
 
     @Test
-    void dispatchPreservesForeignArrivalBeforeOwnerArrival() throws Exception {
-        var exchange = new HttpServerExchange(null);
-        var scheduled = new LinkedBlockingQueue<Runnable>();
-        Thread owner = Thread.currentThread();
-        var dispatcher = HandlerContinuation.capture(exchange).dispatcher(scheduled::add,
-                () -> Thread.currentThread() == owner, () -> fail("Unexpected dispatch rejection"));
-        var seen = new ArrayList<String>();
-        try (var worker = Executors.newSingleThreadExecutor()) {
-            worker.submit(() -> dispatcher.execute(ex -> seen.add("foreign"))).get(5, TimeUnit.SECONDS);
-        }
-        dispatcher.execute(ex -> seen.add("owner"));
-        assertTrue(seen.isEmpty(), "Owner arrival must not overtake an already queued foreign arrival");
-        scheduled.take().run();
-        assertEquals(List.of("foreign", "owner"), seen);
-        assertTrue(scheduled.isEmpty());
-    }
-
-    @Test
-    void rejectedDispatchUsesSelectedPolicyAndRetiresEachResource() throws Exception {
-        var exchange = new HttpServerExchange(null);
-        var scope = new AtomicReference<HandlerContinuation.Scope>();
-        var failures = new AtomicInteger();
-        var cleanup = new AtomicInteger();
-        var abort = new AtomicInteger();
-        HandlerContinuation.execute(exchange, next -> ex -> {
-            try { next.handleRequest(ex); }
-            catch (RejectedExecutionException _) { failures.incrementAndGet(); }
-        }, ex -> scope.set(HandlerContinuation.capture(ex)));
-        var dispatcher = scope.get().dispatcher(task -> {
-            throw new RejectedExecutionException("executor stopped");
-        }, () -> false, abort::incrementAndGet);
-        dispatcher.execute(ex -> fail("Rejected callback must not run"), cleanup::incrementAndGet);
-        dispatcher.execute(ex -> fail("Stopped dispatcher must not run"), cleanup::incrementAndGet);
-        assertEquals(1, failures.get());
-        assertEquals(1, abort.get());
-        assertEquals(2, cleanup.get());
-    }
-
-    @Test
     void acceptedWorkRunsOnceAndItsFailureUsesSelectedPolicy() throws Exception {
         var exchange = new HttpServerExchange(null);
         var scope = new AtomicReference<HandlerContinuation.Scope>();
@@ -307,60 +261,39 @@ class HandlerContinuationTest {
         assertEquals(2, applications.get());
     }
 
-    @Test
-    void completionRemovesIndexEntryWhileRetainedScopeKeepsItsMdc() throws Exception {
-        var completed = new CountDownLatch(1);
-        var captured = new AtomicReference<HandlerContinuation.Scope>();
-        var request = new AtomicReference<HttpServerExchange>();
-        var holder = new AtomicReference<RequestMdcContext>();
-        var server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(exchange -> {
-            publicationMiddleware().addHandlerMDCContext(exchange, "request", "completed");
-            request.set(exchange);
-            holder.set(RequestMdcContext.initialize(exchange));
-            captured.set(HandlerContinuation.capture(exchange));
-            assertNotNull(RequestState.find(exchange));
-            exchange.addExchangeCompleteListener((ex, next) -> {
-                next.proceed();
-                completed.countDown();
-            });
-            exchange.getResponseSender().send("done");
-        }).build();
-        try (var client = HttpClient.newHttpClient()) {
-            server.start();
-            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
-            var response = client.send(HttpRequest.newBuilder(
-                    URI.create("http://127.0.0.1:" + port + "/lifetime")).build(),
-                    HttpResponse.BodyHandlers.ofString());
-            assertEquals("done", response.body());
-            assertTrue(completed.await(5, TimeUnit.SECONDS));
-            assertNull(RequestState.find(request.get()));
-            assertSame(holder.get(), RequestMdcContext.initialize(request.get()));
-            captured.get().wrap(ex -> assertEquals("completed", MDC.get("request"))).handleRequest(request.get());
-            assertNull(RequestState.find(request.get()), "Late MDC access must not reinsert a completed request");
-        } finally { server.stop(); }
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void initializationNeverRegistersACompletionListener(boolean alreadyComplete) {
+        var exchange = spy(new HttpServerExchange(null));
+        doReturn(alreadyComplete, true).when(exchange).isComplete();
+        doThrow(new IllegalStateException("exchange completed during registration"))
+                .when(exchange).addExchangeCompleteListener(any());
+        var state = assertDoesNotThrow(() -> RequestState.initialize(exchange));
+        assertNotNull(state.mdc);
+        assertTrue(exchange.isComplete());
+        verify(exchange, never()).addExchangeCompleteListener(any());
+        if (alreadyComplete) verify(exchange, never()).putAttachment(any(), any());
+        else assertSame(state, RequestState.initialize(exchange));
     }
 
     @Test
-    void fatalDispatchRetiresQueuedAndFutureCallbacksWithoutMaskingError() {
-        var exchange = spy(new HttpServerExchange(null));
-        doReturn(exchange).when(exchange).endExchange();
-        var retired = new AtomicInteger();
-        var aborted = new AtomicInteger();
-        var fatal = new StackOverflowError("injected callback sentinel");
-        var dispatcher = HandlerContinuation.capture(exchange).dispatcher(Runnable::run, () -> true,
-                aborted::incrementAndGet);
-        Error observed = assertThrows(StackOverflowError.class, () -> dispatcher.execute(ex -> {
-            dispatcher.execute(queued -> fail("Queued callback survived fatal failure"), () -> {
-                retired.incrementAndGet();
-                throw new IllegalStateException("cleanup failed too");
-            });
-            throw fatal;
-        }));
-        assertSame(fatal, observed);
-        dispatcher.execute(ex -> fail("Future callback survived fatal failure"), retired::incrementAndGet);
-        assertEquals(2, retired.get());
-        assertEquals(1, aborted.get());
-        verify(exchange).endExchange();
+    void weakIndexReleasesAbandonedExchangeAndMdcAfterReferenceQueueCleanup() throws Exception {
+        var abandoned = abandonedRequest();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (abandoned.get(1).get() != null && System.nanoTime() < deadline) {
+            System.gc();
+            // Each new registration performs bounded ReferenceQueue expunging.
+            RequestState.initialize(new HttpServerExchange(null));
+            Thread.sleep(10);
+        }
+        assertNull(abandoned.get(0).get(), "The index must not retain the exchange");
+        assertNull(abandoned.get(1).get(), "A queued weak key must be removed, releasing its MDC state");
+    }
+
+    private static List<WeakReference<?>> abandonedRequest() {
+        var exchange = new HttpServerExchange(null);
+        var state = RequestState.initialize(exchange);
+        return List.of(new WeakReference<>(exchange), new WeakReference<>(state));
     }
 
     private static MiddlewareHandler publicationMiddleware() {
@@ -393,6 +326,7 @@ class HandlerContinuationTest {
         var exchange = spy(new HttpServerExchange(connection));
         doThrow(writeFailure).when(exchange).setStatusCode(500);
         assertDoesNotThrow(() -> HandlerContinuation.task(exchange, ex -> { throw original; }).run());
+        assertArrayEquals(new Throwable[]{writeFailure, closeFailure}, original.getSuppressed());
         verify(exchange).setStatusCode(500);
         verify(connection).close();
     }
@@ -448,6 +382,7 @@ class HandlerContinuationTest {
         Runnable callback = HandlerContinuation.task(exchange, ex -> { throw fatal; });
         Error observed = assertThrows(StackOverflowError.class, callback::run);
         assertSame(fatal, observed);
+        assertArrayEquals(new Throwable[]{writeFailure, closeFailure}, fatal.getSuppressed());
         assertEquals(500, exchange.getStatusCode());
         verify(exchange).endExchange();
         verify(connection).close();

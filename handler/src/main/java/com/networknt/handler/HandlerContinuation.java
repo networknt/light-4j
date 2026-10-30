@@ -10,21 +10,13 @@ import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
 
 /** Lexical exception policy, carried explicitly across asynchronous hand-offs. */
 public final class HandlerContinuation {
     private static final Logger LOG = LoggerFactory.getLogger(HandlerContinuation.class);
-    private record Frame(HttpServerExchange exchange, HandlerWrapper boundary, RequestState state,
+    private record Frame(HttpServerExchange exchange, RequestState state,
                          Scope scope, boolean mdcScoped) { }
     private static final ThreadLocal<Frame> CURRENT = new ThreadLocal<>();
-    private static final Runnable NO_CLEANUP = () -> { };
 
     private HandlerContinuation() { }
 
@@ -35,7 +27,7 @@ public final class HandlerContinuation {
         boolean sameExchange = previous != null && previous.exchange() == exchange;
         RequestState state = sameExchange ? previous.state() : RequestState.initialize(exchange);
         Scope scope = new Scope(exchange, boundary, state);
-        Frame entry = new Frame(exchange, boundary, state, scope, sameExchange && previous.mdcScoped());
+        Frame entry = new Frame(exchange, state, scope, sameExchange && previous.mdcScoped());
         CURRENT.set(entry);
         try { boundary.wrap(new EntryContinuation(scope, continuation, entry)).handleRequest(exchange); }
         finally { restore(previous); }
@@ -75,15 +67,8 @@ public final class HandlerContinuation {
             this.exchange = exchange;
             this.boundary = boundary;
             this.state = state;
-            this.resumedFrame = new Frame(exchange, boundary, state, this, true);
+            this.resumedFrame = new Frame(exchange, state, this, true);
         }
-
-        public boolean isActive() {
-            Frame frame = CURRENT.get();
-            return frame != null && frame.exchange() == exchange && frame.scope() == this && frame.mdcScoped();
-        }
-
-        public boolean isActive(HttpServerExchange expected) { return exchange == expected && isActive(); }
 
         public Scope fork(HttpServerExchange child) {
             return new Scope(child, boundary, RequestState.initialize(child, state.mdc.snapshot()));
@@ -95,16 +80,14 @@ public final class HandlerContinuation {
 
         /** Selected policy handles ordinary failures; unhandled Errors are cleaned up then propagated. */
         public void execute(HttpHandler continuation) {
-            boolean returned = false;
             try {
                 inContext(continuation, true);
-                returned = true;
             } catch (Exception failure) {
-                finishFailedRequest();
+                finishFailedRequest(failure);
                 LOG.error("Unhandled continuation failure for {}", exchange.getRequestPath(), failure);
-                returned = true;
-            } finally {
-                if (!returned) finishFailedRequest();
+            } catch (Error failure) {
+                finishFailedRequest(failure);
+                throw failure;
             }
         }
 
@@ -112,16 +95,6 @@ public final class HandlerContinuation {
         public void resume(HttpHandler continuation) {
             try { inContext(continuation, false); }
             catch (Exception | Error failure) { execute(new FailureHandler(failure)); }
-        }
-
-        public void fail(Exception failure) { execute(new FailureHandler(failure)); }
-
-        public Dispatcher ioDispatcher(Runnable onFailure) {
-            return dispatcher(exchange.getIoThread(), exchange::isInIoThread, onFailure);
-        }
-
-        public Dispatcher dispatcher(Executor executor, BooleanSupplier inExecutor, Runnable onFailure) {
-            return new Dispatcher(this, executor, inExecutor, onFailure);
         }
 
         private void inContext(HttpHandler continuation, boolean enterBoundary) throws Exception {
@@ -158,23 +131,33 @@ public final class HandlerContinuation {
         }
 
         /** Best-effort cleanup must never mask an already propagating failure. */
-        private void finishFailedRequest() {
+        private void finishFailedRequest(Throwable primary) {
             if (exchange.isComplete()) return;
             if (!exchange.isResponseStarted()) {
                 try {
                     exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
                     exchange.endExchange();
                     return;
-                } catch (Throwable _) {
-                    // The primary failure is retained by the caller; try stream cleanup.
+                } catch (Throwable cleanupFailure) {
+                    rememberCleanupFailure(primary, cleanupFailure);
                 }
             }
             try {
                 if (exchange.getConnection() != null) exchange.getConnection().close();
-            } catch (Throwable _) {
-                // Preserve the primary failure, including VM Errors, if close also fails.
+            } catch (Throwable cleanupFailure) {
+                rememberCleanupFailure(primary, cleanupFailure);
             }
         }
+        private static void rememberCleanupFailure(Throwable primary, Throwable cleanupFailure) {
+            if (primary == cleanupFailure) return;
+            try {
+                primary.addSuppressed(cleanupFailure);
+                LOG.error("Continuation cleanup failed; retaining the original failure", cleanupFailure);
+            } catch (Throwable _) {
+                // Diagnostics can fail under memory pressure; never replace the primary failure.
+            }
+        }
+
     }
 
     private interface ScopedCallback extends HttpHandler { Scope scope(); }
@@ -209,89 +192,6 @@ public final class HandlerContinuation {
             if (failure instanceof Error error) throw error;
             throw new IllegalArgumentException("Unsupported failure", failure);
         }
-    }
-
-    /** FIFO callbacks on an owning executor, including arrivals from that executor itself. */
-    public static final class Dispatcher {
-        private record Event(Scope scope, HttpHandler callback, Runnable rejectedCleanup, boolean accepted) implements ScopedCallback {
-            @Override public void handleRequest(HttpServerExchange exchange) throws Exception { scope.inContext(callback, false); }
-        }
-        private final Scope scope;
-        private final Executor executor;
-        private final BooleanSupplier inExecutor;
-        private final Runnable onFailure;
-        private final ConcurrentLinkedQueue<Event> queue = new ConcurrentLinkedQueue<>();
-        private final AtomicInteger work = new AtomicInteger();
-        private final AtomicReference<RejectedExecutionException> rejected = new AtomicReference<>();
-        private final AtomicBoolean stopped = new AtomicBoolean();
-        private final AtomicBoolean failureReported = new AtomicBoolean();
-        private final Runnable drainTask = this::drain;
-
-        private Dispatcher(Scope scope, Executor executor, BooleanSupplier inExecutor, Runnable onFailure) {
-            this.scope = scope;
-            this.executor = executor;
-            this.inExecutor = inExecutor;
-            this.onFailure = onFailure;
-        }
-
-        public void execute(HttpHandler callback) { execute(callback, NO_CLEANUP); }
-
-        public void execute(HttpHandler callback, Runnable rejectedCleanup) { submit(callback, rejectedCleanup, false); }
-
-        public void resume(HttpHandler callback, Runnable rejectedCleanup) { submit(callback, rejectedCleanup, true); }
-
-        private void submit(HttpHandler callback, Runnable rejectedCleanup, boolean accepted) {
-            queue.add(new Event(scope, callback, rejectedCleanup, accepted));
-            if (stopped.get()) { rejectQueued(); return; }
-            if (work.getAndIncrement() != 0) return;
-            if (inExecutor.getAsBoolean()) drain();
-            else {
-                try { executor.execute(drainTask); }
-                catch (RejectedExecutionException failure) {
-                    rejected.compareAndSet(null, failure);
-                    stopped.set(true);
-                    rejectQueued();
-                }
-            }
-        }
-
-        private void drain() {
-            int missed = 1;
-            boolean returned = false;
-            try {
-                do {
-                    Event event;
-                    while ((event = queue.poll()) != null) {
-                        if (event.accepted()) scope.resume(event);
-                        else scope.execute(event);
-                    }
-                    missed = work.addAndGet(-missed);
-                } while (missed != 0);
-                returned = true;
-            } finally {
-                if (!returned) {
-                    // Scope.execute already preserves/rethrows the fatal Error.
-                    // Retire queued resources without running their transport work.
-                    stopped.set(true);
-                    rejectQueued();
-                }
-            }
-        }
-
-        private void rejectQueued() {
-            Event event;
-            while ((event = queue.poll()) != null) cleanup(event.rejectedCleanup());
-            if (failureReported.compareAndSet(false, true)) {
-                cleanup(onFailure);
-                RejectedExecutionException failure = rejected.get();
-                if (failure != null) scope.fail(failure);
-            }
-        }
-        private static void cleanup(Runnable cleanup) {
-            try { cleanup.run(); }
-            catch (Throwable _) { /* Retain the callback failure and retire the remaining resources. */ }
-        }
-
     }
 
     private static void restore(Frame frame) {

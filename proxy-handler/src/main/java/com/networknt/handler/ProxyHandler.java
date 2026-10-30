@@ -371,16 +371,21 @@ public class ProxyHandler implements HttpHandler {
     private static final class ProxyContinuation {
         private static final Runnable NO_REJECTED_RESOURCE = () -> { };
         private final HandlerContinuation.Scope scope;
-        private final HandlerContinuation.Dispatcher dispatcher;
+        private final ProxyCallbackDispatcher dispatcher;
         private ProxyConnection connection;
         private ClientExchange request;
         private boolean stopping;
         private volatile XnioExecutor.Key timeoutKey;
         private long attempt;
+        private volatile UpstreamResources publishedResources = UpstreamResources.EMPTY;
 
-        private ProxyContinuation(HandlerContinuation.Scope scope) {
+        private ProxyContinuation(HttpServerExchange exchange, HandlerContinuation.Scope scope) {
             this.scope = scope;
-            this.dispatcher = scope.ioDispatcher(() -> abortUpstream(this));
+            this.dispatcher = new ProxyCallbackDispatcher(scope, exchange.getIoThread(),
+                    () -> exchange.isInIoThread(), () -> abortUpstream(this), failure -> {
+                        ProxyCallbackDispatcher.cleanup(publishedResources::close, failure);
+                        scope.execute(ex -> { throw failure; });
+                    });
         }
 
         private void run(Consumer<HttpServerExchange> callback) { run(callback, NO_REJECTED_RESOURCE); }
@@ -400,9 +405,23 @@ public class ProxyHandler implements HttpHandler {
             finally { if (!returned) abortUpstream(this); }
         }
 
+        private void publishResources() {
+            publishedResources = new UpstreamResources(connection, request);
+        }
+
         private void cancelTimeout() {
             XnioExecutor.Key key = timeoutKey;
             if (key != null) key.remove();
+        }
+    }
+
+    /** Immutable shutdown lease; closing XNIO channels is safe from a foreign thread. */
+    private record UpstreamResources(ProxyConnection connection, ClientExchange request) {
+        private static final UpstreamResources EMPTY = new UpstreamResources(null, null);
+        private void close() {
+            if (request != null) cancelClientExchange(request);
+            if (connection != null && (request == null || request.getConnection() != connection.getConnection())
+                    && !connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection());
         }
     }
 
@@ -418,6 +437,7 @@ public class ProxyHandler implements HttpHandler {
         ProxyConnection connection = state.connection;
         state.request = null;
         state.connection = null;
+        state.publishedResources = UpstreamResources.EMPTY;
         if (request != null) cancelClientExchange(request);
         // A stream can belong to the preceding pooled connection. Always release
         // a distinct current HTTP/1 connection as well; never close an HTTP/2 parent.
@@ -452,7 +472,7 @@ public class ProxyHandler implements HttpHandler {
 
         ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate, boolean streamingRequest) {
             this.exchange = exchange;
-            this.continuation = new ProxyContinuation(HandlerContinuation.capture(exchange));
+            this.continuation = new ProxyContinuation(exchange, HandlerContinuation.capture(exchange));
             this.timeout = timeout;
             this.maxRetryAttempts = maxRetryAttempts;
             this.target = target;
@@ -504,6 +524,7 @@ public class ProxyHandler implements HttpHandler {
             }
             LOG.trace("ProxyCallback completed for exchange: {}", ex);
             continuation.connection = connection;
+            continuation.publishResources();
             ex.putAttachment(CONNECTION, connection);
             new ProxyAction(connection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, ex.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run();
         }
@@ -994,6 +1015,7 @@ public class ProxyHandler implements HttpHandler {
                             return;
                         }
                         continuation.request = result;
+                        continuation.publishResources();
                         callback.completed(result);
                     }, () -> cancelClientExchange(result));
                 }
@@ -1103,10 +1125,11 @@ public class ProxyHandler implements HttpHandler {
                                 int i = path.indexOf("?");
                                 if (i > 0) path = path.substring(0, i);
                                 String targetPath = path;
-                                ProxyContinuation pushed = new ProxyContinuation(continuation.scope.fork(child));
+                                ProxyContinuation pushed = new ProxyContinuation(child, continuation.scope.fork(child));
                                 ProxyConnection pushedConnection = new ProxyConnection(pushedRequest.getConnection(), targetPath);
                                 child.putAttachment(CONNECTION, pushedConnection);
                                 pushed.connection = pushedConnection;
+                                pushed.publishResources();
                                 child.dispatch(INLINE_EXECUTOR, () -> pushed.run(ex -> new ProxyAction(pushedConnection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, pushed).run()));
                             });
                             if (!accepted) cancelClientExchange(pushedRequest);

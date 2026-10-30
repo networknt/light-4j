@@ -119,12 +119,8 @@ class ExceptionContinuationTest {
         selected.setNext(exchange -> {
             var scope = HandlerContinuation.capture(exchange);
             exchange.dispatch(() -> {
-                if (mode.equals("rejected")) {
-                    scope.dispatcher(task -> {
-                        throw new RejectedExecutionException("injected shutdown");
-                    }, () -> false, () -> { /* No transport resources in this fixture. */ })
-                            .execute(ex -> fail("Rejected callback ran"));
-                } else scope.resume(ex -> {
+                scope.resume(ex -> {
+                    if (mode.equals("rejected")) throw new RejectedExecutionException("executor rejected transport");
                     calls.incrementAndGet();
                     if (mode.equals("accepted-error")) throw new StackOverflowError("injected fatal sentinel");
                     throw new IOException("accepted I/O failure");
