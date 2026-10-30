@@ -368,36 +368,43 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    /** State is created serially, captured directly, and serialized by its own monitor. */
+    /** Mutable transport state is confined to the downstream exchange's I/O thread. */
     private static final class ProxyContinuation {
         private final UnaryOperator<HttpHandler> boundary;
-        private final Runnable resumed;
-        private Consumer<HttpServerExchange> callback;
         private ProxyConnection connection;
         private ClientExchange request;
         private boolean stopping;
         private volatile XnioExecutor.Key timeoutKey;
+        private long attempt;
 
-        @SuppressWarnings("java:S1181") // Release the upstream stream before rethrowing fatal Errors unchanged.
-        private ProxyContinuation(HttpServerExchange exchange, UnaryOperator<HttpHandler> boundary) {
-            this.boundary = boundary;
-            this.resumed = HandlerContinuation.task(exchange, boundary.apply(ex -> {
-                try { callback.accept(ex); }
-                catch (Exception | Error failure) {
-                    abortUpstream(this);
-                    throw failure;
-                }
-            }));
-        }
+        private ProxyContinuation(UnaryOperator<HttpHandler> boundary) { this.boundary = boundary; }
 
-        private synchronized void run(HttpServerExchange exchange, Consumer<HttpServerExchange> callback) {
-            if (HandlerContinuation.isActive(exchange, boundary)) {
-                callback.accept(exchange);
+        private void run(HttpServerExchange exchange, Consumer<HttpServerExchange> callback) {
+            if (!exchange.isInIoThread()) {
+                exchange.getIoThread().execute(() -> run(exchange, callback));
                 return;
             }
-            this.callback = callback;
-            try { resumed.run(); }
-            finally { this.callback = null; }
+            if (HandlerContinuation.isActive(exchange, boundary)) {
+                acceptedCallback(exchange, callback);
+                return;
+            }
+            HandlerContinuation.task(exchange, boundary.apply(ex -> acceptedCallback(ex, callback))).run();
+        }
+
+        @SuppressWarnings("java:S1181") // Release the upstream stream before rethrowing fatal Errors unchanged.
+        private void acceptedCallback(HttpServerExchange exchange, Consumer<HttpServerExchange> callback) {
+            // A user boundary may defer its continuation onto a worker. Restore
+            // transport ownership without entering that asynchronous policy again.
+            if (!exchange.isInIoThread()) {
+                exchange.getIoThread().execute(HandlerContinuation.acceptedTask(exchange, boundary,
+                        ex -> acceptedCallback(ex, callback)));
+                return;
+            }
+            try { callback.accept(exchange); }
+            catch (Exception | Error failure) {
+                abortUpstream(this);
+                throw failure;
+            }
         }
 
         private void cancelTimeout() {
@@ -420,16 +427,21 @@ public class ProxyHandler implements HttpHandler {
         } else IoUtils.safeClose(request.getConnection());
     }
 
+    private static void releaseAttempt(ProxyContinuation state) {
+        ClientExchange request = state.request;
+        ProxyConnection connection = state.connection;
+        state.request = null;
+        state.connection = null;
+        if (request != null) cancelClientExchange(request);
+        // A stream can belong to the preceding pooled connection. Always release
+        // a distinct current HTTP/1 connection as well; never close an HTTP/2 parent.
+        if (connection != null && (request == null || request.getConnection() != connection.getConnection())
+                && !connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection());
+    }
+
     private static void abortUpstream(ProxyContinuation state) {
         state.stopping = true;
-        ClientExchange request = state.request;
-        state.request = null;
-        if (request != null) cancelClientExchange(request);
-        else {
-            ProxyConnection connection = state.connection;
-            if (connection != null && !connection.getConnection().isMultiplexingSupported())
-                IoUtils.safeClose(connection.getConnection());
-        }
+        releaseAttempt(state);
     }
 
     /** Ignore callbacks owned by a terminal response; terminate only unexpected commitment. */
@@ -454,7 +466,7 @@ public class ProxyHandler implements HttpHandler {
 
         ProxyClientHandler(HttpServerExchange exchange, ProxyClient.ProxyTarget target, long timeout, int maxRetryAttempts, Predicate idempotentPredicate, boolean streamingRequest) {
             this.exchange = exchange;
-            this.continuation = new ProxyContinuation(exchange, HandlerContinuation.capture(exchange));
+            this.continuation = new ProxyContinuation(HandlerContinuation.capture(exchange));
             this.timeout = timeout;
             this.maxRetryAttempts = maxRetryAttempts;
             this.target = target;
@@ -466,7 +478,36 @@ public class ProxyHandler implements HttpHandler {
         public void run() {
             continuationTask(exchange, continuation, ex -> {
                 if (!stopCallbackIfTerminal(ex, continuation))
-                    proxyClient.getConnection(this.target, ex, this, -1, TimeUnit.MILLISECONDS);
+                    acquire(this.target, -1);
+            }).run();
+        }
+
+        private void acquire(ProxyClient.ProxyTarget target, long remaining) {
+            // A retry owns new resources. Drop and cancel the previous stream before
+            // accepting any resources from this attempt.
+            long attempt = ++continuation.attempt;
+            releaseAttempt(continuation);
+            proxyClient.getConnection(target, exchange, new ProxyCallback<>() {
+                @Override public void completed(HttpServerExchange ex, ProxyConnection connection) {
+                    continuationTask(ex, continuation, resumed -> {
+                        if (attempt != continuation.attempt) {
+                            if (!connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection());
+                        } else ProxyClientHandler.this.completed(resumed, connection);
+                    }).run();
+                }
+                @Override public void failed(HttpServerExchange ex) { failedAttempt(ex, attempt); }
+                @Override public void queuedRequestFailed(HttpServerExchange ex) { failedAttempt(ex, attempt); }
+                @Override public void couldNotResolveBackend(HttpServerExchange ex) {
+                    continuationTask(ex, continuation, resumed -> {
+                        if (attempt == continuation.attempt) unresolvedBackend(resumed);
+                    }).run();
+                }
+            }, remaining, TimeUnit.MILLISECONDS);
+        }
+
+        private void failedAttempt(HttpServerExchange ex, long attempt) {
+            continuationTask(ex, continuation, resumed -> {
+                if (attempt == continuation.attempt) handleFailed(resumed);
             }).run();
         }
 
@@ -479,6 +520,7 @@ public class ProxyHandler implements HttpHandler {
                 }
                 LOG.trace("ProxyCallback completed for exchange: {}", ex);
                 continuation.connection = connection;
+                ex.putAttachment(CONNECTION, connection);
                 new ProxyAction(connection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, ex.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run();
             }).run();
         }
@@ -506,7 +548,7 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
             long remaining = timeout > 0 ? timeout - time : -1;
-            proxyClient.getConnection(target, exchange, this, remaining, TimeUnit.MILLISECONDS);
+            acquire(target, remaining);
         }
 
         @Override
@@ -546,9 +588,9 @@ public class ProxyHandler implements HttpHandler {
 
         private void cancelRequest(final HttpServerExchange exchange) {
             if (exchange.isComplete() || continuation.stopping) return;
+            final ProxyConnection connectionAttachment = continuation.connection;
             abortUpstream(continuation);
             //NOTE: this method is called only in context of timeouts.
-            final ProxyConnection connectionAttachment = continuation.connection;
 
             if (connectionAttachment != null) {
                 ClientConnection clientConnection = connectionAttachment.getConnection();
@@ -579,6 +621,7 @@ public class ProxyHandler implements HttpHandler {
     private static class ProxyAction implements Runnable {
         private final ProxyContinuation continuation;
         private final ProxyConnection clientConnection;
+        private final long attempt;
         private final HttpServerExchange exchange;
         private final Map<HttpString, ExchangeAttribute> requestHeaders;
         private final boolean rewriteHostHeader;
@@ -601,6 +644,7 @@ public class ProxyHandler implements HttpHandler {
                     boolean streamingRequest, List<String> streamResponseContentTypes, int streamIdleTimeout, List<HttpString> streamResponseHeaderOverwrite,
                     ProxyContinuation continuation) {
             this.continuation = continuation;
+            this.attempt = continuation.attempt;
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
@@ -983,7 +1027,7 @@ public class ProxyHandler implements HttpHandler {
                 }
                 @Override public void failed(IOException failure) {
                     continuationTask(exchange, continuation, ex -> {
-                        if (!ex.isComplete() && !continuation.stopping) callback.failed(failure);
+                        if (!ex.isComplete() && !continuation.stopping && attempt == continuation.attempt) callback.failed(failure);
                     }).run();
                 }
             };
@@ -1009,7 +1053,7 @@ public class ProxyHandler implements HttpHandler {
 
                     result.setResponseListener(boundaryCallback(new ResponseCallback(ProxyAction.this)));
 
-                    final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
+                    final IoExceptionHandler handler = new IoExceptionHandler(exchange, continuation, attempt);
 
                     if (requiresContinueResponse) {
                         this.prepRequestChannelForContinue(result, handler);
@@ -1075,25 +1119,30 @@ public class ProxyHandler implements HttpHandler {
 
                 private void handleServerPush(ClientExchange ce) {
                     ce.setPushHandler((originalRequest, pushedRequest) -> {
-
-                        LOG.debug("Sending push request {} received from {} to target {} for exchange {}", pushedRequest.getRequest(), r, host, exchange);
-
-                        final ClientRequest req = pushedRequest.getRequest();
-
-                        exchange.getConnection().pushResource(req.getPath(), req.getMethod(), req.getRequestHeaders(), exchange -> {
-                            String path = req.getPath();
-                            int i = path.indexOf("?");
-
-                            if (i > 0)
-                                path = path.substring(0, i);
-
-                            String targetPath = path;
-                            exchange.dispatch(INLINE_EXECUTOR, continuationTask(exchange, continuation, ex -> new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), targetPath), ex, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run()));
-                        });
+                        continuationTask(exchange, continuation, parent -> {
+                            if (parent.isComplete() || continuation.stopping) {
+                                cancelClientExchange(pushedRequest);
+                                return;
+                            }
+                            LOG.debug("Sending push request {} received from {} to target {} for exchange {}", pushedRequest.getRequest(), r, host, parent);
+                            final ClientRequest req = pushedRequest.getRequest();
+                            boolean accepted = parent.getConnection().pushResource(req.getPath(), req.getMethod(), req.getRequestHeaders(), child -> {
+                                String path = req.getPath();
+                                int i = path.indexOf("?");
+                                if (i > 0) path = path.substring(0, i);
+                                String targetPath = path;
+                                ProxyContinuation pushed = new ProxyContinuation(HandlerContinuation.inherit(child, continuation.boundary));
+                                ProxyConnection pushedConnection = new ProxyConnection(pushedRequest.getConnection(), targetPath);
+                                child.putAttachment(CONNECTION, pushedConnection);
+                                pushed.connection = pushedConnection;
+                                child.dispatch(INLINE_EXECUTOR, continuationTask(child, pushed, ex -> new ProxyAction(pushedConnection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, false, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, pushed).run()));
+                            });
+                            if (!accepted) cancelClientExchange(pushedRequest);
+                        }).run();
                         return true;
                     });
-
                 }
+
             }));
         }
 
@@ -1139,6 +1188,7 @@ public class ProxyHandler implements HttpHandler {
 
         private final HttpServerExchange exchange;
         private final ProxyContinuation continuation;
+        private final long attempt;
         private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
         private final Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
@@ -1150,6 +1200,7 @@ public class ProxyHandler implements HttpHandler {
         private ResponseCallback(ProxyAction action) {
             this.exchange = action.exchange;
             this.continuation = action.continuation;
+            this.attempt = action.attempt;
             this.proxyClientHandler = action.proxyClientHandler;
             this.idempotentPredicate = action.idempotentPredicate;
             this.headerRewriteRules = action.headerRewriteRules;
@@ -1182,7 +1233,7 @@ public class ProxyHandler implements HttpHandler {
             if (exchange.isUpgrade())
                 this.handleUpgradeChannelOnComplete(result);
 
-            final IoExceptionHandler handler = new IoExceptionHandler(exchange, result.getConnection());
+            final IoExceptionHandler handler = new IoExceptionHandler(exchange, continuation, attempt);
 
             StreamSourceChannel responseChannel = result.getResponseChannel();
             if (streamingResponse && streamIdleTimeout > 0) {
@@ -1405,6 +1456,7 @@ public class ProxyHandler implements HttpHandler {
         private final Attachable target;
         private final HttpServerExchange exchange;
         private final ProxyContinuation continuation;
+        private final long attempt;
         private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
 
@@ -1413,6 +1465,7 @@ public class ProxyHandler implements HttpHandler {
             this.target = target;
             this.exchange = exchange;
             this.continuation = continuation;
+            this.attempt = continuation.attempt;
             this.proxyClientHandler = proxyClientHandler;
             this.idempotentPredicate = idempotentPredicate;
         }
@@ -1444,47 +1497,48 @@ public class ProxyHandler implements HttpHandler {
 
                 LOG.error("IOException: ", e);
 
-                continuationTask(exchange, continuation, ex -> handleFailure(ex, continuation, proxyClientHandler, idempotentPredicate, e)).run();
+                continuationTask(exchange, continuation, ex -> {
+                    if (attempt == continuation.attempt && !continuation.stopping)
+                        handleFailure(ex, continuation, proxyClientHandler, idempotentPredicate, e);
+                }).run();
 
             } catch (Exception e) {
 
                 LOG.error("Exception: ", e);
 
-                continuationTask(exchange, continuation, ex -> handleFailure(ex, continuation, proxyClientHandler, idempotentPredicate, new IOException(e))).run();
+                continuationTask(exchange, continuation, ex -> {
+                    if (attempt == continuation.attempt && !continuation.stopping)
+                        handleFailure(ex, continuation, proxyClientHandler, idempotentPredicate, new IOException(e));
+                }).run();
             }
 
         }
     }
 
     private static final class IoExceptionHandler implements ChannelExceptionHandler<Channel> {
-
         private final HttpServerExchange exchange;
-        private final ClientConnection clientConnection;
+        private final ProxyContinuation continuation;
+        private final long attempt;
 
-        private IoExceptionHandler(HttpServerExchange exchange, ClientConnection clientConnection) {
+        private IoExceptionHandler(HttpServerExchange exchange, ProxyContinuation continuation, long attempt) {
             this.exchange = exchange;
-            this.clientConnection = clientConnection;
+            this.continuation = continuation;
+            this.attempt = attempt;
         }
 
         @Override
-        public void handleException(Channel channel, IOException e) {
-            IoUtils.safeClose(channel);
-            IoUtils.safeClose(clientConnection);
-
-            if (exchange.isResponseStarted()) {
-                UndertowLogger.REQUEST_IO_LOGGER.debug("Exception reading from target server", e);
-
-                if (!exchange.isResponseStarted()) {
-                    exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                    exchange.endExchange();
-
-                } else IoUtils.safeClose(exchange.getConnection());
-
-            } else {
-                UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.endExchange();
-            }
+        public void handleException(Channel channel, IOException failure) {
+            continuationTask(exchange, continuation, ex -> {
+                IoUtils.safeClose(channel);
+                if (attempt != continuation.attempt || continuation.stopping || ex.isComplete()) return;
+                abortUpstream(continuation);
+                UndertowLogger.REQUEST_IO_LOGGER.ioException(failure);
+                if (ex.isResponseStarted()) IoUtils.safeClose(ex.getConnection());
+                else {
+                    ex.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                    ex.endExchange();
+                }
+            }).run();
         }
     }
 

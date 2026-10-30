@@ -6,6 +6,10 @@ import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.TimeSeriesDbSender;
 import io.undertow.Undertow;
+import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.util.HttpString;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.Methods;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.server.*;
@@ -449,6 +453,7 @@ class ProxyContinuationTest {
                             case "queued" -> callback.queuedRequestFailed(exchange);
                             default -> throw new AssertionError(kind);
                         }
+                        awaitIoCallbacks(exchange);
                     } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new AssertionError(e); }
                     finally { delivered.countDown(); }
                 });
@@ -510,6 +515,7 @@ class ProxyContinuationTest {
                             case "queued" -> callback.queuedRequestFailed(exchange);
                             default -> throw new AssertionError(kind);
                         }
+                        awaitIoCallbacks(exchange);
                     } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new AssertionError(e); }
                     finally { delivered.countDown(); }
                 });
@@ -630,6 +636,203 @@ class ProxyContinuationTest {
                     HttpResponse.BodyHandlers.ofString()).body());
             assertEquals(1, peers.size());
         } finally { releaseBody.countDown(); releaseHealthy.countDown(); }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void http2PushUsesItsOwnExchangeAndSelectedBoundary(boolean rejectPush) throws Exception {
+        var pushedResponses = new ConcurrentHashMap<HttpRequest, CompletableFuture<HttpResponse<String>>>();
+        var pushObserved = new CountDownLatch(1);
+        HttpResponse.PushPromiseHandler<String> acceptPush = (request, pushed, acceptor) -> {
+            pushedResponses.put(pushed, acceptor.apply(HttpResponse.BodyHandlers.ofString()));
+            pushObserved.countDown();
+        };
+        var parentExchange = new AtomicReference<HttpServerExchange>();
+        var childExchange = new AtomicReference<HttpServerExchange>();
+        var failures = new CompletableFuture<Throwable>();
+        Set<Integer> peers = ConcurrentHashMap.newKeySet();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()) {
+            try {
+                URI backend = fixture.start(exchange -> {
+                    if (exchange.getRequestPath().equals("/parent")) {
+                        assertTrue(exchange.getConnection().pushResource("/pushed", Methods.GET,
+                                new HeaderMap(), child -> child.getResponseSender().send("pushed")));
+                        exchange.getResponseSender().send("parent");
+                    } else exchange.getResponseSender().send("pushed");
+                }, true);
+                URI h2 = URI.create("h2c-prior://" + backend.getHost() + ":" + backend.getPort());
+                ProxyHandler proxy = ProxyHandler.builder().setProxyClient(new LoadBalancingProxyClient().addHost(h2))
+                        .setMaxRequestTime(0).addRequestHeader(new HttpString("X-Push-Test"), new ExchangeAttribute() {
+                            @Override public String readAttribute(HttpServerExchange ex) {
+                                if (rejectPush && ex.getRequestPath().equals("/pushed"))
+                                    throw new ControlledFailure(Phase.BEFORE_SEND);
+                                return "value";
+                            }
+                            @Override public void writeAttribute(HttpServerExchange ex, String value) {
+                                throw new UnsupportedOperationException("Read-only test attribute");
+                            }
+                        }).build();
+                URI front = fixture.start(exchange -> {
+                    peers.add(exchange.getSourceAddress().getPort());
+                    if (exchange.getRequestPath().equals("/warm")) exchange.getResponseSender().send("warm");
+                    else HandlerContinuation.execute(exchange, (ex, next) -> {
+                        if (ex.getRequestPath().equals("/pushed")) childExchange.set(ex);
+                        else parentExchange.set(ex);
+                        try { next.handleRequest(ex); }
+                        catch (ControlledFailure failure) {
+                            assertEquals("/pushed", ex.getRequestPath());
+                            assertEquals(Phase.BEFORE_SEND, failure.phase);
+                            ex.setStatusCode(409).getResponseSender().send("selected child");
+                        } catch (Exception | Error failure) { failures.complete(failure); throw failure; }
+                    }, proxy);
+                }, true);
+                assertEquals(HttpClient.Version.HTTP_2, http.sendAsync(HttpRequest.newBuilder(front.resolve("/warm")).build(),
+                        HttpResponse.BodyHandlers.ofString(), acceptPush).get(5, TimeUnit.SECONDS).version());
+                var parent = http.sendAsync(HttpRequest.newBuilder(front.resolve("/parent")).timeout(Duration.ofSeconds(6)).build(),
+                        HttpResponse.BodyHandlers.ofString(), acceptPush);
+                assertEquals("parent", parent.get(8, TimeUnit.SECONDS).body());
+                assertTrue(pushObserved.await(5, TimeUnit.SECONDS), "Must receive a real HTTP/2 push promise");
+                assertEquals(1, pushedResponses.size(), "Must exercise actual HTTP/2 push");
+                var pushed = pushedResponses.values().iterator().next().get(5, TimeUnit.SECONDS);
+                assertEquals(rejectPush ? 409 : 200, pushed.statusCode(), pushed.body());
+                assertEquals(rejectPush ? "selected child" : "pushed", pushed.body());
+                assertNotNull(parentExchange.get());
+                assertNotNull(childExchange.get());
+                assertNotSame(parentExchange.get(), childExchange.get());
+                assertFalse(failures.isDone(), "Push must not corrupt the parent exchange");
+                assertEquals("pushed", http.sendAsync(HttpRequest.newBuilder(front.resolve("/after")).build(),
+                        HttpResponse.BodyHandlers.ofString(), acceptPush).get(5, TimeUnit.SECONDS).body());
+                assertEquals(1, peers.size(), "The parent connection must survive its pushed response");
+            } finally { http.shutdownNow(); }
+        }
+    }
+
+    @Test
+    void deferredBoundaryHasNoCallbackSlotAndPreservesPublicConnectionAttachment() throws Exception {
+        var frontendExchange = new AtomicReference<HttpServerExchange>();
+        var acquired = new AtomicReference<ProxyConnection>();
+        var boundaryCalls = new AtomicInteger();
+        var callbackFailure = new CompletableFuture<Throwable>();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newHttpClient()) {
+            URI backend = fixture.start(exchange -> exchange.getResponseSender().send("accepted"));
+            var real = new LoadBalancingProxyClient().addHost(backend);
+            ProxyClient client = new ProxyClient() {
+                @Override public ProxyTarget findTarget(HttpServerExchange ex) { return real.findTarget(ex); }
+                @Override public void getConnection(ProxyTarget target, HttpServerExchange ex,
+                        ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
+                    assertTrue(ex.isInIoThread(), "No callback-wide monitor: transport work belongs to the I/O thread");
+                    real.getConnection(target, ex, new ProxyCallback<>() {
+                        @Override public void completed(HttpServerExchange exchange, ProxyConnection connection) {
+                            acquired.set(connection);
+                            callback.completed(exchange, connection);
+                        }
+                        @Override public void failed(HttpServerExchange exchange) { callback.failed(exchange); }
+                        @Override public void couldNotResolveBackend(HttpServerExchange exchange) { callback.couldNotResolveBackend(exchange); }
+                        @Override public void queuedRequestFailed(HttpServerExchange exchange) { callback.queuedRequestFailed(exchange); }
+                    }, timeout, unit);
+                }
+            };
+            var proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
+            URI front = fixture.start(exchange -> {
+                frontendExchange.set(exchange);
+                HandlerContinuation.execute(exchange, (ex, next) -> {
+                    if (boundaryCalls.getAndIncrement() == 0) next.handleRequest(ex);
+                    else ex.dispatch(ex.getConnection().getWorker(), () -> {
+                        try { next.handleRequest(ex); }
+                        catch (Throwable failure) { callbackFailure.complete(failure); }
+                    });
+                }, proxy);
+            });
+            var response = http.send(HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(8)).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals("accepted", response.body());
+            assertTrue(boundaryCalls.get() > 1);
+            assertFalse(callbackFailure.isDone());
+            awaitIoCallbacks(frontendExchange.get());
+            assertSame(acquired.get(), frontendExchange.get().getAttachment(ProxyHandler.CONNECTION));
+        }
+    }
+
+    @Test
+    void retryTimeoutReleasesCurrentConnectionAndIgnoresOldAcquisitionFailure() throws Exception {
+        var firstResponseFailure = new CompletableFuture<Runnable>();
+        var secondSend = new CountDownLatch(1);
+        var connections = new CopyOnWriteArrayList<ClientConnection>();
+        var acquired = new CopyOnWriteArrayList<ProxyConnection>();
+        var callbacks = new CopyOnWriteArrayList<ProxyCallback<ProxyConnection>>();
+        var frontend = new AtomicReference<HttpServerExchange>();
+        var attempts = new AtomicInteger();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newHttpClient()) {
+            URI backend = fixture.start(HttpServerExchange::dispatch);
+            ProxyClient client = new ProxyClient() {
+                @Override public ProxyTarget findTarget(HttpServerExchange ex) { return new ProxyTarget() {}; }
+                @Override public void getConnection(ProxyTarget target, HttpServerExchange exchange,
+                        ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
+                    assertTrue(exchange.isInIoThread());
+                    callbacks.add(callback);
+                    int attempt = attempts.incrementAndGet();
+                    UndertowClient.getInstance().connect(new ClientCallback<>() {
+                        @Override public void completed(ClientConnection connection) {
+                            connections.add(connection);
+                            ClientConnection decorated = (ClientConnection) Proxy.newProxyInstance(ClientConnection.class.getClassLoader(),
+                                    new Class<?>[]{ClientConnection.class}, (proxy, method, args) -> {
+                                if (method.getName().equals("sendRequest")) {
+                                    if (attempt == 2) { secondSend.countDown(); return null; }
+                                    @SuppressWarnings("unchecked") var send = (ClientCallback<ClientExchange>) args[1];
+                                    connection.sendRequest((ClientRequest) args[0], new ClientCallback<>() {
+                                        @Override public void completed(ClientExchange request) {
+                                            ClientExchange decoratedRequest = (ClientExchange) Proxy.newProxyInstance(ClientExchange.class.getClassLoader(),
+                                                    new Class<?>[]{ClientExchange.class}, (proxy, method, args) -> {
+                                                if (method.getName().equals("setResponseListener")) {
+                                                    @SuppressWarnings("unchecked") var listener = (ClientCallback<ClientExchange>) args[0];
+                                                    firstResponseFailure.complete(() -> listener.failed(new IOException("first response failed")));
+                                                    return null;
+                                                }
+                                                try { return method.invoke(request, args); }
+                                                catch (InvocationTargetException e) { throw e.getCause(); }
+                                            });
+                                            send.completed(decoratedRequest);
+                                        }
+                                        @Override public void failed(IOException e) { send.failed(e); }
+                                    });
+                                    return null;
+                                }
+                                try { return method.invoke(connection, args); }
+                                catch (InvocationTargetException e) { throw e.getCause(); }
+                            });
+                            var selected = new ProxyConnection(decorated, "/");
+                            acquired.add(selected);
+                            callback.completed(exchange, selected);
+                        }
+                        @Override public void failed(IOException e) { callback.failed(exchange); }
+                    }, backend, exchange.getIoThread(), exchange.getConnection().getByteBufferPool(), org.xnio.OptionMap.EMPTY);
+                }
+            };
+            var proxy = ProxyHandler.builder().setProxyClient(client).setMaxConnectionRetries(1).setMaxRequestTime(1500).build();
+            URI front = fixture.start(exchange -> { frontend.set(exchange); proxy.handleRequest(exchange); });
+            var response = http.sendAsync(HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(6)).build(), HttpResponse.BodyHandlers.ofString());
+            firstResponseFailure.get(5, TimeUnit.SECONDS).run();
+            assertTrue(secondSend.await(5, TimeUnit.SECONDS));
+            callbacks.getFirst().failed(frontend.get());
+            callbacks.getFirst().queuedRequestFailed(frontend.get());
+            callbacks.getFirst().couldNotResolveBackend(frontend.get());
+            callbacks.getFirst().completed(frontend.get(), acquired.getFirst());
+            awaitIoCallbacks(frontend.get());
+            assertSame(acquired.getLast(), frontend.get().getAttachment(ProxyHandler.CONNECTION));
+            assertEquals(2, attempts.get(), "An old acquisition callback cannot retry the current attempt");
+            assertEquals(504, response.get(5, TimeUnit.SECONDS).statusCode());
+            assertEquals(2, connections.size());
+            assertFalse(connections.getFirst().isOpen());
+            assertFalse(connections.getLast().isOpen(), "Timeout must release the current attempt's connection");
+        }
+    }
+
+    private static void awaitIoCallbacks(HttpServerExchange exchange) {
+        assertFalse(exchange.isInIoThread(), "Only the test thread waits for I/O ownership");
+        var drained = new CompletableFuture<Void>();
+        exchange.getIoThread().execute(() -> drained.complete(null));
+        try { drained.get(5, TimeUnit.SECONDS); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new AssertionError(e); }
+        catch (ExecutionException | TimeoutException e) { throw new AssertionError(e); }
     }
 
     private static ClientConnection decorateConnection(ClientConnection real, Phase phase,

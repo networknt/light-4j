@@ -1,6 +1,5 @@
 package com.networknt.handler;
 
-import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.server.HttpServerExchange;
 
 import java.util.AbstractMap;
@@ -19,7 +18,7 @@ import java.util.function.BiConsumer;
 public final class RequestMdcContext extends AbstractMap<String, String> {
     private final AtomicReference<Map<String, String>> current;
 
-    private RequestMdcContext(Map<String, String> initial) {
+    RequestMdcContext(Map<String, String> initial) {
         current = new AtomicReference<>(initial == null || initial.isEmpty()
                 ? Map.of() : Collections.unmodifiableMap(new HashMap<>(initial)));
     }
@@ -30,13 +29,7 @@ public final class RequestMdcContext extends AbstractMap<String, String> {
      * Legacy Map-valued context is migrated once in that serial frame.
      */
     public static RequestMdcContext initialize(HttpServerExchange exchange) {
-        RequestMdcContext active = HandlerContinuation.activeContext(exchange);
-        if (active != null) return active;
-        Map<String, String> attached = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-        if (attached instanceof RequestMdcContext holder) return holder;
-        RequestMdcContext holder = new RequestMdcContext(attached);
-        exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, holder);
-        return holder;
+        return RequestState.initialize(exchange).mdc;
     }
 
     /** One immutable generation suitable for coherent iteration by external readers. */

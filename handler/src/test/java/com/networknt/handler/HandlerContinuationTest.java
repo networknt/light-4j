@@ -26,6 +26,79 @@ import static org.mockito.Mockito.*;
 
 class HandlerContinuationTest {
     @Test
+    void offFrameCaptureRetainsEntryPolicyAndHolderOnAnotherThread() throws Exception {
+        var exchange = spy(new HttpServerExchange(null));
+        var selected = new AtomicInteger();
+        HandlerContinuation.execute(exchange, (ex, next) -> {
+            try { next.handleRequest(ex); }
+            catch (IOException _) { selected.incrementAndGet(); }
+        }, ex -> publicationMiddleware().addHandlerMDCContext(ex, "request", "entry"));
+        var holder = RequestMdcContext.initialize(exchange);
+        clearInvocations(exchange);
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            worker.submit(() -> {
+                assertSame(holder, RequestMdcContext.initialize(exchange));
+                HandlerContinuation.capture(exchange, ex -> {
+                    assertEquals("entry", MDC.get("request"));
+                    throw new IOException("off-frame failure");
+                }).handleRequest(exchange);
+                return null;
+            }).get(5, TimeUnit.SECONDS);
+        }
+        assertEquals(1, selected.get());
+        verify(exchange, never()).getAttachment(any());
+        verify(exchange, never()).putAttachment(any(), any());
+    }
+
+    @Test
+    void deferredBoundaryRetainsItsContinuationAndRestoresWorkerMdc() throws Exception {
+        var exchange = new HttpServerExchange(null);
+        var pending = new AtomicReference<HttpHandler>();
+        HandlerContinuation.execute(exchange, (ex, next) -> pending.set(next), ex -> {
+            publicationMiddleware().addHandlerMDCContext(ex, "request", "deferred");
+        });
+        pending.getAndSet(null).handleRequest(exchange);
+        var calls = new AtomicInteger();
+        HandlerContinuation.task(exchange, HandlerContinuation.capture(exchange, ex -> {
+            assertEquals("deferred", MDC.get("request"));
+            calls.incrementAndGet();
+        })).run();
+        assertEquals(0, calls.get());
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            worker.submit(() -> {
+                MDC.put("worker", "prior");
+                try {
+                    pending.getAndSet(null).handleRequest(exchange);
+                    assertEquals("prior", MDC.get("worker"));
+                } finally { MDC.clear(); }
+                return null;
+            }).get(5, TimeUnit.SECONDS);
+        }
+        assertEquals(1, calls.get());
+    }
+
+    @Test
+    void inheritedExchangeOwnsItsMdcAndUsesTheSelectedPolicy() throws Exception {
+        var parent = new HttpServerExchange(null);
+        var child = new HttpServerExchange(null);
+        var policy = new AtomicReference<java.util.function.UnaryOperator<HttpHandler>>();
+        var seen = new ArrayList<HttpServerExchange>();
+        HandlerContinuation.execute(parent, (ex, next) -> { seen.add(ex); next.handleRequest(ex); }, ex -> {
+            publicationMiddleware().addHandlerMDCContext(ex, "request", "parent");
+            policy.set(HandlerContinuation.capture(ex));
+        });
+        seen.clear();
+        HandlerContinuation.inherit(child, policy.get()).apply(ex -> {
+            assertSame(child, ex);
+            assertEquals("parent", MDC.get("request"));
+            publicationMiddleware().addHandlerMDCContext(ex, "request", "child");
+        }).handleRequest(child);
+        assertEquals(List.of(child), seen);
+        assertEquals("parent", RequestMdcContext.initialize(parent).snapshot().get("request"));
+        assertEquals("child", RequestMdcContext.initialize(child).snapshot().get("request"));
+    }
+
+    @Test
     void activePolicyTracksIdentityAndExchangeAndRestoresAfterNestedFailure() throws Exception {
         HttpServerExchange first = new HttpServerExchange(null);
         HttpServerExchange second = new HttpServerExchange(null);
@@ -282,7 +355,7 @@ class HandlerContinuationTest {
         assertEquals(List.of("inner", "nested", "outer", "enclosing"), seen);
         seen.clear();
         HandlerContinuation.capture(exchange, ignored -> seen.add("unwrapped")).handleRequest(exchange);
-        assertEquals(List.of("unwrapped"), seen, "Neither frame may leave a boundary behind");
+        assertEquals(List.of("outer", "unwrapped"), seen, "Off-frame capture retains the exchange entry boundary");
     }
 
     @Test

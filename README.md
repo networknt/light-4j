@@ -185,10 +185,13 @@ MDC updates use one stable RequestMdcContext holder with an atomic immutable-map
 reference. The first boundary execution or capture initializes that holder
 before its asynchronous hand-off; addHandlerMDCContext can also initialize it on
 first serial use. Later updates replace only the holder's snapshot, never its
-attachment. Captured frames and their MDC helper updates reuse the holder directly,
-without attachment lookups. Active exception policy is thread-scoped and captured
-by value; overlapping frames never rewrite a policy attachment. Custom asynchronous
-code must initialize/capture before hand-off.
+attachment. An exchange-owned RequestState retains the entry exception policy
+and MDC holder. A synchronized weak-key/weak-value index supports off-frame lookups
+without reading Undertow's mutable attachment map; the exchange attachment owns the
+state's lifetime. The index lock covers lookup/initialization only, never handlers
+or callbacks. Captured frames read their holder directly. Thread-local frames only
+select nested policy overrides and scope MDC; off-frame capture retains the entry
+policy. Custom asynchronous code must initialize/capture before hand-off.
 The Map-typed attachment key remains compatible with read-only consumers; direct
 attachment replacement or mutation is unsupported after initialization.
 Proxy callbacks use this scope rather than the unscoped
@@ -210,14 +213,16 @@ The neutral Runnable adapter attempts a 500 before commitment or a stream reset
 after commitment before propagating the original Error. Failed writes/resets are
 suppressed on that Error and cannot replace it; selected exception policies keep
 their existing handling behavior. Ordinary exceptions use the same guarded cleanup.
-Proxy callbacks serialize on private per-request state rather than mutating
-connection, cancellation or timeout attachments. The legacy public `CONNECTION`
-key remains declared but is no longer populated; external consumers of that
-implementation attachment need compatibility review before upgrade. A proxy-generated terminal
-response is marked before sending, so benign late callbacks leave it draining.
-Unexpected committed-response callbacks reset only the affected HTTP/2 stream.
-Allocation samples and a reproducible local probe are in
-[handler/qualification](handler/qualification/README.md).
+Proxy callbacks execute on the downstream exchange's I/O thread, without a
+callback-wide monitor or shared mutable callback slot. The public `CONNECTION`
+attachment is populated when a connection is accepted. Retry generations discard
+late acquisition/send/response callbacks and release the previous attempt's resources
+before accepting a new connection. A proxy-generated terminal response is marked
+before sending, so benign late callbacks leave it draining. Pushed exchanges inherit
+the selected policy and an independent MDC snapshot, with their own cancellation
+state. Unexpected committed-response callbacks reset only the affected HTTP/2 stream.
+Local allocation probes are separate qualification artifacts, not repository source
+or CI qualification; gateway performance remains an explicit review gate.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
 Body-reading requests capture lazily only when a read suspends. ingress-proxy uses

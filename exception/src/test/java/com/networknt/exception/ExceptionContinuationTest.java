@@ -2,6 +2,9 @@ package com.networknt.exception;
 
 
 import com.networknt.config.Config;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.networknt.handler.HandlerContinuation;
 import com.networknt.status.Status;
 import io.undertow.Undertow;
@@ -117,6 +120,10 @@ class ExceptionContinuationTest {
             case "client-without-status" -> new ClientException(new Status());
             default -> throw new IllegalArgumentException(kind);
         };
+        var events = new ListAppender<ILoggingEvent>();
+        var log = (Logger) ExceptionHandler.logger;
+        events.start();
+        log.addAppender(events);
         ExceptionHandler selected = new ExceptionHandler();
         HttpHandler failing = exchange -> { throw failure; };
         selected.setNext(exchange -> {
@@ -133,9 +140,16 @@ class ExceptionContinuationTest {
             assertEquals(missingStatus ? 400 : 429, response.statusCode(), response.body());
             assertTrue(response.body().contains(missingStatus ? "ERR10011" : "TEST_TYPED_FAILURE"), response.body());
             assertEquals("application/json", response.headers().firstValue("Content-Type").orElse(""));
+            if (kind.equals("framework") || kind.equals("api"))
+                assertTrue(events.list.stream().anyMatch(event -> status.toString().equals(event.getMessage())
+                        && event.getThrowableProxy() != null
+                        && failure.getClass().getName().equals(event.getThrowableProxy().getClassName())),
+                        "Keep the existing raw JSON log message and throwable");
         } finally {
             server.stop();
             ClientException.setStatus(previousClientStatus);
+            log.detachAppender(events);
+            events.stop();
         }
     }
 

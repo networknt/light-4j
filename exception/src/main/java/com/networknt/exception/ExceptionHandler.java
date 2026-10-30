@@ -86,11 +86,12 @@ public class ExceptionHandler implements MiddlewareHandler {
                     ex -> Handler.next(ex, next));
         } finally {
             // Initial chain execution owns request-thread cleanup. Resumed frames
-            // use their executor's MDC_CONTEXT and must not erase that context.
+            // scope and restore the executing thread's MDC themselves.
             MDC.clear();
         }
     }
 
+    @SuppressWarnings("java:S3776") // Preserve the established exception-policy branches while adapting asynchronous frames.
     private void handleContinuation(HttpServerExchange exchange, HttpHandler continuation) throws Exception {
         // Log each executing frame, including asynchronous continuations.
         String path = exchange.getRequestPath();
@@ -100,38 +101,42 @@ public class ExceptionHandler implements MiddlewareHandler {
             continuation.handleRequest(exchange);
         } catch (Throwable e) {
             logger.error("ExceptionHandler error processing - path: {}", path, e);
-            if (exchange.isResponseChannelAvailable()) writeFailureResponse(exchange, e);
+            if(exchange.isResponseChannelAvailable()) {
+                //handle exceptions
+                if(e instanceof RuntimeException) {
+                    // check if it is FrameworkException which is subclass of RuntimeException.
+                    if(e instanceof FrameworkException fe) {
+                        exchange.setStatusCode(fe.getStatus().getStatusCode());
+                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                        exchange.getResponseSender().send(fe.getStatus().toString());
+                        if (logger.isErrorEnabled()) logger.error(fe.getStatus().toString(), e);
+                    } else {
+                        setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
+                    }
+                } else {
+                    if(e instanceof ApiException ae) {
+                        exchange.setStatusCode(ae.getStatus().getStatusCode());
+                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                        exchange.getResponseSender().send(ae.getStatus().toString());
+                        if (logger.isErrorEnabled()) logger.error(ae.getStatus().toString(), e);
+                    } else if(e instanceof ClientException){
+                        Status clientStatus = ClientException.getStatus();
+                        if(clientStatus.getStatusCode() == 0){
+                            setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+                        } else {
+                            exchange.setStatusCode(clientStatus.getStatusCode());
+                            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                            exchange.getResponseSender().send(clientStatus.toString());
+                        }
+
+                    } else {
+                        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+                    }
+                }
+            }
         } finally {
             if(logger.isDebugEnabled()) logger.debug("ExceptionHandler frame completed - path: {}", path);
         }
-    }
-
-    private void writeFailureResponse(HttpServerExchange exchange, Throwable failure) {
-        if (failure instanceof RuntimeException) {
-            if (failure instanceof FrameworkException framework) {
-                Status status = framework.getStatus();
-                sendStatus(exchange, status);
-                logger.error("{}", status, failure);
-            } else setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
-            return;
-        }
-        if (failure instanceof ApiException api) {
-            Status status = api.getStatus();
-            sendStatus(exchange, status);
-            logger.error("{}", status, failure);
-            return;
-        }
-        if (failure instanceof ClientException && ClientException.getStatus().getStatusCode() != 0) {
-            sendStatus(exchange, ClientException.getStatus());
-            return;
-        }
-        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-    }
-
-    private static void sendStatus(HttpServerExchange exchange, Status status) {
-        exchange.setStatusCode(status.getStatusCode());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exchange.getResponseSender().send(status.toString());
     }
 
     @Override
