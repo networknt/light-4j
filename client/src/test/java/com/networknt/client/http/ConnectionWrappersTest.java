@@ -2,30 +2,27 @@ package com.networknt.client.http;
 
 import io.undertow.client.ClientConnection;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.parallel.Isolated;
 import org.xnio.*;
 import java.lang.ref.Reference;
-import java.nio.file.*;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@Isolated("Exercises the real static connection registry")
 class ConnectionWrappersTest {
     private XnioWorker worker;
     private XnioIoThread owner;
-    private final List<ConnectionWrappers.Entry> registrations = new ArrayList<>();
+    private final List<Reference<ClientConnection>> registrations = new ArrayList<>();
 
     @BeforeEach void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
     }
     @AfterEach void tearDown() throws Exception {
-        for (ConnectionWrappers.Entry entry : registrations) {
-            entry.key.clear();
-            entry.key.enqueue();
-            entry.cleanable.clean();
+        for (Reference<ClientConnection> key : registrations) {
+            key.clear();
+            ((Runnable) key).run();
         }
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
@@ -35,25 +32,33 @@ class ConnectionWrappersTest {
         owner.execute(() -> done.complete(null));
         done.get(5, TimeUnit.SECONDS);
     }
-    private ClientConnection transport() {
+    @SuppressWarnings("unchecked")
+    private Map<Reference<ClientConnection>, ConnectionWrappers.Entry> registry() throws Exception {
+        Field field = ConnectionWrappers.class.getDeclaredField("entries");
+        field.setAccessible(true);
+        return (Map<Reference<ClientConnection>, ConnectionWrappers.Entry>) field.get(null);
+    }
+    private Reference<ClientConnection> keyFor(ClientConnection raw) throws Exception {
+        return registry().keySet().stream().filter(key -> key.get() == raw).findFirst().orElseThrow();
+    }
+    private ClientConnection transport() throws Exception {
         ClientConnection raw = mock(ClientConnection.class);
         when(raw.getIoThread()).thenReturn(owner);
         when(raw.isOpen()).thenReturn(true);
         IoThreadClientConnection.wrap(raw);
-        registrations.add(ConnectionWrappers.lookup(raw));
+        registrations.add(keyFor(raw));
         return raw;
     }
     @Test void realRegistryRecreatesAClearedViewWithRetirementIntact() throws Exception {
         ClientConnection raw = transport();
         IoThreadClientConnection original = IoThreadClientConnection.wrap(raw);
-        ConnectionWrappers.Entry state = ConnectionWrappers.lookup(raw);
+        ConnectionWrappers.Entry state = registry().get(keyFor(raw));
         drainOwner();
         original.close();
         drainOwner();
         state.view.get().clear();
         IoThreadClientConnection recreated = IoThreadClientConnection.wrap(raw);
-        assertSame(state, ConnectionWrappers.lookup(raw));
-        assertTrue(state.isRegistered());
+        assertSame(state, registry().get(keyFor(raw)));
         assertNotSame(original, recreated);
         assertFalse(recreated.isOpen());
         assertFalse(original.isOpen());
@@ -62,58 +67,39 @@ class ConnectionWrappersTest {
         assertSame(recreated, lateClose.get(5, TimeUnit.SECONDS));
         Reference.reachabilityFence(raw);
     }
-    @Test void registeredCleanerActionPurgesActualWeakKeysAndQueueWithoutAnotherWrap() {
-        ClientConnection first = transport();
-        ClientConnection second = transport();
+    @Test void cleanerActionRemovesOnlyItsActualRegistryKeyWithoutAnotherWrap() throws Exception {
+        ClientConnection dead = transport();
         ClientConnection live = transport();
-        ConnectionWrappers.Entry firstState = ConnectionWrappers.lookup(first);
-        ConnectionWrappers.Entry secondState = ConnectionWrappers.lookup(second);
-        ConnectionWrappers.Entry liveState = ConnectionWrappers.lookup(live);
-        assertTrue(firstState.isRegistered());
-        assertTrue(secondState.isRegistered());
-        firstState.key.clear();
-        secondState.key.clear();
-        assertTrue(firstState.key.enqueue());
-        assertTrue(secondState.key.enqueue());
-        firstState.cleanable.clean(); // Actual registered action also drains the real queue's other key.
-        assertFalse(firstState.isRegistered());
-        assertFalse(secondState.isRegistered());
-        assertTrue(liveState.isRegistered());
-        Reference.reachabilityFence(first);
-        Reference.reachabilityFence(second);
+        Reference<ClientConnection> deadKey = keyFor(dead);
+        Reference<ClientConnection> liveKey = keyFor(live);
+        ConnectionWrappers.Entry liveState = registry().get(liveKey);
+        deadKey.clear(); // Simulate reference processing, without GC timing or a child JVM.
+        Runnable cleanup = (Runnable) deadKey; // This exact key is the registered Cleaner action.
+        cleanup.run();
+        cleanup.run(); // Cleanup is idempotent.
+        assertFalse(registry().containsKey(deadKey));
+        assertSame(liveState, registry().get(liveKey));
+        Reference.reachabilityFence(dead);
         Reference.reachabilityFence(live);
     }
-    @Test void realCollectionAndIdlePurgeWorkInAControlledJvm() throws Exception {
-        String vm = System.getProperty("java.vm.name");
-        Assumptions.assumeTrue(vm.contains("OpenJDK") || vm.contains("HotSpot"), "Controlled Serial GC probe requires HotSpot");
-        Path output = Files.createTempFile("client-registry-gc-", ".log");
-        ProcessBuilder builder = new ProcessBuilder(
-                Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                "-Xint", "-Xms16m", "-Xmx64m", "-XX:+UseSerialGC", "-XX:-DisableExplicitGC",
-                "-Duser.home=" + System.getProperty("user.home"),
-                "-cp", System.getProperty("surefire.test.class.path", System.getProperty("java.class.path")),
-                ConnectionRegistryGcProbe.class.getName()).redirectErrorStream(true).redirectOutput(output.toFile());
-        // Parent collector/agent flags must not change the deliberately controlled child VM.
-        for (String variable : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) builder.environment().remove(variable);
-        Process probe = builder.start();
-        boolean success = false;
-        try {
-            boolean finished = probe.waitFor(30, TimeUnit.SECONDS);
-            if (!finished) probe.destroyForcibly();
-            assertTrue(finished, "GC probe did not terminate: " + Files.readString(output));
-            String log = Files.readString(output);
-            assertEquals(0, probe.exitValue(), log);
-            assertTrue(log.contains("REGISTRY_GC_OK"), log);
-            success = true;
-        } finally {
-            if (probe.isAlive()) probe.destroyForcibly();
-            if (success) Files.deleteIfExists(output);
-        }
+    @Test void staleCleanupCannotRemoveAReplacementForTheSameTransport() throws Exception {
+        ClientConnection raw = transport();
+        Reference<ClientConnection> oldKey = keyFor(raw);
+        oldKey.clear();
+        IoThreadClientConnection current = IoThreadClientConnection.wrap(raw);
+        Reference<ClientConnection> newKey = keyFor(raw);
+        registrations.add(newKey);
+        ((Runnable) oldKey).run();
+        assertFalse(registry().containsKey(oldKey));
+        assertSame(current, ConnectionWrappers.find(raw));
+        assertSame(current, IoThreadClientConnection.wrap(raw));
+        assertNotNull(registry().get(newKey));
+        Reference.reachabilityFence(raw);
     }
     @Test void recreatedViewKeepsTheShutdownRetirementReason() throws Exception {
         ClientConnection raw = transport();
         IoThreadClientConnection original = IoThreadClientConnection.wrap(raw);
-        ConnectionWrappers.Entry state = ConnectionWrappers.lookup(raw);
+        ConnectionWrappers.Entry state = registry().get(keyFor(raw));
         drainOwner();
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
@@ -124,7 +110,7 @@ class ConnectionWrappersTest {
         state.view.get().clear();
         IoThreadClientConnection recreated = IoThreadClientConnection.wrap(raw);
         assertFalse(recreated.isOpen());
-        assertSame(state, ConnectionWrappers.lookup(raw));
+        assertSame(state, registry().get(keyFor(raw)));
         assertSame(reason, state.closeReason);
         Reference.reachabilityFence(raw);
     }

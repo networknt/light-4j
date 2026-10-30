@@ -367,6 +367,52 @@ class Http2ClientPoolRetirementTest {
         }
     }
 
+    @ParameterizedTest @ValueSource(ints = {1, 3})
+    void quarantineClosesUnreturnedBorrowsOnlyAfterItsGraceDespiteTheOriginalFault(int borrowers) throws Exception {
+        AtomicBoolean fail = new AtomicBoolean();
+        pool = new Http2ClientConnectionPool(request, () -> {
+            if (fail.get() && Thread.holdsLock(pool)) throw new AssertionError("permanent retirement failure");
+            return clock.get();
+        });
+        ClientConnection raw = transport();
+        URI uri = URI.create("https://quarantine-bound.invalid");
+        pool.cacheConnection(uri, raw);
+        for (int i = 1; i < borrowers; i++) assertNotNull(pool.getConnection(uri));
+        fail.set(true);
+        for (long at : new long[]{30000, 31000, 33000, 37000, 45000}) {
+            clock.set(at);
+            assertEquals(1, pool.reapExpiredConnections());
+        }
+        drainOwner();
+        assertNull(pool.getConnection(uri));
+        verify(raw, never()).close();
+        assertEquals(1, pool.numberOfConnections());
+        clock.set(144999);
+        assertEquals(0, pool.reapExpiredConnections());
+        verify(raw, never()).close();
+        clock.set(145000);
+        assertEquals(1, pool.reapExpiredConnections());
+        drainOwner();
+        verify(raw).close();
+        assertEquals(0, pool.numberOfConnections(), "no borrower return or recovery of the failing clock was required");
+        assertTrue(fail.get());
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void physicallyClosedBorrowIsCleanedWithoutNativeNotificationOrWaitingForGrace(boolean multiplexed) throws Exception {
+        ClientConnection raw = transport(); // Provider deliberately does not deliver its native close listeners.
+        when(raw.isMultiplexingSupported()).thenReturn(multiplexed);
+        URI uri = URI.create("https://missed-close.invalid");
+        pool.cacheConnection(uri, raw);
+        drainOwner();
+        when(raw.isOpen()).thenReturn(false);
+        assertNull(pool.getConnection(uri)); // Selection detects closure and retires the still-borrowed record.
+        drainOwner();
+        verify(raw).close();
+        assertEquals(0, pool.numberOfConnections());
+        assertEquals(0, clock.get(), "cleanup did not wait for the grace deadline or borrower return");
+    }
+
     @Test void permanentlyFailingClosedMetadataCleanupStopsAfterItsBudget() throws Exception {
         ClientConnection raw = transport();
         pool.cacheConnection(URI.create("https://metadata-failure.invalid"), raw);
