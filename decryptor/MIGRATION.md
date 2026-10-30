@@ -42,11 +42,27 @@ cannot identify a configuration key/file on its own.
 
 ## Credential lifetime and compatibility
 
-Password-provider selection is unchanged. The base `AESSaltDecryptor` retains
-its historical public `light` default for compatibility; that default is not a
-production secret. Production deployments should use `AutoAESSaltDecryptor`
-with an explicitly supplied `light_4j_config_password` (or uppercase equivalent),
-or a custom password provider. The existing Auto JUnit-only fallback remains.
+**Breaking change on master and 2.x:** the base `AESSaltDecryptor` no longer
+supplies the public `light` password. It remains concrete for existing service.yml
+bindings, but supplies no password and throws when password acquisition is
+requested. This withdraws the previous
+compatibility waiver; see [issue #2831](https://github.com/networknt/light-4j/issues/2831).
+
+Select `AutoAESSaltDecryptor` with an explicitly supplied
+`light_4j_config_password` (or uppercase equivalent), the interactive
+`ManualAESSaltDescryptor`, or a custom password provider. Auto has no JUnit
+detection or public-password fallback. Tests supply synthetic passwords in scoped
+test setup that restores the original property afterward. No password is supplied
+by the parent POM.
+Custom providers keep their existing ownership contract.
+
+Inventory deployed `decryptorClass` settings, service.yml Decryptor bindings,
+direct instantiations, and subclasses calling `super.getPassword()` before
+upgrading. If the base class was using its public default, decrypt and re-encrypt
+affected values in a controlled offline migration with light-encryptor and a deployment-specific master secret.
+Do not print plaintext or put real secrets in commands, logs or issues. Replace
+the provider selection and distribute the new runtime secret before adopting the
+updated library. Supplying the old public password explicitly is not remediation.
 
 The base and Auto providers do not cache derived keys or master passwords. A password change
 is observed on the next decrypt call; it does not reload already cached/decrypted
@@ -104,3 +120,24 @@ benchmark. It measures the repeated-value case; the old cache also had to derive
 each previously unseen salt. Base/Auto deliberately pay this repeated PBKDF2
 cost to avoid retaining password-derived keys and to observe password changes.
 The interactive manual provider uses the bounded lifecycle described above.
+
+## Test-suite migration
+
+Auto no longer detects JUnit and its public `isJUnitTest()` helper was removed.
+Remove calls to that helper. Set the synthetic password in the test case before
+loading encrypted fixtures and restore the previous property afterward. Do not
+set it in production resources or the parent POM. Other repositories, including
+light-rest-4j, must migrate their encrypted test fixtures as part of their upgrade.
+Configuration loading rejects a bare-base `decryptorClass` selection with provider
+guidance. Use Auto, Manual, or a custom provider instead. A bare-base service.yml
+binding still constructs and allows later singleton registrations; it throws
+when a valid CRYPT value first requests a password. Service-factory behavior is
+unchanged. This fix does not promise startup-time validation for all provider
+bindings or direct instances.
+
+For JUnit 6.1+, use `org.junit.jupiter.api.util.SetSystemProperty` on the fixture
+test class or method. It sets the explicit test password and restores the original
+property automatically, including IDE runs. Initialize encrypted configuration in
+`@BeforeAll` or `@BeforeEach`, after the annotation has taken effect, rather than
+static fields. Class-level annotations also cover `@BeforeAll`.
+No production provider distinguishes JUnit from other callers.

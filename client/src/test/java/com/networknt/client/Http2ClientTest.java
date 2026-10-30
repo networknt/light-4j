@@ -661,28 +661,22 @@ public class Http2ClientTest extends Http2ClientBase {
 
     @Test
     public void callApiWithHttp2ConnectionPoolAsync() throws Exception {
-        Http2ClientConnectionPool.getInstance().clear();
-
-        int asyncRequestNumber = 100;
+        Http2ClientConnectionPool pool = Http2ClientConnectionPool.getInstance();
+        pool.clear();
         final Http2Client client = createClient();
-        AtomicInteger countComplete = new AtomicInteger(0);
-        ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
-        request.getRequestHeaders().put(Headers.HOST, "localhost");
-        CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
-        for (int i = 0; i < asyncRequestNumber; i++) {
-            client.callService(new URI("https://localhost:7778"), request, Optional.empty()).thenAcceptAsync(clientResponse -> {
-                Assertions.assertEquals(clientResponse.getAttachment(Http2Client.RESPONSE_BODY), "Hello World!");
-                countComplete.getAndIncrement();
-                latch.countDown();
-            });
-            Thread.sleep(5);
+        URI address = new URI("https://localhost:7778");
+        // Establish one transport before measuring reuse. Concurrent cold connects may
+        // legitimately open several transports, all of which the pool must track.
+        client.connectAsync(address).get(5, TimeUnit.SECONDS);
+        List<CompletableFuture<Void>> responses = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            responses.add(client.callService(address, request, Optional.empty()).thenAccept(response ->
+                    Assertions.assertEquals("Hello World!", response.getAttachment(Http2Client.RESPONSE_BODY))));
         }
-        latch.await(5, TimeUnit.SECONDS);
-
-        Assertions.assertTrue(Http2ClientConnectionPool.getInstance().numberOfConnections() == 1);
-
-        System.out.println("Number of connections: " + Http2ClientConnectionPool.getInstance().numberOfConnections());
-        System.out.println("Completed: " + countComplete.get());
+        CompletableFuture.allOf(responses.toArray(new CompletableFuture<?>[0])).get(10, TimeUnit.SECONDS);
+        Assertions.assertEquals(1, pool.numberOfConnections(), "Concurrent requests must reuse the established HTTP/2 transport");
     }
 
     @Test
