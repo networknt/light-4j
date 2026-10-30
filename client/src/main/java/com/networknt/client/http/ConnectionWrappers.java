@@ -37,12 +37,11 @@ final class ConnectionWrappers {
         while ((dead = (Key) collected.poll()) != null) entries.remove(dead);
     }
 
-    private static void removeCollectedKey(Key key) {
-        entries.remove(key);
-        purgeCollectedKeys();
-    }
-
     static final class Entry {
+        private static void removeCollectedKey(Key key) {
+            entries.remove(key);
+            purgeCollectedKeys();
+        }
         // Observational only: check registry cleanup without triggering it.
         boolean isRegistered() { return entries.get(key) == this; }
         final WeakReference<ClientConnection> key;
