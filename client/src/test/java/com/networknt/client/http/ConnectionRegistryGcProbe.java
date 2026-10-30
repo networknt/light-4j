@@ -13,16 +13,16 @@ public final class ConnectionRegistryGcProbe {
     private record Released(WeakReference<ClientConnection> raw, ReferenceQueue<ClientConnection> queue,
                             ConnectionWrappers.Entry entry) { }
 
-    public static void main(String[] args) throws Exception {
+    public static void main() throws Exception {
         XnioWorker worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         try {
             Released released = exerciseRealRegistry(worker.getIoThread());
             collect(released.raw, released.queue);
             long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
-            while (ConnectionWrappers.isRegistered(released.entry) && System.nanoTime() < end) {
+            while (released.entry.isRegistered() && System.nanoTime() < end) {
                 LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
             }
-            if (ConnectionWrappers.isRegistered(released.entry)) throw new AssertionError("Idle registry entry was not autonomously purged");
+            if (released.entry.isRegistered()) throw new AssertionError("Idle registry entry was not autonomously purged");
             System.out.println("REGISTRY_GC_OK");
         } finally {
             worker.shutdownNow();
@@ -46,7 +46,7 @@ public final class ConnectionRegistryGcProbe {
         IoThreadClientConnection recreated = IoThreadClientConnection.wrap(raw);
         if (recreated.isOpen()) throw new AssertionError("Collected view lost transport retirement");
         ConnectionWrappers.Entry state = ConnectionWrappers.lookup(raw);
-        if (!ConnectionWrappers.isRegistered(state)) throw new AssertionError("Live raw transport lost its entry");
+        if (!state.isRegistered()) throw new AssertionError("Live raw transport lost its entry");
         ReferenceQueue<ClientConnection> raws = new ReferenceQueue<>();
         Released released = new Released(new WeakReference<>(raw, raws), raws, state);
         Reference.reachabilityFence(raw);

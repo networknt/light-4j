@@ -32,9 +32,6 @@ final class ConnectionWrappers {
 
     static Entry lookup(ClientConnection raw) { return entries.get(new Key(raw, null)); }
 
-    // Observational only: callers can check registry cleanup without triggering it.
-    static boolean isRegistered(Entry entry) { return entries.get(entry.key) == entry; }
-
     static void purgeCollectedKeys() {
         Key dead;
         while ((dead = (Key) collected.poll()) != null) entries.remove(dead);
@@ -46,6 +43,8 @@ final class ConnectionWrappers {
     }
 
     static final class Entry {
+        // Observational only: check registry cleanup without triggering it.
+        boolean isRegistered() { return entries.get(key) == this; }
         final WeakReference<ClientConnection> key;
         final Cleaner.Cleanable cleanable;
         private Entry(ClientConnection raw, Key key) {

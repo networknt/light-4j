@@ -451,7 +451,7 @@ class Http2ClientPoolRetirementTest {
         Field trackedField = Http2ClientConnectionPool.class.getDeclaredField("tracked");
         trackedField.setAccessible(true);
         Map<?, ?> original = (Map<?, ?>) trackedField.get(pool);
-        Object record = original.values().iterator().next();
+        Object cached = original.values().iterator().next();
         CountDownLatch removed = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         ConcurrentMap<Object, Object> gated = new ConcurrentHashMap<>(original) {
@@ -469,9 +469,9 @@ class Http2ClientPoolRetirementTest {
         owner.execute(() -> { IoThreadClientConnection.wrap(raw).close(); closeDone.complete(null); });
         try {
             assertTrue(removed.await(5, TimeUnit.SECONDS));
-            var managed = Http2ClientConnectionPool.class.getDeclaredMethod("isManaged", record.getClass());
+            var managed = Http2ClientConnectionPool.class.getDeclaredMethod("isManaged", cached.getClass());
             managed.setAccessible(true);
-            assertEquals(Boolean.TRUE, managed.invoke(pool, record));
+            assertEquals(Boolean.TRUE, managed.invoke(pool, cached));
             clock.set(30000);
             pool.reapExpiredConnections(); // Cleanup can complete before the native notice is enqueued.
         } finally { release.countDown(); }
