@@ -398,19 +398,82 @@ class Http2ClientPoolRetirementTest {
         assertTrue(fail.get());
     }
 
-    @ParameterizedTest @ValueSource(booleans = {false, true})
-    void physicallyClosedBorrowIsCleanedWithoutNativeNotificationOrWaitingForGrace(boolean multiplexed) throws Exception {
-        ClientConnection raw = transport(); // Provider deliberately does not deliver its native close listeners.
+    @ParameterizedTest @CsvSource({"false,1,false", "true,3,false", "false,1,true", "true,3,true"})
+    void drainingTransportKeepsBorrowersUntilReturnOrGrace(boolean multiplexed, int borrowers, boolean expire) throws Exception {
+        ClientConnection raw = transport();
         when(raw.isMultiplexingSupported()).thenReturn(multiplexed);
-        URI uri = URI.create("https://missed-close.invalid");
+        URI uri = URI.create("https://draining.invalid");
         pool.cacheConnection(uri, raw);
+        for (int i = 1; i < borrowers; i++) assertNotNull(pool.getConnection(uri));
+        when(raw.isOpen()).thenReturn(false); // GOAWAY/CLOSE_REQ stops admission, not existing exchanges.
+        assertNull(pool.getConnection(uri));
         drainOwner();
-        when(raw.isOpen()).thenReturn(false);
-        assertNull(pool.getConnection(uri)); // Selection detects closure and retires the still-borrowed record.
-        drainOwner();
+        verify(raw, never()).close();
+        assertEquals(1, pool.numberOfConnections());
+        if (expire) {
+            clock.set(99999);
+            assertEquals(0, pool.reapExpiredConnections());
+            verify(raw, never()).close();
+            clock.set(100000);
+            assertEquals(1, pool.reapExpiredConnections());
+            drainOwner();
+        } else {
+            for (int i = 0; i < borrowers; i++) {
+                pool.resetConnectionStatus(raw);
+                drainOwner();
+                if (i + 1 < borrowers) verify(raw, never()).close();
+            }
+        }
         verify(raw).close();
         assertEquals(0, pool.numberOfConnections());
-        assertEquals(0, clock.get(), "cleanup did not wait for the grace deadline or borrower return");
+    }
+
+    @Test void quarantineStopsAnAttachedUnexpiredConnectionAndReleasesItsUriSlot() throws Exception {
+        pool = new Http2ClientConnectionPool(requestConfig(-1, 1_000_000), clock::get);
+        ClientConnection bad = transport();
+        ClientConnection survivor = transport();
+        URI badUri = URI.create("https://quarantine-selection.invalid");
+        URI survivorUri = URI.create("https://survivor.invalid");
+        pool.cacheConnection(badUri, bad);
+        pool.cacheConnection(survivorUri, survivor);
+        Field field = Http2ClientConnectionPool.class.getDeclaredField("tracked");
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ConcurrentMap<ClientConnection, Object> original = (ConcurrentMap<ClientConnection, Object>) field.get(pool);
+        Object cached = original.get(IoThreadClientConnection.wrap(bad));
+        var deadline = Http2ClientConnectionPool.class.getDeclaredMethod("replaceDeadline", cached.getClass(), long.class);
+        deadline.setAccessible(true);
+        deadline.invoke(pool, cached, 30000L); // Early maintenance; the record itself remains unexpired and attached.
+        AtomicBoolean failNextLookup = new AtomicBoolean();
+        ConcurrentMap<ClientConnection, Object> broken = new ConcurrentHashMap<>(original) {
+            @Override public Object get(Object key) {
+                if (Thread.holdsLock(pool) && key == IoThreadClientConnection.wrap(bad)
+                        && failNextLookup.compareAndSet(true, false)) throw new AssertionError("failure before detaching");
+                return super.get(key);
+            }
+        };
+        field.set(pool, broken);
+        for (long at : new long[]{30000, 31000, 33000, 37000}) {
+            clock.set(at);
+            failNextLookup.set(true);
+            assertEquals(1, pool.reapExpiredConnections());
+            assertSame(IoThreadClientConnection.wrap(bad), pool.getConnection(badUri),
+                    "the failed maintenance has not already hidden the connection");
+            pool.resetConnectionStatus(bad);
+        }
+        clock.set(45000);
+        failNextLookup.set(true);
+        assertEquals(1, pool.reapExpiredConnections());
+        // badUri was most recently used. Without its membership release, admission evicts survivorUri.
+        ClientConnection next = transport();
+        pool.cacheConnection(URI.create("https://after-quarantine.invalid"), next);
+        assertNotNull(pool.getConnection(survivorUri), "quarantine must release URI capacity before another admission");
+        assertNull(pool.getConnection(badUri), "quarantine itself must stop selecting the unexpired transport");
+        drainOwner();
+        verify(bad, never()).close();
+        pool.resetConnectionStatus(bad);
+        drainOwner();
+        verify(bad).close();
     }
 
     @Test void permanentlyFailingClosedMetadataCleanupStopsAfterItsBudget() throws Exception {

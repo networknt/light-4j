@@ -284,7 +284,8 @@ public class Http2ClientConnectionPool {
     }
 
     private void releaseRetired(CachedConnection connection) {
-        if (connection.borrowers.get() == 0 || !connection.get().isOpen()) queueClose(connection);
+        // isOpen() also becomes false during GOAWAY/Connection: close draining.
+        if (connection.borrowers.get() == 0) queueClose(connection);
     }
 
     private void queueClose(CachedConnection connection) {
@@ -465,7 +466,7 @@ public class Http2ClientConnectionPool {
             connection.status = ConnectionStatus.CLOSE;
             releaseBucketMember(connection);
             replaceDeadline(connection, connection.retiredAt + RETIREMENT_GRACE_MS);
-            if (connection.borrowers.get() == 0) queueClose(connection);
+            releaseRetired(connection);
         }
         logger.error("Stopping client connection maintenance after {} failures", failures, error);
     }
