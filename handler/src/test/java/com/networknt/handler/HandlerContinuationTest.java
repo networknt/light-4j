@@ -12,6 +12,7 @@ import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -278,22 +279,23 @@ class HandlerContinuationTest {
 
     @Test
     void weakIndexReleasesAbandonedExchangeAndMdcAfterReferenceQueueCleanup() throws Exception {
-        var abandoned = abandonedRequest();
+        var collected = new ReferenceQueue<Object>();
+        var abandoned = abandonedRequest(collected);
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
         while (abandoned.get(1).get() != null && System.nanoTime() < deadline) {
             System.gc();
             // Each new registration performs bounded ReferenceQueue expunging.
             RequestState.initialize(new HttpServerExchange(null));
-            Thread.sleep(10);
+            collected.remove(10);
         }
         assertNull(abandoned.get(0).get(), "The index must not retain the exchange");
         assertNull(abandoned.get(1).get(), "A queued weak key must be removed, releasing its MDC state");
     }
 
-    private static List<WeakReference<?>> abandonedRequest() {
+    private static List<WeakReference<?>> abandonedRequest(ReferenceQueue<Object> collected) {
         var exchange = new HttpServerExchange(null);
         var state = RequestState.initialize(exchange);
-        return List.of(new WeakReference<>(exchange), new WeakReference<>(state));
+        return List.of(new WeakReference<>(exchange, collected), new WeakReference<>(state, collected));
     }
 
     private static MiddlewareHandler publicationMiddleware() {
