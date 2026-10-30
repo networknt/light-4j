@@ -32,8 +32,9 @@ final class RequestState {
             // First use is serial, before hand-off. Later lookups never touch the
             // unsynchronized attachment map, including off-frame helper calls.
             Map<String, String> attached = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
+            Map<String, String> initialMdc = attached == null ? inheritedMdc : attached;
             RequestMdcContext mdc = attached instanceof RequestMdcContext holder ? holder
-                    : new RequestMdcContext(attached == null ? inheritedMdc : attached);
+                    : new RequestMdcContext(initialMdc);
             RequestState state = new RequestState(mdc);
             exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, mdc);
             exchange.putAttachment(KEY, state);
