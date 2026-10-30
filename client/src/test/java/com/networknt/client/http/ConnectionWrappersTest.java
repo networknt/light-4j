@@ -75,7 +75,7 @@ class ConnectionWrappersTest {
         cleanup.run();
         cleanup.run();
         assertNull(registry.lookup(dead));
-        assertSame(liveView, registry.lookup(live).view.get().get());
+        assertSame(liveView, registry.lookup(live).currentView());
         Reference.reachabilityFence(dead);
         Reference.reachabilityFence(live);
     }
@@ -87,7 +87,7 @@ class ConnectionWrappersTest {
         assertNull(registry.lookup(raw));
         IoThreadClientConnection current = registry.getOrCreate(raw);
         oldAction.run();
-        assertSame(current, registry.lookup(raw).view.get().get());
+        assertSame(current, registry.lookup(raw).currentView());
         assertSame(current, registry.getOrCreate(raw));
         verify(cleaner, times(2)).register(same(raw), any(Runnable.class));
         Reference.reachabilityFence(raw);
@@ -143,7 +143,7 @@ class ConnectionWrappersTest {
         ParameterizedType weakView = assertInstanceOf(ParameterizedType.class, viewHolder.getActualTypeArguments()[0]);
         assertEquals(WeakReference.class, weakView.getRawType());
         assertArrayEquals(new Type[]{IoThreadClientConnection.class}, weakView.getActualTypeArguments());
-        assertSame(view, registry.lookup(raw).view.get().get());
+        assertSame(view, registry.lookup(raw).currentView());
         Reference.reachabilityFence(raw);
     }
     @Test void cleanupUsesIdentityEqualityAndDiagnostics() throws ReflectiveOperationException {
