@@ -20,8 +20,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
-import java.util.HashMap;
-import java.util.Collections;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -61,19 +59,15 @@ public interface MiddlewareHandler extends LightHttpHandler {
     boolean isEnabled();
 
     /**
-     * Adds a field and value to the MDC context for the handler.
+     * Adds a field and value to the MDC context for the handler. First use must
+     * occur in the serial frame before asynchronous hand-off. Subsequent updates
+     * publish immutable snapshots through the stable holder.
      *
      * @param exchange HttpServerExchange to add the context to.
      * @param field    The field name.
      * @param value    The value for the field.
      */
     default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
-        synchronized (exchange) {
-            var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-            var updated = context == null ? new HashMap<String, String>() : new HashMap<>(context);
-            updated.put(field, value);
-            // Publish a stable snapshot; readers must not mutate the attachment directly.
-            exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, Collections.unmodifiableMap(updated));
-        }
+        RequestMdcContext.initialize(exchange).putField(field, value);
     }
 }

@@ -161,4 +161,38 @@ class ExceptionContinuationTest {
         } finally { server.stop(); }
     }
 
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void installedBoundaryRetainsExistingFatalErrorMappingOnHttp11(boolean resumed) throws Exception {
+        var initializedOnIoThread = new java.util.concurrent.atomic.AtomicBoolean();
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        Error sentinel = new StackOverflowError("installed boundary sentinel");
+        ExceptionHandler selected = new ExceptionHandler();
+        HttpHandler failing = exchange -> { calls.incrementAndGet(); throw sentinel; };
+        selected.setNext(exchange -> {
+            if (exchange.getRequestPath().equals("/after")) exchange.getResponseSender().send("accepted");
+            else if (resumed) exchange.dispatch(HandlerContinuation.capture(exchange, failing));
+            else failing.handleRequest(exchange);
+        });
+        Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(exchange -> {
+            selected.handleRequest(exchange);
+            initializedOnIoThread.set(exchange.isInIoThread()
+                    && exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT)
+                    instanceof com.networknt.handler.RequestMdcContext);
+        }).build();
+        try (HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()) {
+            server.start();
+            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+            URI endpoint = URI.create("http://127.0.0.1:" + port);
+            var response = client.send(HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(5)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(400, response.statusCode(), response.body());
+            assertTrue(response.body().contains("ERR10011"), response.body());
+            assertEquals(1, calls.get());
+            assertTrue(initializedOnIoThread.get(), "Publish the holder before initial worker dispatch");
+            assertEquals("accepted", client.send(HttpRequest.newBuilder(endpoint.resolve("/after")).build(),
+                    HttpResponse.BodyHandlers.ofString()).body());
+        } finally { server.stop(); }
+    }
+
 }
