@@ -64,8 +64,10 @@ public class Http2ClientConnectionPool {
      * @param connection connected transport
      */
     public void cacheConnection(URI uri, ClientConnection connection) {
+        String uriString = Objects.requireNonNull(uri, "uri").toString();
         ClientConnection owned = IoThreadClientConnection.wrap(connection);
         CachedConnection added = null;
+        boolean committed = false;
         try {
             synchronized (this) {
                 ClientConnection identity = IoThreadClientConnection.identity(owned);
@@ -74,13 +76,26 @@ public class Http2ClientConnectionPool {
                 added = new CachedConnection(owned);
                 tracked.put(identity, added);
                 connectionCount.incrementAndGet();
-                List<CachedConnection> connections = connectionPool.computeIfAbsent(uri.toString(), key -> new LinkedList<>());
+                List<CachedConnection> connections = connectionPool.computeIfAbsent(uriString, key -> new LinkedList<>());
                 connections.add(added);
-                if (!connectionPool.containsKey(uri.toString())) retire(added);
+                if (!connectionPool.containsKey(uriString)) retire(added);
             }
             CachedConnection registered = added;
             owned.addCloseListener(ignored -> connectionClosed(registered));
-        } finally { closeRetiredConnections(); }
+            committed = true;
+        } finally {
+            if (!committed && added != null) rollbackCache(uriString, added);
+            closeRetiredConnections();
+        }
+    }
+
+    private synchronized void rollbackCache(String uri, CachedConnection added) {
+        removeTracked(added);
+        List<CachedConnection> connections = connectionPool.get(uri);
+        if (connections != null) {
+            connections.remove(added);
+            if (connections.isEmpty()) connectionPool.remove(uri);
+        }
     }
 
     private CachedConnection getAndRemoveClosedConnection(URI uri) {
