@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -419,12 +420,58 @@ public class  ServerConfig {
                 if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
                     return instance;
                 }
-                instance = new ServerConfig(configName);
-                ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+                ValidatedConfig loaded = loadValidated(configName);
+                loaded.options().forEach((key, option) -> {
+                    if (option.corrected() && option.originalValue() != null) {
+                        logger.warn("Server option: {} set in server.yml is invalid, has been reset to default value.", key);
+                    }
+                });
+                instance = loaded.config();
+                Map<String, Object> reportedConfig = validatedConfig(
+                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), loaded);
+                ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), reportedConfig, masks);
                 return instance;
             }
         }
-        return new ServerConfig(configName);
+        return loadValidated(configName).config();
+    }
+
+    private static ValidatedConfig loadValidated(String configName) {
+        ServerConfig config = new ServerConfig(configName);
+        return new ValidatedConfig(config, ServerOption.validateServerOptions(config.mappedConfig, config));
+    }
+
+    private record ValidatedConfig(ServerConfig config, Map<String, ServerOption.ValidatedOption> options) {}
+
+    /** Preserve raw key presence and values unless the same input was corrected by validation. */
+    private static Map<String, Object> validatedConfig(Map<String, Object> rawConfig, ValidatedConfig loaded) {
+        // Never fall back to mappedConfig: it can contain decrypted credentials.
+        if (rawConfig == null) {
+            if (loaded.config().mappedConfig != null) {
+                logger.warn("Non-decrypted server configuration is unavailable; server-info configuration will be empty.");
+            }
+            return null;
+        }
+        Map<String, Object> reportedConfig = new HashMap<>(rawConfig);
+        loaded.options().forEach((key, option) -> {
+            boolean rawPresent = rawConfig.containsKey(key);
+            if (option.present() && !rawPresent) {
+                logger.warn("Server option {} is absent from non-decrypted reporting configuration; retaining its absence.", key);
+            } else if (!option.present() && rawPresent) {
+                logger.warn("Server option {} is present only in non-decrypted reporting configuration; retaining the raw reporting value.", key);
+            } else if (rawPresent) {
+                ServerOption.Comparison comparison = option.compare(rawConfig.get(key));
+                if (comparison.decryptionFailureType() != null) {
+                    logger.warn("Server option {} could not be decrypted for reporting comparison ({}); check the configured key and ciphertext. Retaining the raw reporting value.",
+                            key, comparison.decryptionFailureType());
+                } else if (!comparison.matches()) {
+                    logger.warn("Server option {} differs between validated and non-decrypted configuration; retaining the raw reporting value.", key);
+                } else if (option.corrected()) {
+                    reportedConfig.put(key, option.effectiveValue());
+                }
+            }
+        });
+        return reportedConfig;
     }
 
     private void loadData() {
