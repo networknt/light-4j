@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Server configuration class that maps to server.yml properties. This class is a singleton and can be shared
@@ -421,38 +420,47 @@ public class  ServerConfig {
                 if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
                     return instance;
                 }
-                ServerConfig loaded = new ServerConfig(configName);
-                Map<String, ServerOption.Correction> corrections = ServerOption.validateServerOptions(loaded.mappedConfig, loaded, true);
-                instance = loaded;
+                ValidatedConfig loaded = loadValidated(configName);
+                instance = loaded.config();
                 Map<String, Object> reportedConfig = validatedConfig(
-                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), loaded.mappedConfig, corrections);
+                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), loaded);
                 ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), reportedConfig, masks);
                 return instance;
             }
         }
-        ServerConfig loaded = new ServerConfig(configName);
-        ServerOption.validateServerOptions(loaded.mappedConfig, loaded, false);
-        return loaded;
+        return loadValidated(configName).config();
     }
 
-    /** Keep raw values and key presence except where validation corrected a configured option. */
-    private static Map<String, Object> validatedConfig(Map<String, Object> rawConfig,
-                                                       Map<String, Object> mappedConfig,
-                                                       Map<String, ServerOption.Correction> corrections) {
+    private static ValidatedConfig loadValidated(String configName) {
+        ServerConfig config = new ServerConfig(configName);
+        return new ValidatedConfig(config, ServerOption.validateServerOptions(
+                config.mappedConfig, config, CONFIG_NAME.equals(configName)));
+    }
+
+    private record ValidatedConfig(ServerConfig config, Map<String, ServerOption.ValidatedOption> options) {}
+
+    /** Preserve raw key presence and values unless the same input was corrected by validation. */
+    private static Map<String, Object> validatedConfig(Map<String, Object> rawConfig, ValidatedConfig loaded) {
         // Never fall back to mappedConfig: it can contain decrypted credentials.
         if (rawConfig == null) {
-            if (mappedConfig != null) {
+            if (loaded.config().mappedConfig != null) {
                 logger.warn("Non-decrypted server configuration is unavailable; server-info configuration will be empty.");
             }
             return null;
         }
         Map<String, Object> reportedConfig = new HashMap<>(rawConfig);
-        corrections.forEach((key, correction) -> {
-            if (reportedConfig.containsKey(key) && Objects.equals(rawConfig.get(key), correction.originalValue())) {
-                reportedConfig.put(key, correction.effectiveValue());
-            } else {
-                // Separate Config reads may observe a source change. Do not overwrite a newer raw value.
-                logger.warn("Server option {} differs between validated and non-decrypted configuration; retaining the raw reporting value.", key);
+        loaded.options().forEach((key, option) -> {
+            boolean rawPresent = rawConfig.containsKey(key);
+            if (option.present() && !rawPresent) {
+                logger.warn("Server option {} is absent from non-decrypted reporting configuration; retaining its absence.", key);
+            } else if (!option.present() && rawPresent) {
+                logger.warn("Server option {} is present only in non-decrypted reporting configuration; retaining the raw reporting value.", key);
+            } else if (rawPresent) {
+                if (!option.matches(rawConfig.get(key))) {
+                    logger.warn("Server option {} differs between validated and non-decrypted configuration; retaining the raw reporting value.", key);
+                } else if (option.corrected()) {
+                    reportedConfig.put(key, option.effectiveValue());
+                }
             }
         });
         return reportedConfig;

@@ -1,9 +1,12 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigInjection;
+import com.networknt.decrypt.Decryptor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -43,29 +46,39 @@ public enum ServerOption {
         return this.value;
     }
 
-    /** Validate fields and return corrections for explicitly configured options only. */
-    static Map<String, Correction> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig,
-                                                    boolean warnInvalid) {
-        Map<String, Correction> corrections = new HashMap<>();
+    /** Validate fields and capture the presence and input of every option for reporting comparisons. */
+    static Map<String, ValidatedOption> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig,
+                                                           boolean warnInvalid) {
+        Map<String, ValidatedOption> options = new HashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
-            if (mapConfig != null && mapConfig.containsKey(serverOption.value())) {
-                Object value = mapConfig.get(serverOption.value());
-                boolean valid = setServerOption(serverOption, value, serverConfig);
-                if (!valid && value != null && warnInvalid) {
-                    ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
-                }
-                if (!valid || value == null) {
-                    corrections.put(serverOption.value(), new Correction(value, serverOption.effectiveValue.apply(serverConfig)));
-                }
-            } else {
-                setToDefaultServerOption(serverOption, serverConfig);
+            boolean present = mapConfig != null && mapConfig.containsKey(serverOption.value());
+            Object value = present ? mapConfig.get(serverOption.value()) : null;
+            boolean valid = setServerOption(serverOption, value, serverConfig);
+            if (present && !valid && value != null && warnInvalid) {
+                ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
             }
+            options.put(serverOption.value(), new ValidatedOption(present, value,
+                    serverOption.effectiveValue.apply(serverConfig), present && (!valid || value == null)));
         }
-        return corrections;
+        return options;
     }
 
-    /** Capture the validated input so a later mutable-map update cannot change the comparison. */
-    record Correction(Object originalValue, Object effectiveValue) {}
+    /** Capture scalar inputs without retaining validation state on ServerConfig. */
+    record ValidatedOption(boolean present, Object originalValue, Object effectiveValue, boolean corrected) {
+        boolean matches(Object rawValue) {
+            if (rawValue instanceof String encrypted && encrypted.startsWith(Decryptor.CRYPT_PREFIX)) {
+                try {
+                    // Compare the scalar only; reporting must retain its original ciphertext.
+                    return Objects.equals(ConfigInjection.getDecryptor().decrypt(encrypted),
+                            originalValue == null ? null : originalValue.toString());
+                } catch (RuntimeException ignored) {
+                    // A newer encrypted source may be unreadable. Do not expose values or override it.
+                    return false;
+                }
+            }
+            return Objects.equals(rawValue, originalValue);
+        }
+    }
 
     /**
      * Method used to validate and set server options
@@ -140,9 +153,5 @@ public enum ServerOption {
             }
             default -> true;
         };
-    }
-
-    private static void setToDefaultServerOption(ServerOption serverOption, ServerConfig serverConfig) {
-        setServerOption(serverOption, null, serverConfig);
     }
 }
