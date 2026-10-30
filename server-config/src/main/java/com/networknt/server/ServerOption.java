@@ -1,8 +1,13 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigInjection;
+import com.networknt.decrypt.Decryptor;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * This enum class is used to set and validate server options.
@@ -18,41 +23,60 @@ import java.util.Map;
  * Note: To set these options, configuring them in server.yml
  */
 public enum ServerOption {
-    IO_THREADS("ioThreads"),
-    WORKER_THREADS("workerThreads"),
-    BUFFER_SIZE("bufferSize"),
-    BACKLOG("backlog"),
-    SERVER_STRING("serverString"),
-    ALWAYS_SET_DATE("alwaysSetDate"),
-    MAX_TRANSFER_FILE_SIZE("maxTransferFileSize"),
-    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl"),
-    SHUTDOWN_TIMEOUT("shutdownTimeout");
+    IO_THREADS("ioThreads", ServerConfig::getIoThreads),
+    WORKER_THREADS("workerThreads", ServerConfig::getWorkerThreads),
+    BUFFER_SIZE("bufferSize", ServerConfig::getBufferSize),
+    BACKLOG("backlog", ServerConfig::getBacklog),
+    SERVER_STRING("serverString", ServerConfig::getServerString),
+    ALWAYS_SET_DATE("alwaysSetDate", ServerConfig::isAlwaysSetDate),
+    MAX_TRANSFER_FILE_SIZE("maxTransferFileSize", ServerConfig::getMaxTransferFileSize),
+    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl", ServerConfig::isAllowUnescapedCharactersInUrl),
+    SHUTDOWN_TIMEOUT("shutdownTimeout", ServerConfig::getShutdownTimeout);
 
     private final String value;
 
-    ServerOption(String serverOption) {
+    private final Function<ServerConfig, Object> effectiveValue;
+
+    ServerOption(String serverOption, Function<ServerConfig, Object> effectiveValue) {
         this.value = serverOption;
+        this.effectiveValue = effectiveValue;
     }
 
     public String value() {
         return this.value;
     }
 
-    /**
-     * @param mapConfig    map config generated from server.yml
-     * @param serverConfig object config generated from server.yml
-     */
-    protected static void serverOptionInit(Map<String, Object> mapConfig, ServerConfig serverConfig) {
+    /** Validate fields and capture the presence and input of every option for reporting comparisons. */
+    static Map<String, ValidatedOption> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig) {
+        Map<String, ValidatedOption> options = new LinkedHashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
-            if (mapConfig.containsKey(serverOption.value())) {
-                if (!setServerOption(serverOption, mapConfig.get(serverOption.value), serverConfig)) {
-                    ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
+            boolean present = mapConfig != null && mapConfig.containsKey(serverOption.value());
+            Object value = present ? mapConfig.get(serverOption.value()) : null;
+            boolean valid = setServerOption(serverOption, value, serverConfig);
+            options.put(serverOption.value(), new ValidatedOption(present, value,
+                    serverOption.effectiveValue.apply(serverConfig), present && (!valid || value == null)));
+        }
+        return options;
+    }
+
+    /** Capture scalar inputs without retaining validation state on ServerConfig. */
+    record ValidatedOption(boolean present, Object originalValue, Object effectiveValue, boolean corrected) {
+        Comparison compare(Object rawValue) {
+            if (rawValue instanceof String encrypted && encrypted.startsWith(Decryptor.CRYPT_PREFIX)) {
+                try {
+                    // Compare the scalar only; reporting must retain its original ciphertext.
+                    return new Comparison(Objects.equals(ConfigInjection.getDecryptor().decrypt(encrypted),
+                            originalValue == null ? null : originalValue.toString()), null);
+                } catch (RuntimeException failure) {
+                    // Only retain the type: messages and causes can contain configuration values.
+                    return new Comparison(false, failure.getClass().getName());
                 }
-            } else {
-                setToDefaultServerOption(serverOption, serverConfig);
             }
+            return new Comparison(Objects.equals(rawValue, originalValue), null);
         }
     }
+
+    record Comparison(boolean matches, String decryptionFailureType) {}
 
     /**
      * Method used to validate and set server options
@@ -127,9 +151,5 @@ public enum ServerOption {
             }
             default -> true;
         };
-    }
-
-    private static void setToDefaultServerOption(ServerOption serverOption, ServerConfig serverConfig) {
-        setServerOption(serverOption, null, serverConfig);
     }
 }

@@ -1,0 +1,418 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.networknt.server;
+
+import com.networknt.config.Config;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
+class ServerOptionRegistryTest {
+    private static final String KEY = "server:" + ServerConfig.class.getName();
+    private static final String ENCRYPTED = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
+    // Synthetic AES-GCM scalar fixtures; WRONG_KEY uses a deliberately different test master.
+    private static final String ENCRYPTED_EIGHT = "CRYPT:2b4b3f72b8740340a84c29ce0309288e:47901ccf96ccd4ce8397ef07:83f132252f5d8edb546d52e01c148f98e4";
+    private static final String ENCRYPTED_TRUE = "CRYPT:9c652eddc1ea8a62fd7376acc46c646b:e27ccc2edc2784d824052815:3d7be00f94b3e7c47225d9f3fee470c15783545b";
+    private static final String ENCRYPTED_FALSE = "CRYPT:22942d8c857c75d7c80f748cc7305896:2dd5e864fd94ee12be55bfa3:9d015fd607ebf5fcb1026dfe807fda497a94510b70";
+    private static final String ENCRYPTED_WRONG_KEY = "CRYPT:f720c9468e492a43cfb8ab9c07f5eea8:eaf11088c3380fed4a7d0c90:07d763a84c82441caea1936de6e072ff6e5bc8a2c1431676";
+    private FixtureLoader decrypted;
+    private FixtureLoader raw;
+    private final Logger logger = (Logger) ServerConfig.logger;
+    private ListAppender<ILoggingEvent> logs;
+
+    @BeforeEach
+    void captureLogs() {
+        logs = new ListAppender<>();
+        logs.start();
+        logger.addAppender(logs);
+    }
+
+    @AfterEach
+    void clearConfig() {
+        logger.detachAppender(logs);
+        logs.stop();
+        Config.getInstance().setClassLoader(null);
+        Config.getNoneDecryptedInstance().setClassLoader(null);
+        Config.getInstance().clear();
+        Config.getNoneDecryptedInstance().clear();
+        ServerConfig.load();
+    }
+
+    @Test
+    void invalidOptionsAreValidatedBeforeRegistrationAndRemainCorrectAfterReload() {
+        useFixture("""
+                ioThreads: -1
+                workerThreads: -1
+                bufferSize: -1
+                backlog: -1
+                serverString: ''
+                alwaysSetDate: null
+                maxTransferFileSize: -1
+                allowUnescapedCharactersInUrl: null
+                shutdownTimeout: -1
+                """, true);
+        ServerConfig first = ServerConfig.load();
+        assertCorrectedOptions(first);
+        assertEquals(-1, first.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals("password", first.getKeystorePass());
+        assertNotEquals("password", reported().get("keystorePass"));
+        assertNotEquals(ENCRYPTED, reported().get("keystorePass"));
+        assertEquals(1, decrypted.reads);
+        assertEquals(1, raw.reads);
+        Map<String, Object> snapshot = reported();
+        assertSame(first, ServerConfig.load());
+        assertSame(snapshot, reported());
+        assertEquals(1, raw.reads);
+
+        // Exercise the production cache-clear/reload path without a server bind or manual registration.
+        Config.getInstance().clearConfigCache("server");
+        Config.getNoneDecryptedInstance().clearConfigCache("server");
+        ServerConfig reloaded = ServerConfig.load();
+        assertNotSame(first, reloaded);
+        assertNotSame(snapshot, reported());
+        assertCorrectedOptions(reloaded);
+        assertEquals(2, decrypted.reads);
+        assertEquals(2, raw.reads);
+    }
+
+    @Test
+    void missingOptionsKeepTheRawKeySetWhileRuntimeGetsDefaults() {
+        useFixture("", false);
+        ServerConfig server = ServerConfig.load();
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertTrue(server.getIoThreads() > 0);
+        assertNull(server.getShutdownTimeout());
+        assertEquals(server.getMappedConfig().keySet(), reported().keySet());
+        for (ServerOption option : ServerOption.values()) {
+            assertFalse(reported().containsKey(option.value()));
+        }
+    }
+
+    @Test
+    void validRawRepresentationsAndEncryptedSecretsArePreservedWithMaskingDisabled() {
+        useFixture("""
+                ioThreads: '2'
+                maxTransferFileSize: '1234567'
+                shutdownTimeout: '1234'
+                """, false);
+        ServerConfig server = ServerConfig.load();
+        assertEquals(1234567L, server.getMaxTransferFileSize());
+        assertEquals(1234, server.getShutdownTimeout());
+        assertEquals("2", reported().get("ioThreads"));
+        assertEquals("1234567", reported().get("maxTransferFileSize"));
+        assertEquals("1234", reported().get("shutdownTimeout"));
+        assertEquals(server.getMappedConfig().keySet(), reported().keySet());
+        assertEquals("password", server.getKeystorePass());
+        assertEquals(ENCRYPTED, reported().get("keystorePass"));
+        assertEquals(ENCRYPTED, reported().get("keyPass"));
+        assertEquals(ENCRYPTED, reported().get("truststorePass"));
+        assertEquals(ENCRYPTED, reported().get("bootstrapStorePass"));
+        assertEquals(1, raw.reads);
+    }
+
+    @Test
+    void missingNonDecryptedConfigDoesNotThrowOrExposeDecryptedValues() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        raw.yaml = null;
+        ServerConfig server = ServerConfig.load();
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertTrue(reported().isEmpty());
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("server-info configuration will be empty")));
+    }
+
+    @Test
+    void missingConfigStillInitializesRuntimeDefaults() {
+        useFixture("", false);
+        decrypted.yaml = null;
+        raw.yaml = null;
+        ServerConfig server = ServerConfig.load();
+        assertNull(server.getMappedConfig());
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertTrue(server.getIoThreads() > 0);
+        assertTrue(reported().isEmpty());
+    }
+
+    @Test
+    void invalidToValidSourceChangeKeepsLaterRawValueAndWarns() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("maxTransferFileSize: -1", "maxTransferFileSize: 7654321"));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(-1, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertEquals(7654321, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("retaining the raw reporting value")));
+        assertEquals(ENCRYPTED, reported().get("keystorePass"));
+    }
+
+    @Test
+    void validToInvalidSourceChangeKeepsLaterRawValueAndWarns() {
+        useFixture("maxTransferFileSize: 7654321\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("maxTransferFileSize: 7654321", "maxTransferFileSize: -1"));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(7654321L, server.getMaxTransferFileSize());
+        assertEquals(7654321, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(-1, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize differs")));
+        assertEquals(ENCRYPTED, reported().get("keystorePass"));
+    }
+
+    @Test
+    void missingCorrectedRawKeyHasAnAbsenceWarningAndRemainsAbsent() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(raw.yaml.replace("maxTransferFileSize: -1\n", ""));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(-1, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertFalse(reported().containsKey("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize is absent")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("maxTransferFileSize differs")));
+    }
+
+    @Test
+    void rawOnlyOptionHasAPresenceWarningAndKeepsItsRawValue() {
+        useFixture("", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead("maxTransferFileSize: -1\n" + raw.yaml);
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertFalse(server.getMappedConfig().containsKey("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertEquals(-1, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize is present only")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("maxTransferFileSize differs")));
+    }
+
+    @Test
+    void encryptedOptionIsComparedWithoutChangingItsCiphertextOrWarning() {
+        useFixture("serverString: " + ENCRYPTED + "\n", false);
+        ServerConfig server = ServerConfig.load();
+        assertEquals("password", server.getServerString());
+        assertEquals("password", server.getMappedConfig().get("serverString"));
+        assertEquals(ENCRYPTED, reported().get("serverString"));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN));
+    }
+
+    @Test
+    void corruptEncryptedOptionHasADecryptionDiagnosticInsteadOfASourceChangeWarning() {
+        useFixture("serverString: L\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("serverString: L", "serverString: CRYPT:unreadable-test-value"));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals("L", server.getServerString());
+        assertEquals("CRYPT:unreadable-test-value", reported().get("serverString"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("serverString could not be decrypted")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("serverString differs")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("unreadable-test-value")));
+    }
+
+    @Test
+    void encryptedNumericAndBooleanOptionsMatchTypedCachedInputs() {
+        useFixture("ioThreads: " + ENCRYPTED_EIGHT + "\n"
+                + "maxTransferFileSize: " + ENCRYPTED_EIGHT + "\n"
+                + "alwaysSetDate: " + ENCRYPTED_TRUE + "\n"
+                + "allowUnescapedCharactersInUrl: " + ENCRYPTED_FALSE + "\n", false);
+        // Injection and custom loaders may supply typed scalars instead of decrypted strings.
+        Map<String, Object> typed = new HashMap<>(Config.getInstance().getJsonMapConfig("server"));
+        typed.put("ioThreads", 8);
+        typed.put("maxTransferFileSize", 8L);
+        typed.put("alwaysSetDate", true);
+        typed.put("allowUnescapedCharactersInUrl", false);
+        Config.getInstance().putInConfigCache("server", typed);
+        ServerConfig server = ServerConfig.load();
+        assertSame(typed, server.getMappedConfig());
+        assertEquals(8, server.getIoThreads());
+        assertEquals(8L, server.getMaxTransferFileSize());
+        assertTrue(server.isAlwaysSetDate());
+        assertFalse(server.isAllowUnescapedCharactersInUrl());
+        assertEquals(ENCRYPTED_EIGHT, reported().get("ioThreads"));
+        assertEquals(ENCRYPTED_EIGHT, reported().get("maxTransferFileSize"));
+        assertEquals(ENCRYPTED_TRUE, reported().get("alwaysSetDate"));
+        assertEquals(ENCRYPTED_FALSE, reported().get("allowUnescapedCharactersInUrl"));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN));
+    }
+
+    @Test
+    void wrongEncryptionKeyHasADecryptionDiagnosticWithoutLeakingValues() {
+        useFixture("serverString: L\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("serverString: L", "serverString: " + ENCRYPTED_WRONG_KEY));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals("L", server.getServerString());
+        assertEquals(ENCRYPTED_WRONG_KEY, reported().get("serverString"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("serverString could not be decrypted")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("serverString differs")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains(ENCRYPTED_WRONG_KEY)
+                || event.getFormattedMessage().contains("password")));
+    }
+
+    @Test
+    void blankDefaultsAndNamedLoadsDoNotProduceInvalidOptionWarnings() {
+        useFixture("shutdownTimeout: null\n", false);
+        ServerConfig server = ServerConfig.load();
+        assertNull(server.getShutdownTimeout());
+        assertTrue(reported().containsKey("shutdownTimeout"));
+        assertNull(reported().get("shutdownTimeout"));
+        ServerConfig named = ServerConfig.load("server_invalid_option");
+        assertEquals(200, named.getWorkerThreads());
+        assertEquals(16384, named.getBufferSize());
+        assertEquals(0, invalidWarnings());
+    }
+
+    @Test
+    void explicitInvalidOptionsWarnOnlyOnFreshCanonicalLoads() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        ServerConfig first = ServerConfig.load();
+        assertEquals(1, invalidWarnings());
+        assertSame(first, ServerConfig.load());
+        assertEquals(1, invalidWarnings());
+        Config.getInstance().clearConfigCache("server");
+        ServerConfig second = ServerConfig.load();
+        assertNotSame(first, second);
+        assertEquals(1_000_000L, second.getMaxTransferFileSize());
+        assertEquals(2, invalidWarnings());
+    }
+
+    @Test
+    void invalidOptionWarningsFollowDeclarationOrderRegardlessOfSourceOrder() {
+        useFixture("""
+                shutdownTimeout: -1
+                allowUnescapedCharactersInUrl: null
+                maxTransferFileSize: -1
+                alwaysSetDate: null
+                serverString: ''
+                backlog: -1
+                bufferSize: -1
+                workerThreads: -1
+                ioThreads: -1
+                """, false);
+        ServerConfig.load();
+        var warnings = logs.list.stream()
+                .filter(event -> event.getLevel() == Level.WARN
+                        && event.getFormattedMessage().contains("has been reset to default value"))
+                .map(ILoggingEvent::getFormattedMessage).toList();
+        var expected = List.of("ioThreads", "workerThreads", "bufferSize", "backlog", "serverString",
+                        "maxTransferFileSize", "shutdownTimeout").stream()
+                .map(name -> "Server option: " + name + " set in server.yml is invalid, has been reset to default value.")
+                .toList();
+        assertEquals(expected, warnings);
+    }
+
+    private Map<String, Object> changeSourceAfterCachedRead(String updatedYaml) {
+        // A real source edit leaves the existing decrypted cache untouched; the later no-cache read sees it.
+        Map<String, Object> cached = Config.getInstance().getJsonMapConfig("server");
+        decrypted.yaml = updatedYaml;
+        raw.yaml = updatedYaml;
+        return cached;
+    }
+
+    private long invalidWarnings() {
+        return logs.list.stream().filter(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("has been reset to default value")).count();
+    }
+
+    private void useFixture(String options, boolean mask) {
+        String yaml = options + "maskConfigProperties: " + mask + "\n"
+                + "keystorePass: " + ENCRYPTED + "\n"
+                + "keyPass: " + ENCRYPTED + "\n"
+                + "truststorePass: " + ENCRYPTED + "\n"
+                + "bootstrapStorePass: " + ENCRYPTED + "\n";
+        decrypted = new FixtureLoader(yaml);
+        raw = new FixtureLoader(yaml);
+        Config.getInstance().clear();
+        Config.getNoneDecryptedInstance().clear();
+        Config.getInstance().setClassLoader(decrypted);
+        Config.getNoneDecryptedInstance().setClassLoader(raw);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> reported() {
+        return (Map<String, Object>) ModuleRegistry.getModuleRegistry().get(KEY);
+    }
+
+    private static void assertCorrectedOptions(ServerConfig server) {
+        Map<String, Object> config = reported();
+        assertEquals(Runtime.getRuntime().availableProcessors() * 2, server.getIoThreads());
+        assertEquals(200, server.getWorkerThreads());
+        assertEquals(16384, server.getBufferSize());
+        assertEquals(10000, server.getBacklog());
+        assertEquals("L", server.getServerString());
+        assertTrue(server.isAlwaysSetDate());
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertFalse(server.isAllowUnescapedCharactersInUrl());
+        assertNull(server.getShutdownTimeout());
+        assertEquals(server.getIoThreads(), config.get("ioThreads"));
+        assertEquals(server.getWorkerThreads(), config.get("workerThreads"));
+        assertEquals(server.getBufferSize(), config.get("bufferSize"));
+        assertEquals(server.getBacklog(), config.get("backlog"));
+        assertEquals(server.getServerString(), config.get("serverString"));
+        assertEquals(server.isAlwaysSetDate(), config.get("alwaysSetDate"));
+        assertEquals(server.getMaxTransferFileSize(), config.get("maxTransferFileSize"));
+        assertEquals(server.isAllowUnescapedCharactersInUrl(), config.get("allowUnescapedCharactersInUrl"));
+        assertTrue(config.containsKey("shutdownTimeout"));
+        assertNull(config.get("shutdownTimeout"));
+    }
+
+    private static class FixtureLoader extends ClassLoader {
+        private String yaml;
+        private int reads;
+
+        FixtureLoader(String yaml) {
+            super(ServerOptionRegistryTest.class.getClassLoader());
+            this.yaml = yaml;
+        }
+
+        @Override
+        public InputStream getResourceAsStream(String name) {
+            if (name.matches("(?:config/)?server\\.(?:yml|yaml|json)")) {
+                if (name.equals("server.yml") && yaml != null) {
+                    reads++;
+                    return new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8));
+                }
+                return null;
+            }
+            return super.getResourceAsStream(name);
+        }
+    }
+}

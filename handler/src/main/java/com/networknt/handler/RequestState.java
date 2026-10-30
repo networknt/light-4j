@@ -65,12 +65,11 @@ final class RequestState {
         }
         WeakKey key = new WeakKey(exchange);
         try {
-            RequestState state = INDEX.computeIfAbsent(key, ignored -> {
+            return INDEX.computeIfAbsent(key, ignored -> {
                 RequestState created = detached(exchange, inheritedMdc);
                 exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, created.mdc);
                 return created;
             });
-            return state;
         } finally { Reference.reachabilityFence(exchange); }
     }
 

@@ -40,7 +40,6 @@ public class ServerConfigTest {
     public void testDefaultServerOptions() {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server");
-        ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assertions.assertEquals(1024*16, serverConfig.getBufferSize());
         Assertions.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
         Assertions.assertEquals(200, serverConfig.getWorkerThreads());
@@ -53,7 +52,6 @@ public class ServerConfigTest {
     public void testInvalidServerOptions() {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server_invalid_option");
-        ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assertions.assertEquals(1024*16, serverConfig.getBufferSize());
         Assertions.assertEquals(Runtime.getRuntime().availableProcessors() * 2, serverConfig.getIoThreads());
         Assertions.assertEquals(200, serverConfig.getWorkerThreads());
@@ -67,7 +65,6 @@ public class ServerConfigTest {
     public void testValidServerOptions() {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load("server_valid_option");
-        ServerOption.serverOptionInit(serverConfig.getMappedConfig(),serverConfig);
         Assertions.assertEquals(10000, serverConfig.getBufferSize());
         Assertions.assertEquals(1, serverConfig.getIoThreads());
         Assertions.assertEquals(100, serverConfig.getWorkerThreads());
@@ -81,7 +78,6 @@ public class ServerConfigTest {
     public void testMaxTransferFileSize() {
         config.clear();
         ServerConfig serverConfig = ServerConfig.load();
-        ServerOption.serverOptionInit(serverConfig.getMappedConfig(), serverConfig);
         Assertions.assertEquals(1000000, serverConfig.getMaxTransferFileSize());
     }
 }
