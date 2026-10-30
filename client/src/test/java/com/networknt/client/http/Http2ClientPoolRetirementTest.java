@@ -37,13 +37,16 @@ class Http2ClientPoolRetirementTest {
     @BeforeEach void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
-        request = Config.getInstance().getMapper().convertValue(Map.of(
+        request = requestConfig(-1, 30000);
+        pool = new Http2ClientConnectionPool(request, clock::get);
+    }
+    private RequestConfig requestConfig(int maximum, int lifetime) {
+        return Config.getInstance().getMapper().convertValue(Map.of(
                 ClientConfig.CONNECTION_POOL_SIZE, 2,
                 ClientConfig.MAX_CONNECTION_NUM_PER_HOST, 4,
                 ClientConfig.MIN_CONNECTION_NUM_PER_HOST, 1,
-                ClientConfig.MAX_REQ_PER_CONN, -1,
-                ClientConfig.CONNECTION_EXPIRE_TIME, 30000), RequestConfig.class);
-        pool = new Http2ClientConnectionPool(request, clock::get);
+                ClientConfig.MAX_REQ_PER_CONN, maximum,
+                ClientConfig.CONNECTION_EXPIRE_TIME, lifetime), RequestConfig.class);
     }
     @AfterEach void tearDown() throws Exception {
         if (pool != null) pool.clear();
@@ -215,17 +218,196 @@ class Http2ClientPoolRetirementTest {
         verify(newer).close();
     }
 
-    @Test void nativeCloseRemovesUriMetadataWithoutWaitingForTheReaper() throws Exception {
+    @Test void nativeCloseSignalsWithoutWaitingForThePoolMonitor() throws Exception {
         ClientConnection raw = transport();
         pool.cacheConnection(URI.create("https://closed.invalid"), raw);
-        IoThreadClientConnection.wrap(raw).close();
-        drainOwner();
-        // The public count alone would miss a closed transport still rooted by its URI list.
+        IoThreadClientConnection owned = IoThreadClientConnection.wrap(raw);
+        CompletableFuture<Void> closed = new CompletableFuture<>();
+        synchronized (pool) {
+            owner.execute(() -> { owned.close(); closed.complete(null); });
+            closed.get(5, TimeUnit.SECONDS);
+            assertEquals(0, pool.numberOfConnections());
+        }
+        assertEquals(1, pool.reapExpiredConnections(), "metadata cleanup is performed by maintenance");
         Field cache = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
         cache.setAccessible(true);
         assertTrue(((Map<?, ?>) cache.get(pool)).isEmpty());
+        verify(raw).close();
+    }
+
+    @Test void staleEmptyUriBucketCannotRemoveANewEmptyBucket() throws Exception {
+        URI uri = URI.create("https://recreated.invalid");
+        Field cacheField = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
+        cacheField.setAccessible(true);
+        Map<?, ?> cache = (Map<?, ?>) cacheField.get(pool);
+        ClientConnection old = transport();
+        pool.cacheConnection(uri, old);
+        Object oldBucket = cache.get(uri.toString());
+        IoThreadClientConnection.wrap(old).close();
+        drainOwner();
+        pool.reapExpiredConnections();
+        pool.clear();
+        pool.cacheConnection(uri, transport());
+        Object newBucket = cache.get(uri.toString());
+        clock.set(30000);
+        assertNull(pool.getConnection(uri)); // Leaves an empty, newer URI bucket.
+        assertNotSame(oldBucket, newBucket);
+        assertFalse(cache.remove(uri.toString(), oldBucket), "value matching must use bucket identity");
+        assertSame(newBucket, cache.get(uri.toString()));
+    }
+
+    @ParameterizedTest @CsvSource({"1,false", "1,true", "2,false", "2,true"})
+    void requestLimitHasADeadlineWithoutFurtherUriTraffic(int maximum, boolean multiplexed) throws Exception {
+        pool = new Http2ClientConnectionPool(requestConfig(maximum, 1_000_000), clock::get);
+        ClientConnection raw = transport();
+        when(raw.isMultiplexingSupported()).thenReturn(multiplexed);
+        URI uri = URI.create("https://limited.invalid");
+        pool.cacheConnection(uri, raw); // The connecting caller owns request number one.
+        if (maximum == 2) {
+            pool.resetConnectionStatus(raw);
+            assertNotNull(pool.getConnection(uri));
+        }
+        verify(raw, never()).close();
+        clock.set(99999);
+        pool.reapExpiredConnections();
+        verify(raw, never()).close();
+        clock.set(100000);
+        pool.reapExpiredConnections();
+        drainOwner();
+        verify(raw).close();
         assertEquals(0, pool.numberOfConnections());
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void finalPermittedBorrowRemainsUsableUntilItReturns(boolean multiplexed) throws Exception {
+        pool = new Http2ClientConnectionPool(requestConfig(2, 1_000_000), clock::get);
+        ClientConnection raw = transport();
+        when(raw.isMultiplexingSupported()).thenReturn(multiplexed);
+        URI uri = URI.create("https://last-request.invalid");
+        pool.cacheConnection(uri, raw);
+        pool.resetConnectionStatus(raw);
+        ClientConnection last = pool.getConnection(uri);
+        assertNotNull(last);
+        assertTrue(last.isOpen());
+        verify(raw, never()).close();
+        assertNull(pool.getConnection(uri));
+        pool.resetConnectionStatus(last);
+        drainOwner();
+        verify(raw).close();
+    }
+
+    @Test void closeNotificationBurstDoesNotStarveARetirementDeadline() throws Exception {
+        pool = new Http2ClientConnectionPool(requestConfig(1, 1_000_000), clock::get);
+        ClientConnection due = transport();
+        pool.cacheConnection(URI.create("https://due.invalid"), due);
+        clock.set(100000);
+        for (int i = 0; i < 64; i++) {
+            ClientConnection raw = transport();
+            pool.cacheConnection(URI.create("https://closed.invalid"), raw);
+            IoThreadClientConnection.wrap(raw).close();
+        }
+        drainOwner();
+        pool.reapExpiredConnections();
+        drainOwner();
+        verify(due).close();
+    }
+
+    @Test void permanentlyFailingRetirementBacksOffThenClosesOnce() throws Exception {
+        AtomicBoolean fail = new AtomicBoolean();
+        pool = new Http2ClientConnectionPool(request, () -> {
+            if (fail.get() && Thread.holdsLock(pool)) throw new AssertionError("permanent retirement failure");
+            return clock.get();
+        });
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://failure.invalid"), raw);
+        Logger logger = (Logger) LoggerFactory.getLogger(Http2ClientConnectionPool.class);
+        Level previous = logger.getLevel();
+        ListAppender<ILoggingEvent> events = new ListAppender<>();
+        events.start();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(events);
+        try {
+            clock.set(30000);
+            fail.set(true);
+            for (int attempt = 1; attempt <= 5; attempt++) {
+                assertEquals(1, pool.reapExpiredConnections());
+                if (attempt < 5) {
+                    long delay = 1000L << (attempt - 1);
+                    clock.addAndGet(delay - 1);
+                    assertEquals(0, pool.reapExpiredConnections());
+                    clock.incrementAndGet();
+                }
+            }
+            fail.set(false);
+            drainOwner();
+            verify(raw).close();
+            assertEquals(0, pool.numberOfConnections());
+            pool.reapExpiredConnections();
+            assertEquals(0, pool.reapExpiredConnections());
+            assertEquals(1, events.list.stream().filter(event -> event.getLevel() == Level.WARN).count());
+            assertEquals(1, events.list.stream().filter(event -> event.getLevel() == Level.ERROR).count());
+        } finally {
+            logger.detachAppender(events);
+            logger.setLevel(previous);
+            events.stop();
+        }
+    }
+
+    @Test void permanentlyFailingClosedMetadataCleanupStopsAfterItsBudget() throws Exception {
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://metadata-failure.invalid"), raw);
+        Field cacheField = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
+        cacheField.setAccessible(true);
+        Map<?, ?> original = (Map<?, ?>) cacheField.get(pool);
+        AtomicInteger removals = new AtomicInteger();
+        Map<Object, Object> broken = new HashMap<>(original) {
+            @Override public boolean remove(Object key, Object value) {
+                removals.incrementAndGet();
+                throw new AssertionError("permanent metadata failure");
+            }
+        };
+        cacheField.set(pool, broken);
+        IoThreadClientConnection.wrap(raw).close();
+        drainOwner();
+        assertEquals(0, pool.numberOfConnections());
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            assertEquals(1, pool.reapExpiredConnections());
+            if (attempt < 5) clock.addAndGet(1000L << (attempt - 1));
+        }
+        assertEquals(5, removals.get());
+        clock.addAndGet(1_000_000);
         assertEquals(0, pool.reapExpiredConnections());
+        assertEquals(5, removals.get());
+        verify(raw).close();
+    }
+
+    @Test void persistentGlobalFailureUsesCappedBackoffAndLogsOnce() {
+        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+        Queue<Runnable> ticks = new ConcurrentLinkedQueue<>();
+        List<Long> delays = new ArrayList<>();
+        doAnswer(invocation -> {
+            ticks.add(invocation.getArgument(0));
+            delays.add(invocation.getArgument(1));
+            return null;
+        }).when(scheduler).schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS));
+        pool = new Http2ClientConnectionPool(request, () -> { throw new AssertionError("clock unavailable"); }, scheduler);
+        Logger logger = (Logger) LoggerFactory.getLogger(Http2ClientConnectionPool.class);
+        Level previous = logger.getLevel();
+        ListAppender<ILoggingEvent> events = new ListAppender<>();
+        events.start();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(events);
+        try {
+            pool.startReaper();
+            for (int i = 0; i < 10; i++) assertDoesNotThrow(ticks.remove()::run);
+            assertEquals(List.of(1000L, 1000L, 2000L, 4000L, 8000L, 16000L, 30000L, 30000L, 30000L, 30000L, 30000L), delays);
+            assertEquals(1, events.list.stream().filter(event -> event.getLevel() == Level.ERROR).count());
+            assertEquals(1, ticks.size());
+        } finally {
+            logger.detachAppender(events);
+            logger.setLevel(previous);
+            events.stop();
+        }
     }
 
     @Test void untrackedReturnDoesNotTouchTheRawTransport() {

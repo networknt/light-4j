@@ -19,13 +19,7 @@ final class ConnectionWrappers {
         Key dead;
         while ((dead = (Key) collected.poll()) != null) entries.remove(dead);
         Entry entry = entries.computeIfAbsent(new Key(raw, collected), ignored -> new Entry());
-        for (;;) {
-            WeakReference<IoThreadClientConnection> existing = entry.view.get();
-            IoThreadClientConnection view = existing.get();
-            if (view != null) return view;
-            IoThreadClientConnection created = new IoThreadClientConnection(raw, entry);
-            if (entry.view.compareAndSet(existing, new WeakReference<>(created))) return created;
-        }
+        return entry.getOrCreateView(raw);
     }
 
     // Lookup does not create a view, register listeners, or touch the raw transport.
@@ -39,6 +33,15 @@ final class ConnectionWrappers {
         final AtomicBoolean closed = new AtomicBoolean();
         volatile IOException closeReason;
         final AtomicReference<WeakReference<IoThreadClientConnection>> view = new AtomicReference<>(new WeakReference<>(null));
+        IoThreadClientConnection getOrCreateView(ClientConnection raw) {
+            for (;;) {
+                WeakReference<IoThreadClientConnection> existing = view.get();
+                IoThreadClientConnection current = existing.get();
+                if (current != null) return current;
+                IoThreadClientConnection created = new IoThreadClientConnection(raw, this);
+                if (view.compareAndSet(existing, new WeakReference<>(created))) return created;
+            }
+        }
     }
 
     private static final class Key extends WeakReference<ClientConnection> {

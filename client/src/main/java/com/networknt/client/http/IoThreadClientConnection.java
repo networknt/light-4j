@@ -52,9 +52,6 @@ public final class IoThreadClientConnection implements ClientConnection {
         owned.installCloseBridge();
         return owned;
     }
-    static ClientConnection identity(ClientConnection connection) {
-        return connection instanceof IoThreadClientConnection owned ? owned.delegate : connection;
-    }
     @Override public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback) {
         sendRequest(request, callback, new RequestSubmission());
     }
