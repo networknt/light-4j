@@ -10,11 +10,11 @@ import io.undertow.io.*;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.xnio.*;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Native HTTP/2 cancellation must reset the peer stream and retain the shared transport. */
+@Isolated("Uses the shared connection pool")
 class Http2ClientCancellationLoopbackTest {
     private final CompletableFuture<HttpServerExchange> stalled = new CompletableFuture<>();
     private final CountDownLatch releaseBackend = new CountDownLatch(1);
@@ -31,14 +32,8 @@ class Http2ClientCancellationLoopbackTest {
     private XnioWorker worker;
     private Http2Client client;
     private URI target;
-    private Field configName;
-    private String previousConfigName;
 
     @BeforeEach void setUp() throws Exception {
-        configName = ClientConfig.class.getDeclaredField("configName");
-        configName.setAccessible(true);
-        previousConfigName = (String) configName.get(null);
-        configName.set(null, ClientConfig.CONFIG_NAME);
         server = Undertow.builder().addHttpListener(0, "localhost").setIoThreads(1).setWorkerThreads(2)
                 .setServerOption(UndertowOptions.ENABLE_HTTP2, true).setHandler(exchange -> {
                     if (exchange.getRequestPath().equals("/stall")) {
@@ -66,13 +61,13 @@ class Http2ClientCancellationLoopbackTest {
     @AfterEach void tearDown() throws Exception {
         releaseBackend.countDown();
         Http2ClientConnectionPool.getInstance().clear();
+        connections.forEach(org.xnio.IoUtils::safeClose);
         if (client != null) client.shutdown();
         if (worker != null) {
             worker.shutdownNow();
             assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
         }
         if (server != null) server.stop();
-        if (configName != null) configName.set(null, previousConfigName);
     }
     @ParameterizedTest @ValueSource(booleans = {false, true})
     void cancellationBeforeResponseHeadersResetsPeerStream(boolean timeout) throws Exception {
@@ -113,6 +108,19 @@ class Http2ClientCancellationLoopbackTest {
         client.returnConnection(connection);
         assertHealthyTransport();
         assertTrue(connection.isOpen());
+    }
+    @Test void clearKeepsAnInflightResponseUsable() throws Exception {
+        CompletableFuture<ClientResponse> response = client.callService(target, request("/stall"), Optional.empty(), true);
+        HttpServerExchange backend = stalled.get(5, TimeUnit.SECONDS);
+        Http2ClientConnectionPool.getInstance().clear();
+        assertTrue(connections.getFirst().isOpen());
+        backend.getIoThread().execute(() -> {
+            backend.getResponseSender().send("released");
+            releaseBackend.countDown();
+        });
+        assertEquals("released", response.get(5, TimeUnit.SECONDS).getAttachment(Http2Client.RESPONSE_BODY));
+        assertEquals(0, Http2ClientConnectionPool.getInstance().numberOfConnections());
+        assertEquals(1, connects.get());
     }
     private ClientRequest request(String path) { return new ClientRequest().setMethod(Methods.GET).setPath(path); }
     private void assertHealthyTransport() throws Exception {
