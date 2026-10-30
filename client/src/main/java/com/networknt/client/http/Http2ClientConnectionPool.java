@@ -269,7 +269,7 @@ public class Http2ClientConnectionPool {
         if (!(connection instanceof IoThreadClientConnection)) {
             ConnectionWrappers.Entry entry = ConnectionWrappers.INSTANCE.lookup(connection);
             if (entry == null) return;
-            existing = entry.view.get().get();
+            existing = entry.currentView();
         }
         if (existing == null) return;
         CachedConnection cached = tracked.get(existing);

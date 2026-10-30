@@ -47,6 +47,7 @@ final class ConnectionWrappers {
         final AtomicBoolean closed = new AtomicBoolean();
         volatile IOException closeReason;
         final AtomicReference<WeakReference<IoThreadClientConnection>> view = new AtomicReference<>(new WeakReference<>(null));
+        IoThreadClientConnection currentView() { return view.get().get(); }
         IoThreadClientConnection getOrCreateView(ClientConnection raw) {
             for (;;) {
                 WeakReference<IoThreadClientConnection> existing = view.get();
