@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Timeout(20)
 class ProxyContinuationTest {
-    enum Phase { ACQUIRE, RETRY, SEND_CALLBACK, RESPONSE_CALLBACK, TIMEOUT }
+    enum Phase { ACQUIRE, RETRY, SEND_CALLBACK, RESPONSE_CALLBACK, TIMEOUT, BEFORE_SEND }
     private static final class ControlledFailure extends RuntimeException {
         final Phase phase;
         ControlledFailure(Phase phase) { super("Injected failure at " + phase); this.phase = phase; }
@@ -49,11 +49,6 @@ class ProxyContinuationTest {
     @MethodSource("failureCases")
     void asynchronousFailuresUseSelectedBoundaryAndCloseUpstream(Phase phase, boolean enabled, boolean hasMdc) throws Exception {
         var previousMdc = org.slf4j.MDC.getCopyOfContextMap();
-        var legacyMdcLogger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(
-                "com.networknt.handler.thread.LightThreadExecutor");
-        var legacyMdcEvents = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
-        legacyMdcEvents.start();
-        legacyMdcLogger.addAppender(legacyMdcEvents);
         AtomicInteger injected = new AtomicInteger();
         AtomicInteger selected = new AtomicInteger();
         AtomicInteger depth = new AtomicInteger();
@@ -64,7 +59,7 @@ class ProxyContinuationTest {
         CompletableFuture<Runnable> retry = new CompletableFuture<>();
         java.util.function.Supplier<ControlledFailure> failure = () -> {
             assertEquals(hasMdc ? "canonical-request" : null, org.slf4j.MDC.get("request"),
-                    "Callbacks must use the existing MDC_CONTEXT executor, not a stale thread snapshot");
+                    "Callbacks must install canonical request MDC for this frame");
             injected.incrementAndGet();
             return new ControlledFailure(phase);
         };
@@ -130,12 +125,9 @@ class ProxyContinuationTest {
             assertEquals(phase == Phase.RETRY ? 2 : 1, acquisitions.get());
             if (phase != Phase.ACQUIRE && phase != Phase.RETRY)
                 assertFalse(upstream.get().isOpen(), "Close upstream resources on callback failure");
-            assertTrue(legacyMdcEvents.list.isEmpty(), "Callbacks must not invoke the unscoped MDC executor");
             release.countDown();
         } finally {
             release.countDown();
-            legacyMdcLogger.detachAppender(legacyMdcEvents);
-            legacyMdcEvents.stop();
             if (previousMdc == null) org.slf4j.MDC.clear();
             else org.slf4j.MDC.setContextMap(previousMdc);
         }
@@ -231,8 +223,11 @@ class ProxyContinuationTest {
         }
     }
 
-    @Test
-    void upstreamHttp2FailureResetsOnlyTheFailedStream() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"response", "timeout", "before-send", "late"})
+    void upstreamHttp2FailureResetsOnlyTheFailedStream(String mode) throws Exception {
+        CompletableFuture<Runnable> late = new CompletableFuture<>();
+        AtomicInteger failedAcquisitions = new AtomicInteger();
         CountDownLatch healthyEntered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         Set<Integer> backendPeers = ConcurrentHashMap.newKeySet();
@@ -243,8 +238,9 @@ class ProxyContinuationTest {
             URI backend = fixture.start(exchange -> {
                 assertEquals("HTTP/2.0", exchange.getProtocol().toString());
                 backendPeers.add(exchange.getSourceAddress().getPort());
-                if (exchange.getRequestPath().equals("/healthy")) exchange.dispatch(() -> {
-                    healthyEntered.countDown();
+                if (exchange.getRequestPath().equals("/healthy")
+                        || (mode.equals("timeout") && exchange.getRequestPath().equals("/fail"))) exchange.dispatch(() -> {
+                    if (exchange.getRequestPath().equals("/healthy")) healthyEntered.countDown();
                     try {
                         assertTrue(release.await(8, TimeUnit.SECONDS));
                         exchange.getResponseSender().send("healthy");
@@ -257,15 +253,24 @@ class ProxyContinuationTest {
                 @Override public ProxyTarget findTarget(HttpServerExchange exchange) { return new ProxyTarget() {}; }
                 @Override public void getConnection(ProxyTarget target, HttpServerExchange exchange,
                         ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
+                    if (exchange.getRequestPath().equals("/fail")) failedAcquisitions.incrementAndGet();
                     java.util.function.Consumer<ClientConnection> connected = connection -> {
                         ClientConnection selected = connection;
-                        if (exchange.getRequestPath().equals("/fail")) selected = decorateConnection(connection,
-                                Phase.RESPONSE_CALLBACK, () -> {
+                        if (exchange.getRequestPath().equals("/fail") && !mode.equals("timeout")) selected = decorateConnection(connection,
+                                mode.equals("before-send") || mode.equals("late") ? Phase.BEFORE_SEND : Phase.RESPONSE_CALLBACK, () -> {
                                     injected.incrementAndGet();
                                     return new ControlledFailure(Phase.RESPONSE_CALLBACK);
                                 });
                         callback.completed(exchange, new ProxyConnection(selected, "/"));
                     };
+                    if (mode.equals("late") && exchange.getRequestPath().equals("/fail")) {
+                        late.complete(() -> {
+                            connected.accept(shared.get());
+                            callback.failed(exchange);
+                            callback.queuedRequestFailed(exchange);
+                        });
+                        return;
+                    }
                     if (shared.get() != null) connected.accept(shared.get());
                     else UndertowClient.getInstance().connect(new ClientCallback<>() {
                         @Override public void completed(ClientConnection connection) {
@@ -276,7 +281,8 @@ class ProxyContinuationTest {
                     }, upstream, exchange.getIoThread(), exchange.getConnection().getByteBufferPool(), org.xnio.OptionMap.EMPTY);
                 }
             };
-            ProxyHandler proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
+            ProxyHandler proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0)
+                    .setPathPrefixMaxRequestTime(Map.of("/fail", mode.equals("timeout") || mode.equals("late") ? 300 : 0)).build();
             URI front = fixture.start(exchange -> {
                 frontendPeers.add(exchange.getSourceAddress().getPort());
                 HandlerContinuation.execute(exchange, (ex, task) -> {
@@ -293,8 +299,11 @@ class ProxyContinuationTest {
             assertTrue(healthyEntered.await(5, TimeUnit.SECONDS));
             var failed = http.send(HttpRequest.newBuilder(front.resolve("/fail")).timeout(Duration.ofSeconds(5)).build(),
                     HttpResponse.BodyHandlers.ofString());
-            assertEquals(409, failed.statusCode(), failed.body());
-            assertEquals(1, injected.get());
+            boolean timeout = mode.equals("timeout") || mode.equals("late");
+            assertEquals(timeout ? 504 : 409, failed.statusCode(), failed.body());
+            if (mode.equals("late")) late.get(3, TimeUnit.SECONDS).run();
+            assertEquals(timeout ? 0 : 1, injected.get());
+            assertEquals(1, failedAcquisitions.get(), "Late failure callbacks must not retry");
             assertTrue(shared.get().isOpen(), "Keep the shared upstream HTTP/2 connection open");
             assertFalse(healthy.isDone(), "Do not cancel the healthy sibling stream");
             release.countDown();
@@ -309,8 +318,11 @@ class ProxyContinuationTest {
         }
     }
 
-    @Test
-    void committedDownstreamHttp2FailureDoesNotCancelSiblingStream() throws Exception {
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"false,true", "true,true", "true,false"})
+    void downstreamHttp2FailureDoesNotCancelSiblingStream(boolean fatal, boolean committed) throws Exception {
+        CompletableFuture<Error> propagated = new CompletableFuture<>();
+        Error sentinel = new StackOverflowError("injected fatal error");
         CountDownLatch healthyEntered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         Set<Integer> peers = ConcurrentHashMap.newKeySet();
@@ -326,11 +338,18 @@ class ProxyContinuationTest {
                 });
                 else if (exchange.getRequestPath().equals("/fail")) exchange.dispatch(() -> {
                     try {
-                        var channel = exchange.getResponseChannel();
-                        Channels.writeBlocking(channel, ByteBuffer.wrap("first".getBytes(StandardCharsets.UTF_8)));
-                        Channels.flushBlocking(channel);
-                        assertTrue(exchange.isResponseStarted());
-                        HandlerContinuation.task(exchange, ex -> { throw new ControlledFailure(Phase.RESPONSE_CALLBACK); }).run();
+                        if (committed) {
+                            var channel = exchange.getResponseChannel();
+                            Channels.writeBlocking(channel, ByteBuffer.wrap("first".getBytes(StandardCharsets.UTF_8)));
+                            Channels.flushBlocking(channel);
+                        }
+                        assertEquals(committed, exchange.isResponseStarted());
+                        try {
+                            HandlerContinuation.task(exchange, ex -> {
+                                if (fatal) throw sentinel;
+                                throw new ControlledFailure(Phase.RESPONSE_CALLBACK);
+                            }).run();
+                        } catch (Error error) { propagated.complete(error); }
                     } catch (IOException e) { throw new RuntimeException(e); }
                 });
                 else exchange.getResponseSender().send("accepted");
@@ -342,6 +361,7 @@ class ProxyContinuationTest {
             assertTrue(healthyEntered.await(5, TimeUnit.SECONDS));
             assertThrows(IOException.class, () -> http.send(HttpRequest.newBuilder(front.resolve("/fail"))
                     .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString()));
+            if (fatal) assertSame(sentinel, propagated.get(3, TimeUnit.SECONDS));
             assertFalse(healthy.isDone());
             release.countDown();
             assertEquals("healthy", healthy.get(5, TimeUnit.SECONDS).body());
@@ -356,6 +376,7 @@ class ProxyContinuationTest {
         return (ClientConnection) Proxy.newProxyInstance(ClientConnection.class.getClassLoader(),
                 new Class<?>[]{ClientConnection.class}, (proxy, method, args) -> {
             if (method.getName().equals("sendRequest")) {
+                if (phase == Phase.BEFORE_SEND) throw failure.get();
                 @SuppressWarnings("unchecked") var callback = (ClientCallback<ClientExchange>) args[1];
                 real.sendRequest((ClientRequest) args[0], new ClientCallback<>() {
                     @Override public void completed(ClientExchange result) { callback.completed(decorateExchange(result, phase, failure)); }

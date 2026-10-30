@@ -12,6 +12,49 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HandlerContinuationTest {
+    @Test
+    void activePolicyTracksIdentityAndExchangeAndRestoresAfterNestedFailure() throws Exception {
+        HttpServerExchange first = new HttpServerExchange(null);
+        HttpServerExchange second = new HttpServerExchange(null);
+        var policy = HandlerContinuation.capture(first);
+        var otherPolicy = HandlerContinuation.capture(first);
+        assertFalse(HandlerContinuation.isActive(first, policy));
+        policy.apply(ex -> {
+            assertTrue(HandlerContinuation.isActive(first, policy));
+            assertFalse(HandlerContinuation.isActive(first, otherPolicy));
+            assertFalse(HandlerContinuation.isActive(second, policy));
+            assertThrows(IOException.class, () -> policy.apply(nested -> {
+                assertTrue(HandlerContinuation.isActive(second, policy));
+                assertFalse(HandlerContinuation.isActive(first, policy));
+                throw new IOException("nested failure");
+            }).handleRequest(second));
+            assertTrue(HandlerContinuation.isActive(first, policy));
+        }).handleRequest(first);
+        assertFalse(HandlerContinuation.isActive(first, policy));
+        assertFalse(HandlerContinuation.isActive(second, policy));
+    }
+
+    @Test
+    void mdcPublicationRetainsImmutableSnapshotsAndConcurrentUpdates() throws Exception {
+        HttpServerExchange exchange = new HttpServerExchange(null);
+        MiddlewareHandler middleware = new MiddlewareHandler() {
+            @Override public boolean isEnabled() { return true; }
+            @Override public HttpHandler getNext() { return null; }
+            @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
+            @Override public void handleRequest(HttpServerExchange ex) { }
+        };
+        middleware.addHandlerMDCContext(exchange, "first", "one");
+        var first = exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT);
+        assertThrows(UnsupportedOperationException.class, () -> first.put("bad", "mutation"));
+        try (var workers = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var updates = java.util.stream.IntStream.range(0, 20).mapToObj(i -> workers.submit(() ->
+                    middleware.addHandlerMDCContext(exchange, "field" + i, "value" + i))).toList();
+            for (var update : updates) update.get();
+        }
+        assertEquals(java.util.Map.of("first", "one"), first);
+        assertEquals(21, exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT).size());
+    }
+
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
     void resumeScopesCanonicalRequestMdcAndRestoresWorker(boolean present) throws Exception {

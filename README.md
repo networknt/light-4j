@@ -262,7 +262,10 @@ policy. Nested boundaries restore their enclosing scope, and state is isolated
 per exchange. Capturing a boundary does not snapshot thread-local MDC. At resume,
 one scope installs the canonical MDC_CONTEXT attachment (or an empty context when
 absent), then restores the executing thread's previous MDC on every exit. Nested
-frames reuse that scope. Proxy callbacks use this scope rather than the unscoped
+frames reuse that scope. Policy identity and exchange identity share one frame
+tracker; proxy callbacks do not maintain a second thread-local guard. Framework
+MDC updates publish immutable snapshots through addHandlerMDCContext, so readers
+do not traverse a concurrently mutated HashMap. Proxy callbacks use this scope rather than the unscoped
 LightThreadExecutor. ExceptionHandler retains its original response-channel
 availability policy after commitment; it does not forcibly close general-service
 responses. Its initial worker frame still clears request MDC at chain exit.
@@ -277,7 +280,8 @@ an unhandled failure returns 500; after commitment it closes the failed response
 stream without appending an error. Undertow's HTTP/2 ServerConnection.close()
 sends RST_STREAM for that stream, preserving healthy siblings. Late failures on
 completed exchanges do not rewrite a response or close a reused connection.
-The neutral Runnable adapter propagates Error; selected exception policies keep
+The neutral Runnable adapter attempts stream/request cleanup before propagating
+the original Error; selected exception policies keep
 their existing handling behavior.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
