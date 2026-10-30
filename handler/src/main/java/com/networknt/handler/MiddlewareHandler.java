@@ -21,6 +21,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
 import java.util.HashMap;
+import java.util.Collections;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -67,13 +68,12 @@ public interface MiddlewareHandler extends LightHttpHandler {
      * @param value    The value for the field.
      */
     default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
-        var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-        if (context != null) {
-            context.put(field, value);
-        } else {
-            var newContext = new HashMap<String, String>();
-            newContext.put(field, value);
-            exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, newContext);
+        synchronized (exchange) {
+            var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
+            var updated = context == null ? new HashMap<String, String>() : new HashMap<>(context);
+            updated.put(field, value);
+            // Publish a stable snapshot; readers must not mutate the attachment directly.
+            exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, Collections.unmodifiableMap(updated));
         }
     }
 }

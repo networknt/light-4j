@@ -24,7 +24,28 @@ public final class HandlerContinuation {
     private static final Logger LOG = LoggerFactory.getLogger(HandlerContinuation.class);
     private static final Boundary UNHANDLED = (exchange, continuation) -> continuation.handleRequest(exchange);
     private static final AttachmentKey<Boundary> ACTIVE = AttachmentKey.create(Boundary.class);
-    private static final ThreadLocal<HttpServerExchange> MDC_EXCHANGE = new ThreadLocal<>();
+    private record Frame(HttpServerExchange exchange, CapturedBoundary boundary) { }
+    private static final ThreadLocal<Frame> CURRENT_FRAME = new ThreadLocal<>();
+
+    @FunctionalInterface
+    private interface ScopedAction<E extends Exception> { void run() throws E; }
+
+    private record CapturedBoundary(Boundary boundary) implements UnaryOperator<HttpHandler> {
+        @Override public HttpHandler apply(HttpHandler continuation) {
+            return exchange -> withMdc(exchange, () -> {
+                Frame previous = CURRENT_FRAME.get();
+                CURRENT_FRAME.set(new Frame(exchange, this));
+                try { execute(exchange, boundary, continuation); }
+                finally { CURRENT_FRAME.set(previous); }
+            });
+        }
+    }
+
+    // Package-private: proxy callbacks can reuse their exact active policy frame.
+    static boolean isActive(HttpServerExchange exchange, UnaryOperator<HttpHandler> boundary) {
+        Frame frame = CURRENT_FRAME.get();
+        return frame != null && frame.exchange() == exchange && frame.boundary() == boundary;
+    }
 
     private HandlerContinuation() { }
 
@@ -73,26 +94,28 @@ public final class HandlerContinuation {
     public static UnaryOperator<HttpHandler> capture(HttpServerExchange exchange) {
         Boundary active = exchange.getAttachment(ACTIVE);
         Boundary boundary = active == null ? UNHANDLED : active;
-        return continuation -> resumed -> withMdc(resumed,
-                ex -> execute(ex, boundary, continuation));
+        return new CapturedBoundary(boundary);
     }
 
-    private static void withMdc(HttpServerExchange exchange, HttpHandler callback) throws Exception {
-        if (MDC_EXCHANGE.get() == exchange) {
-            callback.handleRequest(exchange);
+    private static <E extends Exception> void withMdc(HttpServerExchange exchange, ScopedAction<E> callback) throws E {
+        Frame previousFrame = CURRENT_FRAME.get();
+        if (previousFrame != null && previousFrame.exchange() == exchange) {
+            callback.run();
             return;
         }
-        HttpServerExchange previousExchange = MDC_EXCHANGE.get();
         Map<String, String> previousMdc = MDC.getCopyOfContextMap();
-        Map<String, String> requestMdc = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-        MDC_EXCHANGE.set(exchange);
+        Map<String, String> requestMdc;
+        synchronized (exchange) {
+            requestMdc = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
+        }
+        CURRENT_FRAME.set(new Frame(exchange, null));
         try {
             setMdc(requestMdc);
-            callback.handleRequest(exchange);
+            callback.run();
         } finally {
             setMdc(previousMdc);
-            if (previousExchange == null) MDC_EXCHANGE.remove();
-            else MDC_EXCHANGE.set(previousExchange);
+            if (previousFrame == null) CURRENT_FRAME.remove();
+            else CURRENT_FRAME.set(previousFrame);
         }
     }
 
@@ -103,21 +126,21 @@ public final class HandlerContinuation {
      * committed stream, or leave an already completed exchange alone.
      */
     public static Runnable task(HttpServerExchange exchange, HttpHandler continuation) {
-        return () -> {
+        return () -> withMdc(exchange, () -> {
             try {
-                withMdc(exchange, ex -> {
-                    try {
-                        continuation.handleRequest(ex);
-                    } catch (Exception failure) {
-                        failTask(ex, failure);
-                    }
-                });
-            } catch (RuntimeException failure) {
-                throw failure;
-            } catch (Exception impossible) {
-                throw new IllegalStateException(impossible);
+                continuation.handleRequest(exchange);
+            } catch (Error fatal) {
+                // Best-effort request/stream termination; preserve the original fatal error.
+                try {
+                    if (!exchange.isComplete() && exchange.getConnection() != null) exchange.getConnection().close();
+                } catch (Throwable cleanupFailure) {
+                    if (cleanupFailure != fatal) fatal.addSuppressed(cleanupFailure);
+                }
+                throw fatal;
+            } catch (Exception failure) {
+                failTask(exchange, failure);
             }
-        };
+        });
     }
 
     private static void failTask(HttpServerExchange exchange, Exception failure) {
