@@ -19,11 +19,7 @@ final class ConnectionWrappers {
 
     IoThreadClientConnection getOrCreate(ClientConnection raw) {
         Entry entry = entries.computeIfAbsent(new Key(raw), key -> {
-            ConcurrentMap<Key, Entry> records = entries;
-            cleaner.register(raw, () -> {
-                key.clear();
-                records.remove(key);
-            });
+            cleaner.register(raw, new Cleanup(entries, key));
             return new Entry();
         });
         return entry.getOrCreateView(raw);
@@ -33,6 +29,13 @@ final class ConnectionWrappers {
         if (connection instanceof IoThreadClientConnection owned) return owned;
         Entry entry = entries.get(new Key(connection));
         return entry == null ? null : entry.view.get().get();
+    }
+
+    static record Cleanup(ConcurrentMap<Key, Entry> records, Key key) implements Runnable {
+        @Override public void run() {
+            key.clear();
+            records.remove(key);
+        }
     }
 
     static final class Entry {
