@@ -21,21 +21,30 @@ class Http2ClientPoolRetirementTest {
     private XnioIoThread owner;
     private Http2ClientConnectionPool pool;
     private Field requestField;
+    private Field configNameField;
+    private String previousConfigName;
+    private ClientConfig selectedConfig;
     private RequestConfig originalRequest;
 
     @BeforeEach void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
+        configNameField = ClientConfig.class.getDeclaredField("configName");
+        configNameField.setAccessible(true);
+        previousConfigName = (String) configNameField.get(null);
+        configNameField.set(null, ClientConfig.CONFIG_NAME);
+        selectedConfig = ClientConfig.get();
         requestField = ClientConfig.class.getDeclaredField("request");
         requestField.setAccessible(true);
-        originalRequest = ClientConfig.get().getRequest();
+        originalRequest = selectedConfig.getRequest();
         RequestConfig request = Config.getInstance().getMapper().convertValue(Map.of(
                 ClientConfig.CONNECTION_POOL_SIZE, 2,
                 ClientConfig.MAX_CONNECTION_NUM_PER_HOST, 4,
                 ClientConfig.MIN_CONNECTION_NUM_PER_HOST, 1,
                 ClientConfig.MAX_REQ_PER_CONN, -1,
                 ClientConfig.CONNECTION_EXPIRE_TIME, 30000), RequestConfig.class);
-        requestField.set(ClientConfig.get(), request);
+        requestField.set(selectedConfig, request);
+        assertSame(request, ClientConfig.get().getRequest());
         var constructor = Http2ClientConnectionPool.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         pool = constructor.newInstance();
@@ -43,7 +52,8 @@ class Http2ClientPoolRetirementTest {
     @AfterEach void tearDown() throws Exception {
         if (pool != null) pool.clear();
         drainOwner();
-        if (requestField != null) requestField.set(ClientConfig.get(), originalRequest);
+        if (requestField != null) requestField.set(selectedConfig, originalRequest);
+        if (configNameField != null) configNameField.set(null, previousConfigName);
         worker.shutdownNow();
         assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
     }
@@ -130,6 +140,8 @@ class Http2ClientPoolRetirementTest {
             pool.resetConnectionStatus(next);
         }
         notified.get(5, TimeUnit.SECONDS);
+        verify(raw).close();
+        assertEquals(2, pool.numberOfConnections());
     }
     @Test void clearClosesDrainingAndSelectableTransports() throws Exception {
         List<ClientConnection> open = new ArrayList<>();

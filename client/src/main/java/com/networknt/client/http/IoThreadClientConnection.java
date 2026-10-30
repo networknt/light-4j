@@ -35,12 +35,12 @@ public final class IoThreadClientConnection implements ClientConnection {
         closeListeners.set(listener);
         if (listener != null) installCloseBridge();
     };
-    private final ConnectionWrappers.Entry state;
+    private final ConnectionWrappers.Entry transportState;
 
     IoThreadClientConnection(ClientConnection delegate, ConnectionWrappers.Entry state) {
         this.delegate = delegate;
         this.closed = state.closed;
-        this.state = state;
+        this.transportState = state;
         if (this.closed.get()) closeListeners.fire();
     }
     /** Return the same live view for the same raw transport, without retaining dead transports. */
@@ -62,7 +62,7 @@ public final class IoThreadClientConnection implements ClientConnection {
     public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback, RequestSubmission submission) {
         OnceCallback guarded = new OnceCallback(callback, submission);
         Runnable send = () -> ClientConnectionOperations.runWithFailureHandler(() -> {
-            if (!isOpen()) { guarded.failed(state.closeReason == null ? new ClosedChannelException() : state.closeReason); return; }
+            if (!isOpen()) { guarded.failed(transportState.closeReason == null ? new ClosedChannelException() : transportState.closeReason); return; }
             if (!submission.start()) { guarded.notSent(new IOException("Request submission cancelled")); return; }
             delegate.sendRequest(request, guarded);
         }, guarded::sendFailed);
@@ -81,7 +81,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         else {
             try { getIoThread().execute(close); }
             catch (java.util.concurrent.RejectedExecutionException error) {
-                state.closeReason = asIOException(error);
+                transportState.closeReason = asIOException(error);
                 closeListeners.fire();
             }
         }
@@ -95,7 +95,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         try { ClientConnectionOperations.execute(delegate, install); }
         catch (java.util.concurrent.RejectedExecutionException error) {
             closed.set(true);
-            state.closeReason = asIOException(error);
+            transportState.closeReason = asIOException(error);
             closeListeners.fire();
         }
     }
