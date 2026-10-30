@@ -26,7 +26,7 @@
     {
       "case": "empty_request_empty_caller",
       "sample": 0,
-      "bytes_per_frame": 74.9799
+      "bytes_per_frame": 60.7921
     },
     {
       "case": "empty_request_empty_caller",
@@ -56,60 +56,60 @@
     {
       "case": "three_fields_different_caller",
       "sample": 0,
-      "bytes_per_frame": 904.0
+      "bytes_per_frame": 853.378
     },
     {
       "case": "three_fields_different_caller",
       "sample": 1,
-      "bytes_per_frame": 904.0
+      "bytes_per_frame": 808.0
     },
     {
       "case": "three_fields_different_caller",
       "sample": 2,
-      "bytes_per_frame": 904.0
+      "bytes_per_frame": 808.0
     },
     {
       "case": "three_fields_different_caller_same_size",
       "sample": 0,
-      "bytes_per_frame": 1184.0
+      "bytes_per_frame": 1056.0
     },
     {
       "case": "three_fields_different_caller_same_size",
       "sample": 1,
-      "bytes_per_frame": 1184.0
+      "bytes_per_frame": 1056.0
     },
     {
       "case": "three_fields_different_caller_same_size",
       "sample": 2,
-      "bytes_per_frame": 1184.0
+      "bytes_per_frame": 1056.0
     },
     {
       "case": "twelve_fields_different_caller",
       "sample": 0,
-      "bytes_per_frame": 1384.0
+      "bytes_per_frame": 1288.0
     },
     {
       "case": "twelve_fields_different_caller",
       "sample": 1,
-      "bytes_per_frame": 1384.0
+      "bytes_per_frame": 1288.0
     },
     {
       "case": "twelve_fields_different_caller",
       "sample": 2,
-      "bytes_per_frame": 1384.0
+      "bytes_per_frame": 1288.0
     }
   ],
   "median_bytes_per_resume": {
     "callback_only": 0.0,
     "empty_request_empty_caller": 56.0,
     "three_fields_matching_caller": 848.0,
-    "three_fields_different_caller": 904.0,
-    "three_fields_different_caller_same_size": 1184.0,
-    "twelve_fields_different_caller": 1384.0
+    "three_fields_different_caller": 808.0,
+    "three_fields_different_caller_same_size": 1056.0,
+    "twelve_fields_different_caller": 1288.0
   },
   "source_sha256": {
-    "handler/src/main/java/com/networknt/handler/HandlerContinuation.java": "d4facd6530d2fe2de3e10962cfc91db7e25f73cde2a663542bb2e18be159e1ed",
+    "handler/src/main/java/com/networknt/handler/HandlerContinuation.java": "b650d3da1471fe7c96cab45e9458dc3b80bd0cc8143767ed87acad1da748fc01",
     "handler/src/main/java/com/networknt/handler/RequestMdcContext.java": "e9788732232232700d33a63ea24eeb0a6a52899dc0a5aa9730f0bf5b7b6692c5",
-    "proxy-handler/src/main/java/com/networknt/handler/ProxyHandler.java": "db186cd98d2e2579f32f71b7594b9706344489745a1332d9264a03d2f8b1e50c"
+    "proxy-handler/src/main/java/com/networknt/handler/ProxyHandler.java": "88195df98d81d55ea70549127fa7258b5464983945e4eae68d9531bd1fa83927"
   }
 }

@@ -34,7 +34,33 @@ public final class HandlerContinuation {
 
     private record CapturedHandler(CapturedBoundary policy, HttpHandler continuation) implements HttpHandler {
         @Override public void handleRequest(HttpServerExchange exchange) throws Exception {
-            withMdc(exchange, policy, () -> policy.boundary().handle(exchange, continuation));
+            withMdc(exchange, () -> policy.boundary().handle(exchange, continuation));
+        }
+
+        private <E extends Exception> void withMdc(HttpServerExchange exchange, ScopedAction<E> callback) throws E {
+            Frame previousFrame = CURRENT_FRAME.get();
+            boolean reuseMdc = previousFrame != null && previousFrame.exchange() == exchange && previousFrame.mdcScoped();
+            if (reuseMdc && previousFrame.boundary() == policy) {
+                callback.run();
+                return;
+            }
+            Map<String, String> previousMdc = reuseMdc ? null : MDC.getCopyOfContextMap();
+            CURRENT_FRAME.set(new Frame(exchange, policy, true));
+            try {
+                if (!reuseMdc) {
+                    Map<String, String> requestMdc = policy.context().snapshot();
+                    if (!requestMdc.equals(previousMdc == null ? Map.of() : previousMdc)) setMdc(requestMdc);
+                }
+                callback.run();
+            } finally {
+                if (!reuseMdc) setMdc(previousMdc);
+                restoreFrame(previousFrame);
+            }
+        }
+
+        private static void setMdc(Map<String, String> context) {
+            if (context == null || context.isEmpty()) MDC.clear();
+            else MDC.setContextMap(context);
         }
     }
 
@@ -52,6 +78,7 @@ public final class HandlerContinuation {
      * Implementations must be safe to reuse concurrently across exchanges.
      */
     @FunctionalInterface
+    @SuppressWarnings("java:S112") // Matches Undertow HttpHandler; boundaries must preserve arbitrary checked failures.
     public interface Boundary {
         void handle(HttpServerExchange exchange, HttpHandler continuation) throws Exception;
     }
@@ -105,28 +132,6 @@ public final class HandlerContinuation {
         return active != null ? active : RequestMdcContext.initialize(exchange);
     }
 
-    private static <E extends Exception> void withMdc(HttpServerExchange exchange, CapturedBoundary policy,
-                                                      ScopedAction<E> callback) throws E {
-        Frame previousFrame = CURRENT_FRAME.get();
-        boolean reuseMdc = previousFrame != null && previousFrame.exchange() == exchange && previousFrame.mdcScoped();
-        if (reuseMdc && previousFrame.boundary() == policy) {
-            callback.run();
-            return;
-        }
-        Map<String, String> previousMdc = reuseMdc ? null : MDC.getCopyOfContextMap();
-        CURRENT_FRAME.set(new Frame(exchange, policy, true));
-        try {
-            if (!reuseMdc) {
-                Map<String, String> requestMdc = policy.context().snapshot();
-                if (!requestMdc.equals(previousMdc == null ? Map.of() : previousMdc)) setMdc(requestMdc);
-            }
-            callback.run();
-        } finally {
-            if (!reuseMdc) setMdc(previousMdc);
-            restoreFrame(previousFrame);
-        }
-    }
-
     private static void restoreFrame(Frame previous) {
         if (previous == null) CURRENT_FRAME.remove();
         else CURRENT_FRAME.set(previous);
@@ -174,13 +179,8 @@ public final class HandlerContinuation {
     private static void rememberCleanupFailure(Throwable failure, Throwable cleanupFailure) {
         if (cleanupFailure == failure) return;
         try { failure.addSuppressed(cleanupFailure); }
-        catch (Throwable ignored) {
+        catch (Throwable _) {
             // Preserve the original failure even when suppression metadata cannot be allocated.
         }
-    }
-
-    private static void setMdc(Map<String, String> context) {
-        if (context == null || context.isEmpty()) MDC.clear();
-        else MDC.setContextMap(context);
     }
 }

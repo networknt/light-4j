@@ -22,7 +22,7 @@ class BodyContinuationTest {
         });
         HttpHandler root = enabled ? exchange -> HandlerContinuation.execute(exchange, (ex, task) -> {
             try { task.handleRequest(ex); }
-            catch (IllegalStateException e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+            catch (IllegalStateException _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
         }, body) : body;
         Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(root).build();
         try (HttpClient client = HttpClient.newHttpClient()) {

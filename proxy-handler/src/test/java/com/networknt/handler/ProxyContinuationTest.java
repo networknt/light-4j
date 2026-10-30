@@ -77,7 +77,7 @@ class ProxyContinuationTest {
                 try {
                     if (phase == Phase.TIMEOUT && !release.await(5, TimeUnit.SECONDS)) return;
                     exchange.getResponseSender().send("accepted");
-                } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                } catch (InterruptedException _) { Thread.currentThread().interrupt(); }
             }));
             LoadBalancingProxyClient real = new LoadBalancingProxyClient().addHost(backend);
             ProxyClient client = new ProxyClient() {
@@ -254,7 +254,7 @@ class ProxyContinuationTest {
                     try {
                         assertTrue(release.await(8, TimeUnit.SECONDS));
                         exchange.getResponseSender().send("healthy");
-                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                    } catch (InterruptedException _) { Thread.currentThread().interrupt(); }
                 });
                 else exchange.getResponseSender().send("accepted");
             }, true);
@@ -297,7 +297,7 @@ class ProxyContinuationTest {
                 frontendPeers.add(exchange.getSourceAddress().getPort());
                 HandlerContinuation.execute(exchange, (ex, task) -> {
                     try { task.handleRequest(ex); }
-                    catch (ControlledFailure e) { ex.setStatusCode(409).getResponseSender().send("selected"); }
+                    catch (ControlledFailure _) { ex.setStatusCode(409).getResponseSender().send("selected"); }
                 }, proxy);
             }, true);
             var warm = http.send(HttpRequest.newBuilder(front.resolve("/warm")).build(), HttpResponse.BodyHandlers.ofString());
@@ -344,7 +344,7 @@ class ProxyContinuationTest {
                     try {
                         assertTrue(release.await(8, TimeUnit.SECONDS));
                         exchange.getResponseSender().send("healthy");
-                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                    } catch (InterruptedException _) { Thread.currentThread().interrupt(); }
                 });
                 else if (exchange.getRequestPath().equals("/fail")) exchange.dispatch(() -> {
                     try {
@@ -532,7 +532,7 @@ class ProxyContinuationTest {
                     try {
                         assertTrue(release.await(8, TimeUnit.SECONDS));
                         exchange.getResponseSender().send("healthy");
-                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                    } catch (InterruptedException _) { Thread.currentThread().interrupt(); }
                 });
                 else if (exchange.getRequestPath().equals("/fail")) proxy.handleRequest(exchange);
                 else exchange.getResponseSender().send("accepted");
@@ -602,7 +602,7 @@ class ProxyContinuationTest {
                     try {
                         assertTrue(releaseHealthy.await(8, TimeUnit.SECONDS));
                         exchange.getResponseSender().send("healthy");
-                    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                    } catch (InterruptedException _) { Thread.currentThread().interrupt(); }
                 });
                 else exchange.getResponseSender().send("accepted");
             }, true);

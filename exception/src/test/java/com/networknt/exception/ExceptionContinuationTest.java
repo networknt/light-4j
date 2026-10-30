@@ -3,6 +3,7 @@ package com.networknt.exception;
 
 import com.networknt.config.Config;
 import com.networknt.handler.HandlerContinuation;
+import com.networknt.status.Status;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -99,6 +100,45 @@ class ExceptionContinuationTest {
             else Config.getInstance().clearConfigCache(name);
         }
     }
+    static Stream<Arguments> typedFailureCases() {
+        return Stream.of("framework", "api", "client", "client-without-status")
+                .flatMap(kind -> Stream.of(false, true).map(resumed -> Arguments.of(kind, resumed)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("typedFailureCases")
+    void typedFailuresRetainResponseStatusAndBody(String kind, boolean resumed) throws Exception {
+        Status previousClientStatus = ClientException.getStatus();
+        Status status = new Status(429, "TEST_TYPED_FAILURE", "Typed failure", "Preserve the supplied status");
+        Exception failure = switch (kind) {
+            case "framework" -> new FrameworkException(status);
+            case "api" -> new ApiException(status);
+            case "client" -> new ClientException(status);
+            case "client-without-status" -> new ClientException(new Status());
+            default -> throw new IllegalArgumentException(kind);
+        };
+        ExceptionHandler selected = new ExceptionHandler();
+        HttpHandler failing = exchange -> { throw failure; };
+        selected.setNext(exchange -> {
+            if (resumed) exchange.dispatch(HandlerContinuation.capture(exchange, failing));
+            else failing.handleRequest(exchange);
+        });
+        Undertow server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(selected).build();
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            server.start();
+            int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+            var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port))
+                    .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString());
+            boolean missingStatus = kind.equals("client-without-status");
+            assertEquals(missingStatus ? 400 : 429, response.statusCode(), response.body());
+            assertTrue(response.body().contains(missingStatus ? "ERR10011" : "TEST_TYPED_FAILURE"), response.body());
+            assertEquals("application/json", response.headers().firstValue("Content-Type").orElse(""));
+        } finally {
+            server.stop();
+            ClientException.setStatus(previousClientStatus);
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void committedResponseIsNotTruncatedByInitialOrResumedBoundary(boolean resumed) throws Exception {
