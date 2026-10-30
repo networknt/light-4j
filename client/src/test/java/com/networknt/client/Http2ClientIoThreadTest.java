@@ -35,7 +35,7 @@ class Http2ClientIoThreadTest {
     void closeClient() { client.shutdown(); }
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws Exception {
         worker = Xnio.getInstance().createWorker(OptionMap.create(Options.WORKER_IO_THREADS, 1));
         owner = worker.getIoThread();
         connection = mock(ClientConnection.class);
@@ -43,6 +43,8 @@ class Http2ClientIoThreadTest {
         when(connection.isOpen()).thenReturn(true);
         pool.clear();
         client.connected = new CompletableFuture<>();
+        com.networknt.client.http.IoThreadClientConnection.wrap(connection);
+        drainOwner();
     }
 
     @AfterEach
@@ -75,8 +77,9 @@ class Http2ClientIoThreadTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"false,false", "false,true", "true,false", "true,true"})
-    void cancellationBeforeDispatchSkipsSend(boolean warm, boolean body) throws Exception {
+    @CsvSource({"false,false,false", "false,true,false", "true,false,false", "true,true,false",
+                "false,false,true", "false,true,true", "true,false,true", "true,true,true"})
+    void cancellationBeforeDispatchSkipsSend(boolean warm, boolean body, boolean timeout) throws Exception {
         CountDownLatch blocked = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         owner.execute(() -> {
@@ -91,14 +94,21 @@ class Http2ClientIoThreadTest {
                 pool.resetConnectionStatus(connection);
             }
             CompletableFuture<ClientResponse> response = call(client, body, false);
-            assertTrue(response.cancel(false));
-            if (!warm) client.connected.complete(connection);
+            if (timeout) response.completeExceptionally(new TimeoutException("before send"));
+            else assertTrue(response.cancel(false));
+            if (!warm) {
+                pool.cacheConnection(uri, connection);
+                client.connected.complete(connection);
+            }
             release.countDown();
             CompletableFuture<Void> drained = new CompletableFuture<>();
             owner.execute(() -> drained.complete(null));
             drained.get(5, TimeUnit.SECONDS);
             verify(connection, never()).sendRequest(any(), any());
-            assertTrue(response.isCancelled());
+            assertTrue(response.isCompletedExceptionally());
+            verify(connection, never()).close();
+            assertSame(com.networknt.client.http.IoThreadClientConnection.wrap(connection), pool.getConnection(uri));
+            pool.resetConnectionStatus(connection);
         } finally {
             release.countDown();
         }
@@ -203,6 +213,58 @@ class Http2ClientIoThreadTest {
         ClientRequest request = new ClientRequest().setMethod(body ? Methods.POST : Methods.GET).setPath("/");
         Optional<String> content = body ? Optional.of("request body") : Optional.empty();
         return explicitHttp2 ? client.callService(uri, request, content, true) : client.callService(uri, request, content);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"false,false", "false,true", "true,false", "true,true"})
+    void multiplexedCancellationResetsOnlyItsStream(boolean lateExchange, boolean timeout) throws Exception {
+        when(connection.isMultiplexingSupported()).thenReturn(true);
+        when(connection.getBufferPool()).thenReturn(Http2Client.BUFFER_POOL);
+        ClientExchange raw = mock(ClientExchange.class);
+        org.xnio.channels.StreamSinkChannel request = mock(org.xnio.channels.StreamSinkChannel.class);
+        org.xnio.channels.StreamSourceChannel body = mock(org.xnio.channels.StreamSourceChannel.class);
+        when(request.flush()).thenReturn(true);
+        when(raw.getRequestChannel()).thenReturn(request);
+        when(raw.getResponseChannel()).thenReturn(body);
+        when(raw.getResponse()).thenReturn(new ClientResponse(200, "OK", io.undertow.util.Protocols.HTTP_2_0));
+        ChannelListener.SimpleSetter<org.xnio.channels.StreamSourceChannel> reads = new ChannelListener.SimpleSetter<>();
+        doReturn(reads).when(body).getReadSetter();
+        CompletableFuture<ClientCallback<ClientExchange>> sent = new CompletableFuture<>();
+        CompletableFuture<ClientCallback<ClientExchange>> responseListener = new CompletableFuture<>();
+        doAnswer(invocation -> { responseListener.complete(invocation.getArgument(0)); return null; }).when(raw).setResponseListener(any());
+        doAnswer(invocation -> {
+            ClientCallback<ClientExchange> callback = invocation.getArgument(1);
+            sent.complete(callback);
+            if (!lateExchange) callback.completed(raw);
+            return null;
+        }).when(connection).sendRequest(any(), any());
+        pool.cacheConnection(uri, connection);
+        pool.resetConnectionStatus(connection);
+        CompletableFuture<ClientResponse> response = call(client, false, false);
+        ClientCallback<ClientExchange> sendCallback = sent.get(5, TimeUnit.SECONDS);
+        if (!lateExchange) {
+            ClientCallback<ClientExchange> listener = responseListener.get(5, TimeUnit.SECONDS);
+            owner.execute(() -> listener.completed(raw));
+            drainOwner();
+            assertNotNull(reads.get(), "the response reader must be installed before cancellation");
+        }
+        if (timeout) response.completeExceptionally(new TimeoutException("caller timeout"));
+        else assertTrue(response.cancel(false));
+        if (lateExchange) owner.execute(() -> sendCallback.completed(raw));
+        drainOwner();
+        verify(request).close();
+        verify(body).close();
+        assertNull(reads.get(), "cancelled streams must release the body reader");
+        verify(connection, never()).close();
+        assertTrue(com.networknt.client.http.IoThreadClientConnection.wrap(connection).isOpen());
+        assertNotNull(pool.getConnection(uri), "other requests can still borrow the HTTP/2 transport");
+        pool.resetConnectionStatus(connection);
+    }
+
+    private void drainOwner() throws Exception {
+        CompletableFuture<Void> drained = new CompletableFuture<>();
+        owner.execute(() -> drained.complete(null));
+        drained.get(5, TimeUnit.SECONDS);
     }
 
     private static class TestClient extends Http2Client {

@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Canonical connection view: sendRequest/sendPing dispatch to the owner; close retires immediately.
- * Synchronous configuration, upgrade and exchange-channel access require the owning I/O thread.
+ * Synchronous configuration, upgrade and exchange access retain the delegate's contract.
  * This is not a general thread-safe channel adapter. Custom callbacks must signal their own
  * waiters in finally: a throwing callback is never followed by a second terminal notification.
  * Close-listener registration is synchronous. Late listeners (or notifications after owner
@@ -35,33 +35,35 @@ public final class IoThreadClientConnection implements ClientConnection {
         closeListeners.set(listener);
         if (listener != null) installCloseBridge();
     };
-    private volatile IOException closeReason;
+    private final ConnectionWrappers.Entry state;
 
-    IoThreadClientConnection(ClientConnection delegate, AtomicBoolean closed) {
+    IoThreadClientConnection(ClientConnection delegate, ConnectionWrappers.Entry state) {
         this.delegate = delegate;
-        this.closed = closed;
-        if (closed.get()) closeListeners.fire();
+        this.closed = state.closed;
+        this.state = state;
+        if (this.closed.get()) closeListeners.fire();
     }
     /** Return the same live view for the same raw transport, without retaining dead transports. */
     public static IoThreadClientConnection wrap(ClientConnection connection) {
         Objects.requireNonNull(connection, "connection");
-        return connection instanceof IoThreadClientConnection owned ? owned : ConnectionWrappers.wrap(connection);
+        IoThreadClientConnection owned = connection instanceof IoThreadClientConnection view ? view : ConnectionWrappers.wrap(connection);
+        // Native registration (and any close notification) runs outside the registry monitor.
+        // The bridge retains the complete view while the transport is alive.
+        owned.installCloseBridge();
+        return owned;
     }
     static ClientConnection identity(ClientConnection connection) {
         return connection instanceof IoThreadClientConnection owned ? owned.delegate : connection;
-    }
-    private void requireOwner() {
-        if (Thread.currentThread() != getIoThread()) throw new IllegalStateException("Operation requires the connection's owning I/O thread");
     }
     @Override public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback) {
         sendRequest(request, callback, new RequestSubmission());
     }
     /** Admission is explicit and occurs once, after the open check and before native handoff. */
     public void sendRequest(ClientRequest request, ClientCallback<ClientExchange> callback, RequestSubmission submission) {
-        OnceCallback guarded = new OnceCallback(callback);
+        OnceCallback guarded = new OnceCallback(callback, submission);
         Runnable send = () -> ClientConnectionOperations.runWithFailureHandler(() -> {
-            if (!isOpen()) { guarded.failed(closeReason == null ? new ClosedChannelException() : closeReason); return; }
-            if (!submission.start()) { guarded.failed(new IOException("Request submission cancelled")); return; }
+            if (!isOpen()) { guarded.failed(state.closeReason == null ? new ClosedChannelException() : state.closeReason); return; }
+            if (!submission.start()) { guarded.notSent(new IOException("Request submission cancelled")); return; }
             delegate.sendRequest(request, guarded);
         }, guarded::sendFailed);
         if (Thread.currentThread() == getIoThread()) send.run();
@@ -79,7 +81,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         else {
             try { getIoThread().execute(close); }
             catch (java.util.concurrent.RejectedExecutionException error) {
-                closeReason = asIOException(error);
+                state.closeReason = asIOException(error);
                 closeListeners.fire();
             }
         }
@@ -93,7 +95,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         try { ClientConnectionOperations.execute(delegate, install); }
         catch (java.util.concurrent.RejectedExecutionException error) {
             closed.set(true);
-            closeReason = asIOException(error);
+            state.closeReason = asIOException(error);
             closeListeners.fire();
         }
     }
@@ -108,11 +110,19 @@ public final class IoThreadClientConnection implements ClientConnection {
         private final AtomicBoolean delivered = new AtomicBoolean();
         private volatile Throwable callbackError;
         private OwnedExchange exchange;
-        OnceCallback(ClientCallback<ClientExchange> callback) { this.callback = callback; }
+        private final RequestSubmission submission;
+        OnceCallback(ClientCallback<ClientExchange> callback, RequestSubmission submission) {
+            this.callback = callback;
+            this.submission = submission;
+        }
         @Override public void completed(ClientExchange raw) {
             if (!delivered.compareAndSet(false, true)) return;
             exchange = new OwnedExchange(raw, new ExchangeState());
-            ClientConnectionOperations.runWithFailureHandler(() -> callback.completed(exchange), error -> {
+            submission.onCancellation(error -> exchange.abort(error, () -> { /* The caller future already carries cancellation. */ }));
+            ClientConnectionOperations.runWithFailureHandler(() -> {
+                if (exchange.state.aborted.get()) callback.failed(new IOException("Request cancelled"));
+                else callback.completed(exchange);
+            }, error -> {
                 callbackError = error;
                 callbackFailed(error);
             });
@@ -123,6 +133,14 @@ public final class IoThreadClientConnection implements ClientConnection {
             ClientConnectionOperations.runWithFailureHandler(() -> callback.failed(error), failure -> {
                 callbackError = failure;
                 callbackFailed(failure);
+            });
+        }
+        void notSent(IOException error) {
+            if (!delivered.compareAndSet(false, true)) return;
+            ClientConnectionOperations.runWithFailureHandler(() -> callback.failed(error), failure -> {
+                callbackError = failure;
+                if (callback instanceof CompletableFuture<?> future) future.completeExceptionally(failure);
+                else rethrow(failure);
             });
         }
         void sendFailed(Throwable error) {
@@ -147,7 +165,7 @@ public final class IoThreadClientConnection implements ClientConnection {
         return error instanceof IOException io ? io : new IOException("Client connection operation failed", error);
     }
     static boolean isFatal(Throwable error) {
-        return error instanceof VirtualMachineError || error instanceof ThreadDeath || error instanceof LinkageError;
+        return error instanceof VirtualMachineError || error instanceof LinkageError;
     }
     static void rethrow(Throwable error) {
         if (error instanceof Error fatal) throw fatal;
@@ -170,9 +188,6 @@ public final class IoThreadClientConnection implements ClientConnection {
         private final ClientExchange exchange;
         private final ExchangeState state;
         OwnedExchange(ClientExchange exchange, ExchangeState state) { this.exchange = exchange; this.state = state; }
-        private void requireActive() {
-            if (state.aborted.get()) throw new IllegalStateException("Client exchange has been retired");
-        }
         void abort(Throwable original, Runnable afterRetirement) {
             if (!state.aborted.compareAndSet(false, true)) {
                 state.retired.thenRun(afterRetirement);
@@ -182,8 +197,8 @@ public final class IoThreadClientConnection implements ClientConnection {
                 try {
                     if (!isMultiplexingSupported()) close();
                     else {
-                        cleanup(() -> IoUtils.safeClose(exchange.getRequestChannel()), original);
-                        cleanup(() -> IoUtils.safeClose(exchange.getResponseChannel()), original);
+                        cleanup(() -> closeRequestChannel(exchange.getRequestChannel()), original);
+                        cleanup(() -> closeResponseChannel(exchange.getResponseChannel()), original);
                     }
                 } finally { state.retired.complete(null); afterRetirement.run(); }
             };
@@ -198,6 +213,20 @@ public final class IoThreadClientConnection implements ClientConnection {
                 }
             }
         }
+        private void closeRequestChannel(StreamSinkChannel channel) {
+            if (channel == null) return;
+            try {
+                channel.suspendWrites();
+                if (channel.getWriteSetter() != null) channel.getWriteSetter().set(null);
+            } finally { IoUtils.safeClose(channel); }
+        }
+        private void closeResponseChannel(StreamSourceChannel channel) {
+            if (channel == null) return;
+            try {
+                channel.suspendReads();
+                if (channel.getReadSetter() != null) channel.getReadSetter().set(null);
+            } finally { IoUtils.safeClose(channel); }
+        }
         private void cleanup(Runnable action, Throwable original) {
             ClientConnectionOperations.runWithFailureHandler(action::run, error -> {
                 if (error != original) original.addSuppressed(error);
@@ -205,7 +234,6 @@ public final class IoThreadClientConnection implements ClientConnection {
         }
         @Override public ClientConnection getConnection() { return IoThreadClientConnection.this; }
         @Override public void setResponseListener(ClientCallback<ClientExchange> listener) {
-            requireOwner(); requireActive();
             exchange.setResponseListener(new ClientCallback<>() {
                 @Override public void completed(ClientExchange response) {
                     if (!state.aborted.get()) listener.completed(new OwnedExchange(response, state));
@@ -214,28 +242,26 @@ public final class IoThreadClientConnection implements ClientConnection {
             });
         }
         @Override public void setContinueHandler(ContinueNotification handler) {
-            requireOwner(); requireActive();
             exchange.setContinueHandler(handler == null ? null : result -> {
                 if (!state.aborted.get()) handler.handleContinue(new OwnedExchange(result, state));
             });
         }
         @Override public void setPushHandler(PushCallback handler) {
-            requireOwner(); requireActive();
             exchange.setPushHandler(handler == null ? null : (original, pushed) -> !state.aborted.get() &&
                     handler.handlePush(new OwnedExchange(original, state), new OwnedExchange(pushed, new ExchangeState())));
         }
-        @Override public StreamSinkChannel getRequestChannel() { requireOwner(); requireActive(); return exchange.getRequestChannel(); }
-        @Override public StreamSourceChannel getResponseChannel() { requireOwner(); requireActive(); return exchange.getResponseChannel(); }
+        @Override public StreamSinkChannel getRequestChannel() { return exchange.getRequestChannel(); }
+        @Override public StreamSourceChannel getResponseChannel() { return exchange.getResponseChannel(); }
         @Override public ClientRequest getRequest() { return exchange.getRequest(); }
-        @Override public ClientResponse getResponse() { requireActive(); return exchange.getResponse(); }
-        @Override public ClientResponse getContinueResponse() { requireActive(); return exchange.getContinueResponse(); }
+        @Override public ClientResponse getResponse() { return exchange.getResponse(); }
+        @Override public ClientResponse getContinueResponse() { return exchange.getContinueResponse(); }
         @Override public <T> T getAttachment(AttachmentKey<T> key) { return exchange.getAttachment(key); }
         @Override public <T> List<T> getAttachmentList(AttachmentKey<? extends List<T>> key) { return exchange.getAttachmentList(key); }
-        @Override public <T> T putAttachment(AttachmentKey<T> key, T value) { requireActive(); return exchange.putAttachment(key, value); }
+        @Override public <T> T putAttachment(AttachmentKey<T> key, T value) { return exchange.putAttachment(key, value); }
         @Override public <T> T removeAttachment(AttachmentKey<T> key) { return exchange.removeAttachment(key); }
-        @Override public <T> void addToAttachmentList(AttachmentKey<AttachmentList<T>> key, T value) { requireActive(); exchange.addToAttachmentList(key, value); }
+        @Override public <T> void addToAttachmentList(AttachmentKey<AttachmentList<T>> key, T value) { exchange.addToAttachmentList(key, value); }
     }
-    @Override public StreamConnection performUpgrade() throws IOException { requireOwner(); return delegate.performUpgrade(); }
+    @Override public StreamConnection performUpgrade() throws IOException { return delegate.performUpgrade(); }
     @Override public ByteBufferPool getBufferPool() { return delegate.getBufferPool(); }
     @Override public SocketAddress getPeerAddress() { return delegate.getPeerAddress(); }
     @Override public <A extends SocketAddress> A getPeerAddress(Class<A> type) { return delegate.getPeerAddress(type); }
@@ -243,9 +269,9 @@ public final class IoThreadClientConnection implements ClientConnection {
     @Override public <A extends SocketAddress> A getLocalAddress(Class<A> type) { return delegate.getLocalAddress(type); }
     @Override public XnioWorker getWorker() { return delegate.getWorker(); }
     @Override public XnioIoThread getIoThread() { return delegate.getIoThread(); }
-    @Override public boolean supportsOption(Option<?> option) { requireOwner(); return delegate.supportsOption(option); }
-    @Override public <T> T getOption(Option<T> option) throws IOException { requireOwner(); return delegate.getOption(option); }
-    @Override public <T> T setOption(Option<T> option, T value) throws IOException { requireOwner(); return delegate.setOption(option, value); }
+    @Override public boolean supportsOption(Option<?> option) { return delegate.supportsOption(option); }
+    @Override public <T> T getOption(Option<T> option) throws IOException { return delegate.getOption(option); }
+    @Override public <T> T setOption(Option<T> option, T value) throws IOException { return delegate.setOption(option, value); }
     @Override public boolean isUpgraded() { return delegate.isUpgraded(); }
     @Override public boolean isPushSupported() { return delegate.isPushSupported(); }
     @Override public boolean isMultiplexingSupported() { return delegate.isMultiplexingSupported(); }

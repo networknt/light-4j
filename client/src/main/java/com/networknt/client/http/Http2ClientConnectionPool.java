@@ -2,8 +2,7 @@ package com.networknt.client.http;
 
 import com.networknt.client.ClientConfig;
 import io.undertow.client.ClientConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
 
 import java.net.URI;
 import java.util.*;
@@ -12,314 +11,221 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A connection pool that caches connections based on the peer address by using LRU.
- * To optimize the establishment mechanism of http/1.1 and http/2 connections.
- *
+ * URI LRU pool. Evicted transports remain tracked until their borrowers return them.
  * @author Jiachen Sun
  */
 public class Http2ClientConnectionPool {
-    private enum ConnectionStatus {HANGING, AVAILABLE, CLOSE, MULTIPLEX_SUPPORT}
-
-    private static final Logger logger = LoggerFactory.getLogger(Http2ClientConnectionPool.class);
-
-    private final Map<String, List<CachedConnection>> connectionPool;
-    private static Map<String, List<CachedConnection>> clientConnectionParkedMap = new HashMap<>();
-
-    private final Map<ClientConnection, ConnectionStatus> connectionStatusMap;
-
+    private enum ConnectionStatus { HANGING, AVAILABLE, CLOSE, MULTIPLEX_SUPPORT }
     private static Http2ClientConnectionPool http2ClientConnectionPool;
-
-    private AtomicInteger connectionCount;
+    private final Map<String, List<CachedConnection>> connectionPool;
+    private final Map<ClientConnection, ConnectionStatus> connectionStatusMap = new ConcurrentHashMap<>();
+    private final Map<ClientConnection, CachedConnection> tracked = new IdentityHashMap<>();
+    private final List<ClientConnection> pendingClose = new ArrayList<>();
+    private final AtomicInteger connectionCount = new AtomicInteger();
 
     private Http2ClientConnectionPool() {
-        int poolSize = ClientConfig.get().getConnectionPoolSize();
-        connectionCount = new AtomicInteger(0);
-        // Initialize a LRU to cache the ClientConnection based on peer address
-        connectionPool = Collections.synchronizedMap(new LinkedHashMap<String, List<CachedConnection>>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
-                if (connectionPool.size() > poolSize) {
-                    for (CachedConnection connection : eldest.getValue()) {
-                        connectionStatusMap.remove(IoThreadClientConnection.identity(connection.get()));
-                        connectionCount.getAndDecrement();
-                    }
-                    return true;
-                }
-                return false;
+        int poolSize = ClientConfig.get().getRequest().getConnectionPoolSize();
+        connectionPool = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
+            @Override protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
+                if (size() <= poolSize) return false;
+                eldest.getValue().forEach(Http2ClientConnectionPool.this::retire);
+                return true;
             }
-        });
-        connectionStatusMap = new ConcurrentHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f);
+        };
     }
 
-    /**
-     * Get the singleton instance of Http2ClientConnectionPool.
-     * @return the singleton instance
-     */
+    /** @return the shared connection pool */
     public static Http2ClientConnectionPool getInstance() {
-        if (http2ClientConnectionPool == null) {
-            http2ClientConnectionPool = new Http2ClientConnectionPool();
-        }
+        if (http2ClientConnectionPool == null) http2ClientConnectionPool = new Http2ClientConnectionPool();
         return http2ClientConnectionPool;
     }
 
     /**
-     * Get a connection from the pool for the given URI.
-     * @param uri the URI
-     * @return the client connection, or null if not found
+     * Borrow a cached connection. Return each borrow with resetConnectionStatus.
+     * @param uri backend URI
+     * @return a connection, or null when none is selectable
      */
-    public synchronized ClientConnection getConnection(URI uri) {
-        if (uri == null) {
-            return null;
-        }
-        String uriString = uri.toString();
-        List<CachedConnection> result = connectionPool.get(uriString);
-        if (result == null) {
-            synchronized (Http2ClientConnectionPool.class) {
-                if(logger.isDebugEnabled()) logger.debug("Second try of getting connections for uri: {}", uriString);
-                result = connectionPool.get(uriString);
-            }
-        }
-        if(logger.isDebugEnabled()) logger.debug("Got {} connections for uri: {}", result != null ? result.size() : null, uriString);
-        CachedConnection cachedConnection = selectConnection(uri, result, false);
-        if(logger.isDebugEnabled()) logger.debug("Got cached connection: {} for uri: {}", cachedConnection, uriString);
-        if (cachedConnection != null) {
-            hangConnection(uri, cachedConnection);
-            return cachedConnection.get();
-        }
-        return null;
-    }
-
-    /**
-     * Cache a connection for the given URI.
-     * @param uri the URI
-     * @param connection the connection to cache
-     */
-    public synchronized void cacheConnection(URI uri, ClientConnection connection) {
-        connection = IoThreadClientConnection.wrap(connection);
-        getAndRemoveClosedConnection(uri);
-        List<CachedConnection> connections = connectionPool.computeIfAbsent(uri.toString(), key -> new LinkedList<>());
-        for (CachedConnection cached : connections) {
-            if (cached.get() == connection) return;
-        }
-        // A concurrent connect still belongs to its caller even if another HTTP/2 transport
-        // reached the pool first. Track every distinct transport rather than orphaning it.
-        connections.add(new CachedConnection(connection));
-        connectionCount.incrementAndGet();
-    }
-
-    private synchronized CachedConnection getAndRemoveClosedConnection(URI uri) {
-        if (uri == null) {
-            return null;
-        }
-        String uriString = uri.toString();
-        List<CachedConnection> result = connectionPool.get(uriString);
-        if (result == null) {
-            synchronized (Http2ClientConnectionPool.class) {
-                result = connectionPool.get(uriString);
-            }
-        }
-        if(logger.isDebugEnabled()) logger.debug("Got {} cache connections for uri: {} from connectionPool", result != null ? result.size() : null, uriString);
-        return selectConnection(uri, result, true);
-    }
-
-    private void handleParkedConnection(URI uri, CachedConnection connection) {
-        if(connection == null) {
-            return;
-        }
-        if (uri == null) {
-            return;
-        }
-        String host = uri.toString();
-        List<CachedConnection> parkedConList = clientConnectionParkedMap.get(host);
-        if(parkedConList == null) {
-            parkedConList = new ArrayList<>();
-            clientConnectionParkedMap.put(host, parkedConList);
-        }
-        if(logger.isDebugEnabled()) logger.debug("Total parked connection for the host {} is {}", host, parkedConList.size());
-        Iterator<CachedConnection> iter = parkedConList.iterator();
-        while(iter.hasNext()) {
-            // the isParkedConnectionExpired will close the connection.
-            if(iter.next().isParkedConnectionExpired()) {
-                iter.remove();
-                if(logger.isDebugEnabled()) logger.debug("Removing the expired Parked Connection for the host {}", host);
-            }
-        }
+    public ClientConnection getConnection(URI uri) {
         try {
-            if(connection.get().isOpen()) {
-                parkedConList.add(connection);
-                if(logger.isDebugEnabled()) logger.debug("Parked the connection for the host {}, total parked count is {}", host, parkedConList.size());
+            synchronized (this) {
+                if (uri == null) return null;
+                CachedConnection selected = selectConnection(connectionPool.get(uri.toString()), false);
+                if (selected == null) return null;
+                hangConnection(selected);
+                selected.borrowers++;
+                return selected.get();
             }
-        } catch(Exception ignored) {
-            //ignore any exceptions in this catch. Exception logged on info level.
-            if(logger.isInfoEnabled()) logger.info("Exception while handling the parked connection. Exception is :", ignored);
-        }
+        } finally { closeRetiredConnections(); }
     }
 
-    private synchronized CachedConnection selectConnection(URI uri, List<CachedConnection> connections, boolean isRemoveClosedConnection) {
-        if (connections != null) {
-            if(logger.isDebugEnabled()) logger.debug("Before removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
-            if (connections.size() > ClientConfig.get().getMaxConnectionNumPerHost() * 0.75) {
-                while (connections.size() > ClientConfig.get().getMinConnectionNumPerHost() && connections.size() > 0) {
-                    connections.remove(0);
-                }
+    /**
+     * Cache a new transport, initially reserved by its connecting caller.
+     * @param uri backend URI
+     * @param connection connected transport
+     */
+    public void cacheConnection(URI uri, ClientConnection connection) {
+        ClientConnection owned = IoThreadClientConnection.wrap(connection);
+        CachedConnection added = null;
+        try {
+            synchronized (this) {
+                ClientConnection identity = IoThreadClientConnection.identity(owned);
+                if (tracked.containsKey(identity)) return;
+                getAndRemoveClosedConnection(uri);
+                added = new CachedConnection(owned);
+                tracked.put(identity, added);
+                connectionCount.incrementAndGet();
+                List<CachedConnection> connections = connectionPool.computeIfAbsent(uri.toString(), key -> new LinkedList<>());
+                connections.add(added);
+                if (!connectionPool.containsKey(uri.toString())) retire(added);
             }
-            if(logger.isDebugEnabled()) logger.debug("After removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
-            if (isRemoveClosedConnection) {
-                Iterator<CachedConnection> iterator = connections.iterator();
-                while (iterator.hasNext()) {
-                    CachedConnection connection = iterator.next();
-                    if (connection != null) {
-                        ConnectionStatus status = getConnectionStatus(uri, connection);
-                        if (ConnectionStatus.CLOSE == status) {
-                            // Remove unavailable connection from the list.
-                            iterator.remove();
-                               connectionStatusMap.remove(IoThreadClientConnection.identity(connection.get()));
-                            connectionCount.getAndDecrement();
-                        }
-                    }
-                }
-                if(logger.isDebugEnabled()) logger.debug("After removing closed connections, {} connections left in the list for uri: {}", connections.size(), uri);
-            }
-            if (connections.size() > 0) {
-                if(logger.isDebugEnabled()) logger.debug("Selecting a valid connections from cached {} connections for uri: {} ...", connections.size(), uri);
-                // Balance the selection of each connection
-                int randomInt = ThreadLocalRandom.current().nextInt(0, connections.size());
-                for (int i = 0; i < connections.size(); i++) {
-                    CachedConnection connection = connections.get((i + randomInt) % connections.size());
-                    ConnectionStatus status = getConnectionStatus(uri, connection);
-                    // Return non-hanging connection
-                    if (status == ConnectionStatus.AVAILABLE || status == ConnectionStatus.MULTIPLEX_SUPPORT) {
-                        return connection;
-                    }
-                    logger.warn("Connection status for uri: {} is {}", uri, status);
-                }
-                logger.warn("None of the connection cached can be used for uri: {}", uri);
-            }
+            CachedConnection registered = added;
+            owned.addCloseListener(ignored -> connectionClosed(registered));
+        } finally { closeRetiredConnections(); }
+    }
+
+    private CachedConnection getAndRemoveClosedConnection(URI uri) {
+        return uri == null ? null : selectConnection(connectionPool.get(uri.toString()), true);
+    }
+
+    private CachedConnection selectConnection(List<CachedConnection> connections, boolean removeClosed) {
+        if (connections == null) return null;
+        trimConnections(connections);
+        if (removeClosed) removeClosedConnections(connections);
+        if (connections.isEmpty()) return null;
+        int offset = ThreadLocalRandom.current().nextInt(connections.size());
+        for (int i = 0; i < connections.size(); i++) {
+            CachedConnection candidate = connections.get((i + offset) % connections.size());
+            ConnectionStatus status = getConnectionStatus(candidate);
+            if (status == ConnectionStatus.AVAILABLE || status == ConnectionStatus.MULTIPLEX_SUPPORT) return candidate;
         }
         return null;
     }
 
-    private ConnectionStatus getConnectionStatus(URI uri, CachedConnection connection) {
-        ConnectionStatus status = connectionStatusMap.get(IoThreadClientConnection.identity(connection.get()));
-        if (status == null) {
-            synchronized (Http2ClientConnectionPool.class) {
-                status = connectionStatusMap.get(IoThreadClientConnection.identity(connection.get()));
-            }
-        }
-        if (connection == null || !connection.isOpen()) {
-            if (connection == null) {
-                return ConnectionStatus.CLOSE;
-            } else {
-                handleParkedConnection(uri, connection);
-                return ConnectionStatus.CLOSE;
-            }
+    private void trimConnections(List<CachedConnection> connections) {
+        if (connections.size() <= ClientConfig.get().getRequest().getMaxConnectionNumPerHost() * 0.75) return;
+        int minimum = Math.max(0, ClientConfig.get().getRequest().getMinConnectionNumPerHost());
+        while (connections.size() > minimum) retire(connections.remove(0));
+    }
 
-        } else if (connection.isHttp2Connection()) {
-            return ConnectionStatus.MULTIPLEX_SUPPORT;
+    private void removeClosedConnections(List<CachedConnection> connections) {
+        Iterator<CachedConnection> iterator = connections.iterator();
+        while (iterator.hasNext()) {
+            CachedConnection connection = iterator.next();
+            if (getConnectionStatus(connection) == ConnectionStatus.CLOSE) {
+                iterator.remove();
+                retire(connection);
+            }
         }
-        return status;
+    }
+
+    private ConnectionStatus getConnectionStatus(CachedConnection connection) {
+        if (connection == null || connection.retired || !connection.isOpen()) return ConnectionStatus.CLOSE;
+        if (connection.isHttp2Connection()) return ConnectionStatus.MULTIPLEX_SUPPORT;
+        return connectionStatusMap.get(IoThreadClientConnection.identity(connection.get()));
     }
 
     /**
-     * Reset the connection status in the pool.
-     * @param connection the connection to reset
+     * Return a borrow after its complete response or failure; retired transports close on the last return.
+     * @param connection the returned transport
      */
     public void resetConnectionStatus(ClientConnection connection) {
-        if (connection != null) {
-            if (!connection.isOpen()) {
-                connectionStatusMap.remove(IoThreadClientConnection.identity(connection));
-            } else if (connection.isMultiplexingSupported()) {
-                connectionStatusMap.put(IoThreadClientConnection.identity(connection), ConnectionStatus.MULTIPLEX_SUPPORT);
-            } else {
-                connectionStatusMap.put(IoThreadClientConnection.identity(connection), ConnectionStatus.AVAILABLE);
+        if (connection == null) return;
+        try {
+            synchronized (this) {
+                ClientConnection identity = IoThreadClientConnection.identity(connection);
+                CachedConnection cached = tracked.get(identity);
+                if (cached != null && cached.borrowers > 0) cached.borrowers--;
+                if (cached != null && cached.retired) releaseRetired(cached);
+                else updateConnectionStatus(connection, identity);
             }
+        } finally { closeRetiredConnections(); }
+    }
+
+    private void updateConnectionStatus(ClientConnection connection, ClientConnection identity) {
+        if (!connection.isOpen()) connectionStatusMap.remove(identity);
+        else connectionStatusMap.put(identity, connection.isMultiplexingSupported()
+                ? ConnectionStatus.MULTIPLEX_SUPPORT : ConnectionStatus.AVAILABLE);
+    }
+
+    private void hangConnection(CachedConnection connection) {
+        connection.requestCount.incrementAndGet();
+        ConnectionStatus status = getConnectionStatus(connection);
+        if ((status == null && !connection.isHttp2Connection()) || status == ConnectionStatus.AVAILABLE) {
+            connectionStatusMap.put(IoThreadClientConnection.identity(connection.get()), ConnectionStatus.HANGING);
         }
     }
 
-    private void hangConnection(URI uri, CachedConnection connection) {
-        if (connection != null) {
-            // Increase the request count for the connection for every invocation
-            connection.incrementRequestCount();
-            ConnectionStatus status = getConnectionStatus(uri, connection);
-            if(logger.isDebugEnabled()) logger.debug("Got connection status: {} for uri: {} before hang it", status, uri);
-            // Hanging new or old Http/1.1 connection
-            if ((status == null && !connection.isHttp2Connection()) || status == ConnectionStatus.AVAILABLE) {
-                connectionStatusMap.put(IoThreadClientConnection.identity(connection.get()), ConnectionStatus.HANGING);
-            }
+    private void retire(CachedConnection connection) {
+        connection.retired = true;
+        connectionStatusMap.remove(IoThreadClientConnection.identity(connection.get()));
+        releaseRetired(connection);
+    }
+
+    private void releaseRetired(CachedConnection connection) {
+        if (connection.borrowers > 0 && connection.get().isOpen()) return;
+        ClientConnection identity = IoThreadClientConnection.identity(connection.get());
+        if (!connection.closing && tracked.get(identity) == connection) {
+            connection.closing = true;
+            pendingClose.add(connection.get());
         }
     }
 
-    /**
-     * Get the number of connections in the pool.
-     * @return the number of connections
-     */
-    public int numberOfConnections() {
-        return connectionCount.get();
+    private boolean removeTracked(CachedConnection connection) {
+        ClientConnection identity = IoThreadClientConnection.identity(connection.get());
+        if (!tracked.remove(identity, connection)) return false;
+        connectionStatusMap.remove(identity);
+        connectionCount.decrementAndGet();
+        return true;
     }
 
-    /**
-     * Clear the connection pool.
-     */
+    private synchronized void connectionClosed(CachedConnection connection) {
+        removeTracked(connection);
+    }
+
+    private void closeRetiredConnections() {
+        List<ClientConnection> closing;
+        synchronized (this) {
+            closing = new ArrayList<>(pendingClose);
+            pendingClose.clear();
+        }
+        // Native close and user listeners must never run under the pool monitor.
+        closing.forEach(IoUtils::safeClose);
+    }
+
+    /** @return all tracked transports, including evicted transports still borrowed */
+    public int numberOfConnections() { return connectionCount.get(); }
+
+    /** Close all tracked transports and clear their pool metadata. */
     public void clear() {
-        this.connectionCount = new AtomicInteger(0);
-        connectionStatusMap.clear();
-        connectionPool.clear();
+        List<ClientConnection> closing;
+        synchronized (this) {
+            closing = new ArrayList<>(pendingClose);
+            tracked.values().forEach(connection -> closing.add(connection.get()));
+            pendingClose.clear();
+            tracked.clear();
+            connectionPool.clear();
+            connectionStatusMap.clear();
+            connectionCount.set(0);
+        }
+        closing.forEach(IoUtils::safeClose);
     }
 
-    private class CachedConnection {
-        private AtomicInteger requestCount;
-        private ClientConnection clientConnection;
-        private long lifeStartTime;
-        private long ttlParked = 100*1000; // default to 1 minutes to closed the parked connection.
-        private long lifeStartTimeParked;
-        private int maxReqCount = ClientConfig.get().getMaxRequestPerConnection();
-        private long expireTime = ClientConfig.get().getConnectionExpireTime();
+    private static final class CachedConnection {
+        private final AtomicInteger requestCount = new AtomicInteger();
+        private final ClientConnection clientConnection;
+        private final long lifeStartTime = System.currentTimeMillis();
+        private final int maxReqCount = ClientConfig.get().getRequest().getMaxReqPerConn();
+        private final long expireTime = ClientConfig.get().getRequest().getConnectionExpireTime();
+        private int borrowers = 1;
+        private boolean retired;
+        private boolean closing;
 
-        protected CachedConnection(ClientConnection connection) {
-            requestCount = new AtomicInteger(0);
-            this.clientConnection = connection;
-            this.lifeStartTime = System.currentTimeMillis();
+        private CachedConnection(ClientConnection connection) { clientConnection = connection; }
+        private boolean isOpen() {
+            return System.currentTimeMillis() - lifeStartTime < expireTime
+                    && (maxReqCount == -1 || requestCount.get() < maxReqCount) && clientConnection.isOpen();
         }
-
-        public boolean isOpen() {
-            if (System.currentTimeMillis() - lifeStartTime >= expireTime || (requestCount.get() >= maxReqCount && maxReqCount != -1)) {
-                logger.debug("Connection expired. Start time of this connection is {}. The total request count is {}", new Date(this.lifeStartTime), this.requestCount);
-                this.lifeStartTimeParked = System.currentTimeMillis(); // Start the life time of the parked connection
-                this.requestCount = new AtomicInteger(0);
-                //cannot directly close connection since there may be some other threads using the connection with request now
-//                try {
-//                    this.clientConnection.close();
-//                } catch (Exception ignored) {
-//                }
-                return false;
-            }
-            return this.clientConnection.isOpen();
-        }
-
-        protected boolean isHttp2Connection() {
-            return this.clientConnection.isMultiplexingSupported();
-        }
-
-        public ClientConnection get() {
-            return this.clientConnection;
-        }
-
-        protected void incrementRequestCount() {
-            this.requestCount.getAndIncrement();
-        }
-
-        public boolean isParkedConnectionExpired() {
-            if(System.currentTimeMillis() > (this.lifeStartTimeParked + this.ttlParked)) {
-                if(logger.isDebugEnabled()) logger.debug("ParkedConnection expired. Start time of this parked connection is {}", new Date(this.lifeStartTimeParked));
-                try {
-                    this.clientConnection.close();
-                } catch (Exception ignored){
-                    if(logger.isInfoEnabled()) logger.info("Exception while closing the parked connection. This exception is suppressed. Exception is {}", ignored);
-                }
-                return true;
-            }
-            return false;
-        }
-
+        private boolean isHttp2Connection() { return clientConnection.isMultiplexingSupported(); }
+        private ClientConnection get() { return clientConnection; }
     }
 }

@@ -2050,7 +2050,7 @@ public class Http2Client {
         submission.finish();
         try {
             ClientConnectionOperations.runWithFailureHandler(() -> {
-                if (error != null && !connection.isMultiplexingSupported()) connection.close();
+                if (error != null && !submission.isCancelledBeforeSend() && !connection.isMultiplexingSupported()) connection.close();
                 // Concurrent pool metadata must be updated even when the I/O owner has stopped.
                 http2ClientConnectionPool.resetConnectionStatus(connection);
             }, cleanupError -> {
@@ -2065,8 +2065,9 @@ public class Http2Client {
 
     private void cancelClientRequest(IoThreadClientConnection connection, RequestSubmission submission,
             Throwable error, CompletableFuture<ClientResponse> exchangeFuture) {
-        if (error != null && submission.cancel() && !connection.isMultiplexingSupported()) {
-            connection.close();
+        if (error != null) {
+            boolean started = submission.cancel(error);
+            if (started && !connection.isMultiplexingSupported()) connection.close();
             exchangeFuture.completeExceptionally(error);
         }
     }
