@@ -2,14 +2,21 @@ package com.networknt.apikey;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+@SetSystemProperty(key = "light_4j_config_password", value = "light")
 public class ApiKeyJsonConfigTest {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyJsonConfigTest.class);
-    static final ApiKeyConfig config = ApiKeyConfig.load("apikey-json");
+    ApiKeyConfig config;
+    @BeforeEach
+    void setup() {
+        config = ApiKeyConfig.load("apikey-json");
+    }
 
     @Test
     public void testDecryption() {

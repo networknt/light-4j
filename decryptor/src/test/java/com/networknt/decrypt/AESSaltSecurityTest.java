@@ -1,6 +1,7 @@
 package com.networknt.decrypt;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.util.SetSystemProperty;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
@@ -67,29 +68,23 @@ class AESSaltSecurityTest {
     }
 
     @Test
+    @SetSystemProperty(key = "light_4j_config_password", value = "first-master")
     void autoProviderClearsOwnedPasswordOnSuccessAndAuthenticationFailure() throws Exception {
         String key = "light_4j_config_password";
-        String previous = System.getProperty(key);
         class Observed extends AutoAESSaltDecryptor {
             char[] issued;
             @Override protected char[] getPassword() {
                 return issued = super.getPassword();
             }
         }
-        try {
-            System.setProperty(key, "first-master");
-            Observed decryptor = new Observed();
-            String encrypted = encrypt("first-master", "plaintext-canary");
-            assertEquals("plaintext-canary", decryptor.decrypt(encrypted));
-            assertArrayEquals(new char[decryptor.issued.length], decryptor.issued);
-            System.setProperty(key, "second-master");
-            assertThrows(RuntimeException.class, () -> decryptor.decrypt(encrypted));
-            assertArrayEquals(new char[decryptor.issued.length], decryptor.issued);
-            assertEquals("updated", decryptor.decrypt(encrypt("second-master", "updated")));
-        } finally {
-            if (previous == null) System.clearProperty(key);
-            else System.setProperty(key, previous);
-        }
+        Observed decryptor = new Observed();
+        String encrypted = encrypt("first-master", "plaintext-canary");
+        assertEquals("plaintext-canary", decryptor.decrypt(encrypted));
+        assertArrayEquals(new char[decryptor.issued.length], decryptor.issued);
+        System.setProperty(key, "second-master");
+        assertThrows(RuntimeException.class, () -> decryptor.decrypt(encrypted));
+        assertArrayEquals(new char[decryptor.issued.length], decryptor.issued);
+        assertEquals("updated", decryptor.decrypt(encrypt("second-master", "updated")));
     }
 
     @Test
@@ -147,9 +142,8 @@ class AESSaltSecurityTest {
     }
 
     @Test
+    @SetSystemProperty(key = "light_4j_config_password", value = "unused-master-canary")
     void autoCleansItsOwnArrayEvenWhenOverrideReturnsAnotherBorrowedArray() throws Exception {
-        String property = "light_4j_config_password";
-        String previous = System.getProperty(property);
         char[] shared = "master-canary".toCharArray();
         class Mixed extends AutoAESSaltDecryptor {
             char[] fresh;
@@ -158,16 +152,10 @@ class AESSaltSecurityTest {
                 return shared;
             }
         }
-        try {
-            System.setProperty(property, "unused-master-canary");
-            Mixed decryptor = new Mixed();
-            assertEquals("plaintext", decryptor.decrypt(encrypt("master-canary", "plaintext")));
-            assertArrayEquals(new char[decryptor.fresh.length], decryptor.fresh);
-            assertArrayEquals("master-canary".toCharArray(), shared);
-        } finally {
-            if (previous == null) System.clearProperty(property);
-            else System.setProperty(property, previous);
-        }
+        Mixed decryptor = new Mixed();
+        assertEquals("plaintext", decryptor.decrypt(encrypt("master-canary", "plaintext")));
+        assertArrayEquals(new char[decryptor.fresh.length], decryptor.fresh);
+        assertArrayEquals("master-canary".toCharArray(), shared);
     }
 
     private static AESSaltDecryptor borrowed(char[] password) {
