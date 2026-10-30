@@ -31,7 +31,15 @@ final class ConnectionWrappers {
         return entry == null ? null : entry.view.get().get();
     }
 
-    static record Cleanup(ConcurrentMap<Key, Entry> records, Key key) implements Runnable {
+    static final class Cleanup implements Runnable {
+        private final ConcurrentMap<Key, Entry> records;
+        private final Key key;
+        private Cleanup(ConcurrentMap<Key, Entry> records, Key key) {
+            this.records = records;
+            this.key = key;
+        }
+        ConcurrentMap<Key, Entry> records() { return records; }
+        WeakReference<ClientConnection> key() { return key; }
         @Override public void run() {
             key.clear();
             records.remove(key);
