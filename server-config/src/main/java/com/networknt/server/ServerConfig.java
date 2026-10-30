@@ -421,6 +421,11 @@ public class  ServerConfig {
                     return instance;
                 }
                 ValidatedConfig loaded = loadValidated(configName);
+                loaded.options().forEach((key, option) -> {
+                    if (option.corrected() && option.originalValue() != null) {
+                        logger.warn("Server option: {} set in server.yml is invalid, has been reset to default value.", key);
+                    }
+                });
                 instance = loaded.config();
                 Map<String, Object> reportedConfig = validatedConfig(
                         Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), loaded);
@@ -433,8 +438,7 @@ public class  ServerConfig {
 
     private static ValidatedConfig loadValidated(String configName) {
         ServerConfig config = new ServerConfig(configName);
-        return new ValidatedConfig(config, ServerOption.validateServerOptions(
-                config.mappedConfig, config, CONFIG_NAME.equals(configName)));
+        return new ValidatedConfig(config, ServerOption.validateServerOptions(config.mappedConfig, config));
     }
 
     private record ValidatedConfig(ServerConfig config, Map<String, ServerOption.ValidatedOption> options) {}
@@ -456,7 +460,11 @@ public class  ServerConfig {
             } else if (!option.present() && rawPresent) {
                 logger.warn("Server option {} is present only in non-decrypted reporting configuration; retaining the raw reporting value.", key);
             } else if (rawPresent) {
-                if (!option.matches(rawConfig.get(key))) {
+                ServerOption.Comparison comparison = option.compare(rawConfig.get(key));
+                if (comparison.decryptionFailureType() != null) {
+                    logger.warn("Server option {} could not be decrypted for reporting comparison ({}); check the configured key and ciphertext. Retaining the raw reporting value.",
+                            key, comparison.decryptionFailureType());
+                } else if (!comparison.matches()) {
                     logger.warn("Server option {} differs between validated and non-decrypted configuration; retaining the raw reporting value.", key);
                 } else if (option.corrected()) {
                     reportedConfig.put(key, option.effectiveValue());

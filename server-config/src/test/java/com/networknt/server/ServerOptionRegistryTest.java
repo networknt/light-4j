@@ -29,6 +29,7 @@ import org.junit.jupiter.api.util.SetSystemProperty;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +38,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class ServerOptionRegistryTest {
     private static final String KEY = "server:" + ServerConfig.class.getName();
     private static final String ENCRYPTED = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
+    // Synthetic AES-GCM scalar fixtures; WRONG_KEY uses a deliberately different test master.
+    private static final String ENCRYPTED_EIGHT = "CRYPT:2b4b3f72b8740340a84c29ce0309288e:47901ccf96ccd4ce8397ef07:83f132252f5d8edb546d52e01c148f98e4";
+    private static final String ENCRYPTED_TRUE = "CRYPT:9c652eddc1ea8a62fd7376acc46c646b:e27ccc2edc2784d824052815:3d7be00f94b3e7c47225d9f3fee470c15783545b";
+    private static final String ENCRYPTED_FALSE = "CRYPT:22942d8c857c75d7c80f748cc7305896:2dd5e864fd94ee12be55bfa3:9d015fd607ebf5fcb1026dfe807fda497a94510b70";
+    private static final String ENCRYPTED_WRONG_KEY = "CRYPT:f720c9468e492a43cfb8ab9c07f5eea8:eaf11088c3380fed4a7d0c90:07d763a84c82441caea1936de6e072ff6e5bc8a2c1431676";
     private FixtureLoader decrypted;
     private FixtureLoader raw;
     private final Logger logger = (Logger) ServerConfig.logger;
@@ -224,7 +230,7 @@ class ServerOptionRegistryTest {
     }
 
     @Test
-    void unreadableNewEncryptedOptionIsRetainedWithAWarning() {
+    void corruptEncryptedOptionHasADecryptionDiagnosticInsteadOfASourceChangeWarning() {
         useFixture("serverString: L\n", false);
         Map<String, Object> cached = changeSourceAfterCachedRead(
                 raw.yaml.replace("serverString: L", "serverString: CRYPT:unreadable-test-value"));
@@ -233,8 +239,51 @@ class ServerOptionRegistryTest {
         assertEquals("L", server.getServerString());
         assertEquals("CRYPT:unreadable-test-value", reported().get("serverString"));
         assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
-                && event.getFormattedMessage().contains("serverString differs")));
+                && event.getFormattedMessage().contains("serverString could not be decrypted")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("serverString differs")));
         assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("unreadable-test-value")));
+    }
+
+    @Test
+    void encryptedNumericAndBooleanOptionsMatchTypedCachedInputs() {
+        useFixture("ioThreads: " + ENCRYPTED_EIGHT + "\n"
+                + "maxTransferFileSize: " + ENCRYPTED_EIGHT + "\n"
+                + "alwaysSetDate: " + ENCRYPTED_TRUE + "\n"
+                + "allowUnescapedCharactersInUrl: " + ENCRYPTED_FALSE + "\n", false);
+        // Injection and custom loaders may supply typed scalars instead of decrypted strings.
+        Map<String, Object> typed = new HashMap<>(Config.getInstance().getJsonMapConfig("server"));
+        typed.put("ioThreads", 8);
+        typed.put("maxTransferFileSize", 8L);
+        typed.put("alwaysSetDate", true);
+        typed.put("allowUnescapedCharactersInUrl", false);
+        Config.getInstance().putInConfigCache("server", typed);
+        ServerConfig server = ServerConfig.load();
+        assertSame(typed, server.getMappedConfig());
+        assertEquals(8, server.getIoThreads());
+        assertEquals(8L, server.getMaxTransferFileSize());
+        assertTrue(server.isAlwaysSetDate());
+        assertFalse(server.isAllowUnescapedCharactersInUrl());
+        assertEquals(ENCRYPTED_EIGHT, reported().get("ioThreads"));
+        assertEquals(ENCRYPTED_EIGHT, reported().get("maxTransferFileSize"));
+        assertEquals(ENCRYPTED_TRUE, reported().get("alwaysSetDate"));
+        assertEquals(ENCRYPTED_FALSE, reported().get("allowUnescapedCharactersInUrl"));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN));
+    }
+
+    @Test
+    void wrongEncryptionKeyHasADecryptionDiagnosticWithoutLeakingValues() {
+        useFixture("serverString: L\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("serverString: L", "serverString: " + ENCRYPTED_WRONG_KEY));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals("L", server.getServerString());
+        assertEquals(ENCRYPTED_WRONG_KEY, reported().get("serverString"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("serverString could not be decrypted")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("serverString differs")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains(ENCRYPTED_WRONG_KEY)
+                || event.getFormattedMessage().contains("password")));
     }
 
     @Test
