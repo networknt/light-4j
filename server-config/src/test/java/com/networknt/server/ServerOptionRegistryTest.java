@@ -156,17 +156,85 @@ class ServerOptionRegistryTest {
     }
 
     @Test
-    void changedRawValuesAreNotOverwrittenByStaleCorrections() {
+    void invalidToValidSourceChangeKeepsLaterRawValueAndWarns() {
         useFixture("maxTransferFileSize: -1\n", false);
-        raw.yaml = raw.yaml.replace("maxTransferFileSize: -1", "maxTransferFileSize: 7654321");
-        raw.beforeRead = () -> Config.getInstance().getJsonMapConfig("server").put("maxTransferFileSize", 7654321);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("maxTransferFileSize: -1", "maxTransferFileSize: 7654321"));
         ServerConfig server = ServerConfig.load();
-        assertEquals(7654321, server.getMappedConfig().get("maxTransferFileSize"));
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(-1, server.getMappedConfig().get("maxTransferFileSize"));
         assertEquals(1_000_000L, server.getMaxTransferFileSize());
         assertEquals(7654321, reported().get("maxTransferFileSize"));
         assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
                 && event.getFormattedMessage().contains("retaining the raw reporting value")));
         assertEquals(ENCRYPTED, reported().get("keystorePass"));
+    }
+
+    @Test
+    void validToInvalidSourceChangeKeepsLaterRawValueAndWarns() {
+        useFixture("maxTransferFileSize: 7654321\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("maxTransferFileSize: 7654321", "maxTransferFileSize: -1"));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(7654321L, server.getMaxTransferFileSize());
+        assertEquals(7654321, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(-1, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize differs")));
+        assertEquals(ENCRYPTED, reported().get("keystorePass"));
+    }
+
+    @Test
+    void missingCorrectedRawKeyHasAnAbsenceWarningAndRemainsAbsent() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(raw.yaml.replace("maxTransferFileSize: -1\n", ""));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals(-1, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertFalse(reported().containsKey("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize is absent")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("maxTransferFileSize differs")));
+    }
+
+    @Test
+    void rawOnlyOptionHasAPresenceWarningAndKeepsItsRawValue() {
+        useFixture("", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead("maxTransferFileSize: -1\n" + raw.yaml);
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertFalse(server.getMappedConfig().containsKey("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertEquals(-1, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("maxTransferFileSize is present only")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("maxTransferFileSize differs")));
+    }
+
+    @Test
+    void encryptedOptionIsComparedWithoutChangingItsCiphertextOrWarning() {
+        useFixture("serverString: " + ENCRYPTED + "\n", false);
+        ServerConfig server = ServerConfig.load();
+        assertEquals("password", server.getServerString());
+        assertEquals("password", server.getMappedConfig().get("serverString"));
+        assertEquals(ENCRYPTED, reported().get("serverString"));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN));
+    }
+
+    @Test
+    void unreadableNewEncryptedOptionIsRetainedWithAWarning() {
+        useFixture("serverString: L\n", false);
+        Map<String, Object> cached = changeSourceAfterCachedRead(
+                raw.yaml.replace("serverString: L", "serverString: CRYPT:unreadable-test-value"));
+        ServerConfig server = ServerConfig.load();
+        assertSame(cached, server.getMappedConfig());
+        assertEquals("L", server.getServerString());
+        assertEquals("CRYPT:unreadable-test-value", reported().get("serverString"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("serverString differs")));
+        assertFalse(logs.list.stream().anyMatch(event -> event.getFormattedMessage().contains("unreadable-test-value")));
     }
 
     @Test
@@ -194,6 +262,14 @@ class ServerOptionRegistryTest {
         assertNotSame(first, second);
         assertEquals(1_000_000L, second.getMaxTransferFileSize());
         assertEquals(2, invalidWarnings());
+    }
+
+    private Map<String, Object> changeSourceAfterCachedRead(String updatedYaml) {
+        // A real source edit leaves the existing decrypted cache untouched; the later no-cache read sees it.
+        Map<String, Object> cached = Config.getInstance().getJsonMapConfig("server");
+        decrypted.yaml = updatedYaml;
+        raw.yaml = updatedYaml;
+        return cached;
     }
 
     private long invalidWarnings() {
@@ -246,7 +322,6 @@ class ServerOptionRegistryTest {
     private static class FixtureLoader extends ClassLoader {
         private String yaml;
         private int reads;
-        private Runnable beforeRead;
 
         FixtureLoader(String yaml) {
             super(ServerOptionRegistryTest.class.getClassLoader());
@@ -258,7 +333,6 @@ class ServerOptionRegistryTest {
             if (name.matches("(?:config/)?server\\.(?:yml|yaml|json)")) {
                 if (name.equals("server.yml") && yaml != null) {
                     reads++;
-                    if (beforeRead != null) beforeRead.run();
                     return new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8));
                 }
                 return null;
