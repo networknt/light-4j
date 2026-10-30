@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -311,6 +312,31 @@ class ServerOptionRegistryTest {
         assertNotSame(first, second);
         assertEquals(1_000_000L, second.getMaxTransferFileSize());
         assertEquals(2, invalidWarnings());
+    }
+
+    @Test
+    void invalidOptionWarningsFollowDeclarationOrderRegardlessOfSourceOrder() {
+        useFixture("""
+                shutdownTimeout: -1
+                allowUnescapedCharactersInUrl: null
+                maxTransferFileSize: -1
+                alwaysSetDate: null
+                serverString: ''
+                backlog: -1
+                bufferSize: -1
+                workerThreads: -1
+                ioThreads: -1
+                """, false);
+        ServerConfig.load();
+        var warnings = logs.list.stream()
+                .filter(event -> event.getLevel() == Level.WARN
+                        && event.getFormattedMessage().contains("has been reset to default value"))
+                .map(ILoggingEvent::getFormattedMessage).toList();
+        var expected = List.of("ioThreads", "workerThreads", "bufferSize", "backlog", "serverString",
+                        "maxTransferFileSize", "shutdownTimeout").stream()
+                .map(name -> "Server option: " + name + " set in server.yml is invalid, has been reset to default value.")
+                .toList();
+        assertEquals(expected, warnings);
     }
 
     private Map<String, Object> changeSourceAfterCachedRead(String updatedYaml) {

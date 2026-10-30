@@ -4,7 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
 import com.networknt.decrypt.Decryptor;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -48,7 +48,7 @@ public enum ServerOption {
 
     /** Validate fields and capture the presence and input of every option for reporting comparisons. */
     static Map<String, ValidatedOption> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig) {
-        Map<String, ValidatedOption> options = new HashMap<>();
+        Map<String, ValidatedOption> options = new LinkedHashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
             boolean present = mapConfig != null && mapConfig.containsKey(serverOption.value());
             Object value = present ? mapConfig.get(serverOption.value()) : null;
