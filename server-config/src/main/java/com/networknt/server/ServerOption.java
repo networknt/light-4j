@@ -47,16 +47,12 @@ public enum ServerOption {
     }
 
     /** Validate fields and capture the presence and input of every option for reporting comparisons. */
-    static Map<String, ValidatedOption> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig,
-                                                           boolean warnInvalid) {
+    static Map<String, ValidatedOption> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig) {
         Map<String, ValidatedOption> options = new HashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
             boolean present = mapConfig != null && mapConfig.containsKey(serverOption.value());
             Object value = present ? mapConfig.get(serverOption.value()) : null;
             boolean valid = setServerOption(serverOption, value, serverConfig);
-            if (present && !valid && value != null && warnInvalid) {
-                ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
-            }
             options.put(serverOption.value(), new ValidatedOption(present, value,
                     serverOption.effectiveValue.apply(serverConfig), present && (!valid || value == null)));
         }
@@ -65,20 +61,22 @@ public enum ServerOption {
 
     /** Capture scalar inputs without retaining validation state on ServerConfig. */
     record ValidatedOption(boolean present, Object originalValue, Object effectiveValue, boolean corrected) {
-        boolean matches(Object rawValue) {
+        Comparison compare(Object rawValue) {
             if (rawValue instanceof String encrypted && encrypted.startsWith(Decryptor.CRYPT_PREFIX)) {
                 try {
                     // Compare the scalar only; reporting must retain its original ciphertext.
-                    return Objects.equals(ConfigInjection.getDecryptor().decrypt(encrypted),
-                            originalValue == null ? null : originalValue.toString());
-                } catch (RuntimeException ignored) {
-                    // A newer encrypted source may be unreadable. Do not expose values or override it.
-                    return false;
+                    return new Comparison(Objects.equals(ConfigInjection.getDecryptor().decrypt(encrypted),
+                            originalValue == null ? null : originalValue.toString()), null);
+                } catch (RuntimeException failure) {
+                    // Only retain the type: messages and causes can contain configuration values.
+                    return new Comparison(false, failure.getClass().getName());
                 }
             }
-            return Objects.equals(rawValue, originalValue);
+            return new Comparison(Objects.equals(rawValue, originalValue), null);
         }
     }
+
+    record Comparison(boolean matches, String decryptionFailureType) {}
 
     /**
      * Method used to validate and set server options
