@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -425,6 +426,24 @@ public class  ServerConfig {
             }
         }
         return new ServerConfig(configName);
+    }
+
+    /** Publish validated startup options without exposing decrypted configuration values. */
+    void registerValidatedServerOptions() {
+        // Named configurations are test instances and must not replace the running server's entry.
+        if (this != instance) return;
+        Map<String, Object> config = new HashMap<>(
+                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME));
+        config.put(IO_THREADS, ioThreads);
+        config.put(WORKER_THREADS, workerThreads);
+        config.put(BUFFER_SIZE, bufferSize);
+        config.put(BACKLOG, backlog);
+        config.put(SERVER_STRING, serverString);
+        config.put(ALWAYS_SET_DATE, alwaysSetDate);
+        config.put(MAX_TRANSFER_FILE_SIZE, maxTransferFileSize);
+        config.put(ALLOW_UNESCAPED_CHARACTERS_IN_URL, allowUnescapedCharactersInUrl);
+        config.put(SHUTDOWN_TIMEOUT, shutdownTimeout);
+        ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), config, masks);
     }
 
     private void loadData() {

@@ -52,6 +52,7 @@ public enum ServerOption {
                 setToDefaultServerOption(serverOption, serverConfig);
             }
         }
+        serverConfig.registerValidatedServerOptions();
     }
 
     /**
