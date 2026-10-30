@@ -17,7 +17,12 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.util.SetSystemProperty;
 
@@ -34,9 +39,20 @@ class ServerOptionRegistryTest {
     private static final String ENCRYPTED = "CRYPT:e6e1b4a099902a2106509e87df909de4:cd9153addc755eb7e00d817c:e499d4501d0372fe37073d88a1025f1970a30cbd9acec7d5";
     private FixtureLoader decrypted;
     private FixtureLoader raw;
+    private final Logger logger = (Logger) ServerConfig.logger;
+    private ListAppender<ILoggingEvent> logs;
+
+    @BeforeEach
+    void captureLogs() {
+        logs = new ListAppender<>();
+        logs.start();
+        logger.addAppender(logs);
+    }
 
     @AfterEach
     void clearConfig() {
+        logger.detachAppender(logs);
+        logs.stop();
         Config.getInstance().setClassLoader(null);
         Config.getNoneDecryptedInstance().setClassLoader(null);
         Config.getInstance().clear();
@@ -123,6 +139,8 @@ class ServerOptionRegistryTest {
         ServerConfig server = ServerConfig.load();
         assertEquals(1_000_000L, server.getMaxTransferFileSize());
         assertTrue(reported().isEmpty());
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("server-info configuration will be empty")));
     }
 
     @Test
@@ -138,17 +156,49 @@ class ServerOptionRegistryTest {
     }
 
     @Test
-    void namedAndStaleInstancesCannotOverwriteTheRunningServerEntry() {
+    void changedRawValuesAreNotOverwrittenByStaleCorrections() {
         useFixture("maxTransferFileSize: -1\n", false);
-        ServerConfig stale = ServerConfig.load();
-        Config.getInstance().clearConfigCache("server");
-        ServerConfig current = ServerConfig.load();
-        Map<String, Object> snapshot = reported();
-        ServerOption.serverOptionInit(stale.getMappedConfig(), stale);
+        raw.yaml = raw.yaml.replace("maxTransferFileSize: -1", "maxTransferFileSize: 7654321");
+        raw.beforeRead = () -> Config.getInstance().getJsonMapConfig("server").put("maxTransferFileSize", 7654321);
+        ServerConfig server = ServerConfig.load();
+        assertEquals(7654321, server.getMappedConfig().get("maxTransferFileSize"));
+        assertEquals(1_000_000L, server.getMaxTransferFileSize());
+        assertEquals(7654321, reported().get("maxTransferFileSize"));
+        assertTrue(logs.list.stream().anyMatch(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("retaining the raw reporting value")));
+        assertEquals(ENCRYPTED, reported().get("keystorePass"));
+    }
+
+    @Test
+    void blankDefaultsAndNamedLoadsDoNotProduceInvalidOptionWarnings() {
+        useFixture("shutdownTimeout: null\n", false);
+        ServerConfig server = ServerConfig.load();
+        assertNull(server.getShutdownTimeout());
+        assertTrue(reported().containsKey("shutdownTimeout"));
+        assertNull(reported().get("shutdownTimeout"));
         ServerConfig named = ServerConfig.load("server_invalid_option");
-        assertTrue(named.getIoThreads() > 0);
-        assertSame(snapshot, reported());
-        assertSame(current, ServerConfig.load());
+        assertEquals(200, named.getWorkerThreads());
+        assertEquals(16384, named.getBufferSize());
+        assertEquals(0, invalidWarnings());
+    }
+
+    @Test
+    void explicitInvalidOptionsWarnOnlyOnFreshCanonicalLoads() {
+        useFixture("maxTransferFileSize: -1\n", false);
+        ServerConfig first = ServerConfig.load();
+        assertEquals(1, invalidWarnings());
+        assertSame(first, ServerConfig.load());
+        assertEquals(1, invalidWarnings());
+        Config.getInstance().clearConfigCache("server");
+        ServerConfig second = ServerConfig.load();
+        assertNotSame(first, second);
+        assertEquals(1_000_000L, second.getMaxTransferFileSize());
+        assertEquals(2, invalidWarnings());
+    }
+
+    private long invalidWarnings() {
+        return logs.list.stream().filter(event -> event.getLevel() == Level.WARN
+                && event.getFormattedMessage().contains("has been reset to default value")).count();
     }
 
     private void useFixture(String options, boolean mask) {
@@ -196,6 +246,7 @@ class ServerOptionRegistryTest {
     private static class FixtureLoader extends ClassLoader {
         private String yaml;
         private int reads;
+        private Runnable beforeRead;
 
         FixtureLoader(String yaml) {
             super(ServerOptionRegistryTest.class.getClassLoader());
@@ -207,6 +258,7 @@ class ServerOptionRegistryTest {
             if (name.matches("(?:config/)?server\\.(?:yml|yaml|json)")) {
                 if (name.equals("server.yml") && yaml != null) {
                     reads++;
+                    if (beforeRead != null) beforeRead.run();
                     return new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8));
                 }
                 return null;

@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Server configuration class that maps to server.yml properties. This class is a singleton and can be shared
@@ -384,7 +385,6 @@ public class  ServerConfig {
 
     private static final List<String> masks = Arrays.asList("keystorePass", "keyPass", "truststorePass", "bootstrapStorePass");
     private Map<String, Object> mappedConfig;
-    private final Map<String, Object> validatedOptions;
     private static volatile ServerConfig instance;
 
     private ServerConfig() {
@@ -401,7 +401,6 @@ public class  ServerConfig {
         if (mappedConfig != null) {
             loadData();
         }
-        validatedOptions = ServerOption.validateServerOptions(mappedConfig, this);
     }
 
     public static ServerConfig load() {
@@ -422,23 +421,39 @@ public class  ServerConfig {
                 if (instance != null && instance.getMappedConfig() == Config.getInstance().getJsonMapConfig(configName)) {
                     return instance;
                 }
-                instance = new ServerConfig(configName);
-                Map<String, Object> reportedConfig = instance.validatedConfig(
-                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME));
+                ServerConfig loaded = new ServerConfig(configName);
+                Map<String, ServerOption.Correction> corrections = ServerOption.validateServerOptions(loaded.mappedConfig, loaded, true);
+                instance = loaded;
+                Map<String, Object> reportedConfig = validatedConfig(
+                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), loaded.mappedConfig, corrections);
                 ModuleRegistry.registerModule(CONFIG_NAME, ServerConfig.class.getName(), reportedConfig, masks);
                 return instance;
             }
         }
-        return new ServerConfig(configName);
+        ServerConfig loaded = new ServerConfig(configName);
+        ServerOption.validateServerOptions(loaded.mappedConfig, loaded, false);
+        return loaded;
     }
 
     /** Keep raw values and key presence except where validation corrected a configured option. */
-    private Map<String, Object> validatedConfig(Map<String, Object> rawConfig) {
+    private static Map<String, Object> validatedConfig(Map<String, Object> rawConfig,
+                                                       Map<String, Object> mappedConfig,
+                                                       Map<String, ServerOption.Correction> corrections) {
         // Never fall back to mappedConfig: it can contain decrypted credentials.
-        if (rawConfig == null) return null;
+        if (rawConfig == null) {
+            if (mappedConfig != null) {
+                logger.warn("Non-decrypted server configuration is unavailable; server-info configuration will be empty.");
+            }
+            return null;
+        }
         Map<String, Object> reportedConfig = new HashMap<>(rawConfig);
-        validatedOptions.forEach((key, value) -> {
-            if (reportedConfig.containsKey(key)) reportedConfig.put(key, value);
+        corrections.forEach((key, correction) -> {
+            if (reportedConfig.containsKey(key) && Objects.equals(rawConfig.get(key), correction.originalValue())) {
+                reportedConfig.put(key, correction.effectiveValue());
+            } else {
+                // Separate Config reads may observe a source change. Do not overwrite a newer raw value.
+                logger.warn("Server option {} differs between validated and non-decrypted configuration; retaining the raw reporting value.", key);
+            }
         });
         return reportedConfig;
     }

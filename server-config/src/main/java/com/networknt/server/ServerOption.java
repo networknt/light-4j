@@ -43,26 +43,19 @@ public enum ServerOption {
         return this.value;
     }
 
-    /**
-     * @param mapConfig    map config generated from server.yml
-     * @param serverConfig object config generated from server.yml
-     */
-    protected static void serverOptionInit(Map<String, Object> mapConfig, ServerConfig serverConfig) {
-        validateServerOptions(mapConfig, serverConfig);
-    }
-
     /** Validate fields and return corrections for explicitly configured options only. */
-    static Map<String, Object> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig) {
-        Map<String, Object> corrections = new HashMap<>();
+    static Map<String, Correction> validateServerOptions(Map<String, Object> mapConfig, ServerConfig serverConfig,
+                                                    boolean warnInvalid) {
+        Map<String, Correction> corrections = new HashMap<>();
         for (ServerOption serverOption : ServerOption.values()) {
             if (mapConfig != null && mapConfig.containsKey(serverOption.value())) {
                 Object value = mapConfig.get(serverOption.value());
                 boolean valid = setServerOption(serverOption, value, serverConfig);
-                if (!valid) {
+                if (!valid && value != null && warnInvalid) {
                     ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
                 }
                 if (!valid || value == null) {
-                    corrections.put(serverOption.value(), serverOption.effectiveValue.apply(serverConfig));
+                    corrections.put(serverOption.value(), new Correction(value, serverOption.effectiveValue.apply(serverConfig)));
                 }
             } else {
                 setToDefaultServerOption(serverOption, serverConfig);
@@ -70,6 +63,9 @@ public enum ServerOption {
         }
         return corrections;
     }
+
+    /** Capture the validated input so a later mutable-map update cannot change the comparison. */
+    record Correction(Object originalValue, Object effectiveValue) {}
 
     /**
      * Method used to validate and set server options
