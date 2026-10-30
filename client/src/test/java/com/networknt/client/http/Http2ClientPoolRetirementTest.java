@@ -14,7 +14,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.networknt.config.Config;
-import java.lang.reflect.Field;
 import org.xnio.*;
 import java.net.URI;
 import java.util.*;
@@ -219,6 +218,8 @@ class Http2ClientPoolRetirementTest {
     }
 
     @Test void nativeCloseSignalsWithoutWaitingForThePoolMonitor() throws Exception {
+        Map<String, Http2ClientConnectionPool.UriConnections> uris = new LinkedHashMap<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), uris);
         ClientConnection raw = transport();
         pool.cacheConnection(URI.create("https://closed.invalid"), raw);
         IoThreadClientConnection owned = IoThreadClientConnection.wrap(raw);
@@ -229,17 +230,14 @@ class Http2ClientPoolRetirementTest {
             assertEquals(0, pool.numberOfConnections());
         }
         assertEquals(1, pool.reapExpiredConnections(), "metadata cleanup is performed by maintenance");
-        Field cache = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
-        cache.setAccessible(true);
-        assertTrue(((Map<?, ?>) cache.get(pool)).isEmpty());
+        assertTrue(uris.isEmpty());
         verify(raw).close();
     }
 
     @Test void staleEmptyUriBucketCannotRemoveANewEmptyBucket() throws Exception {
         URI uri = URI.create("https://recreated.invalid");
-        Field cacheField = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
-        cacheField.setAccessible(true);
-        Map<?, ?> cache = (Map<?, ?>) cacheField.get(pool);
+        Map<String, Http2ClientConnectionPool.UriConnections> cache = new LinkedHashMap<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), cache);
         ClientConnection old = transport();
         pool.cacheConnection(uri, old);
         Object oldBucket = cache.get(uri.toString());
@@ -405,7 +403,7 @@ class Http2ClientPoolRetirementTest {
         URI uri = URI.create("https://draining.invalid");
         pool.cacheConnection(uri, raw);
         for (int i = 1; i < borrowers; i++) assertNotNull(pool.getConnection(uri));
-        when(raw.isOpen()).thenReturn(false); // GOAWAY/CLOSE_REQ stops admission, not existing exchanges.
+        when(raw.isOpen()).thenReturn(false); // Model provider non-selectability while existing exchanges can still finish.
         assertNull(pool.getConnection(uri));
         drainOwner();
         verify(raw, never()).close();
@@ -428,68 +426,62 @@ class Http2ClientPoolRetirementTest {
         assertEquals(0, pool.numberOfConnections());
     }
 
-    @Test void quarantineStopsAnAttachedUnexpiredConnectionAndReleasesItsUriSlot() throws Exception {
-        pool = new Http2ClientConnectionPool(requestConfig(-1, 1_000_000), clock::get);
-        ClientConnection bad = transport();
-        ClientConnection survivor = transport();
-        URI badUri = URI.create("https://quarantine-selection.invalid");
-        URI survivorUri = URI.create("https://survivor.invalid");
-        pool.cacheConnection(badUri, bad);
-        pool.cacheConnection(survivorUri, survivor);
-        Field field = Http2ClientConnectionPool.class.getDeclaredField("tracked");
-        field.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        ConcurrentMap<ClientConnection, Object> original = (ConcurrentMap<ClientConnection, Object>) field.get(pool);
-        Object cached = original.get(IoThreadClientConnection.wrap(bad));
-        var deadline = Http2ClientConnectionPool.class.getDeclaredMethod("replaceDeadline", cached.getClass(), long.class);
-        deadline.setAccessible(true);
-        deadline.invoke(pool, cached, 30000L); // Early maintenance; the record itself remains unexpired and attached.
+    @ParameterizedTest @ValueSource(ints = {4, 5})
+    void quarantineReleasesAttachedUriCapacityAndClosesOnReturn(int attempts) throws Exception {
+        java.util.concurrent.atomic.AtomicReference<RequestConfig> settings =
+                new java.util.concurrent.atomic.AtomicReference<>(requestConfig(-1, 1_000_000));
         AtomicBoolean failNextLookup = new AtomicBoolean();
-        ConcurrentMap<ClientConnection, Object> broken = new ConcurrentHashMap<>(original) {
-            @Override public Object get(Object key) {
-                if (Thread.holdsLock(pool) && key == IoThreadClientConnection.wrap(bad)
-                        && failNextLookup.compareAndSet(true, false)) throw new AssertionError("failure before detaching");
+        java.util.concurrent.atomic.AtomicReference<ClientConnection> failingKey = new java.util.concurrent.atomic.AtomicReference<>();
+        ConcurrentMap<ClientConnection, Http2ClientConnectionPool.CachedConnection> records = new ConcurrentHashMap<>() {
+            @Override public Http2ClientConnectionPool.CachedConnection get(Object key) {
+                if (key == failingKey.get() && failNextLookup.compareAndSet(true, false)) {
+                    throw new AssertionError("failure before detaching");
+                }
                 return super.get(key);
             }
         };
-        field.set(pool, broken);
-        for (long at : new long[]{30000, 31000, 33000, 37000}) {
-            clock.set(at);
+        pool = new Http2ClientConnectionPool(settings::get, clock::get, null, records, null);
+        ClientConnection survivor = transport();
+        ClientConnection bad = transport();
+        URI survivorUri = URI.create("https://survivor.invalid");
+        URI badUri = URI.create("https://quarantine-capacity.invalid");
+        pool.cacheConnection(survivorUri, survivor); // Remains unexpired throughout the retry budget.
+        settings.set(requestConfig(-1, 30000));
+        pool.cacheConnection(badUri, bad); // Most recent URI, with an actual expiry deadline at 30000.
+        failingKey.set(IoThreadClientConnection.wrap(bad));
+        long[] retries = {30000, 31000, 33000, 37000, 45000};
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            clock.set(retries[attempt]);
             failNextLookup.set(true);
             assertEquals(1, pool.reapExpiredConnections());
-            assertSame(IoThreadClientConnection.wrap(bad), pool.getConnection(badUri),
-                    "the failed maintenance has not already hidden the connection");
-            pool.resetConnectionStatus(bad);
+            assertFalse(failNextLookup.get(), "maintenance must hit the injected lookup failure");
         }
-        clock.set(45000);
-        failNextLookup.set(true);
-        assertEquals(1, pool.reapExpiredConnections());
-        // badUri was most recently used. Without its membership release, admission evicts survivorUri.
-        ClientConnection next = transport();
-        pool.cacheConnection(URI.create("https://after-quarantine.invalid"), next);
-        assertNotNull(pool.getConnection(survivorUri), "quarantine must release URI capacity before another admission");
-        assertNull(pool.getConnection(badUri), "quarantine itself must stop selecting the unexpired transport");
+        pool.cacheConnection(URI.create("https://after-quarantine.invalid"), transport());
+        if (attempts < 5) {
+            assertNull(pool.getConnection(survivorUri), "before quarantine the attached URI still occupies its LRU slot");
+        } else {
+            assertNotNull(pool.getConnection(survivorUri), "quarantine must release URI capacity before another admission");
+            assertNull(pool.getConnection(badUri));
+        }
         drainOwner();
         verify(bad, never()).close();
         pool.resetConnectionStatus(bad);
         drainOwner();
-        verify(bad).close();
+        if (attempts < 5) verify(bad, never()).close();
+        else verify(bad).close();
     }
 
     @Test void permanentlyFailingClosedMetadataCleanupStopsAfterItsBudget() throws Exception {
-        ClientConnection raw = transport();
-        pool.cacheConnection(URI.create("https://metadata-failure.invalid"), raw);
-        Field cacheField = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
-        cacheField.setAccessible(true);
-        Map<?, ?> original = (Map<?, ?>) cacheField.get(pool);
         AtomicInteger removals = new AtomicInteger();
-        Map<Object, Object> broken = new HashMap<>(original) {
+        Map<String, Http2ClientConnectionPool.UriConnections> broken = new LinkedHashMap<>() {
             @Override public boolean remove(Object key, Object value) {
                 removals.incrementAndGet();
                 throw new AssertionError("permanent metadata failure");
             }
         };
-        cacheField.set(pool, broken);
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), broken);
+        ClientConnection raw = transport();
+        pool.cacheConnection(URI.create("https://metadata-failure.invalid"), raw);
         IoThreadClientConnection.wrap(raw).close();
         drainOwner();
         assertEquals(0, pool.numberOfConnections());
@@ -554,16 +546,9 @@ class Http2ClientPoolRetirementTest {
     }
 
     @Test void closedCleanupOwnershipIsPublishedBeforeUntracking() throws Exception {
-        ClientConnection raw = transport();
-        URI uri = URI.create("https://publication.invalid");
-        pool.cacheConnection(uri, raw);
-        Field trackedField = Http2ClientConnectionPool.class.getDeclaredField("tracked");
-        trackedField.setAccessible(true);
-        Map<?, ?> original = (Map<?, ?>) trackedField.get(pool);
-        Object cached = original.values().iterator().next();
         CountDownLatch removed = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        ConcurrentMap<Object, Object> gated = new ConcurrentHashMap<>(original) {
+        ConcurrentMap<ClientConnection, Http2ClientConnectionPool.CachedConnection> records = new ConcurrentHashMap<>() {
             @Override public boolean remove(Object key, Object value) {
                 boolean result = super.remove(key, value);
                 removed.countDown();
@@ -573,16 +558,18 @@ class Http2ClientPoolRetirementTest {
                 return result;
             }
         };
-        trackedField.set(pool, gated);
+        Map<String, Http2ClientConnectionPool.UriConnections> uris = new LinkedHashMap<>();
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, records, uris);
+        ClientConnection raw = transport();
+        URI uri = URI.create("https://publication.invalid");
+        pool.cacheConnection(uri, raw);
         CompletableFuture<Void> closeDone = new CompletableFuture<>();
         owner.execute(() -> { IoThreadClientConnection.wrap(raw).close(); closeDone.complete(null); });
         try {
             assertTrue(removed.await(5, TimeUnit.SECONDS));
-            var managed = Http2ClientConnectionPool.class.getDeclaredMethod("isManaged", cached.getClass());
-            managed.setAccessible(true);
-            assertEquals(Boolean.TRUE, managed.invoke(pool, cached));
             clock.set(30000);
-            pool.reapExpiredConnections(); // Cleanup can complete before the native notice is enqueued.
+            assertEquals(1, pool.reapExpiredConnections());
+            assertTrue(uris.isEmpty(), "pending close cleanup must run before its notice can be enqueued");
         } finally { release.countDown(); }
         closeDone.get(5, TimeUnit.SECONDS);
         pool.reapExpiredConnections();
@@ -703,14 +690,12 @@ class Http2ClientPoolRetirementTest {
     @Test void failedInsertionRollsBackTracking() throws Exception {
         ClientConnection raw = transport();
         IllegalStateException failure = new IllegalStateException("cache insertion failed");
-        Map<String, Object> broken = new HashMap<>() {
-            @Override public Object computeIfAbsent(String key, java.util.function.Function<? super String, ?> factory) {
+        Map<String, Http2ClientConnectionPool.UriConnections> broken = new HashMap<>() {
+            @Override public Http2ClientConnectionPool.UriConnections computeIfAbsent(String key, java.util.function.Function<? super String, ? extends Http2ClientConnectionPool.UriConnections> factory) {
                 throw failure;
             }
         };
-        Field cache = Http2ClientConnectionPool.class.getDeclaredField("connectionPool");
-        cache.setAccessible(true);
-        cache.set(pool, broken);
+        pool = new Http2ClientConnectionPool(() -> request, clock::get, null, new ConcurrentHashMap<>(), broken);
         try {
             URI uri = URI.create("https://failure.invalid");
             assertSame(failure, assertThrows(IllegalStateException.class, () -> pool.cacheConnection(uri, raw)));

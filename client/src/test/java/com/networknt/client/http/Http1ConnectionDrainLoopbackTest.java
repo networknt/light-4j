@@ -18,7 +18,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class Http2ClientPoolDrainingLoopbackTest {
+/** Real HTTP/1 CLOSE_REQ body delivery through Http2ClientConnectionPool; no GOAWAY-drain claim. */
+class Http1ConnectionDrainLoopbackTest {
     private XnioWorker worker;
     private ByteBufferPool buffers;
     private Undertow server;
@@ -80,6 +81,9 @@ class Http2ClientPoolDrainingLoopbackTest {
         assertFalse(connection.isOpen(), "CLOSE_REQ stops admission while the response body is still arriving");
         assertFalse(body.isDone());
         assertNull(pool.getConnection(uri));
+        CompletableFuture<Void> ownerBarrier = new CompletableFuture<>();
+        connection.getIoThread().execute(() -> ownerBarrier.complete(null));
+        ownerBarrier.get(5, TimeUnit.SECONDS);
         assertFalse(closed.isDone(), "pool retirement must not truncate the response");
         backend.getIoThread().execute(() -> backend.getResponseSender().send("complete"));
         assertEquals("first-complete", body.get(5, TimeUnit.SECONDS));

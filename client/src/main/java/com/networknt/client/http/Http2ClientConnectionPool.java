@@ -19,7 +19,8 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * URI LRU pool. Retired and quarantined transports drain borrowers for at most 100 seconds.
+ * URI LRU pool. Pool-initiated retirement allows a 100-second borrower-drain grace.
+ * Native closure can end exchanges earlier; Undertow 2.4.4 closes upon receiving GOAWAY.
  * @author Jiachen Sun
  */
 public class Http2ClientConnectionPool {
@@ -30,7 +31,7 @@ public class Http2ClientConnectionPool {
     private final Set<UriConnections> emptyBuckets = ConcurrentHashMap.newKeySet();
     private final int maxUriCount;
     // Canonical views have identity equality, including transports supplied by custom providers.
-    private final ConcurrentMap<ClientConnection, CachedConnection> tracked = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ClientConnection, CachedConnection> tracked;
     private final Queue<CachedConnection> pendingClose = new ConcurrentLinkedQueue<>();
     private final Queue<CachedConnection> closedRecords = new ConcurrentLinkedQueue<>();
     private final AtomicInteger reaperFailures = new AtomicInteger();
@@ -81,12 +82,18 @@ public class Http2ClientConnectionPool {
     }
 
     private Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock, ScheduledExecutorService reaper) {
+        this(requestConfig, clock, reaper, new ConcurrentHashMap<>(), null);
+    }
+
+    Http2ClientConnectionPool(Supplier<RequestConfig> requestConfig, LongSupplier clock, ScheduledExecutorService reaper,
+                              ConcurrentMap<ClientConnection, CachedConnection> tracked, Map<String, UriConnections> uriConnections) {
         this.requestConfig = requestConfig;
         this.clock = clock;
         this.reaper = reaper;
+        this.tracked = tracked;
         int poolSize = requestConfig.get().getConnectionPoolSize();
         maxUriCount = poolSize;
-        connectionPool = new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
+        connectionPool = uriConnections == null ? new LinkedHashMap<>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
             @Override protected boolean removeEldestEntry(Map.Entry<String, UriConnections> eldest) {
                 if (size() <= poolSize) return false;
                 logger.debug("Evicting {} cached connections for uri: {}", eldest.getValue().connections.size(), eldest.getKey());
@@ -95,7 +102,7 @@ public class Http2ClientConnectionPool {
                 emptyBuckets.remove(eldest.getValue());
                 return true;
             }
-        };
+        } : uriConnections;
     }
 
     /** @return the shared connection pool */
@@ -251,7 +258,7 @@ public class Http2ClientConnectionPool {
      */
     public void resetConnectionStatus(ClientConnection connection) {
         if (connection == null) return;
-        ClientConnection existing = ConnectionWrappers.find(connection);
+        ClientConnection existing = ConnectionWrappers.INSTANCE.lookup(connection);
         if (existing == null) return;
         CachedConnection cached = tracked.get(existing);
         if (cached == null) return;
@@ -284,7 +291,7 @@ public class Http2ClientConnectionPool {
     }
 
     private void releaseRetired(CachedConnection connection) {
-        // isOpen() also becomes false during GOAWAY/Connection: close draining.
+        // Non-selectability (for example HTTP/1 CLOSE_REQ) does not establish native closure.
         if (connection.borrowers.get() == 0) queueClose(connection);
     }
 
@@ -494,7 +501,7 @@ public class Http2ClientConnectionPool {
     }
 
     // Object equality deliberately gives each URI bucket identity semantics.
-    private static final class UriConnections {
+    static final class UriConnections {
         private final String uri;
         private final List<CachedConnection> connections = new LinkedList<>();
         private final AtomicInteger members = new AtomicInteger();
@@ -502,7 +509,7 @@ public class Http2ClientConnectionPool {
         private UriConnections(String uri) { this.uri = uri; }
     }
 
-    private static final class CachedConnection {
+    static final class CachedConnection {
         private final AtomicInteger requestCount = new AtomicInteger(1);
         private final ClientConnection clientConnection;
         private WeakReference<UriConnections> owner;

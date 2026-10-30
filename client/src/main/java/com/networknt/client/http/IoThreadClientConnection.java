@@ -46,7 +46,7 @@ public final class IoThreadClientConnection implements ClientConnection {
     /** Return the same live view for the same raw transport, without retaining dead transports. */
     public static IoThreadClientConnection wrap(ClientConnection connection) {
         Objects.requireNonNull(connection, "connection");
-        IoThreadClientConnection owned = connection instanceof IoThreadClientConnection view ? view : ConnectionWrappers.wrap(connection);
+        IoThreadClientConnection owned = connection instanceof IoThreadClientConnection view ? view : ConnectionWrappers.INSTANCE.getOrCreate(connection);
         // Native registration (and any close notification) runs outside the registry monitor.
         // The bridge retains the complete view while the transport is alive.
         owned.installCloseBridge();
