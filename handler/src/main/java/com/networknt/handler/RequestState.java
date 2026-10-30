@@ -57,7 +57,7 @@ final class RequestState {
         RequestState existing = find(exchange);
         if (existing != null) return existing;
         if (exchange.isComplete()) return detached(exchange, inheritedMdc);
-        // Bound cleanup work; ordinary completion removes its entry immediately.
+        // Bounded weak-key cleanup; no exchange-completion listener is registered.
         for (int count = 0; count < 16; count++) {
             var key = CLEARED.poll();
             if (key == null) break;
@@ -68,13 +68,8 @@ final class RequestState {
             RequestState state = INDEX.computeIfAbsent(key, ignored -> {
                 RequestState created = detached(exchange, inheritedMdc);
                 exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, created.mdc);
-                exchange.addExchangeCompleteListener((completed, next) -> {
-                    INDEX.remove(key);
-                    next.proceed();
-                });
                 return created;
             });
-            if (exchange.isComplete()) INDEX.remove(key, state);
             return state;
         } finally { Reference.reachabilityFence(exchange); }
     }

@@ -169,6 +169,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         private final RequestInjectionConfig config;
         private final HttpHandler nextHandler;
         private HttpHandler resumedHandler;
+        private Runnable readContinuation;
         private final StreamSourceChannel channel;
         private final PooledByteBuffer[] bufferedData;
         private final boolean exactLimit;
@@ -242,8 +243,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         }
 
         private ReadOutcome awaitMoreData() {
-            if (resumedHandler == null)
-                resumedHandler = HandlerContinuation.capture(exchange, ex -> Handler.next(ex, nextHandler));
+            if (resumedHandler == null) {
+                HandlerContinuation.Scope scope = HandlerContinuation.capture(exchange);
+                resumedHandler = scope.wrap(ex -> Handler.next(ex, nextHandler));
+                readContinuation = scope.task(ex -> resumeRead());
+            }
             channel.getReadSetter().set(this);
             channel.resumeReads();
             return ReadOutcome.PENDING;
@@ -269,7 +273,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         @Override
         public void handleEvent(StreamSourceChannel ignored) {
             // A pending read must not be auto-ended by a root-handler wrapper.
-            HandlerContinuation.task(exchange, ex -> resumeRead()).run();
+            readContinuation.run();
         }
 
         private void resumeRead() throws Exception {
