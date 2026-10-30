@@ -59,7 +59,7 @@ final class RequestState {
         if (exchange.isComplete()) return detached(exchange, inheritedMdc);
         // Bound cleanup work; ordinary completion removes its entry immediately.
         for (int count = 0; count < 16; count++) {
-            Reference<? extends HttpServerExchange> key = CLEARED.poll();
+            var key = CLEARED.poll();
             if (key == null) break;
             INDEX.remove(key);
         }

@@ -197,7 +197,7 @@ public class ProxyHandler implements HttpHandler {
 
         if (timeout > 0) {
             LOG.trace("Adding timeout to exchange of {} ms to exchange: {}", effectiveMaxRequestTime, exchange);
-            final XnioExecutor.Key key = WorkerUtils.executeAfter(exchange.getIoThread(), () -> clientHandler.cancel(exchange), effectiveMaxRequestTime, TimeUnit.MILLISECONDS);
+            final XnioExecutor.Key key = WorkerUtils.executeAfter(exchange.getIoThread(), () -> clientHandler.cancel(), effectiveMaxRequestTime, TimeUnit.MILLISECONDS);
             clientHandler.continuation.timeoutKey = key;
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
                 LOG.trace("Exchange completed for exchange removing timeout key: {}", exchange1);
@@ -481,8 +481,8 @@ public class ProxyHandler implements HttpHandler {
                         } else ProxyClientHandler.this.acceptConnection(resumed, connection);
                     }, () -> { if (!connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection()); });
                 }
-                @Override public void failed(HttpServerExchange ex) { failedAttempt(ex, attempt); }
-                @Override public void queuedRequestFailed(HttpServerExchange ex) { failedAttempt(ex, attempt); }
+                @Override public void failed(HttpServerExchange ex) { failedAttempt(attempt); }
+                @Override public void queuedRequestFailed(HttpServerExchange ex) { failedAttempt(attempt); }
                 @Override public void couldNotResolveBackend(HttpServerExchange ex) {
                     continuation.run(resumed -> {
                         if (attempt == continuation.attempt) unresolvedBackend(resumed);
@@ -491,7 +491,7 @@ public class ProxyHandler implements HttpHandler {
             }, remaining, TimeUnit.MILLISECONDS);
         }
 
-        private void failedAttempt(HttpServerExchange ex, long attempt) {
+        private void failedAttempt(long attempt) {
             continuation.run(resumed -> {
                 if (attempt == continuation.attempt) handleFailed(resumed);
             });
@@ -508,7 +508,7 @@ public class ProxyHandler implements HttpHandler {
             new ProxyAction(connection, ex, requestHeaders, rewriteHostHeader, reuseXForwarded, ex.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules, streamingRequest, streamResponseContentTypes, streamIdleTimeout, streamResponseHeaderOverwrite, continuation).run();
         }
 
-        private void failed(final HttpServerExchange exchange) {
+        private void failed() {
             continuation.run(this::handleFailed);
         }
 
@@ -554,7 +554,7 @@ public class ProxyHandler implements HttpHandler {
             }
         }
 
-        void cancel(final HttpServerExchange exchange) {
+        void cancel() {
             continuation.run(this::cancelRequest);
         }
 
@@ -1147,7 +1147,7 @@ public class ProxyHandler implements HttpHandler {
             IoUtils.safeClose(exchange.getConnection());
 
         } else if (idempotentRequestPredicate.resolve(exchange) && proxyClientHandler != null)
-            proxyClientHandler.failed(exchange); //this will attempt a retry if configured to do so
+            proxyClientHandler.failed(); //this will attempt a retry if configured to do so
 
         else {
             abortUpstream(continuation);
