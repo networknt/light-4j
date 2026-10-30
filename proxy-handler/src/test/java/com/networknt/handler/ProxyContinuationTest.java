@@ -359,7 +359,11 @@ class ProxyContinuationTest {
             var healthy = http.sendAsync(HttpRequest.newBuilder(front.resolve("/healthy")).timeout(Duration.ofSeconds(10)).build(),
                     HttpResponse.BodyHandlers.ofString());
             assertTrue(healthyEntered.await(5, TimeUnit.SECONDS));
-            assertThrows(IOException.class, () -> http.send(HttpRequest.newBuilder(front.resolve("/fail"))
+            if (fatal && !committed) {
+                var failed = http.send(HttpRequest.newBuilder(front.resolve("/fail")).timeout(Duration.ofSeconds(5)).build(),
+                        HttpResponse.BodyHandlers.ofString());
+                assertEquals(500, failed.statusCode());
+            } else assertThrows(IOException.class, () -> http.send(HttpRequest.newBuilder(front.resolve("/fail"))
                     .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString()));
             if (fatal) assertSame(sentinel, propagated.get(3, TimeUnit.SECONDS));
             assertFalse(healthy.isDone());
@@ -369,6 +373,91 @@ class ProxyContinuationTest {
                     HttpResponse.BodyHandlers.ofString()).body());
             assertEquals(1, peers.size(), "RST_STREAM must not kill the parent HTTP/2 connection");
         } finally { release.countDown(); }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void fatalHttp11FailureTerminatesRequestAndPropagatesOriginal(boolean committed) throws Exception {
+        Error fatal = new StackOverflowError("HTTP/1.1 fatal sentinel");
+        CompletableFuture<Error> propagated = new CompletableFuture<>();
+        try (Fixture fixture = new Fixture(); HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()) {
+            URI front = fixture.start(exchange -> {
+                if (exchange.getRequestPath().equals("/after")) {
+                    exchange.getResponseSender().send("accepted");
+                    return;
+                }
+                exchange.dispatch(() -> {
+                    try {
+                        if (committed) {
+                            var channel = exchange.getResponseChannel();
+                            Channels.writeBlocking(channel, ByteBuffer.wrap("first".getBytes(StandardCharsets.UTF_8)));
+                            Channels.flushBlocking(channel);
+                        }
+                        HandlerContinuation.task(exchange, ex -> { throw fatal; }).run();
+                    } catch (Error error) { propagated.complete(error); }
+                    catch (IOException e) { propagated.completeExceptionally(e); }
+                });
+            });
+            var request = HttpRequest.newBuilder(front).timeout(Duration.ofSeconds(5)).build();
+            if (committed) assertThrows(IOException.class, () -> http.send(request, HttpResponse.BodyHandlers.ofString()));
+            else assertEquals(500, http.send(request, HttpResponse.BodyHandlers.ofString()).statusCode());
+            assertSame(fatal, propagated.get(3, TimeUnit.SECONDS));
+            assertEquals("accepted", http.send(HttpRequest.newBuilder(front.resolve("/after")).build(),
+                    HttpResponse.BodyHandlers.ofString()).body());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"completed", "failed", "queued"})
+    void callbackAfterCommitTerminatesIncompleteStreamWithoutForwarding(String kind) throws Exception {
+        CompletableFuture<Runnable> late = new CompletableFuture<>();
+        AtomicInteger acquisitions = new AtomicInteger();
+        var closed = new java.util.concurrent.atomic.AtomicBoolean();
+        ClientConnection unusedConnection = (ClientConnection) Proxy.newProxyInstance(ClientConnection.class.getClassLoader(),
+                new Class<?>[]{ClientConnection.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "isMultiplexingSupported" -> false;
+                    case "close" -> { closed.set(true); yield null; }
+                    case "isOpen" -> !closed.get();
+                    case "toString" -> "unused late connection";
+                    default -> throw new AssertionError("A late callback must not start a ProxyAction: " + method.getName());
+                });
+        ProxyClient client = new ProxyClient() {
+            @Override public ProxyTarget findTarget(HttpServerExchange exchange) { return new ProxyTarget() {}; }
+            @Override public void getConnection(ProxyTarget target, HttpServerExchange exchange,
+                    ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit unit) {
+                acquisitions.incrementAndGet();
+                late.complete(() -> {
+                    assertTrue(exchange.isResponseStarted());
+                    assertFalse(exchange.isComplete());
+                    switch (kind) {
+                        case "completed" -> callback.completed(exchange, new ProxyConnection(unusedConnection, "/"));
+                        case "failed" -> callback.failed(exchange);
+                        case "queued" -> callback.queuedRequestFailed(exchange);
+                        default -> throw new AssertionError(kind);
+                    }
+                });
+            }
+        };
+        ProxyHandler proxy = ProxyHandler.builder().setProxyClient(client).setMaxRequestTime(0).build();
+        try (Fixture fixture = new Fixture()) {
+            URI front = fixture.start(exchange -> exchange.dispatch(worker -> {
+                proxy.handleRequest(worker);
+                worker.startBlocking();
+                worker.getOutputStream().write("first".getBytes(StandardCharsets.UTF_8));
+                worker.getOutputStream().flush();
+            }));
+            try (Socket socket = new Socket(front.getHost(), front.getPort())) {
+                socket.setSoTimeout(5000);
+                socket.getOutputStream().write("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+                        .getBytes(StandardCharsets.UTF_8));
+                late.get(3, TimeUnit.SECONDS).run();
+                String raw = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                assertTrue(raw.startsWith("HTTP/1.1 200"), raw);
+                assertTrue(raw.contains("first"), raw);
+                assertEquals(1, acquisitions.get());
+                if (kind.equals("completed")) assertTrue(closed.get());
+            }
+        }
     }
 
     private static ClientConnection decorateConnection(ClientConnection real, Phase phase,
@@ -412,8 +501,8 @@ class ProxyContinuationTest {
         private final java.util.function.Supplier<ControlledFailure> failure;
         ThrowingMetrics(java.util.function.Supplier<ControlledFailure> failure) { this.failure = failure; }
         @Override public void injectMetrics(HttpServerExchange exchange, long startTime, String name, String endpoint) { throw failure.get(); }
-        @Override protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) { }
-        @Override public void handleRequest(HttpServerExchange exchange) { }
+        @Override protected void createMetricsReporter(TimeSeriesDbSender sender, MetricsConfig config) { /* No reporter in this fixture. */ }
+        @Override public void handleRequest(HttpServerExchange exchange) { /* Lookup-only metrics fixture. */ }
         @Override public HttpHandler getNext() { return null; }
         @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
     }

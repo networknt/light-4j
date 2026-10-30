@@ -19,6 +19,7 @@ package com.networknt.exception;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerContinuation;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.RequestMdcContext;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -71,6 +72,7 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        RequestMdcContext.initialize(exchange);
         // dispatch here to make sure that all exceptions will be capture in this handler
         // otherwise, some of the exceptions will be captured in Connectors class in Undertow
         // As we've updated Server.java to redirect the logs to slf4j but still it make sense

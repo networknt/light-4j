@@ -181,8 +181,14 @@ one scope installs the canonical MDC_CONTEXT attachment (or an empty context whe
 absent), then restores the executing thread's previous MDC on every exit. Nested
 frames reuse that scope. Policy identity and exchange identity share one frame
 tracker; proxy callbacks do not maintain a second thread-local guard. Framework
-MDC updates publish immutable snapshots through addHandlerMDCContext, so readers
-do not traverse a concurrently mutated HashMap. Proxy callbacks use this scope rather than the unscoped
+MDC updates use one stable RequestMdcContext holder with an atomic immutable-map
+reference. Capture and the initial ExceptionHandler frame initialize that holder
+before any asynchronous hand-off; addHandlerMDCContext can also initialize it on
+first serial use. Later updates replace only the holder's snapshot, never its
+attachment. Custom asynchronous code must initialize/capture before hand-off.
+The Map-typed attachment key remains compatible with read-only consumers; direct
+attachment replacement or mutation is unsupported after initialization.
+Proxy callbacks use this scope rather than the unscoped
 LightThreadExecutor. ExceptionHandler retains its original response-channel
 availability policy after commitment; it does not forcibly close general-service
 responses. Its initial worker frame still clears request MDC at chain exit.
@@ -197,8 +203,9 @@ an unhandled failure returns 500; after commitment it closes the failed response
 stream without appending an error. Undertow's HTTP/2 ServerConnection.close()
 sends RST_STREAM for that stream, preserving healthy siblings. Late failures on
 completed exchanges do not rewrite a response or close a reused connection.
-The neutral Runnable adapter attempts stream/request cleanup before propagating
-the original Error; selected exception policies keep
+The neutral Runnable adapter attempts a 500 before commitment or a stream reset
+after commitment before propagating the original Error. Failed writes/resets are
+suppressed on that Error and cannot replace it; selected exception policies keep
 their existing handling behavior.
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.

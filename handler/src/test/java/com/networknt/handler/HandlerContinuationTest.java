@@ -36,15 +36,17 @@ class HandlerContinuationTest {
 
     @Test
     void mdcPublicationRetainsImmutableSnapshotsAndConcurrentUpdates() throws Exception {
-        HttpServerExchange exchange = new HttpServerExchange(null);
+        HttpServerExchange exchange = org.mockito.Mockito.spy(new HttpServerExchange(null));
         MiddlewareHandler middleware = new MiddlewareHandler() {
             @Override public boolean isEnabled() { return true; }
             @Override public HttpHandler getNext() { return null; }
             @Override public MiddlewareHandler setNext(HttpHandler next) { return this; }
-            @Override public void handleRequest(HttpServerExchange ex) { }
+            @Override public void handleRequest(HttpServerExchange ex) { /* Publication-only fixture. */ }
         };
         middleware.addHandlerMDCContext(exchange, "first", "one");
-        var first = exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT);
+        var holder = assertInstanceOf(RequestMdcContext.class,
+                exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT));
+        var first = holder.snapshot();
         assertThrows(UnsupportedOperationException.class, () -> first.put("bad", "mutation"));
         try (var workers = java.util.concurrent.Executors.newFixedThreadPool(4)) {
             var updates = java.util.stream.IntStream.range(0, 20).mapToObj(i -> workers.submit(() ->
@@ -52,7 +54,73 @@ class HandlerContinuationTest {
             for (var update : updates) update.get();
         }
         assertEquals(java.util.Map.of("first", "one"), first);
-        assertEquals(21, exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT).size());
+        assertEquals(21, holder.size());
+        assertSame(holder, exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT));
+        org.mockito.Mockito.verify(exchange, org.mockito.Mockito.times(1)).putAttachment(
+                org.mockito.Mockito.eq(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT), org.mockito.Mockito.any());
+    }
+
+    @Test
+    void readersIterateStableSnapshotsWhileWritersPublishToInitializedHolder() throws Exception {
+        HttpServerExchange exchange = org.mockito.Mockito.spy(new HttpServerExchange(null));
+        RequestMdcContext holder = RequestMdcContext.initialize(exchange);
+        holder.putFields(java.util.Map.of("epoch", "0", "mirror", "0"));
+        var retained = holder.snapshot();
+        var barrier = new java.util.concurrent.CyclicBarrier(4);
+        var writersDone = new java.util.concurrent.CountDownLatch(2);
+        var reads = new java.util.concurrent.atomic.AtomicInteger();
+        try (var workers = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            List<java.util.concurrent.Future<?>> tasks = new ArrayList<>();
+            for (int writer = 0; writer < 2; writer++) {
+                int id = writer;
+                tasks.add(workers.submit(() -> {
+                    try {
+                        barrier.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                        for (int i = 1; i <= 2000; i++) {
+                            String epoch = id + ":" + i;
+                            holder.putFields(java.util.Map.of("epoch", epoch, "mirror", epoch));
+                        }
+                    } finally { writersDone.countDown(); }
+                    return null;
+                }));
+            }
+            for (int reader = 0; reader < 2; reader++) tasks.add(workers.submit(() -> {
+                barrier.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                do {
+                    var snapshot = holder.snapshot();
+                    var copy = new java.util.HashMap<String, String>();
+                    snapshot.forEach(copy::put);
+                    assertEquals(copy.get("epoch"), copy.get("mirror"), "Never iterate a torn generation");
+                    assertThrows(UnsupportedOperationException.class, () -> snapshot.put("bad", "mutation"));
+                    reads.incrementAndGet();
+                } while (writersDone.getCount() != 0);
+                return null;
+            }));
+            for (var task : tasks) task.get(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        assertTrue(reads.get() >= 2);
+        assertEquals(java.util.Map.of("epoch", "0", "mirror", "0"), retained,
+                "A mutable HashMap implementation must fail this retained-generation assertion");
+        assertSame(holder, exchange.getAttachment(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT));
+        org.mockito.Mockito.verify(exchange, org.mockito.Mockito.times(1)).putAttachment(
+                org.mockito.Mockito.eq(com.networknt.httpstring.AttachmentConstants.MDC_CONTEXT), org.mockito.Mockito.any());
+    }
+
+    @Test
+    void failedFatalStatusWriteCannotReplaceOriginalError() throws Exception {
+        Error fatal = new StackOverflowError("original");
+        RuntimeException writeFailure = new IllegalStateException("status write failed");
+        IOException closeFailure = new IOException("reset failed too");
+        var connection = org.mockito.Mockito.mock(io.undertow.server.ServerConnection.class);
+        org.mockito.Mockito.doThrow(closeFailure).when(connection).close();
+        HttpServerExchange exchange = org.mockito.Mockito.spy(new HttpServerExchange(connection));
+        org.mockito.Mockito.doThrow(writeFailure).when(exchange).endExchange();
+        Error observed = assertThrows(StackOverflowError.class, () ->
+                HandlerContinuation.task(exchange, ex -> { throw fatal; }).run());
+        assertSame(fatal, observed);
+        assertEquals(500, exchange.getStatusCode());
+        assertArrayEquals(new Throwable[]{writeFailure, closeFailure}, fatal.getSuppressed());
+        org.mockito.Mockito.verify(connection).close();
     }
 
     @org.junit.jupiter.params.ParameterizedTest
@@ -86,13 +154,16 @@ class HandlerContinuationTest {
     void runnableAdapterPropagatesFatalErrorsAndRestoresMdc() {
         var original = org.slf4j.MDC.getCopyOfContextMap();
         try {
-            HttpServerExchange exchange = new HttpServerExchange(null);
+            HttpServerExchange exchange = org.mockito.Mockito.spy(new HttpServerExchange(null));
+            org.mockito.Mockito.doReturn(exchange).when(exchange).endExchange();
             org.slf4j.MDC.put("worker", "prior");
             Error error = new OutOfMemoryError("injected sentinel, no memory pressure");
             Runnable task = HandlerContinuation.task(exchange,
                     HandlerContinuation.capture(exchange, ex -> { throw error; }));
             assertSame(error, assertThrows(OutOfMemoryError.class, task::run));
             assertEquals("prior", org.slf4j.MDC.get("worker"));
+            org.mockito.Mockito.verify(exchange).endExchange();
+            assertEquals(500, exchange.getStatusCode());
         } finally {
             if (original == null) org.slf4j.MDC.clear();
             else org.slf4j.MDC.setContextMap(original);
@@ -139,7 +210,7 @@ class HandlerContinuationTest {
         HandlerContinuation.execute(exchange, selected, ex ->
                 assertSame(failure, assertThrows(IOException.class, () -> unwrapped.handleRequest(ex))));
         assertSame(failure, assertThrows(IOException.class, () ->
-                HandlerContinuation.execute(exchange, (ex, task) -> { throw failure; }, ignored -> {})));
+                HandlerContinuation.execute(exchange, (ex, task) -> { throw failure; }, ignored -> { /* The boundary throws before this continuation runs. */ })));
         assertSame(failure, assertThrows(IOException.class, () -> unwrapped.handleRequest(exchange)));
     }
 }

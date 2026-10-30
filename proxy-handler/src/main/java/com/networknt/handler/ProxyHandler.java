@@ -440,6 +440,15 @@ public class ProxyHandler implements HttpHandler {
         };
     }
 
+    private static boolean terminalCallback(HttpServerExchange exchange) {
+        if (exchange.isComplete() || Boolean.TRUE.equals(exchange.getAttachment(ABORTING))) return true;
+        if (!exchange.isResponseStarted()) return false;
+        LOG.warn("Proxy callback arrived after response commitment for {}; terminating the failed stream", exchange.getRequestPath());
+        abortUpstream(exchange);
+        IoUtils.safeClose(exchange.getConnection());
+        return true;
+    }
+
     private final class ProxyClientHandler implements ProxyCallback<ProxyConnection>, Runnable {
         private final ProxyContinuation continuation;
         private int tries;
@@ -469,7 +478,7 @@ public class ProxyHandler implements HttpHandler {
         @Override
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             continuationTask(exchange, continuation, ex -> {
-                if (ex.isComplete() || ex.isResponseStarted() || Boolean.TRUE.equals(ex.getAttachment(ABORTING))) {
+                if (terminalCallback(ex)) {
                     if (!connection.getConnection().isMultiplexingSupported()) IoUtils.safeClose(connection.getConnection());
                     return;
                 }
@@ -486,37 +495,24 @@ public class ProxyHandler implements HttpHandler {
         }
 
         private void handleFailed(final HttpServerExchange exchange) {
-            if (exchange.isComplete() || exchange.isResponseStarted()
-                    || Boolean.TRUE.equals(exchange.getAttachment(ABORTING))) return;
-            LOG.debug("Failed calling backend with tries = {} maxRetryAttempts = {} for exchange: {}", this.tries, this.maxRetryAttempts, exchange);
-
-            final long time = System.currentTimeMillis();
-
-            if (this.tries++ < this.maxRetryAttempts) {
-
-                if (this.timeout > 0 && time > this.timeout) {
-                    LOG.trace("Current time = {} passes timeout {} for exchange: {}", time, this.timeout, exchange);
-                    cancelRequest(exchange);
-
-                } else {
-                    this.target = proxyClient.findTarget(exchange);
-                    LOG.trace("Retry target = {}", target);
-
-                    if (this.target != null) {
-                        final long remaining = this.timeout > 0 ? this.timeout - time : -1;
-                        LOG.trace("Retry with remaining = {} for exchange: {}", remaining, exchange);
-                        proxyClient.getConnection(target, exchange, this, remaining, TimeUnit.MILLISECONDS);
-
-                    } else {
-                        LOG.trace("Target is null, cannot resolve the backend");
-                        unresolvedBackend(exchange); // The context was registered when we started, so return 503
-                    }
-                }
-
-            } else {
-                LOG.trace("Max number fo retry attempts reached for exchange: {}", exchange);
+            if (terminalCallback(exchange)) return;
+            LOG.debug("Failed calling backend with tries = {} maxRetryAttempts = {} for exchange: {}", tries, maxRetryAttempts, exchange);
+            if (tries++ >= maxRetryAttempts) {
                 unresolvedBackend(exchange);
+                return;
             }
+            long time = System.currentTimeMillis();
+            if (timeout > 0 && time > timeout) {
+                cancelRequest(exchange);
+                return;
+            }
+            target = proxyClient.findTarget(exchange);
+            if (target == null) {
+                unresolvedBackend(exchange);
+                return;
+            }
+            long remaining = timeout > 0 ? timeout - time : -1;
+            proxyClient.getConnection(target, exchange, this, remaining, TimeUnit.MILLISECONDS);
         }
 
         @Override
