@@ -177,15 +177,18 @@ changing its next handler. Named handlers are retained; when exception handling
 is disabled and omitted from the chain, failures remain under Undertow's default
 policy. Nested boundaries restore their enclosing scope, and state is isolated
 per exchange. Capturing a boundary does not snapshot thread-local MDC. At resume,
-one scope installs the canonical MDC_CONTEXT attachment (or an empty context when
+one scope reads the directly captured request holder (or an empty context when
 absent), then restores the executing thread's previous MDC on every exit. Nested
 frames reuse that scope. Policy identity and exchange identity share one frame
 tracker; proxy callbacks do not maintain a second thread-local guard. Framework
 MDC updates use one stable RequestMdcContext holder with an atomic immutable-map
-reference. Capture and the initial ExceptionHandler frame initialize that holder
-before any asynchronous hand-off; addHandlerMDCContext can also initialize it on
+reference. The first boundary execution or capture initializes that holder
+before its asynchronous hand-off; addHandlerMDCContext can also initialize it on
 first serial use. Later updates replace only the holder's snapshot, never its
-attachment. Custom asynchronous code must initialize/capture before hand-off.
+attachment. Captured frames and their MDC helper updates reuse the holder directly,
+without attachment lookups. Active exception policy is thread-scoped and captured
+by value; overlapping frames never rewrite a policy attachment. Custom asynchronous
+code must initialize/capture before hand-off.
 The Map-typed attachment key remains compatible with read-only consumers; direct
 attachment replacement or mutation is unsupported after initialization.
 Proxy callbacks use this scope rather than the unscoped
@@ -206,7 +209,15 @@ completed exchanges do not rewrite a response or close a reused connection.
 The neutral Runnable adapter attempts a 500 before commitment or a stream reset
 after commitment before propagating the original Error. Failed writes/resets are
 suppressed on that Error and cannot replace it; selected exception policies keep
-their existing handling behavior.
+their existing handling behavior. Ordinary exceptions use the same guarded cleanup.
+Proxy callbacks serialize on private per-request state rather than mutating
+connection, cancellation or timeout attachments. The legacy public `CONNECTION`
+key remains declared but is no longer populated; external consumers of that
+implementation attachment need compatibility review before upgrade. A proxy-generated terminal
+response is marked before sending, so benign late callbacks leave it draining.
+Unexpected committed-response callbacks reset only the affected HTTP/2 stream.
+Allocation samples and a reproducible local probe are in
+[handler/qualification](handler/qualification/README.md).
 Custom asynchronous handlers must explicitly capture before registering their
 callbacks; this contract cannot intercept arbitrary third-party hand-offs.
 Body-reading requests capture lazily only when a read suspends. ingress-proxy uses

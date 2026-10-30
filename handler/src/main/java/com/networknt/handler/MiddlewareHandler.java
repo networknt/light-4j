@@ -16,7 +16,6 @@
 
 package com.networknt.handler;
 
-import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
