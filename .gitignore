@@ -26,3 +26,6 @@ build.out
 .claude
 AGENTS.md
 CLAUDE.md
+scripts/__pycache__/
+scripts/tests/
+
