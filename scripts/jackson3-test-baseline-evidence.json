@@ -122,13 +122,13 @@
       "review_issues": []
     },
     "client": {
-      "tests": 84,
+      "tests": 237,
       "failures": 0,
       "errors": 0,
       "skipped": 15,
-      "executed": 69,
-      "baseline_executed": 69,
-      "current_floor": 65,
+      "executed": 222,
+      "baseline_executed": 222,
+      "current_floor": 210,
       "review_issues": []
     },
     "client-config": {
@@ -162,13 +162,13 @@
       "review_issues": []
     },
     "config": {
-      "tests": 128,
+      "tests": 137,
       "failures": 0,
       "errors": 0,
       "skipped": 5,
-      "executed": 123,
-      "baseline_executed": 123,
-      "current_floor": 116,
+      "executed": 132,
+      "baseline_executed": 132,
+      "current_floor": 125,
       "review_issues": []
     },
     "config-reload": {
@@ -252,13 +252,13 @@
       "review_issues": []
     },
     "decryptor": {
-      "tests": 8,
+      "tests": 20,
       "failures": 0,
       "errors": 0,
       "skipped": 1,
-      "executed": 7,
-      "baseline_executed": 7,
-      "current_floor": 6,
+      "executed": 19,
+      "baseline_executed": 19,
+      "current_floor": 18,
       "review_issues": []
     },
     "deref-token": {
@@ -442,13 +442,13 @@
       "review_issues": []
     },
     "ingress-proxy": {
-      "tests": 47,
+      "tests": 50,
       "failures": 0,
       "errors": 0,
       "skipped": 8,
-      "executed": 39,
-      "baseline_executed": 39,
-      "current_floor": 37,
+      "executed": 42,
+      "baseline_executed": 42,
+      "current_floor": 39,
       "review_issues": []
     },
     "ip-whitelist": {
@@ -692,13 +692,13 @@
       "review_issues": []
     },
     "security": {
-      "tests": 72,
+      "tests": 73,
       "failures": 0,
       "errors": 0,
       "skipped": 3,
-      "executed": 69,
-      "baseline_executed": 69,
-      "current_floor": 65,
+      "executed": 70,
+      "baseline_executed": 70,
+      "current_floor": 66,
       "review_issues": []
     },
     "security-config": {
@@ -712,33 +712,33 @@
       "review_issues": []
     },
     "server": {
-      "tests": 31,
+      "tests": 34,
       "failures": 0,
       "errors": 0,
       "skipped": 2,
-      "executed": 29,
-      "baseline_executed": 29,
-      "current_floor": 27,
+      "executed": 32,
+      "baseline_executed": 32,
+      "current_floor": 30,
       "review_issues": []
     },
     "server-config": {
-      "tests": 7,
+      "tests": 23,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "executed": 7,
-      "baseline_executed": 7,
-      "current_floor": 6,
+      "executed": 23,
+      "baseline_executed": 23,
+      "current_floor": 21,
       "review_issues": []
     },
     "service": {
-      "tests": 27,
+      "tests": 28,
       "failures": 0,
       "errors": 0,
       "skipped": 1,
-      "executed": 26,
-      "baseline_executed": 26,
-      "current_floor": 24,
+      "executed": 27,
+      "baseline_executed": 27,
+      "current_floor": 25,
       "review_issues": []
     },
     "sse-handler": {
@@ -782,13 +782,13 @@
       "review_issues": []
     },
     "token-exchange": {
-      "tests": 62,
+      "tests": 63,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "executed": 62,
-      "baseline_executed": 62,
-      "current_floor": 58,
+      "executed": 63,
+      "baseline_executed": 63,
+      "current_floor": 59,
       "review_issues": []
     },
     "token-limit": {
@@ -834,36 +834,37 @@
   },
   "missing_modules": [],
   "totals": {
-    "tests": 1372,
+    "tests": 1571,
     "failures": 0,
     "errors": 0,
     "skipped": 89
   },
   "needs_review": false,
   "provenance": {
-    "kind": "reviewed ordinary-CI report snapshot; not reusable qualification evidence",
+    "kind": "candidate qualify-job report snapshot; recorder rejected stale policy; not reusable qualification evidence",
     "repository": "networknt/light-4j",
-    "source_sha": "97b2359b92ed3e1d05cac04f2da8760aa954e49d",
+    "source_sha": "e77455b400f4319c41eb19aaa06c780200dee48e",
+    "policy_sha": "f0d2100f972eec765b2b276e7ace38922394f0a6",
     "workflow": ".github/workflows/jackson3-source-build.yml",
-    "event": "push",
-    "run_id": 40356825612,
+    "event": "workflow_dispatch",
+    "run_id": 41688412346,
     "run_attempt": 1,
-    "conclusion": "success",
-    "run_url": "https://github.com/networknt/light-4j/actions/runs/40356825612",
+    "conclusion": "failure",
+    "qualify_job_conclusion": "success",
+    "record_job_conclusion": "failure (BaselineGrowthError)",
+    "run_url": "https://github.com/networknt/light-4j/actions/runs/41688412346",
     "artifact": {
-      "id": 12666497299,
-      "name": "source-build-reports",
-      "sha256": "d10aad6b423aaacbb93a4df9aedb916b81135c5be654d55c72dc8832c7b0e64b",
-      "created_at": "2026-10-26T16:23:12Z",
-      "expires_at": "2027-01-24T16:12:17Z"
+      "id": 13257171875,
+      "name": "candidate-reports-attempt-1",
+      "sha256": "b1df44cda69dbddc0b8246dd078fff862e2649945c3a6779bf0de8b815131b23",
+      "expires_at": "2027-02-01T17:52:31Z"
     },
-    "report_root": "consumer",
-    "xml_reports": 284,
+    "report_root": ".",
+    "xml_reports": 306,
     "source_refs": {
-      "http-client": "5ecee29dbb08d813512f5379c2e1b902d553c5d4",
-      "yaml-rule": "c237cc3a25720f43e57bf571e25d5fa06687aa3b"
+      "http-client": "5650bef3439bedbf725be49d397a1acdab3e7b8e",
+      "yaml-rule": "de75f33381f0b4a44679da36513075e8807eb26d"
     },
-    "generator": "python3 scripts/preview_jackson3_test_baselines.py --reports-root <source-build-reports>/consumer",
-    "verification": "GitHub run head/event/status and artifact digest checked; ZIP SHA-256 and all parsed XML bytes match. Counts remain reviewed observations, not an independent attestation."
+    "verification": "GitHub candidate input, qualify/record job conclusions and artifact digest checked. Downloaded ZIP SHA-256 and extracted XML bytes match. All 83 modules have zero failures/errors; this snapshot is not reusable qualification."
   }
 }
