@@ -53,7 +53,8 @@ report parser accepts all 306 XML files, module validation passes, and
 ## Required promotion order
 
 Follow [JACKSON3-QUALIFICATION.md](JACKSON3-QUALIFICATION.md#promote-after-review-and-merge).
-Review and merge the runtime fixture repair (#2842) and this policy update first.
+The shared fixture repair (#2842) is merged. Review and merge the remaining config
+fixture repairs and this policy update first.
 Select the actual resulting master policy SHA; do not point consumers at this
 open branch. Create/protect its new immutable policy ref, qualify the selected
 core with the recorded prerequisite SHAs, then complete registration and reviewed
