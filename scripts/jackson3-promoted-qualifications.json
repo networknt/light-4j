@@ -9,6 +9,15 @@
         "yaml-rule": "c237cc3a25720f43e57bf571e25d5fa06687aa3b",
         "http-client": "5ecee29dbb08d813512f5379c2e1b902d553c5d4"
       }
+    },
+    {
+      "policy_sha": "58d2f2ec16cf6a5e9ebc1fa12fb7f65e0d5b9fc5",
+      "core_sha": "e77455b400f4319c41eb19aaa06c780200dee48e",
+      "policy_ref": "jackson3-qualification-policy-58d2f2ec16cf6a5e9ebc1fa12fb7f65e0d5b9fc5",
+      "source_refs": {
+        "yaml-rule": "de75f33381f0b4a44679da36513075e8807eb26d",
+        "http-client": "5650bef3439bedbf725be49d397a1acdab3e7b8e"
+      }
     }
   ]
 }
