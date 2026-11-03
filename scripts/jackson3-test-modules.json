@@ -48,8 +48,8 @@
     "baseline_executed": 3
   },
   "client": {
-    "minimum_executed": 65,
-    "baseline_executed": 69
+    "minimum_executed": 210,
+    "baseline_executed": 222
   },
   "client-config": {
     "minimum_executed": 5,
@@ -64,8 +64,8 @@
     "baseline_executed": 4
   },
   "config": {
-    "minimum_executed": 116,
-    "baseline_executed": 123
+    "minimum_executed": 125,
+    "baseline_executed": 132
   },
   "config-reload": {
     "minimum_executed": 2,
@@ -100,8 +100,8 @@
     "baseline_executed": 1
   },
   "decryptor": {
-    "minimum_executed": 6,
-    "baseline_executed": 7
+    "minimum_executed": 18,
+    "baseline_executed": 19
   },
   "deref-token": {
     "minimum_executed": 1,
@@ -176,8 +176,8 @@
     "baseline_executed": 1
   },
   "ingress-proxy": {
-    "minimum_executed": 37,
-    "baseline_executed": 39
+    "minimum_executed": 39,
+    "baseline_executed": 42
   },
   "ip-whitelist": {
     "minimum_executed": 11,
@@ -277,24 +277,24 @@
     "baseline_executed": 14
   },
   "security": {
-    "minimum_executed": 65,
-    "baseline_executed": 69
+    "minimum_executed": 66,
+    "baseline_executed": 70
   },
   "security-config": {
     "minimum_executed": 5,
     "baseline_executed": 6
   },
   "server": {
-    "minimum_executed": 27,
-    "baseline_executed": 29
+    "minimum_executed": 30,
+    "baseline_executed": 32
   },
   "server-config": {
-    "minimum_executed": 6,
-    "baseline_executed": 7
+    "minimum_executed": 21,
+    "baseline_executed": 23
   },
   "service": {
-    "minimum_executed": 24,
-    "baseline_executed": 26
+    "minimum_executed": 25,
+    "baseline_executed": 27
   },
   "sse-handler": {
     "minimum_executed": 2,
@@ -313,8 +313,8 @@
     "baseline_executed": 2
   },
   "token-exchange": {
-    "minimum_executed": 58,
-    "baseline_executed": 62
+    "minimum_executed": 59,
+    "baseline_executed": 63
   },
   "token-limit": {
     "minimum_executed": 7,
