@@ -31,7 +31,7 @@ class CorsBrowserSmokeTest {
         try {
             server.start();
             int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
-            Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("http://*.example.com:" + port),
+            Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("http://*.example.com:" + port),
                     "allowedMethods", List.of("GET", "PUT")));
             CorsHttpHandler cors = new CorsHttpHandler(name);
             cors.setNext(exchange -> {

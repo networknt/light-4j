@@ -23,7 +23,7 @@ class CorsRequestIsolationTest {
     @Test
     void rejectionCannotChangeAnAlreadyMatchedRequestsDispatchDecision() throws Exception {
         String name = "cors-request-isolation";
-        Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("https://app.example.com"),
+        Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://app.example.com"),
                 "allowedMethods", List.of("GET")));
         CountDownLatch accepted = new CountDownLatch(1);
         CountDownLatch resume = new CountDownLatch(1);

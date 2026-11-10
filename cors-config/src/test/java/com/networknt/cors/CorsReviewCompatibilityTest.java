@@ -48,7 +48,7 @@ class CorsReviewCompatibilityTest {
         try {
             for (String property : List.of("allowedOrigins", "allowedMethods")) {
                 String valid = property.equals("allowedOrigins") ? "https://example.com" : "GET";
-                Config.getInstance().putInConfigCache(name, Map.of(property, List.of(valid, 42)));
+                Config.getInstance().putInConfigCache(name, Map.of("enabled", true, property, List.of(valid, 42)));
                 ConfigException error = assertThrows(ConfigException.class, () -> CorsConfig.load(name));
                 assertTrue(error.getMessage().contains(property + "[1]"), error.getMessage());
             }
@@ -61,7 +61,7 @@ class CorsReviewCompatibilityTest {
     void emptyCommaSeparatedItemsDoNotBreakValidOrigins() {
         String name = "cors-commas-" + UUID.randomUUID();
         try {
-            Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", ",https://example.com,, https://*.example.org,",
+            Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", ",https://example.com,, https://*.example.org,",
                     "allowedMethods", ",GET,,PUT,"));
             CorsConfig config = CorsConfig.load(name);
             assertTrue(config.policyForPath("/").origins().matches("https://example.com"));
@@ -77,7 +77,7 @@ class CorsReviewCompatibilityTest {
     void invalidElementTypesReportPropertyAndIndexInsteadOfJdkExceptions() {
         String name = "cors-elements-" + UUID.randomUUID();
         try {
-            Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("https://example.com")));
+            Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://example.com")));
             CorsConfig config = CorsConfig.load(name);
             ConfigException methods = assertThrows(ConfigException.class,
                     () -> config.setAllowedMethods(Arrays.asList("GET", null)));

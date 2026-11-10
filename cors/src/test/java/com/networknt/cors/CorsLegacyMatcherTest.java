@@ -8,7 +8,6 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,13 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class CorsLegacyMatcherTest {
     @Test
     void malformedLegacyEntriesDoNotThrowAndDeniedRequestsStillAudit() throws Exception {
         String name = "cors-legacy-match";
-        Config.getInstance().putInConfigCache(name, Map.of("allowedMethods", List.of("GET")));
+        Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedMethods", List.of("GET")));
         try {
             CorsHttpHandler handler = new CorsHttpHandler(name);
             List<String> origins = Arrays.asList("not an origin", null, "https://trusted.example.com");
@@ -38,26 +36,15 @@ class CorsLegacyMatcherTest {
     }
 
     @Test
-    void legacyMatcherReusesCompiledRulesAndNoticesCollectionChanges() throws Exception {
-        String name = "cors-legacy-cache";
-        Config.getInstance().putInConfigCache(name, Map.of("allowedMethods", List.of("GET")));
-        try {
-            CorsHttpHandler handler = new CorsHttpHandler(name);
-            List<String> origins = new ArrayList<>(List.of("https://*.example.com"));
-            try (MockedStatic<CorsOriginPolicy> compiler = mockStatic(CorsOriginPolicy.class, CALLS_REAL_METHODS)) {
-                for (int i = 0; i < 3; i++) {
-                    assertEquals("https://app.example.com", CorsHttpHandler.matchOrigin(
-                            exchange("https://app.example.com", "localhost", "http"), origins, handler));
-                }
-                compiler.verify(() -> CorsOriginPolicy.compileLegacy(anyCollection()), times(1));
-                origins.add("https://example.org");
-                assertEquals("https://example.org", CorsHttpHandler.matchOrigin(
-                        exchange("https://example.org", "localhost", "http"), origins, handler));
-                compiler.verify(() -> CorsOriginPolicy.compileLegacy(anyCollection()), times(2));
-            }
-        } finally {
-            Config.getInstance().clearConfigCache(name);
-        }
+    void legacyMatcherNoticesCollectionChangesWithoutCompilingPatterns() throws Exception {
+        List<String> origins = new ArrayList<>(List.of("https://app.example.com"));
+        assertEquals("https://app.example.com", CorsHttpHandler.matchOrigin(
+                exchange("https://app.example.com", "localhost", "http"), origins, null));
+        origins.clear();
+        origins.add("https://example.org");
+        assertNull(CorsHttpHandler.matchOrigin(exchange("https://app.example.com", "localhost", "http"), origins, null));
+        assertEquals("https://example.org", CorsHttpHandler.matchOrigin(
+                exchange("https://example.org", "localhost", "http"), origins, null));
     }
 
     @Test

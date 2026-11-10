@@ -46,9 +46,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public static final String CORS_PREFLIGHT_REQUEST_FAILED =  "ERR10092";
     private String configName = CorsConfig.CONFIG_NAME;
     private volatile HttpHandler next;
-    private volatile LegacyPolicy legacyPolicy;
-
-    private record LegacyPolicy(List<?> origins, CorsOriginPolicy policy) { }
     /** Default max age **/
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
@@ -139,31 +136,20 @@ public class CorsHttpHandler implements MiddlewareHandler {
      * If it doesn't match then a 403 response code is set on the response and it returns null.
      * @param exchange the current HttpExchange.
      * @param allowedOrigins list of sanitized allowed origins.
-     * @param handler retained for source compatibility; request decisions are exchange-local.
-     * @return the single validated request origin, null otherwise.
+     * Caller-supplied collections remain exact-only; wildcard entries do not grant subdomain access.
+     * Configuration-driven wildcard matching uses the separately compiled policy in handleRequest.
+     * @param handler retained for source/binary compatibility; this stateless lookup ignores it, including null.
+     * @return the matching configured string, or the derived server-origin fallback, or null on rejection.
      * @throws Exception the checked exception
      */
+    @SuppressWarnings("java:S1172") // Public compatibility signature; the stateless lookup ignores handler.
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins, CorsHttpHandler handler) throws Exception {
-        CorsOriginPolicy policy = handler == null
-                ? CorsOriginPolicy.compileLegacy(allowedOrigins == null ? List.of() : allowedOrigins)
-                : handler.policyForOrigins(allowedOrigins);
-        String origin = matchOrigin(exchange, policy);
-        if (origin == null) rejectOrigin(exchange);
-        return origin;
-    }
-
-    private CorsOriginPolicy policyForOrigins(Collection<?> allowedOrigins) {
-        List<?> snapshot = allowedOrigins == null ? List.of() : new ArrayList<>(allowedOrigins);
-        LegacyPolicy cached = legacyPolicy;
-        if (cached != null && cached.origins.equals(snapshot)) return cached.policy;
-        synchronized (this) {
-            cached = legacyPolicy;
-            if (cached == null || !cached.origins.equals(snapshot)) {
-                cached = new LegacyPolicy(Collections.unmodifiableList(snapshot), CorsOriginPolicy.compileLegacy(snapshot));
-                legacyPolicy = cached;
-            }
-            return cached.policy;
-        }
+        HeaderValues origins = exchange.getRequestHeaders().get(Headers.ORIGIN);
+        String origin = origins == null || origins.size() != 1 ? null : origins.getFirst();
+        String matched = CorsOriginPolicy.matchLegacy(origin, allowedOrigins, () -> defaultOrigin(exchange.getRequestScheme(),
+                NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort()));
+        if (matched == null) rejectOrigin(exchange);
+        return matched;
     }
 
     private static String matchOrigin(HttpServerExchange exchange, CorsOriginPolicy policy) {

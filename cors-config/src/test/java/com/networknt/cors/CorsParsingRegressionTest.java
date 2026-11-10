@@ -42,7 +42,7 @@ class CorsParsingRegressionTest {
     void rejectsMalformedAuthorityAndPortsWithoutLeakingParserExceptions() {
         for (String origin : List.of("http://[127.0.0.1]", "http://[::1]extra", "http://[::1]:",
                 "http://[fe80::1%eth0]", "http://::1", "http://host:9999999999999999999", "http://host:+80",
-                "http://host:80/path", "http://a..b", "http://host\\path", "http://host?x", "http://host#x")) {
+                "http://host:-0", "http://host:-000", "http://host:80/path", "http://a..b", "http://host\\path", "http://host?x", "http://host#x")) {
             assertThrows(ConfigException.class, () -> CorsOriginPolicy.compile(List.of(origin), "test"), origin);
             assertEquals(origin, CorsUtil.sanitizeDefaultPort(origin));
         }

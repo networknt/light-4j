@@ -23,7 +23,7 @@ class CorsProxyVaryTest {
     @Test
     void preservesBackendVaryForCorsAndNonCorsProxyResponses() throws Exception {
         String name = "cors-proxy-vary";
-        Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.example.com"),
+        Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.com"),
                 "allowedMethods", List.of("GET")));
         Undertow backend = Undertow.builder().addHttpListener(0, "127.0.0.1").setIoThreads(1).setHandler(exchange -> {
             if (exchange.getRequestPath().equals("/star")) {

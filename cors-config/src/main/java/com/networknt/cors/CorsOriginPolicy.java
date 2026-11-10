@@ -17,6 +17,7 @@
 package com.networknt.cors;
 
 import com.google.common.net.InetAddresses;
+import com.google.common.net.HostAndPort;
 import com.google.common.net.InternetDomainName;
 import com.networknt.config.ConfigException;
 
@@ -47,17 +48,25 @@ public final class CorsOriginPolicy {
         return new CorsOriginPolicy(rules);
     }
 
-    /** Legacy matcher inputs are not startup configuration: unusable entries remain non-matches. */
-    static CorsOriginPolicy compileLegacy(Collection<?> origins) {
-        List<Rule> rules = new ArrayList<>();
-        for (Object value : origins) {
+    /** Exact-only compatibility lookup: returns the configured entry, never enables patterns. */
+    static String matchLegacy(String value, Collection<?> origins, Supplier<String> serverOrigin) {
+        final String comparable;
+        if ("null".equals(value)) {
+            comparable = value;
+        } else {
             try {
-                rules.add(compileRule(value, "allowedOrigins"));
-            } catch (ConfigException ignored) {
-                // Preserve valid entries in a mixed legacy collection without trusting malformed ones.
+                comparable = sanitizeDefaultPort(value, parse(value));
+            } catch (IllegalArgumentException e) {
+                return null;
             }
         }
-        return new CorsOriginPolicy(rules);
+        if (origins != null) {
+            for (Object item : origins) {
+                if (item instanceof String origin && origin.indexOf('*') < 0 && origin.equalsIgnoreCase(comparable)) return origin;
+            }
+        }
+        String fallback = serverOrigin.get();
+        return fallback != null && fallback.equalsIgnoreCase(comparable) ? fallback : null;
     }
 
     private static Rule compileRule(Object value, String location) {
@@ -121,13 +130,17 @@ public final class CorsOriginPolicy {
 
     static String sanitizeDefaultPort(String value) {
         try {
-            Origin origin = parse(value);
-            int colon = value.lastIndexOf(':');
-            if (isHttp(origin.scheme) && colon > value.indexOf("://") + 2 && colon > value.lastIndexOf(']')
-                    && origin.port == defaultPort(origin.scheme)) return value.substring(0, colon);
+            return sanitizeDefaultPort(value, parse(value));
         } catch (IllegalArgumentException ignored) {
             // This compatibility utility leaves malformed input unchanged; matching rejects it.
+            return value;
         }
+    }
+
+    private static String sanitizeDefaultPort(String value, Origin origin) {
+        int colon = value.lastIndexOf(':');
+        if (isHttp(origin.scheme) && colon > value.indexOf("://") + 2 && colon > value.lastIndexOf(']')
+                && origin.port == defaultPort(origin.scheme)) return value.substring(0, colon);
         return value;
     }
 
@@ -152,18 +165,14 @@ public final class CorsOriginPolicy {
     }
 
     private static HostPort parseAuthority(String authority) {
-        if (authority.startsWith("[")) {
-            int close = authority.indexOf(']');
-            if (close < 0) throw new IllegalArgumentException("invalid IPv6 literal");
-            String address = authority.substring(1, close);
-            if (address.indexOf(':') < 0) throw new IllegalArgumentException("invalid IPv6 literal");
-            String host = "[" + InetAddresses.toAddrString(InetAddresses.forString(address)) + "]";
-            return new HostPort(host, parsePort(authority.substring(close + 1)), false);
-        }
-        int colon = authority.indexOf(':');
-        String host = colon < 0 ? authority : authority.substring(0, colon);
-        boolean dnsHost = validateHostname(host);
-        return new HostPort(host, colon < 0 ? -1 : parsePort(authority.substring(colon)), dnsHost);
+        // Guava accepts empty ports/negative zero; some versions accept scoped IP literals.
+        if (authority.endsWith(":") || authority.contains(":-") || authority.indexOf('%') >= 0) throw new IllegalArgumentException("invalid origin authority");
+        HostAndPort parsed = HostAndPort.fromString(authority).requireBracketsForIPv6();
+        String host = parsed.getHost();
+        boolean ipv6 = host.indexOf(':') >= 0;
+        if (ipv6) host = "[" + InetAddresses.toAddrString(InetAddresses.forString(host)) + "]";
+        boolean dnsHost = !ipv6 && validateHostname(host);
+        return new HostPort(host, parsed.getPortOrDefault(-1), dnsHost);
     }
 
     private static boolean validateHostname(String host) {
@@ -178,19 +187,6 @@ public final class CorsOriginPolicy {
             return false;
         }
         return !trailingDot && host.indexOf('_') < 0;
-    }
-
-    private static int parsePort(String suffix) {
-        if (suffix.isEmpty()) return -1;
-        if (suffix.length() < 2 || suffix.charAt(0) != ':') throw new IllegalArgumentException("invalid port");
-        int port = 0;
-        for (int i = 1; i < suffix.length(); i++) {
-            char c = suffix.charAt(i);
-            if (c < '0' || c > '9') throw new IllegalArgumentException("invalid port");
-            port = port * 10 + c - '0';
-            if (port > 65535) throw new IllegalArgumentException("port must be 0 through 65535");
-        }
-        return port;
     }
 
     private static int defaultPort(String scheme) {

@@ -57,7 +57,7 @@ or trust. CORS does not replace authentication, authorization, or CSRF protectio
 
 ## Compatibility and path selection
 
-This feature preserves the existing server-origin fallback: after an allowlist
+The Undertow handler preserves its existing server-origin fallback: after an allowlist
 miss, an origin matching the exchange's scheme, hostname, and port is accepted.
 This also applies when the selected origins list is missing or empty. Such lists
 therefore do not express an absolute deny-all policy. Configure virtual hosts
@@ -108,7 +108,9 @@ does not establish that subdomains are trusted. Downstream dependency overrides
 must preserve the tested PSL behavior.
 
 All global and per-path patterns compile before enabled configuration activation,
-even for paths that have not received traffic. Disabled CORS does not validate
+even for paths that have not received traffic. A missing named configuration or a
+map without an `enabled` key remains disabled, preserving the legacy default.
+The packaged `cors.yml` explicitly sets `enabled: true`. Disabled CORS does not validate
 unused origin patterns or methods, and its handler passes through without adding
 headers. Enabling it first validates the complete policy; invalid values leave it
 disabled. Invalid initial enabled configuration fails with the offending
@@ -118,12 +120,30 @@ map-replacement contract: invalid refreshes log an error once per replacement
 map and retain the entire last valid policy. A later valid replacement activates
 atomically. Correct a failed revocation promptly: the previous policy remains in
 force until a valid replacement is applied. Named CORS configurations use the
-same validation and caching behavior. The public collection-based `matchOrigin`
-compatibility helper keeps one compiled collection snapshot per handler, rebuilds
-it when collection contents change, and treats malformed legacy entries as
-non-matches. Its rejection path retains the 403/audit contract. The public
-`CorsUtil.sanitizeDefaultPort` utility remains as a deprecated adapter to the
-same parser rather than exposing a second port-parsing implementation.
+same validation and caching behavior. Named startup and setter diagnostics include
+the configuration name and the exact path key.
+
+Consumers must use `CorsConfig.policyForPath(path).origins().matches(origin)` to
+honor compiled wildcard and normalization rules. Raw `getAllowedOrigins()` and
+`getPathPrefixAllowed()` getters expose configuration data; string comparison of
+that data does not implement the new matcher. `light-lambda-native` requires the
+companion middleware update and the matching `cors-config` artifact before using
+patterns. Its request middleware keeps Lambda's explicit-allowlist behavior,
+without Undertow's implicit server-origin fallback.
+
+The public collection-based `CorsHttpHandler.matchOrigin` helper remains a
+stateless, exact-only compatibility API: it returns the configured matching string
+(or derived server-origin fallback), not the raw request Origin. Wildcard entries
+in caller-supplied collections remain non-matches. This helper does no policy
+compilation or PSL lookup, regardless of a null/non-null handler or alternating
+collections. Its handler parameter is retained for source/binary compatibility
+and ignored. Rejection retains the 403/audit contract. The configured handler
+uses the compiled policy separately and echoes the validated request Origin.
+The public `CorsUtil.sanitizeDefaultPort` utility remains a deprecated adapter to
+the same parser. Host/port splitting delegates to Guava `HostAndPort`; explicit
+origin grammar checks reject empty ports and IPv6 zone identifiers across
+platforms.
+
 
 ## Validation
 

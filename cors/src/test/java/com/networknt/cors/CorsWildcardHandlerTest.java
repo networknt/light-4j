@@ -34,7 +34,7 @@ class CorsWildcardHandlerTest {
         paths.put("/private", Map.of("allowedOrigins", List.of("https://trusted.example.com"), "allowedMethods", List.of("GET")));
         paths.put("/private/admin", Map.of("allowedOrigins", List.of("https://admin.example.com"), "allowedMethods", List.of("POST")));
         paths.put("/empty", Map.of());
-        Config.getInstance().putInConfigCache(NAME, Map.of("allowedOrigins", List.of("https://*.example.com", "https://example.com"),
+        Config.getInstance().putInConfigCache(NAME, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.com", "https://example.com"),
                 "allowedMethods", List.of("GET", "PUT"), "pathPrefixAllowed", paths));
         CorsHttpHandler cors = new CorsHttpHandler(NAME);
         cors.setNext(exchange -> {

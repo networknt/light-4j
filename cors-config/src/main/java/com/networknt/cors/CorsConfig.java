@@ -41,15 +41,16 @@ public class CorsConfig {
     public static final String PATH_PREFIX_ALLOWED = "pathPrefixAllowed";
 
     private Map<String, Object> mappedConfig;
+    private final String configName;
 
 
     @BooleanField(
             configFieldName = ENABLED,
             externalizedKeyName = ENABLED,
             defaultValue = "true",
-            description = "Indicate if the CORS middleware is enabled or not."
+            description = "Indicate if the CORS middleware is enabled or not. Missing configuration or an absent enabled key stays disabled; the packaged YAML explicitly enables CORS."
     )
-    volatile boolean enabled = true;
+    volatile boolean enabled;
 
     @ArrayField(
             configFieldName = ALLOWED_ORIGINS,
@@ -135,7 +136,7 @@ public class CorsConfig {
     private static Policy compilePolicy(List<?> origins, List<?> methods, String location) {
         List<String> validatedMethods = new ArrayList<>();
         if (methods != null) {
-            String methodLocation = location.replace("allowedOrigins", "allowedMethods");
+            String methodLocation = location + "." + ALLOWED_METHODS;
             for (int i = 0; i < methods.size(); i++) {
                 if (!(methods.get(i) instanceof String method)) {
                     throw new ConfigException(methodLocation + "[" + i + "]: expected a non-null string");
@@ -143,32 +144,33 @@ public class CorsConfig {
                 validatedMethods.add(method);
             }
         }
-        return new Policy(CorsOriginPolicy.compile(origins, location), List.copyOf(validatedMethods));
+        return new Policy(CorsOriginPolicy.compile(origins, location + "." + ALLOWED_ORIGINS), List.copyOf(validatedMethods));
     }
 
     private Policies compilePolicies() {
-        return new Policies(compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins"), compilePaths(pathPrefixAllowed));
+        return new Policies(compilePolicy(allowedOrigins, allowedMethods, configName), compilePaths(pathPrefixAllowed, configName));
     }
 
-    private static Map<String, Policy> compilePaths(Map<String, CorsPathPrefix> paths) {
+    private static Map<String, Policy> compilePaths(Map<String, CorsPathPrefix> paths, String configName) {
         Map<String, Policy> compiled = new LinkedHashMap<>();
         if (paths != null) {
             paths.forEach((path, value) -> {
                 if (path == null || value == null) throw new ConfigException("pathPrefixAllowed requires non-null paths and policies");
                 compiled.put(path, compilePolicy(value.allowedOrigins, value.allowedMethods,
-                        "pathPrefixAllowed[" + path + "].allowedOrigins"));
+                        configName + "." + PATH_PREFIX_ALLOWED + "[" + path + "]"));
             });
         }
         return Collections.unmodifiableMap(compiled);
     }
 
     private CorsConfig(String configName) {
+        this.configName = configName;
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
         policies = enabled ? compilePolicies()
-                : new Policies(compilePolicy(null, null, "allowedOrigins"), Map.of());
+                : new Policies(compilePolicy(null, null, configName), Map.of());
     }
     private CorsConfig() {
         this(CONFIG_NAME);
@@ -205,7 +207,7 @@ public class CorsConfig {
         }
     }
 
-    public boolean isEnabled() {
+    public synchronized boolean isEnabled() {
         return enabled;
     }
 
@@ -220,7 +222,7 @@ public class CorsConfig {
     }
 
     public synchronized void setAllowedOrigins(List allowedOrigins) {
-        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins") : policies.global;
+        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, configName) : policies.global;
         this.allowedOrigins = allowedOrigins == null ? null : Collections.unmodifiableList(new ArrayList<>(allowedOrigins));
         policies = new Policies(candidate, policies.paths);
     }
@@ -230,7 +232,7 @@ public class CorsConfig {
     }
 
     public synchronized void setAllowedMethods(List allowedMethods) {
-        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins") : policies.global;
+        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, configName) : policies.global;
         this.allowedMethods = allowedMethods == null ? null : Collections.unmodifiableList(new ArrayList<>(allowedMethods));
         policies = new Policies(candidate, policies.paths);
     }
@@ -245,7 +247,7 @@ public class CorsConfig {
     public synchronized void setPathPrefixAllowed(Map<String, Object> pathPrefixAllowed) {
         final var mapper = Config.getInstance().getMapper();
         Map<String, CorsPathPrefix> candidate = mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
-        Map<String, Policy> compiled = enabled ? compilePaths(candidate) : Map.of();
+        Map<String, Policy> compiled = enabled ? compilePaths(candidate, configName) : Map.of();
         this.pathPrefixAllowed = candidate;
         policies = new Policies(policies.global, compiled);
     }
@@ -265,8 +267,8 @@ public class CorsConfig {
 
     private void setConfigList() {
         if (mappedConfig != null) {
-            allowedOrigins = readList(mappedConfig.get(ALLOWED_ORIGINS), ALLOWED_ORIGINS);
-            allowedMethods = readList(mappedConfig.get(ALLOWED_METHODS), ALLOWED_METHODS);
+            allowedOrigins = readList(mappedConfig.get(ALLOWED_ORIGINS), configName + "." + ALLOWED_ORIGINS);
+            allowedMethods = readList(mappedConfig.get(ALLOWED_METHODS), configName + "." + ALLOWED_METHODS);
         }
     }
 

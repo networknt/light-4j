@@ -1,4 +1,4 @@
-# Indicate if the CORS middleware is enabled or not.
+# Indicate if the CORS middleware is enabled or not. Missing configuration or an absent enabled key stays disabled; the packaged YAML explicitly enables CORS.
 enabled: ${cors.enabled:true}
 # Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global
 # configuration for all paths. If you want to have different configuration for different paths, you

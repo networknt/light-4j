@@ -18,12 +18,14 @@ class CorsPolicyReloadTest {
         try {
             for (Map<String, Object> input : List.<Map<String, Object>>of(Map.of(),
                     Map.of("allowedOrigins", List.of()), Map.of("allowedOrigins", "  "))) {
-                Config.getInstance().putInConfigCache(name, input);
+                Map<String, Object> enabled = new LinkedHashMap<>(input);
+                enabled.put("enabled", true);
+                Config.getInstance().putInConfigCache(name, enabled);
                 assertFalse(CorsConfig.load(name).policyForPath("/").origins().matches("https://app.example.com"));
             }
             for (String input : List.of("https://*.example.com, https://example.com",
                     "[\"https://*.example.com\", \"https://example.com\"]")) {
-                Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", input));
+                Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", input));
                 assertTrue(CorsConfig.load(name).policyForPath("/").origins().matches("https://app.example.com"));
                 assertTrue(CorsConfig.load(name).policyForPath("/").origins().matches("https://example.com"));
             }
@@ -37,18 +39,18 @@ class CorsPolicyReloadTest {
         String name = "cors-policy-" + UUID.randomUUID();
         Config source = Config.getInstance();
         try {
-            source.putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.co.uk")));
+            source.putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.co.uk")));
             assertThrows(ConfigException.class, () -> CorsConfig.load(name));
-            source.putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.example.com")));
+            source.putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.com")));
             CorsConfig first = CorsConfig.load(name);
             assertTrue(first.policyForPath("/").origins().matches("https://app.example.com"));
             assertSame(first, CorsConfig.load(name));
-            source.putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.example.org"),
+            source.putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.org"),
                     "pathPrefixAllowed", Map.of("/api", Map.of("allowedOrigins", List.of("*")))));
             assertSame(first, CorsConfig.load(name));
             assertSame(first, CorsConfig.load(name));
             assertFalse(CorsConfig.load(name).policyForPath("/").origins().matches("https://app.example.org"));
-            source.putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.example.org")));
+            source.putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.org")));
             CorsConfig second = CorsConfig.load(name);
             assertNotSame(first, second);
             assertTrue(second.policyForPath("/").origins().matches("https://app.example.org"));
@@ -65,7 +67,7 @@ class CorsPolicyReloadTest {
         paths.put("/api", Map.of("allowedOrigins", List.of("https://trusted.example.com"), "allowedMethods", List.of("GET")));
         paths.put("/api/admin", Map.of("allowedOrigins", List.of("https://admin.example.com")));
         try {
-            Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("https://*.example.com"),
+            Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://*.example.com"),
                     "allowedMethods", List.of("PUT"), "pathPrefixAllowed", paths));
             CorsConfig config = CorsConfig.load(name);
             for (String path : List.of("/api", "/api/1", "/api/admin", "/api-other")) {
