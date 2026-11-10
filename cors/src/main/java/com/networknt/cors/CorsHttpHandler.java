@@ -34,7 +34,7 @@ import io.undertow.util.*;
 import java.util.*;
 
 import static com.networknt.cors.CorsHeaders.*;
-import static com.networknt.cors.CorsUtil.*;
+import static com.networknt.cors.CorsUtil.defaultOrigin;
 import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
 
 /**
@@ -46,7 +46,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public static final String CORS_PREFLIGHT_REQUEST_FAILED =  "ERR10092";
     private String configName = CorsConfig.CONFIG_NAME;
     private volatile HttpHandler next;
-    private boolean isNonPreflightReqAllowed = true;
     /** Default max age **/
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
@@ -63,57 +62,45 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
         CorsConfig config = CorsConfig.load(configName);
-        HeaderMap headers = exchange.getRequestHeaders();
-        this.isNonPreflightReqAllowed = true;
-        if (isCorsRequest(headers)) {
-            List<String> allowedOrigins = config.getAllowedOrigins();
-            List<String> allowedMethods = config.getAllowedMethods();
-            // cors headers available in the request. Set the allowedOrigins and allowedMethods based on the
-            // path prefix if it is configured. Otherwise, use the global configuration set in the constructor.
-            if (config.pathPrefixAllowed != null) {
-                String requestPath = exchange.getRequestPath();
-                for(Map.Entry<String, CorsPathPrefix> entry: config.pathPrefixAllowed.entrySet()) {
-                    if (requestPath.startsWith(entry.getKey())) {
-                        CorsPathPrefix endpointCors = entry.getValue();
-                        allowedOrigins = endpointCors.getAllowedOrigins();
-                        allowedMethods = endpointCors.getAllowedMethods();
-                        break;
-                    }
-                }
-            }
-            if (isPreflightedRequest(exchange)) {
-                // it is a preflight request.
-                if(logger.isTraceEnabled()) logger.trace("Preflight OPTIONS request detected.");
-                handlePreflightRequest(exchange, allowedOrigins, allowedMethods);
+        if (!config.isEnabled()) {
+            Handler.next(exchange, next);
+            return;
+        }
+        // Merge after the proxy/downstream handler has supplied its response headers.
+        exchange.addResponseCommitListener(CorsHttpHandler::addVaryOrigin);
+        if (isCorsRequest(exchange.getRequestHeaders())) {
+            CorsConfig.Policy policy = config.policyForPath(exchange.getRequestPath());
+            String origin = matchOrigin(exchange, policy.origins());
+            if (origin == null) {
+                rejectOrigin(exchange);
                 return;
             }
-            if(logger.isTraceEnabled()) logger.trace("Simple or actual request detected with cors headers.");
-            setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
-        }
-
-
-        if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest ends.");
-        if(this.isNonPreflightReqAllowed) Handler.next(exchange, next);
-        else return;
-    }
-
-    private void handlePreflightRequest(HttpServerExchange exchange, List<String> allowedOrigins, List<String> allowedMethods) throws Exception {
-        setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
-        HANDLE_200.handleRequest(exchange);
-    }
-
-    private void setCorsResponseHeaders(HttpServerExchange exchange, List<String> allowedOrigins, List<String> allowedMethods) throws Exception {
-        HeaderMap headers = exchange.getRequestHeaders();
-        if (headers.contains(Headers.ORIGIN)) {
-            String matchingOrigin = matchOrigin(exchange, allowedOrigins, this);
-            if(matchingOrigin != null) {
-                if(logger.isTraceEnabled()) logger.trace("Setting CORS headers for origin: {}",headers.get(Headers.ORIGIN));
-                exchange.getResponseHeaders().addAll(new HttpString(ACCESS_CONTROL_ALLOW_ORIGIN), headers.get(Headers.ORIGIN));
-                exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
+            setCorsResponseHeaders(exchange, origin, policy.methods());
+            if (isPreflightedRequest(exchange)) {
+                HANDLE_200.handleRequest(exchange);
+                return;
             }
         }
+        Handler.next(exchange, next);
+    }
+
+    private static void addVaryOrigin(HttpServerExchange exchange) {
+        HeaderValues vary = exchange.getResponseHeaders().get(Headers.VARY);
+        if (vary != null) {
+            for (String value : vary) {
+                for (String token : value.split(",")) {
+                    if (token.trim().equals("*") || token.trim().equalsIgnoreCase("Origin")) return;
+                }
+            }
+        }
+        exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
+    }
+
+    private void setCorsResponseHeaders(HttpServerExchange exchange, String matchingOrigin,
+                                        List<String> allowedMethods) {
+        HeaderMap headers = exchange.getRequestHeaders();
+        exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_ALLOW_ORIGIN), matchingOrigin);
         exchange.getResponseHeaders().addAll(new HttpString(ACCESS_CONTROL_ALLOW_METHODS), allowedMethods);
         HeaderValues requestedHeaders = headers.get(ACCESS_CONTROL_REQUEST_HEADERS);
         if (requestedHeaders != null && !requestedHeaders.isEmpty()) {
@@ -123,8 +110,8 @@ public class CorsHttpHandler implements MiddlewareHandler {
             exchange.getResponseHeaders().add(new HttpString(ACCESS_CONTROL_ALLOW_HEADERS), Headers.WWW_AUTHENTICATE_STRING);
             exchange.getResponseHeaders().add(new HttpString(ACCESS_CONTROL_ALLOW_HEADERS), Headers.AUTHORIZATION_STRING);
         }
-        exchange.getResponseHeaders().add(new HttpString(ACCESS_CONTROL_ALLOW_CREDENTIALS), "true");
-        exchange.getResponseHeaders().add(new HttpString(ACCESS_CONTROL_MAX_AGE), ONE_HOUR_IN_SECONDS);
+        exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_ALLOW_CREDENTIALS), "true");
+        exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_MAX_AGE), ONE_HOUR_IN_SECONDS);
     }
 
     @Override
@@ -149,38 +136,33 @@ public class CorsHttpHandler implements MiddlewareHandler {
      * If it doesn't match then a 403 response code is set on the response and it returns null.
      * @param exchange the current HttpExchange.
      * @param allowedOrigins list of sanitized allowed origins.
-     * @param handler The instance of the handler.
-     * @return the first matching origin, null otherwise.
+     * Caller-supplied collections remain exact-only; wildcard entries do not grant subdomain access.
+     * Configuration-driven wildcard matching uses the separately compiled policy in handleRequest.
+     * @param handler retained for source/binary compatibility; this stateless lookup ignores it, including null.
+     * @return the matching configured string, or the derived server-origin fallback, or null on rejection.
      * @throws Exception the checked exception
      */
+    @SuppressWarnings("java:S1172") // Public compatibility signature; the stateless lookup ignores handler.
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins, CorsHttpHandler handler) throws Exception {
-        HeaderMap headers = exchange.getRequestHeaders();
-        String[] origins = headers.get(Headers.ORIGIN).toArray();
-        if(logger.isTraceEnabled())
-            logger.trace("origins from the request header = {} allowedOrigins = {}", Arrays.toString(origins), allowedOrigins);
-        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-            for (String allowedOrigin : allowedOrigins) {
-                for (String origin : origins) {
-                    if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
-                        if(logger.isTraceEnabled()) logger.trace("matchOrigin returns allowedOrigin = {}", allowedOrigin);
-                        return allowedOrigin;
-                    }
-                }
-            }
-        }
-        String allowedOrigin = CorsUtil.defaultOrigin(exchange.getRequestScheme(), NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort());
-        if(logger.isTraceEnabled()) logger.trace("Default allowedOrigin from the exchange = {}", allowedOrigin);
-        for (String origin : origins) {
-            if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
-                if(logger.isTraceEnabled()) logger.trace("Default matchOrigin returns allowedOrigin = {}", allowedOrigin);
-                return allowedOrigin;
-            }
-        }
-        logger.debug("Request rejected due to HOST/ORIGIN mis-match.");
+        HeaderValues origins = exchange.getRequestHeaders().get(Headers.ORIGIN);
+        String origin = origins == null || origins.size() != 1 ? null : origins.getFirst();
+        String matched = CorsOriginPolicy.matchLegacy(origin, allowedOrigins, () -> defaultOrigin(exchange.getRequestScheme(),
+                NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort()));
+        if (matched == null) rejectOrigin(exchange);
+        return matched;
+    }
 
-        // save info for auditing purposes in case of an error
+    private static String matchOrigin(HttpServerExchange exchange, CorsOriginPolicy policy) {
+        HeaderValues origins = exchange.getRequestHeaders().get(Headers.ORIGIN);
+        if (origins == null || origins.size() != 1) return null;
+        String origin = origins.getFirst();
+        return policy.matches(origin, () -> defaultOrigin(exchange.getRequestScheme(),
+                NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort())) ? origin : null;
+    }
+
+    private static void rejectOrigin(HttpServerExchange exchange) throws Exception {
+        logger.debug("Request rejected due to invalid or untrusted Origin.");
         if (AUDIT_ON_ERROR) {
-            // Populate audit attachment so the AuditHandler records this CORS 403 rejection
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             if (auditInfo == null) {
                 auditInfo = new HashMap<>();
@@ -189,14 +171,10 @@ public class CorsHttpHandler implements MiddlewareHandler {
             auditInfo.put(Constants.STATUS, new Status(CORS_PREFLIGHT_REQUEST_FAILED));
         }
         ResponseCodeHandler.HANDLE_403.handleRequest(exchange);
-        handler.isNonPreflightReqAllowed = false;
-        return null;
     }
 
     public static boolean isCorsRequest(HeaderMap headers) {
-        return headers.contains(ORIGIN)
-                || headers.contains(ACCESS_CONTROL_REQUEST_HEADERS)
-                || headers.contains(ACCESS_CONTROL_REQUEST_METHOD);
+        return headers.contains(ORIGIN);
     }
 
     public static boolean isPreflightedRequest(HttpServerExchange exchange) {
