@@ -81,7 +81,8 @@ class CorsPolicyReloadTest {
             config.setPathPrefixAllowed(Map.of("/api", Map.of()));
             assertFalse(config.policyForPath("/api").origins().matches("https://arbitrary.example.com"));
             assertTrue(config.policyForPath("/api").methods().isEmpty());
-            assertThrows(ConfigException.class, () -> config.setAllowedOrigins(List.of("*")));
+            List<String> invalidOrigins = List.of("*");
+            assertThrows(ConfigException.class, () -> config.setAllowedOrigins(invalidOrigins));
             assertTrue(config.policyForPath("/other").origins().matches("https://arbitrary.example.com"));
         } finally {
             Config.getInstance().clearConfigCache(name);

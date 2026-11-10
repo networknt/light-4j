@@ -51,7 +51,7 @@ class CorsBrowserSmokeTest {
             assertTrue(process.waitFor(45, TimeUnit.SECONDS), "Browser smoke test timed out: " + output);
             assertEquals(0, process.exitValue(), () -> {
                 try { return Files.readString(output); }
-                catch (Exception e) { return output.toString(); }
+                catch (Exception _) { return output.toString(); }
             });
         } finally {
             if (process != null && process.isAlive()) process.destroyForcibly();

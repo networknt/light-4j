@@ -39,8 +39,9 @@ class CorsOriginPolicyTest {
             "https://*.example.internal", "https://*.127.0.0.1", "https://*.[::1]", "ftp://*.example.com",
             "https://*.example.com/", "https://*.example.com.", "https://*.example.com:*"})
     void rejectsInvalidConfiguration(String pattern) {
+        List<String> patterns = List.of(pattern);
         ConfigException error = assertThrows(ConfigException.class,
-                () -> CorsOriginPolicy.compile(List.of(pattern), "pathPrefixAllowed[/api].allowedOrigins"));
+                () -> CorsOriginPolicy.compile(patterns, "pathPrefixAllowed[/api].allowedOrigins"));
         assertTrue(error.getMessage().contains("pathPrefixAllowed[/api].allowedOrigins"));
         assertTrue(error.getMessage().contains(pattern));
     }

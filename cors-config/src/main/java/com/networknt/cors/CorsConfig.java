@@ -50,6 +50,8 @@ public class CorsConfig {
             defaultValue = "true",
             description = "Indicate if the CORS middleware is enabled or not. Missing configuration or an absent enabled key stays disabled; the packaged YAML explicitly enables CORS."
     )
+    // Keep the established backing-field name and external ENABLED key distinct by convention.
+    @SuppressWarnings("java:S1845")
     volatile boolean enabled;
 
     @ArrayField(
@@ -82,36 +84,37 @@ public class CorsConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ALLOWED,
             externalizedKeyName = PATH_PREFIX_ALLOWED,
-            description = "CORS configuration per path prefix on a shared gateway. The first raw string prefix match in map order\n" +
-                    "replaces the global origins and methods; unmatched paths use global settings. Prefixes are not segment-aware:\n" +
-                    " /api also matches /api-other. Put more specific prefixes first; map order must be preserved.\n" +
-                    "Missing per-path origins or methods do not inherit the global values. The server-origin fallback still applies.\n" +
-                    "The value is a map with the key as the path prefix and the value is another map with allowedOrigins and\n" +
-                    "allowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.\n" +
-                    "\n" +
-                    "Use the above global configuration if you are dealing with a single API in the case of http-sidecar,\n" +
-                    "proxy server or build the API with light-4j frameworks. If you are using light-gateway with multiple\n" +
-                    "downstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different APIs.\n" +
-                    "\n" +
-                    "\n" +
-                    "Here is an example in values.yml\n" +
-                    "cors.pathPrefixAllowed:\n" +
-                    "  /v1/pets:\n" +
-                    "    allowedOrigins:\n" +
-                    "      - https://abc.com\n" +
-                    "      - https://www.xyz.com\n" +
-                    "    allowedMethods:\n" +
-                    "      - GET\n" +
-                    "      - PUT\n" +
-                    "      - POST\n" +
-                    "      - DELETE\n" +
-                    "  /v1/market:\n" +
-                    "    allowedOrigins:\n" +
-                    "      - https://def.com\n" +
-                    "      - https://abc.com\n" +
-                    "    allowedMethods:\n" +
-                    "      - GET\n" +
-                    "      - POST",
+            description = """
+                    CORS configuration per path prefix on a shared gateway. The first raw string prefix match in map order
+                    replaces the global origins and methods; unmatched paths use global settings. Prefixes are not segment-aware:
+                     /api also matches /api-other. Put more specific prefixes first; map order must be preserved.
+                    Missing per-path origins or methods do not inherit the global values. The server-origin fallback still applies.
+                    The value is a map with the key as the path prefix and the value is another map with allowedOrigins and
+                    allowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.
+
+                    Use the above global configuration if you are dealing with a single API in the case of http-sidecar,
+                    proxy server or build the API with light-4j frameworks. If you are using light-gateway with multiple
+                    downstream APIs, you can use the pathPrefixAllowed to set up different CORS configuration for different APIs.
+
+
+                    Here is an example in values.yml
+                    cors.pathPrefixAllowed:
+                      /v1/pets:
+                        allowedOrigins:
+                          - https://abc.com
+                          - https://www.xyz.com
+                        allowedMethods:
+                          - GET
+                          - PUT
+                          - POST
+                          - DELETE
+                      /v1/market:
+                        allowedOrigins:
+                          - https://def.com
+                          - https://abc.com
+                        allowedMethods:
+                          - GET
+                          - POST""",
             valueType = CorsPathPrefix.class
     )
     Map<String, CorsPathPrefix> pathPrefixAllowed;
@@ -237,13 +240,23 @@ public class CorsConfig {
         policies = new Policies(candidate, policies.paths);
     }
 
-    @Deprecated(since = "2.2.1")
+    /**
+     * @return the configured per-path data in its legacy map representation.
+     * @deprecated use {@link #policyForPath(String)} for request matching; retained for binary compatibility.
+     */
+    @SuppressWarnings("java:S1133") // Public compatibility API; removal requires a separate breaking release.
+    @Deprecated(since = "2.2.1", forRemoval = false)
     public synchronized Map<String, Object> getPathPrefixAllowed() {
         final var mapper = Config.getInstance().getMapper();
         return mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
     }
 
-    @Deprecated(since = "2.2.1")
+    /**
+     * @param pathPrefixAllowed the legacy per-path configuration map.
+     * @deprecated configure named CORS data and reload with {@link #load(String)}; retained for binary compatibility.
+     */
+    @SuppressWarnings("java:S1133") // Public compatibility API; removal requires a separate breaking release.
+    @Deprecated(since = "2.2.1", forRemoval = false)
     public synchronized void setPathPrefixAllowed(Map<String, Object> pathPrefixAllowed) {
         final var mapper = Config.getInstance().getMapper();
         Map<String, CorsPathPrefix> candidate = mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
@@ -267,34 +280,38 @@ public class CorsConfig {
 
     private void setConfigList() {
         if (mappedConfig != null) {
-            allowedOrigins = readList(mappedConfig.get(ALLOWED_ORIGINS), configName + "." + ALLOWED_ORIGINS);
-            allowedMethods = readList(mappedConfig.get(ALLOWED_METHODS), configName + "." + ALLOWED_METHODS);
+            // Preserve legacy null getters for absent fields while readList itself always returns a collection.
+            if (mappedConfig.get(ALLOWED_ORIGINS) != null) {
+                allowedOrigins = readList(mappedConfig.get(ALLOWED_ORIGINS), configName + "." + ALLOWED_ORIGINS);
+            }
+            if (mappedConfig.get(ALLOWED_METHODS) != null) {
+                allowedMethods = readList(mappedConfig.get(ALLOWED_METHODS), configName + "." + ALLOWED_METHODS);
+            }
         }
     }
 
     @SuppressWarnings("unchecked")
     private static List<String> readList(Object value, String property) {
-        if (value == null) return null;
-        List<?> values;
-        if (value instanceof String text) {
-            text = text.trim();
-            if (text.startsWith("[")) {
-                try {
-                    values = Config.getInstance().getMapper().readValue(text, new TypeReference<List<Object>>() {});
-                } catch (Exception e) {
-                    throw new ConfigException(property + ": expected a JSON list of strings");
-                }
-            } else {
-                // Empty comma-separated items were harmless non-matches before pattern validation.
-                values = Arrays.stream(text.split(",")).map(String::trim).filter(item -> !item.isEmpty()).toList();
-            }
-        } else if (value instanceof List<?> list) {
-            values = list;
-        } else {
-            throw new ConfigException(property + ": expected a string or list of strings");
-        }
+        List<?> values = switch (value) {
+            case null -> List.of();
+            case String text -> readTextList(text.trim(), property);
+            case List<?> list -> list;
+            default -> throw new ConfigException(property + ": expected a string or list of strings");
+        };
         // Preserve runtime types until compilePolicy can report an actionable property/index error.
         return (List<String>) Collections.unmodifiableList(new ArrayList<>(values));
+    }
+
+    private static List<?> readTextList(String text, String property) {
+        if (text.startsWith("[")) {
+            try {
+                return Config.getInstance().getMapper().readValue(text, new TypeReference<List<Object>>() {});
+            } catch (Exception _) {
+                throw new ConfigException(property + ": expected a JSON list of strings");
+            }
+        }
+        // Empty comma-separated items were harmless non-matches before pattern validation.
+        return Arrays.stream(text.split(",")).map(String::trim).filter(item -> !item.isEmpty()).toList();
     }
 
     private void setConfigMap() {

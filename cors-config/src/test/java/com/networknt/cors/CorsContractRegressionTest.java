@@ -16,9 +16,12 @@ class CorsContractRegressionTest {
     void missingConfigAndMissingEnabledRemainDisabled() {
         String name = "missing-cors-" + UUID.randomUUID();
         assertFalse(CorsConfig.load(name).isEnabled());
+        assertNull(CorsConfig.load(name).getAllowedOrigins());
+        assertNull(CorsConfig.load(name).getAllowedMethods());
         try {
             Config.getInstance().putInConfigCache(name, Map.of("allowedOrigins", List.of("*")));
             assertFalse(CorsConfig.load(name).isEnabled());
+            assertNull(CorsConfig.load(name).getAllowedMethods());
         } finally {
             Config.getInstance().clearConfigCache(name);
         }

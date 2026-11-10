@@ -57,7 +57,8 @@ public class CorsUtil {
      * @return the sanitized origin, or unchanged input if malformed.
      * @deprecated retained for source compatibility; origin policies normalize ports during matching.
      */
-    @Deprecated
+    @SuppressWarnings("java:S1133") // Public compatibility API; removal requires a separate breaking release.
+    @Deprecated(since = "3.0.0", forRemoval = false)
     public static String sanitizeDefaultPort(String url) {
         return CorsOriginPolicy.sanitizeDefaultPort(url);
     }

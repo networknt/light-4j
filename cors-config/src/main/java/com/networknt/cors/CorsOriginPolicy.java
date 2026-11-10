@@ -56,7 +56,7 @@ public final class CorsOriginPolicy {
         } else {
             try {
                 comparable = sanitizeDefaultPort(value, parse(value));
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
                 return null;
             }
         }
@@ -105,7 +105,7 @@ public final class CorsOriginPolicy {
         final Origin request;
         try {
             request = parse(value);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
         for (Rule rule : rules) {
@@ -114,7 +114,7 @@ public final class CorsOriginPolicy {
         try {
             String fallback = serverOrigin.get();
             return fallback != null && request.equals(parse(fallback));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
     }
@@ -123,7 +123,7 @@ public final class CorsOriginPolicy {
     public static boolean sameOrigin(String first, String second) {
         try {
             return parse(first).equals(parse(second));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
     }
@@ -131,7 +131,7 @@ public final class CorsOriginPolicy {
     static String sanitizeDefaultPort(String value) {
         try {
             return sanitizeDefaultPort(value, parse(value));
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
             // This compatibility utility leaves malformed input unchanged; matching rejects it.
             return value;
         }

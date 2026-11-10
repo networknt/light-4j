@@ -73,17 +73,18 @@ class CorsReviewCompatibilityTest {
     }
 
     @Test
-    @SuppressWarnings({"rawtypes", "unchecked"})
     void invalidElementTypesReportPropertyAndIndexInsteadOfJdkExceptions() {
         String name = "cors-elements-" + UUID.randomUUID();
         try {
             Config.getInstance().putInConfigCache(name, Map.of("enabled", true, "allowedOrigins", List.of("https://example.com")));
             CorsConfig config = CorsConfig.load(name);
+            List<String> invalidMethods = Arrays.asList("GET", null);
             ConfigException methods = assertThrows(ConfigException.class,
-                    () -> config.setAllowedMethods(Arrays.asList("GET", null)));
+                    () -> config.setAllowedMethods(invalidMethods));
             assertTrue(methods.getMessage().contains("allowedMethods[1]"), methods.getMessage());
+            List<?> invalidOrigins = List.of("https://example.com", 42);
             ConfigException origins = assertThrows(ConfigException.class,
-                    () -> config.setAllowedOrigins((List) List.of("https://example.com", 42)));
+                    () -> config.setAllowedOrigins(invalidOrigins));
             assertTrue(origins.getMessage().contains("allowedOrigins[1]"), origins.getMessage());
             assertTrue(config.policyForPath("/").origins().matches("https://example.com"));
         } finally {

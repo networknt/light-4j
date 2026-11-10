@@ -34,7 +34,8 @@ class CorsParsingRegressionTest {
             assertFalse(policy.matches(origin), origin);
         }
         for (String pattern : List.of("capacitor://*.example.com", "https://*.my_service.com", "https://*.example.com.")) {
-            assertThrows(ConfigException.class, () -> CorsOriginPolicy.compile(List.of(pattern), "test"));
+            List<String> patterns = List.of(pattern);
+            assertThrows(ConfigException.class, () -> CorsOriginPolicy.compile(patterns, "test"));
         }
     }
 
@@ -43,7 +44,8 @@ class CorsParsingRegressionTest {
         for (String origin : List.of("http://[127.0.0.1]", "http://[::1]extra", "http://[::1]:",
                 "http://[fe80::1%eth0]", "http://::1", "http://host:9999999999999999999", "http://host:+80",
                 "http://host:-0", "http://host:-000", "http://host:80/path", "http://a..b", "http://host\\path", "http://host?x", "http://host#x")) {
-            assertThrows(ConfigException.class, () -> CorsOriginPolicy.compile(List.of(origin), "test"), origin);
+            List<String> origins = List.of(origin);
+            assertThrows(ConfigException.class, () -> CorsOriginPolicy.compile(origins, "test"), origin);
             assertEquals(origin, CorsUtil.sanitizeDefaultPort(origin));
         }
         assertEquals("HTTP://my_service", CorsUtil.sanitizeDefaultPort("HTTP://my_service:080"));
