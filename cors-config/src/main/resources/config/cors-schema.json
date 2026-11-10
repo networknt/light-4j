@@ -10,7 +10,7 @@
     },
     "allowedOrigins" : {
       "type" : "array",
-      "description" : "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\nconfiguration for all paths. If you want to have different configuration for different paths, you\ncan use pathPrefixAllowed. The value is a list of strings.\nHTTP/HTTPS origins use ASCII/Punycode hosts, no trailing dot, and ports 0-65535.\nScoped wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.\nUse only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.\nCredentials remain enabled. Explicit null is supported only by an explicit null entry.\nThe legacy server-origin fallback remains after allowlist misses, including empty lists.\nInvalid startup configuration fails; invalid refresh retains the last valid policy.\n - http://localhost\n - https://*.example.com",
+      "description" : "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\nconfiguration for all paths. If you want to have different configuration for different paths, you\ncan use pathPrefixAllowed. The value is a list of strings.\nOrigins use ASCII/Punycode hosts and ports 0-65535; exact entries retain custom schemes, underscores, and trailing dots.\nHTTP/HTTPS DNS wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.\nUse only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.\nCredentials remain enabled. Explicit null is supported only by an explicit null entry.\nThe legacy server-origin fallback remains after allowlist misses, including empty lists.\nEnabled CORS validates at startup and before enabling; invalid refresh retains the last valid policy.\n - http://localhost\n - https://*.example.com",
       "items" : {
         "type" : "string"
       }
@@ -30,7 +30,7 @@
         "properties" : {
           "allowedOrigins" : {
             "type" : "array",
-            "description" : "List of allowed HTTP/HTTPS origins or scoped patterns such as https://*.example.com. Trusts all matching subdomains at every depth, excludes the apex, and rejects public/private PSL suffixes. Replaces global origins; the legacy server-origin fallback remains.",
+            "description" : "List of allowed exact origins (including custom schemes) or HTTP/HTTPS scoped patterns such as https://*.example.com. Trusts all matching subdomains at every depth, excludes the apex, and rejects public/private PSL suffixes. Replaces global origins; the legacy server-origin fallback remains.",
             "items" : {
               "type" : "string"
             }

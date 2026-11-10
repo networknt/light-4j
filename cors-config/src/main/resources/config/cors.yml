@@ -3,12 +3,12 @@ enabled: ${cors.enabled:true}
 # Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global
 # configuration for all paths. If you want to have different configuration for different paths, you
 # can use pathPrefixAllowed. The value is a list of strings.
-# HTTP/HTTPS origins use ASCII/Punycode hosts, no trailing dot, and ports 0-65535.
-# Scoped wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.
+# Origins use ASCII/Punycode hosts and ports 0-65535; exact entries retain custom schemes, underscores, and trailing dots.
+# HTTP/HTTPS DNS wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.
 # Use only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.
 # Credentials remain enabled. Explicit null is supported only by an explicit null entry.
 # The legacy server-origin fallback remains after allowlist misses, including empty lists.
-# Invalid startup configuration fails; invalid refresh retains the last valid policy.
+# Enabled CORS validates at startup and before enabling; invalid refresh retains the last valid policy.
 #  - http://localhost
 #  - https://*.example.com
 allowedOrigins: ${cors.allowedOrigins:}

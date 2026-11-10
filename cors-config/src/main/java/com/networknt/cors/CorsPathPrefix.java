@@ -8,7 +8,7 @@ public class CorsPathPrefix {
 
     @ArrayField(
             configFieldName = "allowedOrigins",
-            description = "List of allowed HTTP/HTTPS origins or scoped patterns such as https://*.example.com. Trusts all matching subdomains at every depth, excludes the apex, and rejects public/private PSL suffixes. Replaces global origins; the legacy server-origin fallback remains.",
+            description = "List of allowed exact origins (including custom schemes) or HTTP/HTTPS scoped patterns such as https://*.example.com. Trusts all matching subdomains at every depth, excludes the apex, and rejects public/private PSL suffixes. Replaces global origins; the legacy server-origin fallback remains.",
             items = String.class
     )
     List<String> allowedOrigins;

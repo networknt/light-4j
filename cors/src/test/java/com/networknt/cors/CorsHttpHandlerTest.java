@@ -298,10 +298,10 @@ public class CorsHttpHandlerTest {
         Assertions.assertTrue(isCorsRequest(headers));
         headers = new HeaderMap();
         headers.add(new HttpString(ACCESS_CONTROL_REQUEST_HEADERS), "");
-        Assertions.assertTrue(isCorsRequest(headers));
+        Assertions.assertFalse(isCorsRequest(headers));
         headers = new HeaderMap();
         headers.add(new HttpString(ACCESS_CONTROL_REQUEST_METHOD), "");
-        Assertions.assertTrue(isCorsRequest(headers));
+        Assertions.assertFalse(isCorsRequest(headers));
     }
 
     /**

@@ -49,7 +49,7 @@ public class CorsConfig {
             defaultValue = "true",
             description = "Indicate if the CORS middleware is enabled or not."
     )
-    boolean enabled;
+    volatile boolean enabled = true;
 
     @ArrayField(
             configFieldName = ALLOWED_ORIGINS,
@@ -57,12 +57,12 @@ public class CorsConfig {
             description = "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\n" +
                     "configuration for all paths. If you want to have different configuration for different paths, you\n" +
                     "can use pathPrefixAllowed. The value is a list of strings.\n" +
-                    "HTTP/HTTPS origins use ASCII/Punycode hosts, no trailing dot, and ports 0-65535.\n" +
-                    "Scoped wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.\n" +
+                    "Origins use ASCII/Punycode hosts and ports 0-65535; exact entries retain custom schemes, underscores, and trailing dots.\n" +
+                    "HTTP/HTTPS DNS wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.\n" +
                     "Use only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.\n" +
                     "Credentials remain enabled. Explicit null is supported only by an explicit null entry.\n" +
                     "The legacy server-origin fallback remains after allowlist misses, including empty lists.\n" +
-                    "Invalid startup configuration fails; invalid refresh retains the last valid policy.\n - http://localhost\n - https://*.example.com",
+                    "Enabled CORS validates at startup and before enabling; invalid refresh retains the last valid policy.\n - http://localhost\n - https://*.example.com",
             items = String.class
     )
     List<String> allowedOrigins;
@@ -132,9 +132,22 @@ public class CorsConfig {
         return current.global;
     }
 
-    private static Policy compilePolicy(List<String> origins, List<String> methods, String location) {
-        return new Policy(CorsOriginPolicy.compile(origins, location),
-                methods == null ? List.of() : List.copyOf(methods));
+    private static Policy compilePolicy(List<?> origins, List<?> methods, String location) {
+        List<String> validatedMethods = new ArrayList<>();
+        if (methods != null) {
+            String methodLocation = location.replace("allowedOrigins", "allowedMethods");
+            for (int i = 0; i < methods.size(); i++) {
+                if (!(methods.get(i) instanceof String method)) {
+                    throw new ConfigException(methodLocation + "[" + i + "]: expected a non-null string");
+                }
+                validatedMethods.add(method);
+            }
+        }
+        return new Policy(CorsOriginPolicy.compile(origins, location), List.copyOf(validatedMethods));
+    }
+
+    private Policies compilePolicies() {
+        return new Policies(compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins"), compilePaths(pathPrefixAllowed));
     }
 
     private static Map<String, Policy> compilePaths(Map<String, CorsPathPrefix> paths) {
@@ -154,8 +167,8 @@ public class CorsConfig {
         setConfigData();
         setConfigList();
         setConfigMap();
-        policies = new Policies(compilePolicy(allowedOrigins, allowedMethods, configName + ".allowedOrigins"),
-                compilePaths(pathPrefixAllowed));
+        policies = enabled ? compilePolicies()
+                : new Policies(compilePolicy(null, null, "allowedOrigins"), Map.of());
     }
     private CorsConfig() {
         this(CONFIG_NAME);
@@ -196,32 +209,34 @@ public class CorsConfig {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public synchronized void setEnabled(boolean enabled) {
+        // A disabled middleware may retain obsolete values; validate before it can become active.
+        if (enabled && !this.enabled) policies = compilePolicies();
         this.enabled = enabled;
     }
 
-    public List getAllowedOrigins() {
+    public synchronized List getAllowedOrigins() {
         return allowedOrigins;
     }
 
     public synchronized void setAllowedOrigins(List allowedOrigins) {
-        Policy candidate = compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins");
-        this.allowedOrigins = allowedOrigins == null ? null : List.copyOf(allowedOrigins);
+        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins") : policies.global;
+        this.allowedOrigins = allowedOrigins == null ? null : Collections.unmodifiableList(new ArrayList<>(allowedOrigins));
         policies = new Policies(candidate, policies.paths);
     }
 
-    public List getAllowedMethods() {
+    public synchronized List getAllowedMethods() {
         return allowedMethods;
     }
 
     public synchronized void setAllowedMethods(List allowedMethods) {
-        Policy candidate = compilePolicy(allowedOrigins, allowedMethods, "allowedMethods");
-        this.allowedMethods = allowedMethods == null ? null : List.copyOf(allowedMethods);
+        Policy candidate = enabled ? compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins") : policies.global;
+        this.allowedMethods = allowedMethods == null ? null : Collections.unmodifiableList(new ArrayList<>(allowedMethods));
         policies = new Policies(candidate, policies.paths);
     }
 
     @Deprecated(since = "2.2.1")
-    public Map<String, Object> getPathPrefixAllowed() {
+    public synchronized Map<String, Object> getPathPrefixAllowed() {
         final var mapper = Config.getInstance().getMapper();
         return mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
     }
@@ -230,7 +245,7 @@ public class CorsConfig {
     public synchronized void setPathPrefixAllowed(Map<String, Object> pathPrefixAllowed) {
         final var mapper = Config.getInstance().getMapper();
         Map<String, CorsPathPrefix> candidate = mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
-        Map<String, Policy> compiled = compilePaths(candidate);
+        Map<String, Policy> compiled = enabled ? compilePaths(candidate) : Map.of();
         this.pathPrefixAllowed = candidate;
         policies = new Policies(policies.global, compiled);
     }
@@ -249,62 +264,35 @@ public class CorsConfig {
     }
 
     private void setConfigList() {
-        if (mappedConfig != null && mappedConfig.get(ALLOWED_ORIGINS) != null) {
-            Object object = mappedConfig.get(ALLOWED_ORIGINS);
-            allowedOrigins = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if (s.isEmpty()) {
-                    // Preserve blank externalized values as an empty allowlist.
-                } else if(s.startsWith("[")) {
-                    // json format
-                    try {
-                        allowedOrigins = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse allowedOrigins JSON with a list of strings.");
-                    }
-                } else {
-                    // comma separated
-                    allowedOrigins = Arrays.asList(s.split("\\s*,\\s*"));
-                }
-            } else if (object instanceof List) {
-                List prefixes = (List)object;
-                prefixes.forEach(item -> {
-                    allowedOrigins.add((String)item);
-                });
-            } else {
-                throw new ConfigException("allowedOrigins must be a string or a list of strings.");
-            }
+        if (mappedConfig != null) {
+            allowedOrigins = readList(mappedConfig.get(ALLOWED_ORIGINS), ALLOWED_ORIGINS);
+            allowedMethods = readList(mappedConfig.get(ALLOWED_METHODS), ALLOWED_METHODS);
         }
-        if (mappedConfig != null && mappedConfig.get(ALLOWED_METHODS) != null) {
-            Object object = mappedConfig.get(ALLOWED_METHODS);
-            allowedMethods = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if (s.isEmpty()) {
-                    // Preserve blank externalized values as an empty allowlist.
-                } else if(s.startsWith("[")) {
-                    // json format
-                    try {
-                        allowedMethods = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse allowedMethods JSON with a list of strings.");
-                    }
-                } else {
-                    // comma separated
-                    allowedMethods = Arrays.asList(s.split("\\s*,\\s*"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> readList(Object value, String property) {
+        if (value == null) return null;
+        List<?> values;
+        if (value instanceof String text) {
+            text = text.trim();
+            if (text.startsWith("[")) {
+                try {
+                    values = Config.getInstance().getMapper().readValue(text, new TypeReference<List<Object>>() {});
+                } catch (Exception e) {
+                    throw new ConfigException(property + ": expected a JSON list of strings");
                 }
-            } else if (object instanceof List) {
-                List<String> prefixes = (List)object;
-                allowedMethods.addAll(prefixes);
             } else {
-                throw new ConfigException("allowedMethods must be a string or a list of strings.");
+                // Empty comma-separated items were harmless non-matches before pattern validation.
+                values = Arrays.stream(text.split(",")).map(String::trim).filter(item -> !item.isEmpty()).toList();
             }
+        } else if (value instanceof List<?> list) {
+            values = list;
+        } else {
+            throw new ConfigException(property + ": expected a string or list of strings");
         }
+        // Preserve runtime types until compilePolicy can report an actionable property/index error.
+        return (List<String>) Collections.unmodifiableList(new ArrayList<>(values));
     }
 
     private void setConfigMap() {

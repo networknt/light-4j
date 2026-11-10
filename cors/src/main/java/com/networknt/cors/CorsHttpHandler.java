@@ -46,6 +46,9 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public static final String CORS_PREFLIGHT_REQUEST_FAILED =  "ERR10092";
     private String configName = CorsConfig.CONFIG_NAME;
     private volatile HttpHandler next;
+    private volatile LegacyPolicy legacyPolicy;
+
+    private record LegacyPolicy(List<?> origins, CorsOriginPolicy policy) { }
     /** Default max age **/
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
@@ -63,11 +66,20 @@ public class CorsHttpHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         CorsConfig config = CorsConfig.load(configName);
-        // Include non-CORS and rejected responses, too: their cached representation differs by Origin.
-        addVaryOrigin(exchange);
+        if (!config.isEnabled()) {
+            Handler.next(exchange, next);
+            return;
+        }
+        // Merge after the proxy/downstream handler has supplied its response headers.
+        exchange.addResponseCommitListener(CorsHttpHandler::addVaryOrigin);
         if (isCorsRequest(exchange.getRequestHeaders())) {
             CorsConfig.Policy policy = config.policyForPath(exchange.getRequestPath());
-            if (!setCorsResponseHeaders(exchange, policy.origins(), policy.methods())) return;
+            String origin = matchOrigin(exchange, policy.origins());
+            if (origin == null) {
+                rejectOrigin(exchange);
+                return;
+            }
+            setCorsResponseHeaders(exchange, origin, policy.methods());
             if (isPreflightedRequest(exchange)) {
                 HANDLE_200.handleRequest(exchange);
                 return;
@@ -88,10 +100,8 @@ public class CorsHttpHandler implements MiddlewareHandler {
         exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
     }
 
-    private boolean setCorsResponseHeaders(HttpServerExchange exchange, CorsOriginPolicy policy,
-                                           List<String> allowedMethods) throws Exception {
-        String matchingOrigin = matchOrigin(exchange, policy);
-        if (matchingOrigin == null) return false;
+    private void setCorsResponseHeaders(HttpServerExchange exchange, String matchingOrigin,
+                                        List<String> allowedMethods) {
         HeaderMap headers = exchange.getRequestHeaders();
         exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_ALLOW_ORIGIN), matchingOrigin);
         exchange.getResponseHeaders().addAll(new HttpString(ACCESS_CONTROL_ALLOW_METHODS), allowedMethods);
@@ -105,7 +115,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
         }
         exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_ALLOW_CREDENTIALS), "true");
         exchange.getResponseHeaders().put(new HttpString(ACCESS_CONTROL_MAX_AGE), ONE_HOUR_IN_SECONDS);
-        return true;
     }
 
     @Override
@@ -135,17 +144,37 @@ public class CorsHttpHandler implements MiddlewareHandler {
      * @throws Exception the checked exception
      */
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins, CorsHttpHandler handler) throws Exception {
-        return matchOrigin(exchange, CorsOriginPolicy.compile(allowedOrigins, "allowedOrigins"));
+        CorsOriginPolicy policy = handler == null
+                ? CorsOriginPolicy.compileLegacy(allowedOrigins == null ? List.of() : allowedOrigins)
+                : handler.policyForOrigins(allowedOrigins);
+        String origin = matchOrigin(exchange, policy);
+        if (origin == null) rejectOrigin(exchange);
+        return origin;
     }
 
-    private static String matchOrigin(HttpServerExchange exchange, CorsOriginPolicy policy) throws Exception {
-        HeaderValues origins = exchange.getRequestHeaders().get(Headers.ORIGIN);
-        if (origins != null && origins.size() == 1) {
-            String origin = origins.getFirst();
-            String serverOrigin = defaultOrigin(exchange.getRequestScheme(),
-                    NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort());
-            if (policy.matches(origin) || CorsOriginPolicy.sameOrigin(origin, serverOrigin)) return origin;
+    private CorsOriginPolicy policyForOrigins(Collection<?> allowedOrigins) {
+        List<?> snapshot = allowedOrigins == null ? List.of() : new ArrayList<>(allowedOrigins);
+        LegacyPolicy cached = legacyPolicy;
+        if (cached != null && cached.origins.equals(snapshot)) return cached.policy;
+        synchronized (this) {
+            cached = legacyPolicy;
+            if (cached == null || !cached.origins.equals(snapshot)) {
+                cached = new LegacyPolicy(Collections.unmodifiableList(snapshot), CorsOriginPolicy.compileLegacy(snapshot));
+                legacyPolicy = cached;
+            }
+            return cached.policy;
         }
+    }
+
+    private static String matchOrigin(HttpServerExchange exchange, CorsOriginPolicy policy) {
+        HeaderValues origins = exchange.getRequestHeaders().get(Headers.ORIGIN);
+        if (origins == null || origins.size() != 1) return null;
+        String origin = origins.getFirst();
+        return policy.matches(origin, () -> defaultOrigin(exchange.getRequestScheme(),
+                NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort())) ? origin : null;
+    }
+
+    private static void rejectOrigin(HttpServerExchange exchange) throws Exception {
         logger.debug("Request rejected due to invalid or untrusted Origin.");
         if (AUDIT_ON_ERROR) {
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
@@ -156,13 +185,10 @@ public class CorsHttpHandler implements MiddlewareHandler {
             auditInfo.put(Constants.STATUS, new Status(CORS_PREFLIGHT_REQUEST_FAILED));
         }
         ResponseCodeHandler.HANDLE_403.handleRequest(exchange);
-        return null;
     }
 
     public static boolean isCorsRequest(HeaderMap headers) {
-        return headers.contains(ORIGIN)
-                || headers.contains(ACCESS_CONTROL_REQUEST_HEADERS)
-                || headers.contains(ACCESS_CONTROL_REQUEST_METHOD);
+        return headers.contains(ORIGIN);
     }
 
     public static boolean isPreflightedRequest(HttpServerExchange exchange) {

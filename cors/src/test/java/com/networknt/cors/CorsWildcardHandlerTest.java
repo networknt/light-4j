@@ -111,7 +111,6 @@ class CorsWildcardHandlerTest {
             assertEquals(403, send("/public", method, "https://app.example.com", "https://evil.net").statusCode());
             assertEquals(403, send("/public", method, "https://app.example.com", "https://app.example.com").statusCode());
         }
-        assertEquals(403, send("/public", "OPTIONS").statusCode());
         assertEquals(before, downstreamCalls.get());
     }
 
@@ -130,6 +129,17 @@ class CorsWildcardHandlerTest {
         assertEquals(200, noOrigin.statusCode());
         assertTrue(noOrigin.headers().allValues("Access-Control-Allow-Origin").isEmpty());
         assertVary(noOrigin);
+        for (String method : List.of("GET", "POST", "OPTIONS")) {
+            HttpRequest headersOnly = HttpRequest.newBuilder(base.resolve("/public"))
+                    .method(method, HttpRequest.BodyPublishers.noBody())
+                    .header("Access-Control-Request-Method", "PUT")
+                    .header("Access-Control-Request-Headers", "X-Test").build();
+            HttpResponse<String> response = client.send(headersOnly, HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, response.statusCode());
+            assertEquals("OK", response.body());
+            assertTrue(response.headers().allValues("Access-Control-Allow-Origin").isEmpty());
+            assertVary(response);
+        }
     }
 
     @Test
