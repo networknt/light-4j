@@ -188,8 +188,8 @@ public class CorsHttpHandlerTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         HeaderMap headerMap = reference.get().getResponseHeaders();
         String header = headerMap.getFirst("Access-Control-Allow-Origin");
-        Assertions.assertEquals(200, statusCode);
-        if(statusCode == 200) {
+        Assertions.assertEquals(403, statusCode);
+        if(statusCode == 403) {
             Assertions.assertNull(header);
         }
     }
@@ -334,7 +334,7 @@ public class CorsHttpHandlerTest {
         Assertions.assertInstanceOf(Status.class, auditInfo.get(Constants.STATUS), "Audit info should contain a Status instance under Constants.STATUS key on CORS rejection");
         headerMap.addAll(new HttpString(ORIGIN), Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
         allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
-        Assertions.assertEquals("http://localhost", matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()));
+        Assertions.assertNull(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), "Duplicate Origin values must be rejected");
     }
 
 

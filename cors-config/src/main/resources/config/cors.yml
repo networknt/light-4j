@@ -3,8 +3,14 @@ enabled: ${cors.enabled:true}
 # Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global
 # configuration for all paths. If you want to have different configuration for different paths, you
 # can use pathPrefixAllowed. The value is a list of strings.
-# Wildcard is not supported for security reasons.
+# HTTP/HTTPS origins use ASCII/Punycode hosts, no trailing dot, and ports 0-65535.
+# Scoped wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.
+# Use only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.
+# Credentials remain enabled. Explicit null is supported only by an explicit null entry.
+# The legacy server-origin fallback remains after allowlist misses, including empty lists.
+# Invalid startup configuration fails; invalid refresh retains the last valid policy.
 #  - http://localhost
+#  - https://*.example.com
 allowedOrigins: ${cors.allowedOrigins:}
 # Allowed methods list. The value is a list of strings. The possible value is GET, POST, PUT, DELETE, PATCH
 # This is the global configuration for all paths. If you want to have different configuration for different
@@ -12,8 +18,10 @@ allowedOrigins: ${cors.allowedOrigins:}
 #  - GET
 #  - POST
 allowedMethods: ${cors.allowedMethods:}
-# cors configuration per path prefix on a shared gateway. You either have allowedOrigins and allowedMethods
-# or you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.
+# CORS configuration per path prefix on a shared gateway. The first raw string prefix match in map order
+# replaces the global origins and methods; unmatched paths use global settings. Prefixes are not segment-aware:
+#  /api also matches /api-other. Put more specific prefixes first; map order must be preserved.
+# Missing per-path origins or methods do not inherit the global values. The server-origin fallback still applies.
 # The value is a map with the key as the path prefix and the value is another map with allowedOrigins and
 # allowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.
 #

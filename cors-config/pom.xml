@@ -31,6 +31,12 @@
     <description>A cors config for cors handler for single page applications.</description>
 
     <dependencies>
+        <!-- Bundled Public Suffix List, including PRIVATE rules; no runtime downloads. -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.8.0-jre</version>
+        </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>

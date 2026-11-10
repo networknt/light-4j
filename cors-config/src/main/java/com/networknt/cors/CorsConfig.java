@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Steve Hu on 2017-01-21.
@@ -56,7 +57,12 @@ public class CorsConfig {
             description = "Allowed origins, you can have multiple and with port if port is not 80 or 443. This is the global\n" +
                     "configuration for all paths. If you want to have different configuration for different paths, you\n" +
                     "can use pathPrefixAllowed. The value is a list of strings.\n" +
-                    "Wildcard is not supported for security reasons.\n - http://localhost",
+                    "HTTP/HTTPS origins use ASCII/Punycode hosts, no trailing dot, and ports 0-65535.\n" +
+                    "Scoped wildcards such as https://*.example.com trust every subdomain at every depth, excluding the apex.\n" +
+                    "Use only organization-controlled trusted subdomains; public/private PSL suffixes and unknown suffixes are rejected.\n" +
+                    "Credentials remain enabled. Explicit null is supported only by an explicit null entry.\n" +
+                    "The legacy server-origin fallback remains after allowlist misses, including empty lists.\n" +
+                    "Invalid startup configuration fails; invalid refresh retains the last valid policy.\n - http://localhost\n - https://*.example.com",
             items = String.class
     )
     List<String> allowedOrigins;
@@ -75,8 +81,10 @@ public class CorsConfig {
     @MapField(
             configFieldName = PATH_PREFIX_ALLOWED,
             externalizedKeyName = PATH_PREFIX_ALLOWED,
-            description = "cors configuration per path prefix on a shared gateway. You either have allowedOrigins and allowedMethods\n" +
-                    "or you have pathPrefixAllowed. You can't have both. If you have both, pathPrefixAllowed will be used.\n" +
+            description = "CORS configuration per path prefix on a shared gateway. The first raw string prefix match in map order\n" +
+                    "replaces the global origins and methods; unmatched paths use global settings. Prefixes are not segment-aware:\n" +
+                    " /api also matches /api-other. Put more specific prefixes first; map order must be preserved.\n" +
+                    "Missing per-path origins or methods do not inherit the global values. The server-origin fallback still applies.\n" +
                     "The value is a map with the key as the path prefix and the value is another map with allowedOrigins and\n" +
                     "allowedMethods. The allowedOrigins is a list of strings and allowedMethods is a list of strings.\n" +
                     "\n" +
@@ -107,13 +115,47 @@ public class CorsConfig {
     )
     Map<String, CorsPathPrefix> pathPrefixAllowed;
 
-    private static volatile CorsConfig instance;
+    private static final Map<String, CachedConfig> instances = new ConcurrentHashMap<>();
+    private volatile Policies policies;
+
+    private record CachedConfig(CorsConfig config, Map<String, Object> seen) { }
+    private record Policies(Policy global, Map<String, Policy> paths) { }
+
+    /** One immutable policy selected using the existing first raw-prefix match contract. */
+    public record Policy(CorsOriginPolicy origins, List<String> methods) { }
+
+    public Policy policyForPath(String requestPath) {
+        Policies current = policies;
+        for (Map.Entry<String, Policy> entry : current.paths.entrySet()) {
+            if (requestPath.startsWith(entry.getKey())) return entry.getValue();
+        }
+        return current.global;
+    }
+
+    private static Policy compilePolicy(List<String> origins, List<String> methods, String location) {
+        return new Policy(CorsOriginPolicy.compile(origins, location),
+                methods == null ? List.of() : List.copyOf(methods));
+    }
+
+    private static Map<String, Policy> compilePaths(Map<String, CorsPathPrefix> paths) {
+        Map<String, Policy> compiled = new LinkedHashMap<>();
+        if (paths != null) {
+            paths.forEach((path, value) -> {
+                if (path == null || value == null) throw new ConfigException("pathPrefixAllowed requires non-null paths and policies");
+                compiled.put(path, compilePolicy(value.allowedOrigins, value.allowedMethods,
+                        "pathPrefixAllowed[" + path + "].allowedOrigins"));
+            });
+        }
+        return Collections.unmodifiableMap(compiled);
+    }
 
     private CorsConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigList();
         setConfigMap();
+        policies = new Policies(compilePolicy(allowedOrigins, allowedMethods, configName + ".allowedOrigins"),
+                compilePaths(pathPrefixAllowed));
     }
     private CorsConfig() {
         this(CONFIG_NAME);
@@ -124,23 +166,30 @@ public class CorsConfig {
     }
 
     public static CorsConfig load(String configName) {
-        if (CONFIG_NAME.equals(configName)) {
-            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-            if (instance != null && instance.getMappedConfig() == mappedConfig) {
-                return instance;
+        Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        CachedConfig cached = instances.get(configName);
+        if (cached != null && cached.seen == mappedConfig) return cached.config;
+        synchronized (CorsConfig.class) {
+            mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            cached = instances.get(configName);
+            if (cached != null && cached.seen == mappedConfig) return cached.config;
+            final CorsConfig candidate;
+            try {
+                candidate = new CorsConfig(configName);
+            } catch (RuntimeException e) {
+                if (cached == null) throw e;
+                logger.error("Rejected CORS configuration refresh for {}; retaining last valid policy: {}",
+                        configName, e.getMessage());
+                instances.put(configName, new CachedConfig(cached.config, mappedConfig));
+                return cached.config;
             }
-            synchronized (CorsConfig.class) {
-                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-                if (instance != null && instance.getMappedConfig() == mappedConfig) {
-                    return instance;
-                }
-                instance = new CorsConfig(configName);
-                // Register the module with the configuration.
-                ModuleRegistry.registerModule(configName, CorsConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
-                return instance;
+            if (CONFIG_NAME.equals(configName)) {
+                ModuleRegistry.registerModule(configName, CorsConfig.class.getName(),
+                        Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(configName), null);
             }
+            instances.put(configName, new CachedConfig(candidate, candidate.mappedConfig));
+            return candidate;
         }
-        return new CorsConfig(configName);
     }
 
     public boolean isEnabled() {
@@ -155,16 +204,20 @@ public class CorsConfig {
         return allowedOrigins;
     }
 
-    public void setAllowedOrigins(List allowedOrigins) {
-        this.allowedOrigins = allowedOrigins;
+    public synchronized void setAllowedOrigins(List allowedOrigins) {
+        Policy candidate = compilePolicy(allowedOrigins, allowedMethods, "allowedOrigins");
+        this.allowedOrigins = allowedOrigins == null ? null : List.copyOf(allowedOrigins);
+        policies = new Policies(candidate, policies.paths);
     }
 
     public List getAllowedMethods() {
         return allowedMethods;
     }
 
-    public void setAllowedMethods(List allowedMethods) {
-        this.allowedMethods = allowedMethods;
+    public synchronized void setAllowedMethods(List allowedMethods) {
+        Policy candidate = compilePolicy(allowedOrigins, allowedMethods, "allowedMethods");
+        this.allowedMethods = allowedMethods == null ? null : List.copyOf(allowedMethods);
+        policies = new Policies(candidate, policies.paths);
     }
 
     @Deprecated(since = "2.2.1")
@@ -174,9 +227,12 @@ public class CorsConfig {
     }
 
     @Deprecated(since = "2.2.1")
-    public void setPathPrefixAllowed(Map<String, Object> pathPrefixAllowed) {
+    public synchronized void setPathPrefixAllowed(Map<String, Object> pathPrefixAllowed) {
         final var mapper = Config.getInstance().getMapper();
-        this.pathPrefixAllowed = mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
+        Map<String, CorsPathPrefix> candidate = mapper.convertValue(pathPrefixAllowed, new TypeReference<>() {});
+        Map<String, Policy> compiled = compilePaths(candidate);
+        this.pathPrefixAllowed = candidate;
+        policies = new Policies(policies.global, compiled);
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -200,12 +256,14 @@ public class CorsConfig {
                 String s = (String)object;
                 s = s.trim();
                 if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
+                if (s.isEmpty()) {
+                    // Preserve blank externalized values as an empty allowlist.
+                } else if(s.startsWith("[")) {
                     // json format
                     try {
                         allowedOrigins = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
                     } catch (Exception e) {
-                        throw new ConfigException("could not parse the skipPathPrefixes json with a list of strings.");
+                        throw new ConfigException("could not parse allowedOrigins JSON with a list of strings.");
                     }
                 } else {
                     // comma separated
@@ -227,12 +285,14 @@ public class CorsConfig {
                 String s = (String)object;
                 s = s.trim();
                 if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
+                if (s.isEmpty()) {
+                    // Preserve blank externalized values as an empty allowlist.
+                } else if(s.startsWith("[")) {
                     // json format
                     try {
                         allowedMethods = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
                     } catch (Exception e) {
-                        throw new ConfigException("could not parse the skipPathPrefixes json with a list of strings.");
+                        throw new ConfigException("could not parse allowedMethods JSON with a list of strings.");
                     }
                 } else {
                     // comma separated
