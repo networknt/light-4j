@@ -113,8 +113,8 @@ public class CorsPathPrefixTest {
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         HeaderMap headerMap = reference.get().getResponseHeaders();
         String header = headerMap.getFirst("Access-Control-Allow-Origin");
-        Assertions.assertEquals(200, statusCode);
-        if(statusCode == 200) {
+        Assertions.assertEquals(403, statusCode);
+        if(statusCode == 403) {
             Assertions.assertNull(header);
         }
     }
