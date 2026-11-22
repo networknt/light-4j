@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.5.1](https://github.com/networknt/light-4j/tree/2.5.1) (2026-11-21)
+
+**Commits:**
+
+- upgrade to version 2.5.1 before release in 2.x branch ([6e5bf95](https://github.com/networknt/light-4j/commit/6e5bf959ba52f509d618045cbae56de2e63802e0)) (by Steve Hu)
+- upgrade logback to 1.6.8 from 1.6.7 ([0334c02](https://github.com/networknt/light-4j/commit/0334c02abbd3fc82703665bc7ad48c4bd17e6b94)) (by Steve Hu)
+- upgrade logback to 1.6.7 from 1.6.6 ([102209f](https://github.com/networknt/light-4j/commit/102209f7da865d41ac3d10196abe8fc5c770b5d8)) (by Steve Hu)
+- upgrade maven-compiler to 3.16.0 from 3.8.0 ([f251fec](https://github.com/networknt/light-4j/commit/f251fec1ee4326fe5169da1e682e1bbdcf7f7b31)) (by Steve Hu)
+- upgrade maven-surefire to 3.6.1 from 3.6.0 ([9fe9652](https://github.com/networknt/light-4j/commit/9fe9652cdb404da1488ce660f45f4e71a4d512a9)) (by Steve Hu)
+- upgrade to version 2.5.1-SNAPSHOT after release in 2.x branch ([b2f2594](https://github.com/networknt/light-4j/commit/b2f2594f1bad548b692512e7f6fa2a8834f4c0cf)) (by Steve Hu)
+
 ## [2.5.0](https://github.com/networknt/light-4j/tree/2.5.0) (2026-11-04)
 
 **Commits:**
