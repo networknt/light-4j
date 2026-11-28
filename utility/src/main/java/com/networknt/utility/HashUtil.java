@@ -112,13 +112,21 @@ public class HashUtil {
     public static String generateStrongPasswordHash(String password) throws NoSuchAlgorithmException, InvalidKeySpecException
     {
         int iterations = 1000;
-        char[] chars = password.toCharArray();
         byte[] salt = getSalt().getBytes(UTF_8);
-
-        PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 64 * 8);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] hash = skf.generateSecret(spec).getEncoded();
-        return iterations + ":" + toHex(salt) + ":" + toHex(hash);
+        char[] chars = password.toCharArray();
+        PBEKeySpec spec;
+        try {
+            spec = new PBEKeySpec(chars, salt, iterations, 64 * 8);
+        } finally {
+            Arrays.fill(chars, '\0');
+        }
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] hash = skf.generateSecret(spec).getEncoded();
+            return iterations + ":" + toHex(salt) + ":" + toHex(hash);
+        } finally {
+            spec.clearPassword();
+        }
     }
 
     private static String getSalt() throws NoSuchAlgorithmException
@@ -150,15 +158,18 @@ public class HashUtil {
         byte[] hash = fromHex(parts[2]);
 
         PBEKeySpec spec = new PBEKeySpec(originalPassword, salt, iterations, hash.length * 8);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] testHash = skf.generateSecret(spec).getEncoded();
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] testHash = skf.generateSecret(spec).getEncoded();
 
-        int diff = hash.length ^ testHash.length;
-        for(int i = 0; i < hash.length && i < testHash.length; i++)
-        {
-            diff |= hash[i] ^ testHash[i];
+            int diff = hash.length ^ testHash.length;
+            for (int i = 0; i < hash.length && i < testHash.length; i++) {
+                diff |= hash[i] ^ testHash[i];
+            }
+            return diff == 0;
+        } finally {
+            spec.clearPassword();
         }
-        return diff == 0;
     }
 
     /**
